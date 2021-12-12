@@ -10,6 +10,7 @@
 #include <QMouseEvent>
 #include "drawable_object.h"
 #include "circle.h"
+#include "rectangle.h"
 
 class Scene : public QWidget {
 
@@ -35,7 +36,16 @@ public:
         }
 
         if (state != State::Move) {
-            objects.push_back(new Circle(pos, 10));
+            switch (event->button()) {
+                case Qt::MouseButton::LeftButton:
+                    objects.push_back(new Circle(pos, 10));
+                    break;
+                case Qt::MouseButton::RightButton:
+                default:
+                    objects.push_back(new Rectangle(pos, 10, 40));
+                    break;
+            }
+
             drag = objects.back();
             state = State::Move;
         }

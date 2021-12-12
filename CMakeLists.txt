@@ -28,7 +28,7 @@ add_executable(ffi_rust
         main.cpp
         mainwindow.cpp
         mainwindow.ui
-        mainwindow.cpp scene.cpp scene.h drawable_object.cpp drawable_object.h circle.cpp circle.h)
+        mainwindow.cpp scene.cpp scene.h drawable_object.cpp drawable_object.h circle.cpp circle.h rectangle.cpp rectangle.h)
 
 add_dependencies(ffi_rust rust)
 
