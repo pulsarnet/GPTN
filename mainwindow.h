@@ -11,8 +11,6 @@
 #include <iostream>
 #include "scene.h"
 
-extern "C" void print(int a, float b, bool c);
-
 class MainWindow : public QMainWindow {
 
 public:

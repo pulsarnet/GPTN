@@ -4,7 +4,7 @@ include(ExternalProject)
 
 set(CMAKE_CXX_STANDARD 20)
 
-set(CMAKE_PREFIX_PATH /Users/nikolajmuravev/Qt6/6.2.1/macos/lib/cmake)
+set(CMAKE_PREFIX_PATH "C:\\Qt\\6.2.2\\msvc2019_64\\lib\\cmake")
 
 ExternalProject_Add(
         rust
@@ -28,11 +28,11 @@ add_executable(ffi_rust
         main.cpp
         mainwindow.cpp
         mainwindow.ui
-        mainwindow.cpp scene.cpp scene.h)
+        mainwindow.cpp scene.cpp scene.h drawable_object.cpp drawable_object.h circle.cpp circle.h)
 
 add_dependencies(ffi_rust rust)
 
 target_link_libraries(ffi_rust
-        debug "${CMAKE_SOURCE_DIR}/rust/target/debug/libhello_world.a" Qt6::Widgets
-        optimized "${CMAKE_SOURCE_DIR}/rust/target/release/libhello_world.a" Qt6::Widgets
+        debug "${CMAKE_SOURCE_DIR}/rust/target/debug/hello_world.lib" Qt6::Widgets
+        optimized "${CMAKE_SOURCE_DIR}/rust/target/release/hello_world.lib" Qt6::Widgets
         )

@@ -8,6 +8,8 @@
 #include <QWidget>
 #include <QPainter>
 #include <QMouseEvent>
+#include "drawable_object.h"
+#include "circle.h"
 
 class Scene : public QWidget {
 
@@ -22,50 +24,67 @@ public:
     }
 
     void mousePressEvent(QMouseEvent* event) override {
-        this->x1 = event->pos().x();
-        this->y1 = event->pos().y();
 
-        this->x2 = this->x1;
-        this->y2 = this->y1;
+        QPointF pos = event->position();
+        for (int i = 0; i < this->objects.size(); i++) {
+            if (objects[i]->contains(pos)) {
+                drag = objects[i];
+                state = State::Move;
+                break;
+            }
+        }
 
-        this->isDrawing = true;
+        if (state != State::Move) {
+            objects.push_back(new Circle(pos, 10));
+            drag = objects.back();
+            state = State::Move;
+        }
 
         update();
     }
 
     void mouseMoveEvent(QMouseEvent *event) override {
-        if (this->isDrawing) {
-            this->x2 = event->pos().x();
-            this->y2 = event->pos().y();
+        if (state == State::Move) {
+
+            if (!drag) return;
+
+            drag->setPos(event->position());
 
             update();
         }
     }
 
     void mouseReleaseEvent(QMouseEvent *event) override {
-        this->isDrawing = false;
-        this->x2 = event->pos().x();
-        this->y2 = event->pos().y();
+        state = State::Nothing;
+        drag = nullptr;
 
         update();
     }
 
     void paintEvent(QPaintEvent *event) override {
         QPainter painter(this);
-        painter.setPen(QPen(Qt::white));
+        painter.setPen(QPen(Qt::black));
         painter.setBrush(QBrush(Qt::black));
         painter.setRenderHint(QPainter::Antialiasing);
 
-        painter.drawLine(x1, y1, x2, y2);
-
+        for (int i = 0; i < this->objects.size(); i++) {
+            objects[i]->paint(&painter);
+        }
     }
 
 private:
 
-    int x1 = 0, y1 = 0, x2 = 0, y2 = 0;
-    bool isDrawing = false;
+    std::vector<DrawableObject*> objects;
+
+    DrawableObject* drag = nullptr;
+
+    enum State {
+        Move,
+        Nothing
+    };
+
+    State state = State::Nothing;
 
 };
-
 
 #endif //FFI_RUST_SCENE_H
