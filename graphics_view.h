@@ -12,6 +12,7 @@
 #include <QScrollBar>
 #include <QTransform>
 #include "position.h"
+#include "arrow_line.h"
 
 class GraphicsView : public QGraphicsView {
 
@@ -73,7 +74,8 @@ public:
                 scene->addItem(items.back());
             }
             else if (auto item = scene->itemAt(event->scenePosition(), transform()); item && action == Action::A_Connect) {
-                auto line_item = scene->addLine(item->scenePos().x(), item->scenePos().y(), event->scenePosition().x(), event->scenePosition().y());
+                auto line_item = new ArrowLine(QLineF(item->scenePos().x(), item->scenePos().y(), event->scenePosition().x(), event->scenePosition().y()));
+                scene->addItem(line_item);
                 connections.push_back(std::make_pair(line_item, std::make_pair(item, nullptr)));
                 current_connection = &connections.back();
             }
@@ -91,10 +93,9 @@ public:
         }
         else  {
             for (int i = 0; i < connections.size(); i++) {
-                auto line = connections[i].first->line();
-                line.setP1(connections[i].second.first->scenePos());
-                line.setP2(connections[i].second.second->scenePos());
-                connections[i].first->setLine(line);
+                connections[i].first->setLine(connectObjects(
+                        dynamic_cast<PetriObject *>(connections[i].second.first),
+                        dynamic_cast<PetriObject *>(connections[i].second.second)));
             }
         }
 
@@ -108,12 +109,27 @@ public:
         return nullptr;
     }
 
+    QLineF connectObjects(PetriObject* from, PetriObject* to) {
+        qreal from_angle = from->angleBetween(to->center());
+        qreal to_angle = to->angleBetween(from->center());
+
+        QPointF pointFrom = from->connectionPos(from_angle);
+        QPointF pointTo = to->connectionPos(to_angle);
+
+        return {pointFrom, pointTo};
+    }
+
     void mouseReleaseEvent(QMouseEvent *event) override {
 
         if (auto item = itemAt(event->scenePosition()); item && current_connection) {
-            if ((dynamic_cast<Position*>(current_connection->second.first) && dynamic_cast<Transition*>(item))
-                || (dynamic_cast<Transition*>(current_connection->second.first) && dynamic_cast<Position*>(item)))
+            if ((item != current_connection->second.first) &&
+                    ((dynamic_cast<Position*>(current_connection->second.first) && dynamic_cast<Transition*>(item))
+                || (dynamic_cast<Transition*>(current_connection->second.first) && dynamic_cast<Position*>(item))))
             {
+                current_connection->first->setLine(connectObjects(
+                        dynamic_cast<PetriObject *>(current_connection->second.first),
+                        dynamic_cast<PetriObject *>(item)));
+
                 current_connection->second.second = item;
                 current_connection = nullptr;
             }
