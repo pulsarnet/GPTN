@@ -16,7 +16,7 @@ class PetriObject : public QObject, public QGraphicsItem {
 
 public:
 
-    PetriObject(QGraphicsItem* parent = nullptr) : QGraphicsItem(parent) {
+    explicit PetriObject(QGraphicsItem* parent = nullptr) : QGraphicsItem(parent) {
         setFlags(ItemIsMovable | ItemSendsGeometryChanges);
     }
 
@@ -27,7 +27,7 @@ protected:
             this->setCursor(QCursor(Qt::ClosedHandCursor));
         }
 
-        Q_UNUSED(event);
+        Q_UNUSED(event)
     }
 
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override {
@@ -35,14 +35,14 @@ protected:
             this->setPos(mapToScene(event->pos()));
         }
 
-        Q_UNUSED(event);
+        Q_UNUSED(event)
     }
 
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override {
         if (event->button() == Qt::LeftButton) {
             this->setCursor(QCursor(Qt::ArrowCursor));
         }
-        Q_UNUSED(event);
+        Q_UNUSED(event)
     }
 
 public:
@@ -75,14 +75,17 @@ public:
 
     }
 
-    QRectF boundingRect() const override {
+    [[nodiscard]] QRectF boundingRect() const override {
         qreal penWidth = 1;
         qreal diameter = 2 * radius;
-        return QRectF(-radius - penWidth / 2, -radius - penWidth / 2,
-                      diameter + penWidth, diameter + penWidth);
+        return {-radius - penWidth / 2, -radius - penWidth / 2,
+                      diameter + penWidth, diameter + penWidth};
     }
 
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override {
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override {
+        Q_UNUSED(option)
+        Q_UNUSED(widget)
+
         painter->drawEllipse(boundingRect().center(), radius, radius);
     }
 
@@ -115,11 +118,14 @@ public:
         this->setPos(m_origin);
     }
 
-    QRectF boundingRect() const override {
-        return QRectF(-10, -30, 20, 60);
+    [[nodiscard]] QRectF boundingRect() const override {
+        return {-10, -30, 20, 60};
     }
 
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override {
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override {
+        Q_UNUSED(option)
+        Q_UNUSED(widget)
+
         painter->drawRect(boundingRect());
     }
 
