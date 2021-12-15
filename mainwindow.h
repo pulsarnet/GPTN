@@ -19,12 +19,20 @@ public:
     explicit MainWindow(QWidget *parent = nullptr): QMainWindow(parent) {
 
         this->scene = new GraphicsView();
-        this->scene->setStyleSheet("background-color: green");
 
         createToolBar();
 
         this->setCentralWidget(scene);
+    }
 
+    QAction* makeAction(const QString& name, const QIcon& icon, bool checkable, QActionGroup* actionGroup = nullptr) {
+        auto action = new QAction(name);
+        action->setIcon(icon);
+        action->setCheckable(checkable);
+
+        if (actionGroup) actionGroup->addAction(action);
+
+        return action;
     }
 
     void createToolBar() {
@@ -33,39 +41,25 @@ public:
 
         QActionGroup* actionGroup = new QActionGroup(toolBar);
 
-        position_action = new QAction("Position");
-        position_action->setIcon(QIcon(":/images/circle.png"));
-        position_action->setCheckable(true);
+        position_action = makeAction("Position", QIcon(":/images/circle.png"), true, actionGroup);
+        transition_action = makeAction("Transition", QIcon(":/images/rectangle.png"), true, actionGroup);
+        move_action = makeAction("Move", QIcon(":/images/move.png"), true, actionGroup);
+        connect_action = makeAction("Connect", QIcon(":/images/connect.png"), true, actionGroup);
+        rotation_action = makeAction("Rotate", QIcon(":/images/rotation.png"), true, actionGroup);
+
 
         connect(position_action, &QAction::toggled, this, &MainWindow::positionChecked);
-
-        transition_action = new QAction("Transition");
-        transition_action->setIcon(QIcon(":/images/rectangle.png"));
-        transition_action->setCheckable(true);
-
         connect(transition_action, &QAction::toggled, this, &MainWindow::transitionChecked);
-
-        move_action = new QAction("Move");
-        move_action->setIcon(QIcon(":/images/move.png"));
-        move_action->setCheckable(true);
-
         connect(move_action, &QAction::toggled, this, &MainWindow::moveChecked);
-
-        connect_action = new QAction("Connect");
-        connect_action->setIcon(QIcon(":/images/connect.png"));
-        connect_action->setCheckable(true);
-
         connect(connect_action, &QAction::toggled, this, &MainWindow::connectChecked);
+        connect(rotation_action, &QAction::toggled, this, &MainWindow::rotateChecked);
 
-        actionGroup->addAction(position_action);
-        actionGroup->addAction(transition_action);
-        actionGroup->addAction(move_action);
-        actionGroup->addAction(connect_action);
 
         toolBar->addAction(position_action);
         toolBar->addAction(transition_action);
         toolBar->addAction(move_action);
         toolBar->addAction(connect_action);
+        toolBar->addAction(rotation_action);
     }
 
 public slots:
@@ -90,6 +84,11 @@ public slots:
         else scene->setAction(GraphicsView::A_Nothing);
     }
 
+    void rotateChecked(bool checked) {
+        if(checked) scene->setAction(GraphicsView::A_Rotate);
+        else scene->setAction(GraphicsView::A_Nothing);
+    }
+
 private:
 
     GraphicsView* scene = nullptr;
@@ -98,6 +97,7 @@ private:
     QAction* transition_action = nullptr;
     QAction* move_action = nullptr;
     QAction* connect_action = nullptr;
+    QAction* rotation_action = nullptr;
 
     QToolBar* toolBar = nullptr;
 };

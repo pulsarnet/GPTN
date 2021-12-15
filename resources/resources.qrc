@@ -4,5 +4,6 @@
         <file>images/connect.png</file>
         <file>images/move.png</file>
         <file>images/rectangle.png</file>
+        <file>images/rotation.png</file>
     </qresource>
 </RCC>

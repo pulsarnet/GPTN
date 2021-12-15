@@ -111,10 +111,12 @@ class Transition : public PetriObject {
 
 public:
 
-    explicit Transition(QGraphicsItem* parent = nullptr): PetriObject(parent) {}
+    explicit Transition(const QPointF& origin, QGraphicsItem* parent = nullptr): PetriObject(parent), m_origin(origin) {
+        this->setPos(m_origin);
+    }
 
     QRectF boundingRect() const override {
-        return QRectF(0, 0, 20, 60);
+        return QRectF(-10, -30, 20, 60);
     }
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override {
@@ -122,7 +124,7 @@ public:
     }
 
     QPointF center() override {
-        return QPointF(scenePos().x() + boundingRect().width() / 2., scenePos().y() + boundingRect().height() / 2.);
+        return this->scenePos();
     }
 
     QPointF connectionPos(qreal angle) override {
@@ -130,11 +132,15 @@ public:
         double y = center().y();
 
         angle = angle - qDegreesToRadians(90);
-        qreal xPosy = round((x + qCos(angle) * 10));
-        qreal yPosy = round((y + qSin(angle) * 30));
+        qreal xPosy = round((x + qCos(angle) * sceneBoundingRect().width() / 2.));
+        qreal yPosy = round((y + qSin(angle) * sceneBoundingRect().height() / 2.));
 
         return {xPosy, yPosy};
     }
+
+private:
+
+    QPointF m_origin;
 
 };
 

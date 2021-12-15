@@ -22,6 +22,7 @@ public:
         A_Transition,
         A_Connect,
         A_Move,
+        A_Rotate,
         A_Nothing
     };
 
@@ -69,9 +70,13 @@ public:
                 scene->addItem(items.back());
             }
             else if (action == Action::A_Transition) {
-                items.push_back(new Transition);
-                items.back()->setPos(event->scenePosition());
+                items.push_back(new Transition(event->scenePosition()));
                 scene->addItem(items.back());
+            }
+            else if (action == Action::A_Rotate) {
+                if (auto item = dynamic_cast<Transition*>(scene->itemAt(event->scenePosition(), transform())); item) {
+                    item->setRotation(item->rotation() == 90 ? 0 : 90);
+                }
             }
             else if (auto item = scene->itemAt(event->scenePosition(), transform()); item && action == Action::A_Connect) {
                 auto line_item = new ArrowLine(QLineF(item->scenePos().x(), item->scenePos().y(), event->scenePosition().x(), event->scenePosition().y()));
