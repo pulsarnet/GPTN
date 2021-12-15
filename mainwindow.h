@@ -10,6 +10,9 @@
 #include <QListView>
 #include <QAction>
 #include <QToolBar>
+#include <QStatusBar>
+#include <QMenuBar>
+#include <QWheelEvent>
 #include <QActionGroup>
 #include "graphics_view.h"
 
@@ -18,10 +21,11 @@ class MainWindow : public QMainWindow {
 public:
     explicit MainWindow(QWidget *parent = nullptr): QMainWindow(parent) {
 
-        this->scene = new GraphicsView();
-
         createToolBar();
+        createMenuBar();
+        createStatusBar();
 
+        this->scene = new GraphicsView(this);
         this->setCentralWidget(scene);
     }
 
@@ -33,6 +37,18 @@ public:
         if (actionGroup) actionGroup->addAction(action);
 
         return action;
+    }
+
+    void createMenuBar() {
+        menuBar = new QMenuBar;
+        //menuBar->addAction(move_action);
+        this->setMenuBar(menuBar);
+    }
+
+    void createStatusBar() {
+        statusBar = new QStatusBar;
+        this->setStatusBar(statusBar);
+
     }
 
     void createToolBar() {
@@ -100,6 +116,9 @@ private:
     QAction* rotation_action = nullptr;
 
     QToolBar* toolBar = nullptr;
+
+    QStatusBar* statusBar = nullptr;
+    QMenuBar* menuBar = nullptr;
 };
 
 #endif //FFI_RUST_MAINWINDOW_H

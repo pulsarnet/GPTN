@@ -11,6 +11,7 @@
 #include <QTimer>
 #include <QScrollBar>
 #include <QTransform>
+#include "graphics_view_zoom.h"
 #include "position.h"
 #include "arrow_line.h"
 
@@ -29,20 +30,25 @@ public:
 public:
 
     GraphicsView(QWidget* parent = nullptr): QGraphicsView(parent) {
-        scene = new QGraphicsScene();
-
         this->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         this->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
         this->setMinimumHeight(100);
         this->setMinimumWidth(100);
 
-        this->setScene(scene);
         this->setViewportUpdateMode(QGraphicsView::BoundingRectViewportUpdate);
-        scene->setItemIndexMethod(QGraphicsScene::NoIndex);
         this->setWindowFlag(Qt::BypassGraphicsProxyWidget);
 
+        scene = new QGraphicsScene();
+        scene->setItemIndexMethod(QGraphicsScene::NoIndex);
+        this->setScene(scene);
+
         this->setRenderHints(QPainter::Antialiasing);
+
+        zoom = new GraphicsViewZoom(this);
+        zoom->set_modifier(Qt::NoModifier);
+
+        setTransformationAnchor(QGraphicsView::NoAnchor);
     }
 
     void setAction(Action action) {
@@ -61,29 +67,45 @@ public:
         }
     }
 
+    void updateConnections() {
+        for (int i = 0; i < connections.size(); i++) {
+            connections[i].first->setLine(connectObjects(
+                    dynamic_cast<PetriObject *>(connections[i].second.first),
+                    dynamic_cast<PetriObject *>(connections[i].second.second)));
+        }
+    }
+
     void mousePressEvent(QMouseEvent *event) override {
+
+        auto mapToScenePos = this->mapToScene(event->pos());
 
         if (event->button() == Qt::LeftButton) {
             if (action == Action::A_Position) {
                 items.push_back(new Position);
-                items.back()->setPos(event->scenePosition());
+                items.back()->setPos(mapToScenePos);
                 scene->addItem(items.back());
             }
             else if (action == Action::A_Transition) {
-                items.push_back(new Transition(event->scenePosition()));
+                items.push_back(new Transition(mapToScenePos));
                 scene->addItem(items.back());
             }
             else if (action == Action::A_Rotate) {
-                if (auto item = dynamic_cast<Transition*>(scene->itemAt(event->scenePosition(), transform())); item) {
+                if (auto item = dynamic_cast<Transition*>(scene->itemAt(mapToScenePos, transform())); item) {
                     item->setRotation(item->rotation() == 90 ? 0 : 90);
+                    updateConnections();
                 }
             }
-            else if (auto item = scene->itemAt(event->scenePosition(), transform()); item && action == Action::A_Connect) {
-                auto line_item = new ArrowLine(QLineF(item->scenePos().x(), item->scenePos().y(), event->scenePosition().x(), event->scenePosition().y()));
+            else if (auto item = scene->itemAt(mapToScenePos, transform()); item && action == Action::A_Connect) {
+                auto line_item = new ArrowLine(QLineF(item->scenePos().x(), item->scenePos().y(), mapToScenePos.x(), mapToScenePos.y()));
                 scene->addItem(line_item);
                 connections.push_back(std::make_pair(line_item, std::make_pair(item, nullptr)));
                 current_connection = &connections.back();
             }
+        }
+        else if (event->button() == Qt::MiddleButton) {
+            m_origin = event->pos();
+            setDragMode(QGraphicsView::ScrollHandDrag);
+            setInteractive(false);
         }
 
         if (action == Action::A_Move) QGraphicsView::mousePressEvent(event);
@@ -93,16 +115,19 @@ public:
 
         if (event->buttons() & Qt::LeftButton && action == Action::A_Connect && current_connection) {
             auto line = current_connection->first->line();
-            line.setP2(event->scenePosition());
+            line.setP2(this->mapToScene(event->pos()));
             current_connection->first->setLine(line);
         }
-        else  {
-            for (int i = 0; i < connections.size(); i++) {
-                connections[i].first->setLine(connectObjects(
-                        dynamic_cast<PetriObject *>(connections[i].second.first),
-                        dynamic_cast<PetriObject *>(connections[i].second.second)));
-            }
+        else if (event->buttons() & Qt::MiddleButton) {
+            QPointF oldp = mapToScene(m_origin.toPoint());
+            QPointF newp = mapToScene(event->pos());
+            QPointF translation = newp - oldp;
+
+            translate(translation.x(), translation.y());
+
+            m_origin = event->pos();
         }
+        else updateConnections();
 
         if (action == Action::A_Move) QGraphicsView::mouseMoveEvent(event);
     }
@@ -114,19 +139,12 @@ public:
         return nullptr;
     }
 
-    QLineF connectObjects(PetriObject* from, PetriObject* to) {
-        qreal from_angle = from->angleBetween(to->center());
-        qreal to_angle = to->angleBetween(from->center());
-
-        QPointF pointFrom = from->connectionPos(from_angle);
-        QPointF pointTo = to->connectionPos(to_angle);
-
-        return {pointFrom, pointTo};
-    }
-
     void mouseReleaseEvent(QMouseEvent *event) override {
 
-        if (auto item = itemAt(event->scenePosition()); item && current_connection) {
+        setDragMode(QGraphicsView::NoDrag);
+        setInteractive(true);
+
+        if (auto item = itemAt(this->mapToScene(event->pos())); item && current_connection) {
             if ((item != current_connection->second.first) &&
                     ((dynamic_cast<Position*>(current_connection->second.first) && dynamic_cast<Transition*>(item))
                 || (dynamic_cast<Transition*>(current_connection->second.first) && dynamic_cast<Position*>(item))))
@@ -154,8 +172,19 @@ public:
         QGraphicsView::mouseReleaseEvent(event);
     }
 
+    QLineF connectObjects(PetriObject* from, PetriObject* to) {
+        qreal from_angle = from->angleBetween(to->center());
+        qreal to_angle = to->angleBetween(from->center());
+
+        QPointF pointFrom = from->connectionPos(from_angle);
+        QPointF pointTo = to->connectionPos(to_angle);
+
+        return {pointFrom, pointTo};
+    }
+
+
     void resizeEvent(QResizeEvent *event) override {
-        scene->setSceneRect(this->pos().x(), this->pos().y(), this->width(), this->height());
+        scene->setSceneRect(this->pos().x(), this->pos().y(), 65535, 65535);
         QGraphicsView::resizeEvent(event);
     }
 
@@ -176,6 +205,8 @@ private:
 
     Action action = Action::A_Nothing;
 
+    GraphicsViewZoom* zoom = nullptr;
+    QPointF m_origin;
 
 };
 

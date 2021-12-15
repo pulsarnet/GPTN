@@ -29,7 +29,7 @@ add_executable(ffi_rust
         mainwindow.cpp
         mainwindow.ui
         mainwindow.cpp graphics_view.cpp graphics_view.h position.cpp position.h connection.cpp connection.h arrow_line.cpp arrow_line.h
-        resources/resources.qrc)
+        resources/resources.qrc graphics_view_zoom.cpp graphics_view_zoom.h)
 
 add_dependencies(ffi_rust rust)
 
