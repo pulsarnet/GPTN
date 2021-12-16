@@ -26,10 +26,10 @@ find_package(Qt6 COMPONENTS Widgets REQUIRED)
 
 add_executable(ffi_rust
         main.cpp
-        mainwindow.cpp
+        src/mainwindow.cpp
         mainwindow.ui
-        mainwindow.cpp graphics_view.cpp graphics_view.h position.cpp position.h connection.cpp connection.h arrow_line.cpp arrow_line.h
-        resources/resources.qrc graphics_view_zoom.cpp graphics_view_zoom.h)
+        src/mainwindow.cpp src/graphics_view.cpp include/graphics_view.h src/position.cpp include/position.h src/arrow_line.cpp include/arrow_line.h
+        resources/resources.qrc src/graphics_view_zoom.cpp include/graphics_view_zoom.h)
 
 add_dependencies(ffi_rust rust)
 

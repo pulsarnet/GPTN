@@ -1,6 +1,7 @@
-
+#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "Bcrypt.lib")
 #include <QApplication>
-#include "mainwindow.h"
+#include "include/mainwindow.h"
 
 int main(int argc, char **argv) {
     QApplication app(argc, argv);

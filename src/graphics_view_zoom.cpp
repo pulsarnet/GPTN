@@ -4,7 +4,7 @@
 
 #include <QtMath>
 #include <QApplication>
-#include "graphics_view_zoom.h"
+#include "../include/graphics_view_zoom.h"
 
 GraphicsViewZoom::GraphicsViewZoom(QGraphicsView *view) : QObject(view), m_view(view) {
     m_view->viewport()->installEventFilter(this);
