@@ -3,6 +3,7 @@
 //
 
 #include "../include/mainwindow.h"
+#include "../include/tab.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
@@ -16,15 +17,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     createStatusBar();
     configureTab();
 
-    connect(this->tabWidget, &QTabWidget::currentChanged, this, &MainWindow::tabChanged);
     connect(this->tabWidget, &QTabWidget::tabCloseRequested, this, &MainWindow::closeTab);
-
+    connect(this->tabWidget, &QTabWidget::currentChanged, this, &MainWindow::tabChanged);
 
     this->setCentralWidget(this->tabWidget);
-}
 
-void MainWindow::tabChanged(int index) {
-    this->scene = dynamic_cast<GraphicsView*>(tabWidget->widget(index));
+    tabChanged(-1);
 }
 
 void MainWindow::closeTab(int index) {
@@ -32,38 +30,33 @@ void MainWindow::closeTab(int index) {
 }
 
 void MainWindow::positionChecked(bool checked) {
-    if (!scene) return;
-
-    if (checked) scene->setAction(GraphicsView::A_Position);
-    else scene->setAction(GraphicsView::A_Nothing);
+    if (auto scene = currentScene(); scene) {
+        scene->setAction(checked ? GraphicsView::A_Position : GraphicsView::A_Nothing);
+    }
 }
 
 void MainWindow::transitionChecked(bool checked) {
-    if (!scene) return;
-
-    if (checked) scene->setAction(GraphicsView::A_Transition);
-    else scene->setAction(GraphicsView::A_Nothing);
+    if (auto scene = currentScene(); scene) {
+        scene->setAction(checked ? GraphicsView::A_Transition : GraphicsView::A_Nothing);
+    }
 }
 
 void MainWindow::moveChecked(bool checked) {
-    if (!scene) return;
-
-    if (checked) scene->setAction(GraphicsView::A_Move);
-    else scene->setAction(GraphicsView::A_Nothing);
+    if (auto scene = currentScene(); scene) {
+        scene->setAction(checked ? GraphicsView::A_Move : GraphicsView::A_Nothing);
+    }
 }
 
 void MainWindow::connectChecked(bool checked) {
-    if (!scene) return;
-
-    if (checked) scene->setAction(GraphicsView::A_Connect);
-    else scene->setAction(GraphicsView::A_Nothing);
+    if (auto scene = currentScene(); scene) {
+        scene->setAction(checked ? GraphicsView::A_Connect : GraphicsView::A_Nothing);
+    }
 }
 
 void MainWindow::rotateChecked(bool checked) {
-    if (!scene) return;
-
-    if(checked) scene->setAction(GraphicsView::A_Rotate);
-    else scene->setAction(GraphicsView::A_Nothing);
+    if (auto scene = currentScene(); scene) {
+        scene->setAction(checked ? GraphicsView::A_Rotate : GraphicsView::A_Nothing);
+    }
 }
 
 void MainWindow::configureTab() {
@@ -72,21 +65,11 @@ void MainWindow::configureTab() {
     this->tabWidget->setTabShape(QTabWidget::Rounded);
     this->tabWidget->setTabsClosable(true);
 
-    QToolButton *tb = new QToolButton();
-    tb->setText("+");
-
-    tabWidget->addTab(new QLabel("Add tabs by pressing \"+\""), QString());
-    tabWidget->setTabEnabled(0, false);
-
-    tabWidget->tabBar()->setTabButton(0, QTabBar::RightSide, tb);
-
-    connect(tb, &QPushButton::released, this, &MainWindow::newTab);
 }
 
 void MainWindow::newTab() {
-    auto index = this->tabWidget->addTab(new GraphicsView, "New Tab");
-    scene = dynamic_cast<GraphicsView*>(this->tabWidget->widget(this->tabWidget->currentIndex()));
-    this->tabWidget->setCurrentIndex(index);
+    auto index = tabWidget->addTab(new Tab, "New Tab");
+    if (this->tabWidget->currentIndex() == 0) this->tabWidget->setCurrentIndex(index);
 }
 
 QAction *MainWindow::makeAction(const QString &name, const QIcon &icon, bool checkable, QActionGroup *actionGroup) {
@@ -102,6 +85,25 @@ QAction *MainWindow::makeAction(const QString &name, const QIcon &icon, bool che
 void MainWindow::createMenuBar() {
     menuBar = new QMenuBar;
     //menuBar->addAction(move_action);
+
+    auto file_menu = new QMenu("&File");
+    {
+        auto newMenu = new QMenu("New");
+
+        auto new_action = new QAction("File");
+        new_action->setShortcut(QKeySequence::fromString(tr("Ctrl+N")));
+        newMenu->addAction(new_action);
+        connect(new_action, &QAction::triggered, this, &MainWindow::newFile);
+
+        file_menu->addMenu(newMenu);
+    }
+
+    file_menu->addAction(new QAction("&Open"));
+    file_menu->addAction(new QAction("&Save"));
+    file_menu->addAction(new QAction("&SaveAs"));
+
+    menuBar->addMenu(file_menu);
+
     this->setMenuBar(menuBar);
 }
 
@@ -114,7 +116,7 @@ void MainWindow::createToolBar() {
     toolBar = new QToolBar;
     this->addToolBar(Qt::LeftToolBarArea, toolBar);
 
-    QActionGroup* actionGroup = new QActionGroup(toolBar);
+    actionGroup = new QActionGroup(toolBar);
 
     position_action = makeAction("Position", QIcon(":/images/circle.png"), true, actionGroup);
     transition_action = makeAction("Transition", QIcon(":/images/rectangle.png"), true, actionGroup);
@@ -135,4 +137,53 @@ void MainWindow::createToolBar() {
     toolBar->addAction(move_action);
     toolBar->addAction(connect_action);
     toolBar->addAction(rotation_action);
+}
+
+GraphicsView *MainWindow::currentScene() {
+    if (auto tab = dynamic_cast<Tab*>(tabWidget->widget(tabWidget->currentIndex())); tab) {
+        return tab->scene();
+    }
+
+    return nullptr;
+}
+
+void MainWindow::newFile(bool trigger) {
+    Q_UNUSED(trigger);
+    this->newTab();
+}
+
+void MainWindow::tabChanged(int index) {
+    auto checked = this->actionGroup->checkedAction();
+
+    if (index == -1) {
+        if (checked) checked->toggle();
+        this->toolBar->setEnabled(false);
+        return;
+    }
+
+    this->toolBar->setEnabled(true);
+
+    auto currentAction = currentScene()->currentAction();
+
+    if (checked) checked->toggle();
+
+    switch (currentAction) {
+        case GraphicsView::A_Position:
+            position_action->toggle();
+            break;
+        case GraphicsView::A_Transition:
+            transition_action->toggle();
+            break;
+        case GraphicsView::A_Connect:
+            connect_action->toggle();
+            break;
+        case GraphicsView::A_Move:
+            move_action->toggle();
+            break;
+        case GraphicsView::A_Rotate:
+            rotation_action->toggle();
+            break;
+        case GraphicsView::A_Nothing:
+            break;
+    }
 }

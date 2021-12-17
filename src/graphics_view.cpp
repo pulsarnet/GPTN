@@ -53,7 +53,7 @@ void GraphicsView::updateConnections() {
 void GraphicsView::mousePressEvent(QMouseEvent *event) {
 
     auto mapToScenePos = this->mapToScene(event->pos());
-
+    qDebug() << event;
     if (event->button() == Qt::LeftButton) {
         if (action == Action::A_Position) {
             items.push_back(new Position);
@@ -160,4 +160,8 @@ QLineF GraphicsView::connectObjects(PetriObject *from, PetriObject *to) {
 void GraphicsView::resizeEvent(QResizeEvent *event) {
     scene->setSceneRect(0, 0, 65535, 65535);
     QGraphicsView::resizeEvent(event);
+}
+
+GraphicsView::Action GraphicsView::currentAction() {
+    return action;
 }

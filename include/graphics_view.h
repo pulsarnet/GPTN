@@ -49,11 +49,10 @@ public:
 
     QLineF connectObjects(PetriObject* from, PetriObject* to);
 
+    Action currentAction();
+
 
     void resizeEvent(QResizeEvent *event) override;
-
-public slots:
-
 
 private:
 

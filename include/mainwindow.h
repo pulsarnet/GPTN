@@ -33,8 +33,6 @@ public:
 
 public slots:
 
-    void tabChanged(int index);;
-
     void closeTab(int index);
 
     void positionChecked(bool checked);
@@ -47,6 +45,9 @@ public slots:
 
     void rotateChecked(bool checked);
 
+    void newFile(bool trigger);
+
+    void tabChanged(int index);
 
 private:
 
@@ -62,15 +63,16 @@ private:
 
     void createToolBar();
 
-private:
+    GraphicsView* currentScene();
 
-    GraphicsView* scene = nullptr;
+private:
 
     QAction* position_action = nullptr;
     QAction* transition_action = nullptr;
     QAction* move_action = nullptr;
     QAction* connect_action = nullptr;
     QAction* rotation_action = nullptr;
+    QActionGroup* actionGroup = nullptr;
 
     QToolBar* toolBar = nullptr;
 
