@@ -17,6 +17,8 @@
 
 class GraphicsView : public QGraphicsView {
 
+    Q_OBJECT
+
 public:
     enum Action {
         A_Position,
@@ -51,8 +53,19 @@ public:
 
     Action currentAction();
 
-
     void resizeEvent(QResizeEvent *event) override;
+
+    void saveToFile(QFile& file);
+
+    void openFile(QFile& file);
+
+protected slots:
+
+    void slotSceneChanged(const QList<QRectF>& region);
+
+signals:
+
+    void signalSceneChanged();
 
 private:
 

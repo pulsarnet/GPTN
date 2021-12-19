@@ -5,6 +5,10 @@
 #include "../include/mainwindow.h"
 #include "../include/tab.h"
 
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QDir>
+
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
     this->net = make();
@@ -26,7 +30,31 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 }
 
 void MainWindow::closeTab(int index) {
+    auto tab = dynamic_cast<Tab*>(this->tabWidget->widget(index));
+    if (tab->changed()) {
+        auto answer = MainWindow::askSaveFile();
+        if (answer == MainWindow::Cancel) return;
+
+        if (answer == MainWindow::Save) {
+            auto saveFile = chooseSaveFile();
+            if (saveFile.isEmpty()) return;
+
+            // Save to file
+            if (tab->setFile(saveFile)) {
+                tab->scene()->saveToFile(tab->file());
+                tab->setChanged(false);
+            }
+            else {
+                // TODO: Error Message
+                return;
+            }
+
+        }
+    }
+
+    auto tab_object = dynamic_cast<Tab*>(this->tabWidget->widget(index));
     this->tabWidget->removeTab(index);
+    tab_object->closeFile();
 }
 
 void MainWindow::positionChecked(bool checked) {
@@ -67,9 +95,11 @@ void MainWindow::configureTab() {
 
 }
 
-void MainWindow::newTab() {
-    auto index = tabWidget->addTab(new Tab, "New Tab");
-    if (this->tabWidget->currentIndex() == 0) this->tabWidget->setCurrentIndex(index);
+Tab* MainWindow::newTab() {
+    auto tab = new Tab;
+    auto index = tabWidget->addTab(tab, "New Tab");
+    this->tabWidget->setCurrentIndex(index);
+    return tab;
 }
 
 QAction *MainWindow::makeAction(const QString &name, const QIcon &icon, bool checkable, QActionGroup *actionGroup) {
@@ -84,7 +114,6 @@ QAction *MainWindow::makeAction(const QString &name, const QIcon &icon, bool che
 
 void MainWindow::createMenuBar() {
     menuBar = new QMenuBar;
-    //menuBar->addAction(move_action);
 
     auto file_menu = new QMenu("&File");
     {
@@ -98,9 +127,21 @@ void MainWindow::createMenuBar() {
         file_menu->addMenu(newMenu);
     }
 
-    file_menu->addAction(new QAction("&Open"));
-    file_menu->addAction(new QAction("&Save"));
-    file_menu->addAction(new QAction("&SaveAs"));
+    auto save_action = new QAction("Save");
+    save_action->setShortcut(tr("Ctrl+S"));
+    connect(save_action, &QAction::triggered, this, &MainWindow::slotSaveFile);
+
+    auto save_as_action = new QAction("Save as...");
+    save_as_action->setShortcut(tr("Ctrl+Shift+S"));
+    connect(save_as_action, &QAction::triggered, this, &MainWindow::slotSaveAsFile);
+
+    auto open_action = new QAction("Open");
+    open_action->setShortcut(tr("Ctrl+O"));
+    connect(open_action, &QAction::triggered, this, &MainWindow::slotOpenFile);
+
+    file_menu->addAction(open_action);
+    file_menu->addAction(save_action);
+    file_menu->addAction(save_as_action);
 
     menuBar->addMenu(file_menu);
 
@@ -186,4 +227,77 @@ void MainWindow::tabChanged(int index) {
         case GraphicsView::A_Nothing:
             break;
     }
+}
+
+MainWindow::SaveFileAnswer MainWindow::askSaveFile() {
+
+    QMessageBox ask_dialog;
+    ask_dialog.setText("The document has been modified.");
+    ask_dialog.setInformativeText("Do you want to save your changes?");
+    ask_dialog.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+    ask_dialog.setDefaultButton(QMessageBox::Save);
+
+    switch (ask_dialog.exec()) {
+        case QMessageBox::Save:
+            return MainWindow::Save;
+        case QMessageBox::Discard:
+            return MainWindow::NoSave;
+        case QMessageBox::Cancel:
+        default:
+            return MainWindow::Cancel;
+    }
+
+}
+
+QString MainWindow::chooseSaveFile() {
+
+    QFileDialog dialog(this);
+    dialog.setAcceptMode(QFileDialog::AcceptSave);
+    dialog.setLabelText(QFileDialog::FileName, "Save file name...");
+    dialog.setFileMode(QFileDialog::AnyFile);
+    dialog.setOption(QFileDialog::ReadOnly, true);
+    dialog.setDefaultSuffix("ptn");
+
+    if (dialog.exec()) {
+        auto files = dialog.selectedFiles();
+        return files.count() == 0 ? QString() : files[0];
+    }
+
+    return {};
+}
+
+void MainWindow::slotSaveFile(bool checked) {
+    auto tab = dynamic_cast<Tab*>(tabWidget->widget(tabWidget->currentIndex()));
+    if (!tab) return;
+
+    auto& file = tab->file();
+    if (!file.isOpen()) {
+        auto filename = chooseSaveFile();
+        if (filename.isEmpty() || !tab->setFile(filename)) return;
+    }
+
+    tab->scene()->saveToFile(file);
+    tab->setChanged(false);
+}
+
+void MainWindow::slotSaveAsFile(bool checked) {
+    auto tab = dynamic_cast<Tab*>(tabWidget->widget(tabWidget->currentIndex()));
+    if (!tab) return;
+
+    if (auto filename = chooseSaveFile(); !filename.isEmpty() && tab->setFile(filename)) {
+        tab->scene()->saveToFile(tab->file());
+        tab->setChanged(false);
+    }
+}
+
+void MainWindow::slotOpenFile(bool checked) {
+    Q_UNUSED(checked);
+
+    auto tab = newTab();
+
+    auto filename = QFileDialog::getOpenFileName(this, tr("Open File"), QString(QDir::currentPath()), tr("PTN Files (*.ptn)"));
+    QFile file(filename);
+    file.open(QIODeviceBase::ReadWrite);
+
+    tab->scene()->openFile(file);
 }

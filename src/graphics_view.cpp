@@ -2,6 +2,8 @@
 // Created by nmuravev on 12/13/2021.
 //
 
+#include <QFile>
+#include <QSettings>
 #include "../include/graphics_view.h"
 
 GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
@@ -24,6 +26,8 @@ GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
     zoom->set_modifier(Qt::NoModifier);
 
     setTransformationAnchor(QGraphicsView::NoAnchor);
+
+    connect(scene, &QGraphicsScene::changed, this, &GraphicsView::slotSceneChanged);
 }
 
 void GraphicsView::setAction(GraphicsView::Action action) {
@@ -53,7 +57,6 @@ void GraphicsView::updateConnections() {
 void GraphicsView::mousePressEvent(QMouseEvent *event) {
 
     auto mapToScenePos = this->mapToScene(event->pos());
-    qDebug() << event;
     if (event->button() == Qt::LeftButton) {
         if (action == Action::A_Position) {
             items.push_back(new Position);
@@ -164,4 +167,81 @@ void GraphicsView::resizeEvent(QResizeEvent *event) {
 
 GraphicsView::Action GraphicsView::currentAction() {
     return action;
+}
+
+void GraphicsView::slotSceneChanged(const QList<QRectF>& region) {
+    Q_UNUSED(region);
+    emit signalSceneChanged();
+}
+
+void GraphicsView::saveToFile(QFile &file) {
+
+    QVariantList data_list;
+    foreach(QGraphicsItem* item, this->items) {
+        QVariantHash data;
+        data["pos"] = QVariant(item->pos());
+        data["rotation"] = QVariant(item->rotation());
+        data["id"] = QVariant("id_1");
+
+        if (dynamic_cast<Transition*>(item)) {
+            data["type"] = QVariant(tr("transition"));
+        }
+        else if (dynamic_cast<Position*>(item)) {
+            data["type"] = QVariant(tr("position"));
+        }
+
+        data_list << data;
+    }
+
+    QVariantList connections_list;
+    foreach(Connection conn, this->connections) {
+        QVariantHash data;
+        // TODO: Изменить на идентификаторы
+        data["from"] = QVariant(conn.second.first->pos());
+        data["to"] = QVariant(conn.second.second->pos());
+
+        connections_list << data;
+    }
+
+    QVariantHash common_data;
+    common_data["items"] = data_list;
+    common_data["connections"] = connections_list;
+
+    QVariant data(common_data);
+
+    QDataStream stream(&file);
+    stream << data;
+
+}
+
+void GraphicsView::openFile(QFile &file) {
+
+    QDataStream stream(&file);
+    QVariant data;
+
+    stream >> data;
+
+    qDebug() << data;
+
+    auto common_data = data.toHash();
+
+    if (common_data.contains("items")) {
+        foreach(QVariant data, common_data.value("items").toList()) {
+            QVariantHash hash = data.toHash();
+            PetriObject* object = nullptr;
+            if (hash["type"] == "position") {
+                object = new Position;
+                object->setPos(hash["pos"].toPointF());
+                object->setRotation(hash["transition"].toDouble());
+            }
+            else if (hash["type"] == "transition") {
+                object = new Transition(hash["pos"].toPointF());
+                object->setRotation(hash["rotation"].toDouble());
+            }
+
+            this->items.push_back(object);
+            this->scene->addItem(object);
+        }
+    }
+
 }
