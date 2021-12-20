@@ -21,11 +21,6 @@
 #include "graphics_view.h"
 #include "tab.h"
 
-extern "C" struct PetriNet;
-
-extern "C" PetriNet* make();
-extern "C" void del(PetriNet*);
-extern "C" unsigned long count(PetriNet*);
 
 class MainWindow : public QMainWindow {
 
@@ -52,6 +47,8 @@ public slots:
 
     void rotateChecked(bool checked);
 
+    void removeChecked(bool checked);
+
     void newFile(bool trigger);
 
     void tabChanged(int index);
@@ -61,6 +58,8 @@ public slots:
     void slotSaveAsFile(bool checked);
 
     void slotOpenFile(bool checked);
+
+    void slotSplitAction(bool checked);
 
 private:
 
@@ -89,6 +88,7 @@ private:
     QAction* move_action = nullptr;
     QAction* connect_action = nullptr;
     QAction* rotation_action = nullptr;
+    QAction* remove_action = nullptr;
     QActionGroup* actionGroup = nullptr;
 
     QToolBar* toolBar = nullptr;
@@ -97,8 +97,6 @@ private:
     QMenuBar* menuBar = nullptr;
 
     QTabWidget* tabWidget = nullptr;
-
-    PetriNet* net = nullptr;
 };
 
 #endif //FFI_RUST_MAINWINDOW_H

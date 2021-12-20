@@ -19,6 +19,8 @@ class GraphicsView : public QGraphicsView {
 
     Q_OBJECT
 
+    typedef std::pair<QGraphicsLineItem*, std::pair<PetriObject*, PetriObject*>> Connection;
+
 public:
     enum Action {
         A_Position,
@@ -26,18 +28,15 @@ public:
         A_Connect,
         A_Move,
         A_Rotate,
+        A_Remove,
         A_Nothing
     };
 
 public:
 
-    GraphicsView(QWidget* parent = nullptr);
+    explicit GraphicsView(QWidget* parent = nullptr);
 
     void setAction(Action action);
-
-    void keyPressEvent(QKeyEvent *event) override;
-
-    void keyReleaseEvent(QKeyEvent *event) override;
 
     void updateConnections();
 
@@ -45,7 +44,7 @@ public:
 
     void mouseMoveEvent(QMouseEvent *event) override;
 
-    QGraphicsItem* itemAt(QPointF pos);
+    PetriObject* itemAt(QPointF pos);
 
     void mouseReleaseEvent(QMouseEvent *event) override;
 
@@ -59,6 +58,18 @@ public:
 
     void openFile(QFile& file);
 
+    uint64_t getPositionIndex();
+
+    uint64_t getTransitionIndex();
+
+    [[nodiscard]] const QList<QGraphicsItem*>& getItems() const {
+        return this->items;
+    }
+
+    [[nodiscard]] const QList<Connection>& getConnections() const {
+        return this->connections;
+    }
+
 protected slots:
 
     void slotSceneChanged(const QList<QRectF>& region);
@@ -69,20 +80,19 @@ signals:
 
 private:
 
-    typedef std::pair<QGraphicsLineItem*, std::pair<QGraphicsItem*, QGraphicsItem*>> Connection;
-
     QGraphicsScene* scene;
-    QList<QGraphicsItem*> items;
+    QList<QGraphicsItem *> items;
 
     QList<Connection> connections;
     Connection* current_connection = nullptr;
-
-    bool shift_pressed = false;
 
     Action action = Action::A_Nothing;
 
     GraphicsViewZoom* zoom = nullptr;
     QPointF m_origin;
+
+    uint64_t lastPositionIndex = 0;
+    uint64_t lastTransitionIndex = 0;
 
 };
 

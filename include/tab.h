@@ -34,6 +34,8 @@ public:
 
     void closeFile();
 
+    void splitAction();
+
 public slots:
 
     void slotDocumentChanged();

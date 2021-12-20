@@ -11,11 +11,6 @@
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
-    this->net = make();
-    qDebug() << count(this->net);
-    qDebug() << count(this->net);
-    ::del(this->net);
-
     createToolBar();
     createMenuBar();
     createStatusBar();
@@ -48,7 +43,6 @@ void MainWindow::closeTab(int index) {
                 // TODO: Error Message
                 return;
             }
-
         }
     }
 
@@ -84,6 +78,12 @@ void MainWindow::connectChecked(bool checked) {
 void MainWindow::rotateChecked(bool checked) {
     if (auto scene = currentScene(); scene) {
         scene->setAction(checked ? GraphicsView::A_Rotate : GraphicsView::A_Nothing);
+    }
+}
+
+void MainWindow::removeChecked(bool checked) {
+    if (auto scene = currentScene(); scene) {
+        scene->setAction(checked ? GraphicsView::A_Remove : GraphicsView::A_Nothing);
     }
 }
 
@@ -145,6 +145,18 @@ void MainWindow::createMenuBar() {
 
     menuBar->addMenu(file_menu);
 
+    {
+        auto action_menu = new QMenu("Actions");
+
+        auto split = new QAction("Split");
+        split->setShortcut(tr("F9"));
+        connect(split, &QAction::triggered, this, &MainWindow::slotSplitAction);
+
+        action_menu->addAction(split);
+
+        menuBar->addMenu(action_menu);
+    }
+
     this->setMenuBar(menuBar);
 }
 
@@ -164,6 +176,7 @@ void MainWindow::createToolBar() {
     move_action = makeAction("Move", QIcon(":/images/move.png"), true, actionGroup);
     connect_action = makeAction("Connect", QIcon(":/images/connect.png"), true, actionGroup);
     rotation_action = makeAction("Rotate", QIcon(":/images/rotation.png"), true, actionGroup);
+    remove_action = makeAction("Remove", QIcon(":/images/remove.png"), true, actionGroup);
 
 
     connect(position_action, &QAction::toggled, this, &MainWindow::positionChecked);
@@ -171,6 +184,7 @@ void MainWindow::createToolBar() {
     connect(move_action, &QAction::toggled, this, &MainWindow::moveChecked);
     connect(connect_action, &QAction::toggled, this, &MainWindow::connectChecked);
     connect(rotation_action, &QAction::toggled, this, &MainWindow::rotateChecked);
+    connect(remove_action, &QAction::toggled, this, &MainWindow::removeChecked);
 
 
     toolBar->addAction(position_action);
@@ -178,6 +192,7 @@ void MainWindow::createToolBar() {
     toolBar->addAction(move_action);
     toolBar->addAction(connect_action);
     toolBar->addAction(rotation_action);
+    toolBar->addAction(remove_action);
 }
 
 GraphicsView *MainWindow::currentScene() {
@@ -300,4 +315,13 @@ void MainWindow::slotOpenFile(bool checked) {
     file.open(QIODeviceBase::ReadWrite);
 
     tab->scene()->openFile(file);
+}
+
+void MainWindow::slotSplitAction(bool checked) {
+
+    auto current_tab = dynamic_cast<Tab*>(tabWidget->widget(tabWidget->currentIndex()));
+    if (!current_tab) return;
+
+    current_tab->splitAction();
+
 }

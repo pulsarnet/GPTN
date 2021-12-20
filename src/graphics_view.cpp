@@ -34,24 +34,10 @@ void GraphicsView::setAction(GraphicsView::Action action) {
     this->action = action;
 }
 
-void GraphicsView::keyPressEvent(QKeyEvent *event) {
-    if (event->key() == Qt::Key_Shift) {
-        shift_pressed = true;
-    }
-}
-
-void GraphicsView::keyReleaseEvent(QKeyEvent *event) {
-    if (event->key() == Qt::Key_Shift) {
-        shift_pressed = false;
-    }
-}
-
 void GraphicsView::updateConnections() {
-    for (int i = 0; i < connections.size(); i++) {
-        connections[i].first->setLine(connectObjects(
-                dynamic_cast<PetriObject *>(connections[i].second.first),
-                dynamic_cast<PetriObject *>(connections[i].second.second)));
-    }
+    std::for_each(connections.begin(), connections.end(), [&](Connection& connection) {
+        connection.first->setLine(connectObjects(connection.second.first, connection.second.second));
+    });
 }
 
 void GraphicsView::mousePressEvent(QMouseEvent *event) {
@@ -59,12 +45,11 @@ void GraphicsView::mousePressEvent(QMouseEvent *event) {
     auto mapToScenePos = this->mapToScene(event->pos());
     if (event->button() == Qt::LeftButton) {
         if (action == Action::A_Position) {
-            items.push_back(new Position);
-            items.back()->setPos(mapToScenePos);
+            items.push_back(new Position(mapToScenePos, this->getPositionIndex()));
             scene->addItem(items.back());
         }
         else if (action == Action::A_Transition) {
-            items.push_back(new Transition(mapToScenePos));
+            items.push_back(new Transition(mapToScenePos, this->getTransitionIndex()));
             scene->addItem(items.back());
         }
         else if (action == Action::A_Rotate) {
@@ -73,11 +58,47 @@ void GraphicsView::mousePressEvent(QMouseEvent *event) {
                 updateConnections();
             }
         }
-        else if (auto item = scene->itemAt(mapToScenePos, transform()); item && action == Action::A_Connect) {
-            auto line_item = new ArrowLine(QLineF(item->scenePos().x(), item->scenePos().y(), mapToScenePos.x(), mapToScenePos.y()));
-            scene->addItem(line_item);
-            connections.push_back(std::make_pair(line_item, std::make_pair(item, nullptr)));
-            current_connection = &connections.back();
+        else if (auto item = scene->itemAt(mapToScenePos, transform()); item) {
+            if (action == Action::A_Connect) {
+                auto line_item = new ArrowLine(QLineF(item->scenePos().x(), item->scenePos().y(), mapToScenePos.x(), mapToScenePos.y()));
+                scene->addItem(line_item);
+                connections.push_back(std::make_pair(line_item, std::make_pair(dynamic_cast<PetriObject*>(item), nullptr)));
+                current_connection = &connections.back();
+            }
+            else if (action == Action::A_Remove) {
+                scene->removeItem(item);
+
+                if (auto petriObject = PetriObject::castTo<PetriObject>(item); petriObject) {
+                    QMutableListIterator<Connection> connection_mut(connections);
+                    while (connection_mut.hasNext()) {
+                        auto next = connection_mut.next();
+                        if (next.second.first == petriObject || next.second.second == petriObject) {
+                            scene->removeItem(next.first);
+                            connection_mut.remove();
+                            delete next.first;
+                        }
+                    }
+
+                    QMutableListIterator<QGraphicsItem*> items_mut(items);
+                    while (items_mut.hasNext()) {
+                        auto next = items_mut.next();
+                        if (next == item) {
+                            items_mut.remove();
+                        }
+                    }
+                }
+                else if (auto connection = dynamic_cast<ArrowLine*>(item); connection) {
+                    QMutableListIterator<Connection> connection_mut(connections);
+                    while (connection_mut.hasNext()) {
+                        auto next = connection_mut.next();
+                        if (next.first == connection) {
+                            connection_mut.remove();
+                        }
+                    }
+                }
+
+                delete item;
+            }
         }
     }
     else if (event->button() == Qt::MiddleButton) {
@@ -110,9 +131,9 @@ void GraphicsView::mouseMoveEvent(QMouseEvent *event) {
     if (action == Action::A_Move) QGraphicsView::mouseMoveEvent(event);
 }
 
-QGraphicsItem *GraphicsView::itemAt(QPointF pos) {
+PetriObject *GraphicsView::itemAt(QPointF pos) {
     for (auto item: items) {
-        if (item->sceneBoundingRect().contains(pos)) return item;
+        if (item->sceneBoundingRect().contains(pos) && dynamic_cast<PetriObject*>(item)) return PetriObject::castTo<PetriObject>(item);
     }
     return nullptr;
 }
@@ -123,14 +144,9 @@ void GraphicsView::mouseReleaseEvent(QMouseEvent *event) {
     setInteractive(true);
 
     if (auto item = itemAt(this->mapToScene(event->pos())); item && current_connection) {
-        if ((item != current_connection->second.first) &&
-            ((dynamic_cast<Position*>(current_connection->second.first) && dynamic_cast<Transition*>(item))
-             || (dynamic_cast<Transition*>(current_connection->second.first) && dynamic_cast<Position*>(item))))
+        if (current_connection->second.first->allowConnection(item))
         {
-            current_connection->first->setLine(connectObjects(
-                    dynamic_cast<PetriObject *>(current_connection->second.first),
-                    dynamic_cast<PetriObject *>(item)));
-
+            current_connection->first->setLine(connectObjects(current_connection->second.first, item));
             current_connection->second.second = item;
             current_connection = nullptr;
         }
@@ -181,13 +197,14 @@ void GraphicsView::saveToFile(QFile &file) {
         QVariantHash data;
         data["pos"] = QVariant(item->pos());
         data["rotation"] = QVariant(item->rotation());
-        data["id"] = QVariant("id_1");
 
-        if (dynamic_cast<Transition*>(item)) {
+        if (auto transition = dynamic_cast<Transition*>(item); transition) {
             data["type"] = QVariant(tr("transition"));
+            data["id"] = QVariant(transition->index());
         }
-        else if (dynamic_cast<Position*>(item)) {
+        else if (auto position = dynamic_cast<Position*>(item); position) {
             data["type"] = QVariant(tr("position"));
+            data["id"] = QVariant(position->index());
         }
 
         data_list << data;
@@ -195,10 +212,17 @@ void GraphicsView::saveToFile(QFile &file) {
 
     QVariantList connections_list;
     foreach(Connection conn, this->connections) {
+        QVariantHash from;
+        from["type"] = QVariant(conn.second.first->objectTypeStr());
+        from["id"] = QVariant(conn.second.first->index());
+
+        QVariantHash to;
+        to["type"] = QVariant(conn.second.second->objectTypeStr());
+        to["id"] = QVariant(conn.second.second->index());
+
         QVariantHash data;
-        // TODO: Изменить на идентификаторы
-        data["from"] = QVariant(conn.second.first->pos());
-        data["to"] = QVariant(conn.second.second->pos());
+        data["from"] = QVariant(from);
+        data["to"] = QVariant(to);
 
         connections_list << data;
     }
@@ -206,6 +230,8 @@ void GraphicsView::saveToFile(QFile &file) {
     QVariantHash common_data;
     common_data["items"] = data_list;
     common_data["connections"] = connections_list;
+    common_data["last_position_index"] = QVariant(this->lastPositionIndex);
+    common_data["last_transition_index"] = QVariant(this->lastTransitionIndex);
 
     QVariant data(common_data);
 
@@ -229,13 +255,14 @@ void GraphicsView::openFile(QFile &file) {
         foreach(QVariant data, common_data.value("items").toList()) {
             QVariantHash hash = data.toHash();
             PetriObject* object = nullptr;
+            qDebug() << hash["id"].toInt();
             if (hash["type"] == "position") {
-                object = new Position;
+                object = new Position(hash["pos"].toPointF(), hash["id"].toInt());
                 object->setPos(hash["pos"].toPointF());
                 object->setRotation(hash["transition"].toDouble());
             }
             else if (hash["type"] == "transition") {
-                object = new Transition(hash["pos"].toPointF());
+                object = new Transition(hash["pos"].toPointF(), hash["id"].toInt());
                 object->setRotation(hash["rotation"].toDouble());
             }
 
@@ -244,4 +271,46 @@ void GraphicsView::openFile(QFile &file) {
         }
     }
 
+    if (common_data.contains("connections")) {
+        foreach(QVariant connection, common_data.value("connections").toList()) {
+            QVariantHash hash = connection.toHash();
+
+            QVariantHash from = hash["from"].toHash();
+            QVariantHash to = hash["to"].toHash();
+
+            auto find_from = [=](QGraphicsItem* item) {
+                auto object = dynamic_cast<PetriObject*>(item);
+                return object->objectTypeStr() == from["type"].toString() && object->index() == from["id"].toInt();
+            };
+
+            auto find_to = [=](QGraphicsItem* item) {
+                auto object = dynamic_cast<PetriObject*>(item);
+                return object->objectTypeStr() == to["type"].toString() && object->index() == to["id"].toInt();
+            };
+
+            auto point1_it = std::find_if(this->items.begin(), this->items.end(), find_from);
+            auto point2_it = std::find_if(this->items.begin(), this->items.end(), find_to);
+
+            PetriObject* point1 = dynamic_cast<PetriObject*>(*point1_it);
+            PetriObject* point2 = dynamic_cast<PetriObject*>(*point2_it);
+
+            auto line_item = new ArrowLine(QLineF(point1->scenePos().x(), point1->scenePos().y(), point2->scenePos().x(), point2->scenePos().y()));
+            scene->addItem(line_item);
+            connections.push_back(std::make_pair(line_item, std::make_pair(point1, point2)));
+        }
+
+        updateConnections();
+    }
+
+    this->lastPositionIndex = common_data["last_position_index"].toInt();
+    this->lastTransitionIndex = common_data["last_transition_index"].toInt();
+
+}
+
+uint64_t GraphicsView::getPositionIndex() {
+    return ++this->lastPositionIndex;
+}
+
+uint64_t GraphicsView::getTransitionIndex() {
+    return ++this->lastTransitionIndex;
 }

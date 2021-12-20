@@ -4,6 +4,7 @@
 
 #include <QHBoxLayout>
 #include "../include/tab.h"
+#include "../include/rust.h"
 
 Tab::Tab(QWidget *parent) : QWidget(parent) {
 
@@ -40,4 +41,32 @@ void Tab::setChanged(bool changed) {
 
 void Tab::closeFile() {
     m_file.close();
+}
+
+void Tab::splitAction() {
+
+    auto petri = make();
+
+    for (auto item : this->view->getItems()) {
+        auto petriItem = dynamic_cast<PetriObject*>(item);
+        if (petriItem->objectType() == PetriObject::Position) {
+            add_position(petri, petriItem->index());
+        }
+        else if (petriItem->objectType() == PetriObject::Transition) {
+            add_transition(petri, petriItem->index());
+        }
+    }
+
+    for (auto conn : this->view->getConnections()) {
+        if (conn.second.first->objectType() == PetriObject::Position) {
+            connect_p(petri, conn.second.first->index(), conn.second.second->index());
+        }
+        else if (conn.second.first->objectType() == PetriObject::Transition) {
+            connect_t(petri, conn.second.first->index(), conn.second.second->index());
+        }
+    }
+
+    split(petri);
+    del(petri);
+
 }

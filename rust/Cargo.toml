@@ -5,3 +5,6 @@ authors = ["Alice <a@example.com>", "Bob <b@example.com>"]
 
 [lib]
 crate-type = ["staticlib"]
+
+[dependencies]
+nalgebra = "0.29.0"

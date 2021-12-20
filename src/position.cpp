@@ -2,6 +2,7 @@
 // Created by nmuravev on 12/13/2021.
 //
 
+#include <format>
 #include "../include/position.h"
 
 PetriObject::PetriObject(QGraphicsItem *parent) : QGraphicsItem(parent) {
@@ -48,8 +49,9 @@ qreal PetriObject::angleBetween(const QPointF &to) {
     return rotation;
 }
 
-Position::Position(QGraphicsItem *parent) : PetriObject(parent) {
-
+Position::Position(const QPointF& origin, uint32_t index, QGraphicsItem *parent) : PetriObject(parent) {
+    this->setPos(origin);
+    this->m_index = index;
 }
 
 QRectF Position::boundingRect() const {
@@ -63,7 +65,13 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     Q_UNUSED(option)
     Q_UNUSED(widget)
 
+    painter->save();
     painter->drawEllipse(boundingRect().center(), radius, radius);
+
+    auto name = QString::fromStdString(std::format("p{}", this->index()));
+    painter->drawText(boundingRect().center() - QPointF(5.0, 5.0), name);
+    painter->restore();
+    //painter->drawText(boundingRect().center(), QTextFormat())
 }
 
 QPointF Position::center() {
@@ -81,8 +89,9 @@ QPointF Position::connectionPos(qreal angle) {
     return {xPosy, yPosy};
 }
 
-Transition::Transition(const QPointF &origin, QGraphicsItem *parent) : PetriObject(parent), m_origin(origin) {
+Transition::Transition(const QPointF& origin, uint32_t index, QGraphicsItem *parent) : PetriObject(parent), m_origin(origin) {
     this->setPos(m_origin);
+    this->m_index = index;
 }
 
 QRectF Transition::boundingRect() const {
@@ -96,6 +105,10 @@ void Transition::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
     painter->save();
     painter->setBrush(Qt::black);
     painter->drawRect(boundingRect());
+
+    painter->setPen(Qt::white);
+    auto name = QString::fromStdString(std::format("t{}", this->index()));
+    painter->drawText(boundingRect().left(), boundingRect().center().y(), name);
     painter->restore();
 }
 
