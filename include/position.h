@@ -50,9 +50,18 @@ public:
 
     virtual bool allowConnection(PetriObject* other) = 0;
 
+    void setColored(bool colored) {
+        m_colored = colored;
+        emit update(boundingRect());
+    }
+
+    bool colored() { return m_colored; }
+
 protected:
 
     uint64_t m_index;
+
+    bool m_colored = false;
 
 };
 

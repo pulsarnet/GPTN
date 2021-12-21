@@ -16,7 +16,14 @@ QRectF ArrowLine::boundingRect() const {
 void ArrowLine::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     qreal arrowSize = 10;
     painter->save();
-    painter->setBrush(Qt::black);
+
+    if (this->m_to && this->m_from->colored() && this->m_to->colored()) {
+        painter->setPen(Qt::red);
+        painter->setBrush(Qt::darkRed);
+    }
+    else {
+        painter->setBrush(Qt::black);
+    }
 
     QLineF line(this->line().p2(), this->line().p1());
 
@@ -34,6 +41,7 @@ void ArrowLine::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
     painter->restore();
 }
 
-ArrowLine::ArrowLine(const QLineF &line, QGraphicsItem *parent) : QGraphicsLineItem(line, parent) {
 
+ArrowLine::ArrowLine(PetriObject *from, const QLineF &line, QGraphicsItem *parent) : QGraphicsLineItem(line, parent) {
+    this->m_from = from;
 }

@@ -15,6 +15,9 @@ Tab::Tab(QWidget *parent) : QWidget(parent) {
     layout->addWidget(this->view);
 
     connect(this->view, &GraphicsView::signalSceneChanged, this, &Tab::slotDocumentChanged);
+    connect(this->view, &GraphicsView::signalRemoveItem, this, &Tab::slotRemoveItem);
+
+    this->m_split_actions = new SplitListModel();
 
 }
 
@@ -58,15 +61,21 @@ void Tab::splitAction() {
     }
 
     for (auto conn : this->view->getConnections()) {
-        if (conn.second.first->objectType() == PetriObject::Position) {
-            connect_p(petri, conn.second.first->index(), conn.second.second->index());
+        if (conn->from()->objectType() == PetriObject::Position) {
+            connect_p(petri, conn->from()->index(), conn->to()->index());
         }
-        else if (conn.second.first->objectType() == PetriObject::Transition) {
-            connect_t(petri, conn.second.first->index(), conn.second.second->index());
+        else if (conn->from()->objectType() == PetriObject::Transition) {
+            connect_t(petri, conn->from()->index(), conn->to()->index());
         }
     }
 
-    split(petri);
+    this->m_split_actions->clear();
+    this->m_split_actions->setActions(split_net(petri));
+
     del(petri);
 
+}
+
+void Tab::slotRemoveItem() {
+    this->m_split_actions->clear();
 }

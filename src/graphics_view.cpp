@@ -35,8 +35,8 @@ void GraphicsView::setAction(GraphicsView::Action action) {
 }
 
 void GraphicsView::updateConnections() {
-    std::for_each(connections.begin(), connections.end(), [&](Connection& connection) {
-        connection.first->setLine(connectObjects(connection.second.first, connection.second.second));
+    std::for_each(connections.begin(), connections.end(), [&](ArrowLine* connection) {
+        connection->setLine(connectObjects(connection->from(), connection->to()));
     });
 }
 
@@ -60,22 +60,23 @@ void GraphicsView::mousePressEvent(QMouseEvent *event) {
         }
         else if (auto item = scene->itemAt(mapToScenePos, transform()); item) {
             if (action == Action::A_Connect) {
-                auto line_item = new ArrowLine(QLineF(item->scenePos().x(), item->scenePos().y(), mapToScenePos.x(), mapToScenePos.y()));
+                auto petri = dynamic_cast<PetriObject*>(item);
+                auto line_item = new ArrowLine(petri, QLineF(item->scenePos().x(), item->scenePos().y(), mapToScenePos.x(), mapToScenePos.y()));
                 scene->addItem(line_item);
-                connections.push_back(std::make_pair(line_item, std::make_pair(dynamic_cast<PetriObject*>(item), nullptr)));
-                current_connection = &connections.back();
+                connections.push_back(line_item);
+                current_connection = line_item;
             }
             else if (action == Action::A_Remove) {
                 scene->removeItem(item);
 
                 if (auto petriObject = PetriObject::castTo<PetriObject>(item); petriObject) {
-                    QMutableListIterator<Connection> connection_mut(connections);
+                    QMutableListIterator<ArrowLine*> connection_mut(connections);
                     while (connection_mut.hasNext()) {
                         auto next = connection_mut.next();
-                        if (next.second.first == petriObject || next.second.second == petriObject) {
-                            scene->removeItem(next.first);
+                        if (next->from() == petriObject || next->to() == petriObject) {
+                            scene->removeItem(next);
                             connection_mut.remove();
-                            delete next.first;
+                            delete next;
                         }
                     }
 
@@ -88,16 +89,18 @@ void GraphicsView::mousePressEvent(QMouseEvent *event) {
                     }
                 }
                 else if (auto connection = dynamic_cast<ArrowLine*>(item); connection) {
-                    QMutableListIterator<Connection> connection_mut(connections);
+                    QMutableListIterator<ArrowLine*> connection_mut(connections);
                     while (connection_mut.hasNext()) {
                         auto next = connection_mut.next();
-                        if (next.first == connection) {
+                        if (next == connection) {
                             connection_mut.remove();
                         }
                     }
                 }
 
                 delete item;
+
+                emit signalRemoveItem();
             }
         }
     }
@@ -113,9 +116,9 @@ void GraphicsView::mousePressEvent(QMouseEvent *event) {
 void GraphicsView::mouseMoveEvent(QMouseEvent *event) {
 
     if (event->buttons() & Qt::LeftButton && action == Action::A_Connect && current_connection) {
-        auto line = current_connection->first->line();
+        auto line = current_connection->line();
         line.setP2(this->mapToScene(event->pos()));
-        current_connection->first->setLine(line);
+        current_connection->setLine(line);
     }
     else if (event->buttons() & Qt::MiddleButton) {
         QPointF oldp = mapToScene(m_origin.toPoint());
@@ -144,19 +147,19 @@ void GraphicsView::mouseReleaseEvent(QMouseEvent *event) {
     setInteractive(true);
 
     if (auto item = itemAt(this->mapToScene(event->pos())); item && current_connection) {
-        if (current_connection->second.first->allowConnection(item))
+        if (current_connection->from()->allowConnection(item))
         {
-            current_connection->first->setLine(connectObjects(current_connection->second.first, item));
-            current_connection->second.second = item;
+            current_connection->setLine(connectObjects(current_connection->from(), item));
+            current_connection->setTo(item);
             current_connection = nullptr;
         }
     }
 
-    if (current_connection && current_connection->second.second == nullptr) {
+    if (current_connection && current_connection->to() == nullptr) {
         for (int i = 0; i < connections.size(); i++) {
-            if (&connections[i] == current_connection) {
+            if (connections[i] == current_connection) {
                 connections.removeAt(i);
-                scene->removeItem(current_connection->first);
+                scene->removeItem(current_connection);
                 break;
             }
         }
@@ -211,14 +214,14 @@ void GraphicsView::saveToFile(QFile &file) {
     }
 
     QVariantList connections_list;
-    foreach(Connection conn, this->connections) {
+    foreach(ArrowLine* conn, this->connections) {
         QVariantHash from;
-        from["type"] = QVariant(conn.second.first->objectTypeStr());
-        from["id"] = QVariant(conn.second.first->index());
+        from["type"] = QVariant(conn->from()->objectTypeStr());
+        from["id"] = QVariant(conn->from()->index());
 
         QVariantHash to;
-        to["type"] = QVariant(conn.second.second->objectTypeStr());
-        to["id"] = QVariant(conn.second.second->index());
+        to["type"] = QVariant(conn->to()->objectTypeStr());
+        to["id"] = QVariant(conn->to()->index());
 
         QVariantHash data;
         data["from"] = QVariant(from);
@@ -294,9 +297,10 @@ void GraphicsView::openFile(QFile &file) {
             PetriObject* point1 = dynamic_cast<PetriObject*>(*point1_it);
             PetriObject* point2 = dynamic_cast<PetriObject*>(*point2_it);
 
-            auto line_item = new ArrowLine(QLineF(point1->scenePos().x(), point1->scenePos().y(), point2->scenePos().x(), point2->scenePos().y()));
+            auto line_item = new ArrowLine(point1, QLineF(point1->scenePos().x(), point1->scenePos().y(), point2->scenePos().x(), point2->scenePos().y()));
+            line_item->setTo(point2);
             scene->addItem(line_item);
-            connections.push_back(std::make_pair(line_item, std::make_pair(point1, point2)));
+            connections.push_back(line_item);
         }
 
         updateConnections();

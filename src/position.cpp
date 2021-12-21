@@ -66,6 +66,8 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     Q_UNUSED(widget)
 
     painter->save();
+    if (colored()) painter->setPen(Qt::red);
+
     painter->drawEllipse(boundingRect().center(), radius, radius);
 
     auto name = QString::fromStdString(std::format("p{}", this->index()));
@@ -103,6 +105,8 @@ void Transition::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
     Q_UNUSED(widget)
 
     painter->save();
+
+    if (colored()) painter->setPen(Qt::red);
     painter->setBrush(Qt::black);
     painter->drawRect(boundingRect());
 

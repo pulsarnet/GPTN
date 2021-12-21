@@ -61,6 +61,8 @@ public slots:
 
     void slotSplitAction(bool checked);
 
+    void slotSplitChecked(const QModelIndex& index);
+
 private:
 
     static SaveFileAnswer askSaveFile();
@@ -97,6 +99,8 @@ private:
     QMenuBar* menuBar = nullptr;
 
     QTabWidget* tabWidget = nullptr;
+
+    QListView* splitItems = nullptr;
 };
 
 #endif //FFI_RUST_MAINWINDOW_H

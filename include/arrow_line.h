@@ -7,15 +7,38 @@
 
 #include <QGraphicsItem>
 #include <QPainter>
+#include "position.h"
 
 class ArrowLine : public QGraphicsLineItem {
 
 public:
-    explicit ArrowLine(const QLineF& line, QGraphicsItem* parent = nullptr);
+    explicit ArrowLine(PetriObject* from, const QLineF &line, QGraphicsItem* parent = nullptr);
 
     QRectF boundingRect() const override;
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
+
+    bool setTo(PetriObject* to) {
+        if (this->m_from->allowConnection(to)) {
+            m_to = to;
+            return true;
+        }
+
+        return false;
+    }
+
+    PetriObject* from() {
+        return m_from;
+    }
+
+    PetriObject* to() {
+        return m_to;
+    }
+
+private:
+
+    PetriObject* m_from = nullptr;
+    PetriObject* m_to = nullptr;
 
 };
 

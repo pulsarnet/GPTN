@@ -7,7 +7,9 @@
 
 #include <QWidget>
 #include <QFile>
+#include <QAction>
 #include "graphics_view.h"
+#include "split_list_model.h"
 
 class Tab : public QWidget {
 
@@ -36,9 +38,13 @@ public:
 
     void splitAction();
 
+    SplitListModel* splitActions() { return m_split_actions; }
+
 public slots:
 
     void slotDocumentChanged();
+
+    void slotRemoveItem();
 
 private:
 
@@ -46,6 +52,8 @@ private:
 
     bool m_changed = false;
     QFile m_file;
+
+    SplitListModel* m_split_actions;
 
 };
 

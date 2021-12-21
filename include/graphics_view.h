@@ -19,8 +19,6 @@ class GraphicsView : public QGraphicsView {
 
     Q_OBJECT
 
-    typedef std::pair<QGraphicsLineItem*, std::pair<PetriObject*, PetriObject*>> Connection;
-
 public:
     enum Action {
         A_Position,
@@ -66,7 +64,7 @@ public:
         return this->items;
     }
 
-    [[nodiscard]] const QList<Connection>& getConnections() const {
+    [[nodiscard]] const QList<ArrowLine*>& getConnections() const {
         return this->connections;
     }
 
@@ -78,13 +76,15 @@ signals:
 
     void signalSceneChanged();
 
+    void signalRemoveItem();
+
 private:
 
     QGraphicsScene* scene;
     QList<QGraphicsItem *> items;
 
-    QList<Connection> connections;
-    Connection* current_connection = nullptr;
+    QList<ArrowLine*> connections;
+    ArrowLine* current_connection = nullptr;
 
     Action action = Action::A_Nothing;
 

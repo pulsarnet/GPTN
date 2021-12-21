@@ -7,6 +7,7 @@
 
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QDockWidget>
 #include <QDir>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
@@ -20,6 +21,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     connect(this->tabWidget, &QTabWidget::currentChanged, this, &MainWindow::tabChanged);
 
     this->setCentralWidget(this->tabWidget);
+
+    this->splitItems = new QListView;
+    connect(this->splitItems, &QListView::clicked, this, &MainWindow::slotSplitChecked);
+
+    QDockWidget* dock = new QDockWidget(this);
+    dock->setWidget(this->splitItems);
+
+    this->addDockWidget(Qt::RightDockWidgetArea, dock);
 
     tabChanged(-1);
 }
@@ -214,6 +223,7 @@ void MainWindow::tabChanged(int index) {
     if (index == -1) {
         if (checked) checked->toggle();
         this->toolBar->setEnabled(false);
+        this->splitItems->setModel(nullptr);
         return;
     }
 
@@ -242,6 +252,10 @@ void MainWindow::tabChanged(int index) {
         case GraphicsView::A_Nothing:
             break;
     }
+
+    // Update list
+
+    this->splitItems->setModel(dynamic_cast<Tab*>(this->tabWidget->currentWidget())->splitActions());
 }
 
 MainWindow::SaveFileAnswer MainWindow::askSaveFile() {
@@ -324,4 +338,28 @@ void MainWindow::slotSplitAction(bool checked) {
 
     current_tab->splitAction();
 
+}
+
+void MainWindow::slotSplitChecked(const QModelIndex& index) {
+    auto result = index.data(Qt::UserRole);
+    auto list = result.toList();
+    auto currentTab = dynamic_cast<Tab*>(tabWidget->currentWidget());
+
+    std::for_each(currentTab->scene()->getItems().begin(), currentTab->scene()->getItems().end(), [](QGraphicsItem* item) {
+        dynamic_cast<PetriObject*>(item)->setColored(false);
+    });
+
+    for (auto item : list) {
+        auto str = item.toString();
+        auto inner_index = str.right(str.length() - 1).toInt();
+        auto find_type = str.startsWith('p') ? PetriObject::Position : PetriObject::Transition;
+
+        auto items = currentTab->scene()->getItems();
+        auto it = std::find_if(items.begin(), items.end(), [=](QGraphicsItem* item) {
+            auto object = dynamic_cast<PetriObject*>(item);
+            return object->objectType() == find_type && object->index() == inner_index;
+        });
+
+        if (it != items.end()) dynamic_cast<PetriObject*>(*it)->setColored(true);
+    }
 }
