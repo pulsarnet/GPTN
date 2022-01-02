@@ -1,0 +1,84 @@
+QMainWindow {
+    background-color: #24292E;
+}
+
+QMainWindow::separator {
+    width: 1px;
+}
+
+QDockWidget {
+    padding: 0;
+    border: 1px solid green;
+}
+
+QDockWidget::title {
+    text-align: left;
+    background-color: #24292E;
+    border-bottom: 1px solid white;
+    padding-left: 8px;
+}
+
+QDockWidget::close-button:hover, QDockWidget::float-button:hover {
+    background-color: #88544C;
+}
+
+QGraphicsView {
+    border: none;
+    background-color: #24292E;
+}
+
+QTabWidget::pane {
+    border-top: 2px solid #1E2327;
+    background-color: #24292E;
+    border-right: 1px solid black;
+}
+
+QTabWidget::tab-bar {
+    left: 10px;
+}
+
+QTabBar::tab {
+    min-width: 8ex;
+    padding: 9px;
+    color: white;
+    background-color: #24292E;
+}
+
+QTabBar::tab:selected {
+    border-bottom: 2px solid #f9826c; /* same as pane color */
+    background-color: #24292E;
+    color: white;
+}
+
+QTabBar::tab:!selected:hover {
+    background-color: #444D56;
+}
+
+QTabBar::close-button {
+    image: url(':/images/close.png');
+    padding: 4px;
+    border-radius: 7px;
+    subcontrol-position: left;
+}
+
+QTabBar::close-button:hover {
+    background-color: #79CB60;
+}
+
+QMenuBar, QMenu {
+    background-color: #24292E;
+    color: white;
+}
+
+QMenu {
+    margin: 0;
+    padding: 0;
+}
+
+QMenuBar::item, QMenu::item {
+    padding: 6px 25px 6px 20px;
+}
+
+QMenuBar::item:selected, QMenu::item:selected {
+    background-color: #3392FF;
+}

@@ -8,9 +8,11 @@
 
 Tab::Tab(QWidget *parent) : QWidget(parent) {
 
-    QVBoxLayout* layout = new QVBoxLayout(this);
+    QGridLayout* layout = new QGridLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
 
-    this->view = new GraphicsView;
+    this->view = new GraphicsView(this);
     this->view->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding));
     layout->addWidget(this->view);
 

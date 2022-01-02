@@ -6,5 +6,7 @@
         <file>images/rectangle.png</file>
         <file>images/rotation.png</file>
         <file>images/remove.png</file>
+        <file>images/close.png</file>
+        <file>styles/style.qss</file>
     </qresource>
 </RCC>
