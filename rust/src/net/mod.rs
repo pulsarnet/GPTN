@@ -122,11 +122,10 @@ impl PetriNet {
         self.connections.push(Connection::new(a, b));
     }
 
-    pub fn get_loop(&self) -> Option<Vec<Vertex>> {
-        let mut loops = Vec::<Vec<Vertex>>::new();
+    fn split_elements(&self) -> (Vec<Vertex>, Vec<Vertex>) {
+        let mut positions = vec![];
+        let mut transitions = vec![];
 
-        let mut positions = Vec::new();
-        let mut transitions = Vec::new();
         for element in self.elements.iter().cloned() {
             match element.is_position() {
                 false => transitions.push(element),
@@ -134,7 +133,11 @@ impl PetriNet {
             }
         }
 
-        let indexes = transitions
+        (positions, transitions)
+    }
+
+    fn get_indexes(positions: &[Vertex], transitions: &[Vertex]) -> HashMap<Vertex, usize> {
+        transitions
             .iter()
             .chain(positions.iter())
             .cloned()
@@ -142,8 +145,10 @@ impl PetriNet {
             .fold(HashMap::new(), |mut acc, (index, element)| {
                 acc.insert(element, index);
                 acc
-            });
+            })
+    }
 
+    fn pre_post_arrays(&self) -> (HashMap<Vertex, HashSet<Vertex>>, HashMap<Vertex, HashSet<Vertex>>) {
         let mut pre = HashMap::<Vertex, HashSet<Vertex>>::new();
         let mut post = HashMap::<Vertex, HashSet<Vertex>>::new();
         for connection in self.connections.iter() {
@@ -155,6 +160,16 @@ impl PetriNet {
                 .or_insert_with(HashSet::new)
                 .insert(connection.second().clone());
         }
+
+        (pre, post)
+    }
+
+    pub fn get_loop(&self) -> Option<Vec<Vertex>> {
+        let mut loops = Vec::<Vec<Vertex>>::new();
+
+        let (positions, transitions) = self.split_elements();
+        let indexes = Self::get_indexes(&positions, &transitions);
+        let (pre, post) = self.pre_post_arrays();
 
         let mut b = Vec::new();
         b.resize(indexes.len(), Default::default());
