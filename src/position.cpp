@@ -2,7 +2,7 @@
 // Created by nmuravev on 12/13/2021.
 //
 
-#include <format>
+#include <fmt/format.h>
 #include "../include/position.h"
 
 PetriObject::PetriObject(QGraphicsItem *parent) : QGraphicsItem(parent) {
@@ -70,7 +70,7 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 
     painter->drawEllipse(boundingRect().center(), radius, radius);
 
-    auto name = QString::fromStdString(std::format("p{}", this->index()));
+    auto name = QString::fromStdString(fmt::format("p{}", this->index()));
     painter->drawText(boundingRect().center() - QPointF(5.0, 5.0), name);
     painter->restore();
     //painter->drawText(boundingRect().center(), QTextFormat())
@@ -111,7 +111,7 @@ void Transition::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
     painter->drawRect(boundingRect());
 
     painter->setPen(Qt::white);
-    auto name = QString::fromStdString(std::format("t{}", this->index()));
+    auto name = QString::fromStdString(fmt::format("t{}", this->index()));
     painter->drawText(boundingRect().left(), boundingRect().center().y(), name);
     painter->restore();
 }

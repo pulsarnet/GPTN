@@ -16,7 +16,15 @@ impl Connection {
         &self.a
     }
 
+    pub fn first_mut(&mut self) -> &mut Vertex {
+        &mut self.a
+    }
+
     pub fn second(&self) -> &Vertex {
         &self.b
+    }
+
+    pub fn second_mut(&mut self) -> &mut Vertex {
+        &mut self.b
     }
 }

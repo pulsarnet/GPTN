@@ -3,7 +3,6 @@
 
 extern crate nalgebra;
 
-use std::collections::HashMap;
 use std::ffi::CString;
 use std::os::raw::c_char;
 
@@ -25,30 +24,30 @@ pub unsafe extern "C" fn del(v: *mut PetriNet) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn count(v: *mut PetriNet) -> std::os::raw::c_ulong {
+pub unsafe extern "C" fn count(_: *mut PetriNet) -> std::os::raw::c_ulong {
     0
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn add_position(v: *mut PetriNet, index: u64) {
     let v = &mut *v;
-    v.add(Vertex::position(index));
+    v.add_position(index);
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn add_transition(v: *mut PetriNet, index: u64) {
     let v = &mut *v;
-    v.add(Vertex::transition(index));
+    v.add_transition(index);
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn connect_p(v: *mut PetriNet, position: u64, transition: u64) {
-    let mut v = &mut *v;
+    let v = &mut *v;
 
     let position = Vertex::position(position);
     let transition = Vertex::transition(transition);
 
-    v.connect(&position, &transition);
+    v.connect(position, transition);
 }
 
 #[no_mangle]
@@ -58,7 +57,7 @@ pub unsafe extern "C" fn connect_t(v: *mut PetriNet, transition: u64, position: 
     let position = Vertex::position(position);
     let transition = Vertex::transition(transition);
 
-    v.connect(&transition, &position);
+    v.connect(transition, position);
 }
 
 #[repr(C)]

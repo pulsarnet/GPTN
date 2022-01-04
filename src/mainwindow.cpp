@@ -99,58 +99,8 @@ void MainWindow::removeChecked(bool checked) {
 void MainWindow::configureTab() {
 
     this->tabWidget = new QTabWidget;
-    //this->tabWidget->setTabShape(QTabWidget::Rounded);
     this->tabWidget->setDocumentMode(false);
     this->tabWidget->setTabsClosable(true);
-
-//    this->tabWidget->setStyleSheet(R"(
-//        QGraphicsView {
-//            border: none;
-//            background-color: #24292E;
-//        }
-//
-//        QTabWidget::pane {
-//            border-top: 2px solid #1E2327;
-//            background-color: #24292E;
-//            border-right: 1px solid black;
-//        }
-//
-//        QTabWidget::tab-bar {
-//            left: 10px;
-//        }
-//
-//        QTabBar::tab {
-//            min-width: 8ex;
-//            padding: 9px;
-//            color: white;
-//        }
-//
-//        QTabBar::tab:selected, QTabBar::tab:hover {
-//
-//        }
-//
-//        QTabBar::tab:selected {
-//            border-color: #9B9B9B;
-//            border-bottom-color: #8C543A; /* same as pane color */
-//            background-color: #1F2428;
-//            color: white;
-//        }
-//
-//        QTabBar::tab:!selected {
-//
-//        }
-//
-//        QTabBar::close-button {
-//            image: url(':/images/close.png');
-//            padding: 4px;
-//            border-radius: 7px;
-//            subcontrol-position: left;
-//        }
-//
-//        QTabBar::close-button:hover {
-//            background-color: #79CB60;
-//        }
-//    )");
 
 }
 
@@ -298,6 +248,9 @@ void MainWindow::tabChanged(int index) {
             break;
         case GraphicsView::A_Rotate:
             rotation_action->toggle();
+            break;
+        case GraphicsView::A_Remove:
+            remove_action->toggle();
             break;
         case GraphicsView::A_Nothing:
             break;

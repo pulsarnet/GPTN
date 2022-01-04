@@ -28,7 +28,7 @@ extern "C" struct SplitNet {
     FFIBoxedSlice** ptr;
     unsigned long size;
 
-    QList<QList<QString>> into_vec() {
+    [[nodiscard]] QList<QList<QString>> into_vec() const {
         QList<QList<QString>> result;
 
         auto cursor = this->ptr;

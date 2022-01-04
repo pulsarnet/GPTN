@@ -6,6 +6,7 @@
 #define FFI_RUST_SPLIT_LIST_MODEL_H
 
 #include <QAbstractListModel>
+#include <utility>
 
 class SplitListModel : public QAbstractListModel {
 
@@ -19,7 +20,7 @@ public:
 
     void setActions(QList<QList<QString>> actions) {
         beginResetModel();
-        this->m_actions = actions;
+        this->m_actions = std::move(actions);
         endResetModel();
     }
 
