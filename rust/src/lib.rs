@@ -2,6 +2,7 @@
 #![feature(drain_filter)]
 #![feature(option_result_contains)]
 
+
 extern crate nalgebra;
 
 use std::ffi::CString;
@@ -139,9 +140,9 @@ pub unsafe extern "C" fn split(v: *mut PetriNet) -> *mut FFIBoxedSlice {
 
     // Добавим в каждую часть нормальную позицию
     parts.iter_mut().for_each(|net| net.normalize());
-    parts.iter_mut().for_each(|net| println!("PART: {:?}", net.elements));
+    parts.iter_mut().for_each(|net| println!("PART: {:?}", net));
 
-    let res = synthesis(parts);
+    let res = synthesis(parts).downgrade_transitions().downgrade_pos();
 
     let boxed_result = Box::new(FFIBoxedSlice::from_net(res));
     //std::mem::forget(result);

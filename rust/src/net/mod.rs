@@ -2,13 +2,15 @@ mod connection;
 mod vertex;
 
 use std::cell::RefCell;
+use std::cmp::min_by;
 pub use net::connection::Connection;
 pub use net::vertex::Vertex;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
+use nalgebra::min;
 use core::{MatrixFormat, Unique};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PetriNet {
     pub elements: Vec<Vertex>,
     pub connections: Vec<Connection>,
@@ -397,6 +399,10 @@ impl PetriNet {
                 .filter(|conn| conn.first().eq(position) || conn.second().eq(position))
                 .collect::<Vec<_>>();
 
+            if connections.len() < 2 {
+                continue
+            }
+
             let new_pos = position.split(self.next_position_index());
             positions.push(new_pos.clone());
 
@@ -514,6 +520,120 @@ impl PetriNet {
         part.transition_index = self.transition_index;
         part
     }
+
+    pub fn downgrade_transitions(mut self) -> Self {
+
+        let mut result = self.clone();
+
+        let (pre, post) = self.pre_post_arrays();
+        'tran: for transition in self.elements.iter().filter(|e| e.is_transition()) {
+            for check_transition in self.elements.iter().filter(|e| e.is_transition() && (*e).ne(transition)) {
+
+                let Some(pre_1) = pre.get(transition) else { continue };
+                let Some(pre_2) = pre.get(check_transition) else { continue };
+                let Some(post_1) = post.get(transition) else { continue };
+                let Some(post_2) = post.get(check_transition) else { continue };
+
+                if pre_1.eq(pre_2) && post_1.eq(post_2) {
+                    let insert = min_by(transition, check_transition, |a, b| a.index().cmp(&b.index()));
+                    let search = if transition.eq(insert) { check_transition } else { transition };
+
+                    if let Some(pos) = result.elements.iter().position(|e| e.eq(search)) {
+                        result.elements.swap_remove(pos);
+                    }
+
+                    result.connections.drain_filter(|c| c.first().eq(search));
+                    result.connections.drain_filter(|c| c.second().eq(search));
+                    //result.connections.iter_mut().filter(|c| c.first().eq(search)).for_each(|c| *c.first_mut() = insert.clone());
+                    //result.connections.iter_mut().filter(|c| c.second().eq(search)).for_each(|c| *c.second_mut() = insert.clone());
+
+                    result = result.downgrade_transitions();
+                    break 'tran
+                }
+
+            }
+        }
+
+        result
+
+    }
+
+    pub fn downgrade_pos(mut self) -> Self {
+
+        println!("CONNS: {:?}", self.connections);
+
+        let mut result = self.clone();
+
+        let (pre, post) = self.pre_post_arrays();
+        println!("PRE: {:?}, \nPOS: {:?}", pre, post);
+        'pos: for position in self.elements.iter().filter(|e| e.is_position()) {
+            for check_position in self.elements.iter().filter(|e| e.is_position() && (*e).ne(position)) {
+
+                let pre_1 = pre.get(position).cloned().unwrap_or(vec![]);
+                let pre_2 = pre.get(check_position).cloned().unwrap_or(vec![]);
+                let post_1 = post.get(position).cloned().unwrap_or(vec![]);
+                let post_2 = post.get(check_position).cloned().unwrap_or(vec![]);
+
+                if pre_1.eq(&pre_2) && post_1.eq(&post_2) {
+                    let insert = min_by(position, check_position, |a, b| a.index().cmp(&b.index()));
+                    let search = if position.eq(insert) { check_position } else { position };
+
+                    if let Some(pos) = result.elements.iter().position(|e| e.eq(search)) {
+                        result.elements.swap_remove(pos);
+                    }
+
+                    result.connections.drain_filter(|c| c.first().eq(search));
+                    result.connections.drain_filter(|c| c.second().eq(search));
+                    //result.connections.iter_mut().filter(|c| c.first().eq(search)).for_each(|c| *c.first_mut() = insert.clone());
+                    //result.connections.iter_mut().filter(|c| c.second().eq(search)).for_each(|c| *c.second_mut() = insert.clone());
+
+                    result = result.downgrade_pos();
+                    break 'pos
+                }
+
+            }
+        }
+
+        result
+
+    }
+}
+
+pub fn lbf(nets: &Vec<PetriNet>) -> Vec<Vec<Vertex>> {
+
+    let mut result = vec![];
+
+    for net in nets.iter() {
+        let transitions = net.elements.iter().filter(|t| t.is_transition()).cloned().collect::<Vec<_>>();
+        'brk: for transition in transitions.into_iter() {
+            let mut vertexes = vec![Vertex::position(0), Vertex::transition(0), Vertex::position(0)];
+            let mut from = net.connections.iter().filter(|c| c.first().eq(&transition));
+
+            while let Some(f) = from.next() {
+                if result.iter().flatten().find(|v: &&Vertex| (*v).eq(f.second())).is_some() {
+                    continue;
+                }
+
+                let mut to = net.connections.iter().filter(|c| c.first().ne(f.second()) && c.second().eq(&transition));
+
+                while let Some(t) = to.next() {
+                    if result.iter().flatten().find(|v: &&Vertex| (*v).eq(t.first())).is_some() {
+                        continue;
+                    }
+
+                    vertexes[0] = t.first().clone();
+                    vertexes[1] = f.first().clone();
+                    vertexes[2] = f.second().clone();
+                    result.push(vertexes);
+                    continue 'brk
+                }
+            }
+        }
+    }
+
+    println!("LBF: => {:?}", result);
+    result
+
 }
 
 pub fn synthesis(mut nets: Vec<PetriNet>) -> PetriNet {
@@ -523,11 +643,14 @@ pub fn synthesis(mut nets: Vec<PetriNet>) -> PetriNet {
             .cmp(&net_a.elements.iter().filter(|e| e.is_position()).count())
     });
 
+    let lbf_res = lbf(&nets);
+
     let positions = nets.iter().map(|net| net.elements.iter().filter(|e| e.is_position()).count()).sum::<usize>();
     let transitions = nets.iter().map(|net| net.elements.iter().filter(|e| e.is_transition()).count()).sum::<usize>();
 
-    let mut c_matrix = nalgebra::DMatrix::<i8>::zeros(positions, positions);
-    let mut d_matrix = nalgebra::DMatrix::<i8>::zeros(positions, transitions);
+    let mut c_matrix = nalgebra::DMatrix::<i32>::zeros(positions, positions);
+    let mut d_matrix = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
+    let mut lbf_matrix = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
 
     let mut pos_indexes = HashMap::new();
     for (index, positions) in nets.iter().flat_map(|net| net.elements.iter().filter(|e| e.is_position())).enumerate() {
@@ -537,6 +660,15 @@ pub fn synthesis(mut nets: Vec<PetriNet>) -> PetriNet {
     let mut tran_indexes = HashMap::new();
     for (index, transition) in nets.iter().flat_map(|net| net.elements.iter().filter(|e| e.is_transition())).enumerate() {
         tran_indexes.insert(transition.clone(), index);
+    }
+
+    for lbf in lbf_res.into_iter() {
+        let index_p1 = *pos_indexes.get(&lbf[0]).unwrap();
+        let index_t1 = *tran_indexes.get(&lbf[1]).unwrap();
+        let index_p2 = *pos_indexes.get(&lbf[2]).unwrap();
+
+        lbf_matrix.column_mut(index_t1)[index_p1] = -1;
+        lbf_matrix.column_mut(index_t1)[index_p2] = 1;
     }
 
 
@@ -596,7 +728,6 @@ pub fn synthesis(mut nets: Vec<PetriNet>) -> PetriNet {
     }
 
     let mut offset = 0_usize;
-
     for net in nets.iter() {
         let positions = net.elements.iter().filter(|p| p.is_position()).count();
         if net.is_loop {
@@ -617,10 +748,34 @@ pub fn synthesis(mut nets: Vec<PetriNet>) -> PetriNet {
 
     }
 
+    // let mut c_k_matrix = c_matrix.clone();
+    // let mut c_b_matrix = nalgebra::DMatrix::zeros(1, positions);
+    // for i in 0..c_matrix.nrows() {
+    //     if i >= lbf_matrix.ncols() {
+    //         offset = lbf_matrix.ncols();
+    //     }
+    //
+    //     for j in 0..c_matrix.ncols() {
+    //         c_k_matrix.row_mut(i)[j] = lbf_matrix.row(j)[i - offset];
+    //         c_b_matrix.row_mut(0)[j] = d_matrix.row(i)
+    //     }
+    // }
+    //
+    // println!("CK_MAT => {}", c_k_matrix);
+    //
+    //
+    // loop {
+    //
+    //
+    //
+    // }
+
+    println!("LBF: => {}", MatrixFormat(&lbf_matrix, &transs, &poss));
     println!("{} * {}", MatrixFormat(&d_matrix, &transs, &poss), c_matrix);
 
-    let result = c_matrix * d_matrix;
+    let result = c_matrix * lbf_matrix;
     println!(" = {}", MatrixFormat(&result, &transs, &poss));
+
 
     let mut new_net = PetriNet::new();
     new_net.elements = nets.iter().flat_map(|net| net.elements.iter().cloned()).collect();
@@ -636,9 +791,11 @@ pub fn synthesis(mut nets: Vec<PetriNet>) -> PetriNet {
 
             let Some((pos, _)) = pos_indexes.iter().find(|(_, v)| (*v).eq(&index)) else { continue };
 
-            match element {
-                1 => connections.push(Connection::new(transition.clone(), pos.clone())),
-                _ => connections.push(Connection::new(pos.clone(), transition.clone()))
+            if *element >= 1 {
+                connections.push(Connection::new(transition.clone(), pos.clone()));
+            }
+            else {
+                connections.push(Connection::new(pos.clone(), transition.clone()));
             }
 
         }
