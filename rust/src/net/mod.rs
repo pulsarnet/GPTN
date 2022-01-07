@@ -727,48 +727,74 @@ pub fn synthesis(mut nets: Vec<PetriNet>) -> PetriNet {
         }
     }
 
-    let mut offset = 0_usize;
-    for net in nets.iter() {
-        let positions = net.elements.iter().filter(|p| p.is_position()).count();
-        if net.is_loop {
-            c_matrix.row_mut(positions + offset - 1)[offset] = 1;
-            c_matrix.column_mut(positions + offset - 1)[offset] = 1;
-        }
+    let mut entries = Vec::<Vec<(usize, usize, f64)>>::new();
+    let mut result_entries = Vec::<Vec<f64>>::new();
 
-        for i in 0..positions {
-            c_matrix.row_mut(offset + i)[offset + i] = 1;
+    ndarray::Array2::zeros((lbf_matrix.ncols(), c_matrix.nrows()));
 
-            if i % 2 == 0 && i != 0 && i < (positions - 1) {
-                c_matrix.row_mut(offset + i)[offset + i - 1] = 1;
-                c_matrix.column_mut(offset + i)[offset + i - 1] = 1;
+    for i in 0..c_matrix.nrows() {
+        let mut entry = vec![];
+        let mut result_entry = vec![];
+        for j in 0..lbf_matrix.ncols() {
+            for d in 0..lbf_matrix.nrows() {
+                entry.push((j, d, lbf_matrix.row(d)[j] as f64));
             }
+
+            result_entry.push(d_matrix.row(i)[j] as f64);
         }
 
-        offset += positions;
+        entries.push(entry);
+        result_entries.push(result_entry);
+    }
+
+    println!("LBF: => {}", lbf_matrix);
+    println!("D: => {}", d_matrix);
+
+    for (index, (mut a, mut b)) in entries.into_iter().zip(result_entries.into_iter()).enumerate() {
+
+        for (is, i) in (lbf_matrix.ncols()..c_matrix.nrows()).enumerate() {
+            for j in 0..lbf_matrix.nrows() {
+                if is == j {
+                    a.push((i, j, 1.0));
+                }
+                else {
+                    a.push((i, j, 0.0));
+                }
+            }
+
+            b.push(0.0);
+        }
+
+        println!("A = {:?}", a);
+        println!("B = {:?}", b);
+
+        let mut equation = sparse21::Matrix::from_entries(a);
+        let solve = equation.solve(b).unwrap();
+        solve.into_iter().enumerate().for_each(|v| c_matrix.row_mut(index)[v.0] = v.1 as i32);
 
     }
 
-    // let mut c_k_matrix = c_matrix.clone();
-    // let mut c_b_matrix = nalgebra::DMatrix::zeros(1, positions);
-    // for i in 0..c_matrix.nrows() {
-    //     if i >= lbf_matrix.ncols() {
-    //         offset = lbf_matrix.ncols();
+    // let mut offset = 0_usize;
+    // for net in nets.iter() {
+    //     let positions = net.elements.iter().filter(|p| p.is_position()).count();
+    //     if net.is_loop {
+    //         c_matrix.row_mut(positions + offset - 1)[offset] = 1;
+    //         c_matrix.column_mut(positions + offset - 1)[offset] = 1;
     //     }
     //
-    //     for j in 0..c_matrix.ncols() {
-    //         c_k_matrix.row_mut(i)[j] = lbf_matrix.row(j)[i - offset];
-    //         c_b_matrix.row_mut(0)[j] = d_matrix.row(i)
+    //     for i in 0..positions {
+    //         c_matrix.row_mut(offset + i)[offset + i] = 1;
+    //
+    //         if i % 2 == 0 && i != 0 && i < (positions - 1) {
+    //             c_matrix.row_mut(offset + i)[offset + i - 1] = 1;
+    //             c_matrix.column_mut(offset + i)[offset + i - 1] = 1;
+    //         }
     //     }
-    // }
     //
-    // println!("CK_MAT => {}", c_k_matrix);
-    //
-    //
-    // loop {
-    //
-    //
+    //     offset += positions;
     //
     // }
+
 
     println!("LBF: => {}", MatrixFormat(&lbf_matrix, &transs, &poss));
     println!("{} * {}", MatrixFormat(&d_matrix, &transs, &poss), c_matrix);
