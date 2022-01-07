@@ -20,6 +20,7 @@
 #include <QLabel>
 #include "graphics_view.h"
 #include "tab.h"
+#include "petri_net.h"
 
 
 class MainWindow : public QMainWindow {
@@ -32,6 +33,8 @@ class MainWindow : public QMainWindow {
 
 public:
     explicit MainWindow(QWidget *parent = nullptr);
+
+    void addTabFromNet(InnerPetriNet net, Tab* current);
 
 public slots:
 

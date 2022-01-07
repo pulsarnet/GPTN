@@ -1,5 +1,6 @@
 #![feature(let_else)]
 #![feature(drain_filter)]
+#![feature(option_result_contains)]
 
 extern crate nalgebra;
 
@@ -10,7 +11,7 @@ mod net;
 
 pub mod core;
 
-use net::{PetriNet, Vertex};
+use net::{PetriNet, synthesis, Vertex};
 
 #[no_mangle]
 pub extern "C" fn make() -> *mut PetriNet {
@@ -61,71 +62,89 @@ pub unsafe extern "C" fn connect_t(v: *mut PetriNet, transition: u64, position: 
 }
 
 #[repr(C)]
+pub struct FFIConnection {
+    from: *const c_char,
+    to: *const c_char
+}
+
+#[repr(C)]
 pub struct FFIBoxedSlice {
-    ptr: *const *const c_char,
-    partition_type: *const c_char,
-    len: usize
+    elements: *const *const c_char,
+    len_elements: usize,
+
+    connections: *const *mut FFIConnection,
+    len_connections: usize
 }
 
 impl FFIBoxedSlice {
-    fn from_vec(vec: Vec<Vertex>, partition_type: String) -> Self {
-        let mut cstr_vec: Vec<CString> = vec![];
-        for s in vec {
+    fn from_net(net: PetriNet) -> Self {
+        let mut elements_vec: Vec<CString> = vec![];
+        let mut connections_vec: Vec<*mut FFIConnection> = vec![];
+
+        for s in net.elements.into_iter() {
             let c_str = CString::new(s.name()).unwrap();
-            cstr_vec.push(c_str);
+            elements_vec.push(c_str);
         }
-        cstr_vec.shrink_to_fit();
+        elements_vec.shrink_to_fit();
 
         let mut c_char_vec: Vec<*const c_char> = vec![];
-        for s in cstr_vec {
+        for s in elements_vec {
             c_char_vec.push(s.as_ptr());
             std::mem::forget(s);
         }
 
-        let partition_type = CString::new(partition_type.as_str()).unwrap();
+        for s in net.connections.into_iter() {
+            let s1 = CString::new(s.first().name()).unwrap();
+            let s2 = CString::new(s.second().name()).unwrap();
+            let conn = Box::new(FFIConnection { from: s1.as_ptr(), to: s2.as_ptr() });
+            let conn = Box::into_raw(conn);
+
+            connections_vec.push(conn);
+
+            std::mem::forget(s1);
+            std::mem::forget(s2);
+        }
 
         let slice = FFIBoxedSlice {
-            ptr: c_char_vec.as_ptr(),
-            partition_type: partition_type.as_ptr() as *const c_char,
-            len: c_char_vec.len()
+            elements: c_char_vec.as_ptr(),
+            len_elements: c_char_vec.len(),
+            connections: connections_vec.as_ptr(),
+            len_connections: connections_vec.len()
         };
 
         std::mem::forget(c_char_vec);
-        std::mem::forget(partition_type);
+        std::mem::forget(connections_vec);
         slice
     }
 }
 
-#[repr(C)]
-pub struct SplitNet {
-    ptr: *const *mut FFIBoxedSlice,
-    len: usize,
-}
 
 #[no_mangle]
-pub unsafe extern "C" fn split(v: *mut PetriNet) -> *mut SplitNet {
+pub unsafe extern "C" fn split(v: *mut PetriNet) -> *mut FFIBoxedSlice {
     let v = &mut *v;
-
-    let mut result = Vec::new();
 
     println!("V: {:?}", v);
 
+    let mut parts = vec![];
+
     while let Some(l) = v.get_loop() {
-        println!("LOOP: {:?}", l);
-        v.remove_part(&l);
-        let slice = Box::new(FFIBoxedSlice::from_vec(l, "loop".to_string()));
-        result.push(Box::into_raw(slice));
+        println!("LOOOOP:::::::::: {:?}", l);
+        parts.push(v.remove_part(&l));
     }
 
     while let Some(p) = v.get_part() {
-        println!("PART: {:?}", p);
-        v.remove_part(&p);
-        let slice = Box::new(FFIBoxedSlice::from_vec(p, "part".to_string()));
-        result.push(Box::into_raw(slice));
+        println!("PART::::::::::: {:?}", p);
+        parts.push(v.remove_part(&p));
     }
 
-    let boxed_result = Box::new(SplitNet { ptr: result.as_ptr() as *const *mut FFIBoxedSlice, len: result.len() });
-    std::mem::forget(result);
+    // Добавим в каждую часть нормальную позицию
+    parts.iter_mut().for_each(|net| net.normalize());
+    parts.iter_mut().for_each(|net| println!("PART: {:?}", net.elements));
+
+    let res = synthesis(parts);
+
+    let boxed_result = Box::new(FFIBoxedSlice::from_net(res));
+    //std::mem::forget(result);
 
     Box::into_raw(boxed_result)
 }

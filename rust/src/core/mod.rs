@@ -4,7 +4,7 @@ use std::fmt::{Display, Formatter};
 use nalgebra::DMatrix;
 use crate::net::Vertex;
 
-pub struct MatrixFormat<'a, T>(pub &'a DMatrix<T>, pub &'a Vec<Vertex>);
+pub struct MatrixFormat<'a, T>(pub &'a DMatrix<T>, pub &'a Vec<Vertex>, pub &'a Vec<Vertex>);
 
 impl<'a, T: Display> Display for MatrixFormat<'a, T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -43,7 +43,7 @@ impl<'a, T: Display> Display for MatrixFormat<'a, T> {
 
 
         for row in 0..rows {
-            write!(f, " {:^pad$} |", self.1[row], pad = max_len)?;
+            write!(f, " {:^pad$} |", self.2[row], pad = max_len)?;
             for col in 0..cols {
                 let member = format!("{}", self.0[(row, col)]);
                 if row == col {
@@ -56,7 +56,7 @@ impl<'a, T: Display> Display for MatrixFormat<'a, T> {
             writeln!(f, " │")?;
         }
 
-        let width = self.1.len() * max_len - 1;
+        let width = self.2.len() * max_len - 1;
         writeln!(
             f,
             " {:>freepad$} └ {:>width$} ┘",
@@ -106,42 +106,14 @@ pub trait Unique {
 
 impl<T: Default + PartialEq + Clone> Unique for Vec<T> {
     fn unique(&mut self) {
+        let mut result = vec![];
 
-        let mut dim = 2;
-        let mut index = 0;
-
-        while dim < (self.len() / 2) {
-
-            if self.len() % dim > 0 {
-                dim += 1;
-                continue;
-            }
-
-            let size = self.len() / dim;
-
-            for i in 0..size {
-                if self[i] != self[size + i] {
-                    if index > 0 {
-                        *self = self[0..index].iter().cloned().collect::<Vec<_>>();
-                        return;
-                    }
-                    break;
-                }
-            }
-
-            index = size;
-            dim += 1;
-
-        }
-
-        let mut result = Vec::<T>::new();
-        for el in self.iter_mut() {
+        for el in self.iter() {
             if !result.contains(el) {
-                let mut def: T = Default::default();
-                std::mem::swap(el, &mut def);
-                result.push(def);
+                result.push(el.clone())
             }
         }
+
         *self = result;
     }
 }

@@ -5,6 +5,7 @@
 #include <QHBoxLayout>
 #include "../include/tab.h"
 #include "../include/rust.h"
+#include "../include/mainwindow.h"
 
 Tab::Tab(QWidget *parent) : QWidget(parent) {
 
@@ -72,7 +73,10 @@ void Tab::splitAction() {
     }
 
     this->m_split_actions->clear();
-    this->m_split_actions->setActions(split_net(petri));
+
+    auto net = split_net(petri);
+
+    dynamic_cast<MainWindow*>(parent()->parent()->parent())->addTabFromNet(std::move(net), this);
 
     del(petri);
 

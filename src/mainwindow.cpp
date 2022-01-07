@@ -10,6 +10,7 @@
 #include <QGraphicsDropShadowEffect>
 #include <QDockWidget>
 #include <QDir>
+#include <fmt/format.h>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
@@ -105,7 +106,7 @@ void MainWindow::configureTab() {
 }
 
 Tab* MainWindow::newTab() {
-    auto tab = new Tab;
+    auto tab = new Tab(this);
     auto index = tabWidget->addTab(tab, "New Tab");
     this->tabWidget->setCurrentIndex(index);
     return tab;
@@ -365,4 +366,40 @@ void MainWindow::slotSplitChecked(const QModelIndex& index) {
 
         if (it != items.end()) dynamic_cast<PetriObject*>(*it)->setColored(true);
     }
+}
+
+void MainWindow::addTabFromNet(InnerPetriNet net, Tab* current) {
+
+    auto items = current->scene()->getItems();
+    auto points = std::map<QString, QPointF>();
+    for (auto item : items) {
+        if (auto position = dynamic_cast<Position*>(item); position) {
+            points.insert({QString::fromStdString(fmt::format("p{}", position->index())), position->pos()});
+        }
+        else if (auto transition = dynamic_cast<Transition*>(item); transition) {
+            points.insert({QString::fromStdString(fmt::format("t{}", transition->index())), transition->pos()});
+        }
+    }
+
+    auto tab_index = tabWidget->addTab(new Tab(this), "Результат синтеза");
+    auto tab = dynamic_cast<Tab*>(tabWidget->widget(tab_index));
+    auto scene = tab->scene();
+
+    auto added_objects = std::map<QString, PetriObject*>();
+    for (auto element : net.elements) {
+        auto point = points.find(element) != points.end() ? (*points.find(element)).second : QPointF(150, 150);
+
+        if (element.startsWith('p')) added_objects.insert({element, scene->addPosition(element, point)});
+        else added_objects.insert({element, scene->addTransition(element, point)});
+    }
+
+    for (auto& conn : net.connections) {
+        auto s1 = (*added_objects.find(get<0>(conn))).second;
+        auto s2 = (*added_objects.find(get<1>(conn))).second;
+
+        scene->newConnection(s1, s2);
+    }
+
+    tabWidget->setCurrentIndex(tab_index);
+
 }

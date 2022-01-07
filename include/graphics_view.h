@@ -40,6 +40,12 @@ public:
 
     void mousePressEvent(QMouseEvent *event) override;
 
+    PetriObject* addPosition(QString& name, QPointF point = QPointF(0, 0));
+
+    PetriObject* addTransition(QString& name, QPointF point = QPointF(0, 0));
+
+    void newConnection(PetriObject* from, PetriObject* to);
+
     void mouseMoveEvent(QMouseEvent *event) override;
 
     PetriObject* itemAt(QPointF pos);

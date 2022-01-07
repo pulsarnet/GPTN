@@ -318,3 +318,42 @@ uint64_t GraphicsView::getPositionIndex() {
 uint64_t GraphicsView::getTransitionIndex() {
     return ++this->lastTransitionIndex;
 }
+
+PetriObject *GraphicsView::addPosition(QString &name, QPointF point) {
+
+    auto index = name.mid(1).toInt();
+
+    if (this->lastPositionIndex < index) {
+        this->lastPositionIndex = index;
+    }
+
+    auto pos = new Position(point, index);
+    items.push_back(pos);
+    scene->addItem(pos);
+
+    return pos;
+}
+
+PetriObject *GraphicsView::addTransition(QString &name, QPointF point) {
+    auto index = name.mid(1).toInt();
+
+    if (this->lastTransitionIndex < index) {
+        this->lastTransitionIndex = index;
+    }
+
+
+    auto tran = new Transition(point, index);
+    items.push_back(tran);
+    scene->addItem(tran);
+
+    return tran;
+}
+
+void GraphicsView::newConnection(PetriObject *from, PetriObject *to) {
+    auto conn_line = new ArrowLine(from, connectObjects(from, to));
+    conn_line->setTo(to);
+
+    scene->addItem(conn_line);
+
+    connections.push_back(conn_line);
+}
