@@ -4,13 +4,15 @@
 
 
 extern crate nalgebra;
+extern crate ndarray_linalg;
+extern crate libc;
 
 use std::ffi::CString;
 use std::os::raw::c_char;
 
 mod net;
 
-pub mod core;
+mod core;
 
 use net::{PetriNet, synthesis, Vertex};
 

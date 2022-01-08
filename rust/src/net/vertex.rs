@@ -82,6 +82,12 @@ impl Vertex {
         }
     }
 
+    pub fn set_parent(&mut self, parent: Vertex) {
+        match *self.0.borrow_mut() {
+            Inner::Position(_, ref mut p) | Inner::Transition(_, ref mut p) => *p = Some(parent),
+        }
+    }
+
     pub fn get_parent(&self) -> Option<Self> {
         match *self.0.borrow() {
             Inner::Position(_, Some(ref parent)) | Inner::Transition(_, Some(ref parent)) => Some(parent.clone()),

@@ -4,7 +4,7 @@ version = "0.1.0"    # the current version, obeying semver
 authors = ["Alice <a@example.com>", "Bob <b@example.com>"]
 
 [lib]
-crate-type = ["staticlib"]
+crate-type = ["cdylib"]
 
 [dependencies]
 nalgebra = "0.30.0"
@@ -12,3 +12,4 @@ libc = "0.2.112"
 sparse21 = "0.2.1"
 ndarray-linalg = "0.14.1"
 ndarray = "0.15.4"
+rand = "0.8.4"

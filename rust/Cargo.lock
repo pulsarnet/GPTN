@@ -84,6 +84,7 @@ dependencies = [
  "nalgebra",
  "ndarray",
  "ndarray-linalg",
+ "rand",
  "sparse21",
 ]
 

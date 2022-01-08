@@ -41,7 +41,7 @@ add_executable(ffi_rust
 
 add_dependencies(ffi_rust rust)
 
-target_link_libraries(ffi_rust
-        debug "${CMAKE_SOURCE_DIR}/rust/target/debug/libhello_world.a" Qt6::Widgets fmt::fmt
-        optimized "${CMAKE_SOURCE_DIR}/rust/target/release/libhello_world.a" Qt6::Widgets fmt::fmt
+target_link_libraries(ffi_rust PRIVATE
+        debug "${CMAKE_SOURCE_DIR}/rust/target/debug/libhello_world.dylib" Qt6::Widgets fmt::fmt
+        optimized "${CMAKE_SOURCE_DIR}/rust/target/release/libhello_world.dylib" Qt6::Widgets fmt::fmt
         )

@@ -371,13 +371,13 @@ void MainWindow::slotSplitChecked(const QModelIndex& index) {
 void MainWindow::addTabFromNet(InnerPetriNet net, Tab* current) {
 
     auto items = current->scene()->getItems();
-    auto points = std::map<QString, QPointF>();
+    auto points = std::map<QString, PetriObject*>();
     for (auto item : items) {
         if (auto position = dynamic_cast<Position*>(item); position) {
-            points.insert({QString::fromStdString(fmt::format("p{}", position->index())), position->pos()});
+            points.insert({QString::fromStdString(fmt::format("p{}", position->index())), position});
         }
         else if (auto transition = dynamic_cast<Transition*>(item); transition) {
-            points.insert({QString::fromStdString(fmt::format("t{}", transition->index())), transition->pos()});
+            points.insert({QString::fromStdString(fmt::format("t{}", transition->index())), transition});
         }
     }
 
@@ -387,10 +387,16 @@ void MainWindow::addTabFromNet(InnerPetriNet net, Tab* current) {
 
     auto added_objects = std::map<QString, PetriObject*>();
     for (auto element : net.elements) {
-        auto point = points.find(element) != points.end() ? (*points.find(element)).second : QPointF(150, 150);
+        auto position = points.find(element) != points.end() ? (*points.find(element)).second : nullptr;
+        auto point = position ? position->pos() : QPointF(150.0, 150.0);
 
         if (element.startsWith('p')) added_objects.insert({element, scene->addPosition(element, point)});
-        else added_objects.insert({element, scene->addTransition(element, point)});
+        else {
+            auto rotation = position ? position->rotation() : 0.;
+            auto added = scene->addTransition(element, point);
+            added->setRotation(rotation);
+            added_objects.insert({element, added});
+        }
     }
 
     for (auto& conn : net.connections) {

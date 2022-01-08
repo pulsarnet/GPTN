@@ -7,8 +7,8 @@ pub use net::connection::Connection;
 pub use net::vertex::Vertex;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
-use nalgebra::min;
-use core::{MatrixFormat, Unique};
+use ndarray_linalg::Solve;
+use core::{MatrixFormat};
 
 #[derive(Debug, Clone)]
 pub struct PetriNet {
@@ -98,6 +98,7 @@ impl PetriNet {
             println!("Element already exists {:?}", p);
             return p;
         }
+
 
         if let (Some(found), true) = (self.elements.iter().enumerate()
             .find(|e| element.get_parent().contains(e.1))
@@ -424,7 +425,7 @@ impl PetriNet {
     pub fn remove_part(&mut self, part: &Vec<Vertex>) -> Self {
 
         for loop_element in part.iter() {
-            let new_element = match loop_element.is_position() {
+            let mut new_element = match loop_element.is_position() {
                 true => loop_element.split(self.get_position_index()),
                 false => loop_element.split(self.transition_index)
             };
@@ -438,21 +439,13 @@ impl PetriNet {
                 if connection.first().eq(loop_element) && !part.contains(connection.second())
                     || (connection.second().eq(loop_element) && !part.contains(connection.first()))
                 {
-                    match loop_element.is_position() {
-                        true if connection.first().eq(loop_element) => {
-                            *connection.first_mut() = new_element.clone()
-                        }
-                        true if connection.second().eq(loop_element) => {
-                            *connection.second_mut() = new_element.clone()
-                        }
-                        false if connection.first().eq(loop_element) => {
-                            *connection.first_mut() = new_element.clone()
-                        }
-                        false if connection.second().eq(loop_element) => {
-                            *connection.second_mut() = new_element.clone()
-                        }
-                        _ => unreachable!(),
+                    if connection.first().eq(loop_element) {
+                        *connection.first_mut() = new_element.clone();
                     }
+                    else {
+                        *connection.second_mut() = new_element.clone()
+                    }
+                    new_element.set_parent(loop_element.clone());
 
                     add_element = true;
                 }
@@ -460,11 +453,41 @@ impl PetriNet {
 
             if add_element {
                 match loop_element.is_position() {
-                    true => self.insert_position(new_element.clone(), false),
+                    true => self.insert_position(new_element.clone(), true),
                     false => self.insert_transition(new_element.clone()),
                 };
+
+                if new_element.is_transition() {
+
+                    if let None = self.connections.iter().find(|c| c.first().eq(&new_element)) {
+                        let parent = new_element.get_parent().unwrap();
+                        if let Some(mut conn) = self.connections.iter().find(|c| c.first().eq(&parent)).cloned() {
+                            let index = self.next_position_index();
+                            let pos = self.insert_position(conn.second().split(index), true);
+                            *conn.first_mut() = new_element.clone();
+                            *conn.second_mut() = pos.clone();
+                            self.connections.push(conn);
+                        }
+                    }
+
+                    if let None = self.connections.iter().find(|c| c.second().eq(&new_element)) {
+                        let parent = new_element.get_parent().unwrap();
+                        if let Some(mut conn) = self.connections.iter().find(|c| c.second().eq(&parent)).cloned() {
+                            let index = self.next_position_index();
+                            let pos = self.insert_position(conn.first().split(index), true);
+                            *conn.first_mut() = pos.clone();
+                            *conn.second_mut() = new_element.clone();
+                            self.connections.push(conn);
+                        }
+                    }
+
+                }
+
             }
 
+        }
+
+        for loop_element in part.iter() {
             self.connections.drain_filter(|conn| {
                 conn.first().eq(loop_element) || conn.second().eq(loop_element)
             });
@@ -483,35 +506,36 @@ impl PetriNet {
         let mut new_self = PetriNet::new();
         new_self.position_index = self.position_index.clone();
         new_self.transition_index = self.transition_index;
+        new_self.elements.extend(self.elements.iter().cloned());
 
-        for element in self.elements.iter().cloned() {
-            let added = new_self.insert(element);
-
-            // Проверяем только переходы
-            if added.is_position() {
-                continue;
-            }
-
-            // Работаем с переходом
-
-            if let None = self.connections.iter().find(|conn| conn.first().eq(&added)) {
-                let vert = new_self.insert_position(Vertex::position(new_self.next_position_index()), false);
-                new_self.connect(added, vert)
-            } else if let None = self
-                .connections
-                .iter()
-                .find(|conn| conn.second().eq(&added))
-            {
-                let vert = new_self.insert_position(Vertex::position(new_self.next_position_index()), false);
-                new_self.connect(vert, added)
-            }
-        }
+        // for element in self.elements.iter().cloned() {
+        //     let added = new_self.insert(element);
+        //
+        //     // Проверяем только переходы
+        //     if added.is_position() {
+        //         continue;
+        //     }
+        //
+        //     // Работаем с переходом
+        //
+        //     if let None = self.connections.iter().find(|conn| conn.first().eq(&added)) {
+        //         let vert = new_self.insert_position(Vertex::position(new_self.next_position_index()), false);
+        //         new_self.connect(added, vert)
+        //     } else if let None = self
+        //         .connections
+        //         .iter()
+        //         .find(|conn| conn.second().eq(&added))
+        //     {
+        //         let vert = new_self.insert_position(Vertex::position(new_self.next_position_index()), false);
+        //         new_self.connect(vert, added)
+        //     }
+        // }
 
         new_self
             .connections
             .extend(self.connections.iter().cloned());
 
-        std::mem::swap(self, &mut new_self);
+        *self = new_self;
 
         println!("RES: {:?}", self);
 
@@ -521,7 +545,7 @@ impl PetriNet {
         part
     }
 
-    pub fn downgrade_transitions(mut self) -> Self {
+    pub fn downgrade_transitions(self) -> Self {
 
         let mut result = self.clone();
 
@@ -558,7 +582,7 @@ impl PetriNet {
 
     }
 
-    pub fn downgrade_pos(mut self) -> Self {
+    pub fn downgrade_pos(self) -> Self {
 
         println!("CONNS: {:?}", self.connections);
 
@@ -727,20 +751,27 @@ pub fn synthesis(mut nets: Vec<PetriNet>) -> PetriNet {
         }
     }
 
-    let mut entries = Vec::<Vec<(usize, usize, f64)>>::new();
-    let mut result_entries = Vec::<Vec<f64>>::new();
-
-    ndarray::Array2::zeros((lbf_matrix.ncols(), c_matrix.nrows()));
+    let mut entries = vec![];
+    let mut result_entries = vec![];
 
     for i in 0..c_matrix.nrows() {
-        let mut entry = vec![];
-        let mut result_entry = vec![];
+        let mut entry = ndarray::Array2::zeros((lbf_matrix.nrows(), c_matrix.nrows()));
+        let mut result_entry = ndarray::Array1::zeros(c_matrix.nrows());
         for j in 0..lbf_matrix.ncols() {
             for d in 0..lbf_matrix.nrows() {
-                entry.push((j, d, lbf_matrix.row(d)[j] as f64));
+                entry.row_mut(j)[d] = lbf_matrix.row(d)[j] as f64;
             }
 
-            result_entry.push(d_matrix.row(i)[j] as f64);
+            result_entry[j] = d_matrix.row(i)[j] as f64;
+        }
+
+        for j in 0..entry.nrows() {
+            for d in 0..entry.ncols() {
+                if entry.row(j)[d] == -1.0 {
+                    entry.row_mut(j + lbf_matrix.ncols())[d] = 1.0;
+                    result_entry[j + lbf_matrix.ncols()] = (rand::random::<u8>() % 4).into();
+                }
+            }
         }
 
         entries.push(entry);
@@ -750,26 +781,10 @@ pub fn synthesis(mut nets: Vec<PetriNet>) -> PetriNet {
     println!("LBF: => {}", lbf_matrix);
     println!("D: => {}", d_matrix);
 
-    for (index, (mut a, mut b)) in entries.into_iter().zip(result_entries.into_iter()).enumerate() {
+    for (index, (a, b)) in entries.into_iter().zip(result_entries.into_iter()).enumerate() {
 
-        for (is, i) in (lbf_matrix.ncols()..c_matrix.nrows()).enumerate() {
-            for j in 0..lbf_matrix.nrows() {
-                if is == j {
-                    a.push((i, j, 1.0));
-                }
-                else {
-                    a.push((i, j, 0.0));
-                }
-            }
 
-            b.push(0.0);
-        }
-
-        println!("A = {:?}", a);
-        println!("B = {:?}", b);
-
-        let mut equation = sparse21::Matrix::from_entries(a);
-        let solve = equation.solve(b).unwrap();
+        let solve = a.solve(&b).unwrap();
         solve.into_iter().enumerate().for_each(|v| c_matrix.row_mut(index)[v.0] = v.1 as i32);
 
     }
@@ -797,7 +812,7 @@ pub fn synthesis(mut nets: Vec<PetriNet>) -> PetriNet {
 
 
     println!("LBF: => {}", MatrixFormat(&lbf_matrix, &transs, &poss));
-    println!("{} * {}", MatrixFormat(&d_matrix, &transs, &poss), c_matrix);
+    println!("{} * {}", c_matrix, MatrixFormat(&lbf_matrix, &transs, &poss));
 
     let result = c_matrix * lbf_matrix;
     println!(" = {}", MatrixFormat(&result, &transs, &poss));
