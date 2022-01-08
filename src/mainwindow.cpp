@@ -11,6 +11,9 @@
 #include <QDockWidget>
 #include <QDir>
 #include <fmt/format.h>
+#include "../include/matrix_model.h"
+#include <QTableView>
+#include <QHeaderView>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
@@ -368,7 +371,9 @@ void MainWindow::slotSplitChecked(const QModelIndex& index) {
     }
 }
 
-void MainWindow::addTabFromNet(InnerPetriNet net, Tab* current) {
+void MainWindow::addTabFromNet(InnerCommonResult common_result, Tab* current) {
+
+    auto net = std::move(common_result.net);
 
     auto items = current->scene()->getItems();
     auto points = std::map<QString, PetriObject*>();
@@ -407,5 +412,17 @@ void MainWindow::addTabFromNet(InnerPetriNet net, Tab* current) {
     }
 
     tabWidget->setCurrentIndex(tab_index);
+
+    QTableView* view = new QTableView;
+    QHeaderView* vert = view->verticalHeader();
+    vert->setSectionResizeMode(QHeaderView::Fixed);
+    vert->setDefaultSectionSize(25);
+
+    QHeaderView* horz = view->horizontalHeader();
+    horz->setSectionResizeMode(QHeaderView::Fixed);
+    horz->setDefaultSectionSize(25);
+
+    view->setModel(MatrixModel::loadFromMatrix(common_result.matrix));
+    view->show();
 
 }

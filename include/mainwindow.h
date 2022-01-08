@@ -34,7 +34,7 @@ class MainWindow : public QMainWindow {
 public:
     explicit MainWindow(QWidget *parent = nullptr);
 
-    void addTabFromNet(InnerPetriNet net, Tab* current);
+    void addTabFromNet(InnerCommonResult common_result, Tab* current);
 
 public slots:
 

@@ -7,6 +7,7 @@ pub use net::connection::Connection;
 pub use net::vertex::Vertex;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
+use nalgebra::DMatrix;
 use ndarray_linalg::Solve;
 use core::{MatrixFormat};
 
@@ -660,7 +661,7 @@ pub fn lbf(nets: &Vec<PetriNet>) -> Vec<Vec<Vertex>> {
 
 }
 
-pub fn synthesis(mut nets: Vec<PetriNet>) -> PetriNet {
+pub fn synthesis(mut nets: Vec<PetriNet>) -> (PetriNet, DMatrix<i32>) {
 
     nets.sort_by(|net_a, net_b| {
         net_b.elements.iter().filter(|e| e.is_position()).count()
@@ -814,7 +815,7 @@ pub fn synthesis(mut nets: Vec<PetriNet>) -> PetriNet {
     println!("LBF: => {}", MatrixFormat(&lbf_matrix, &transs, &poss));
     println!("{} * {}", c_matrix, MatrixFormat(&lbf_matrix, &transs, &poss));
 
-    let result = c_matrix * lbf_matrix;
+    let result = c_matrix.clone() * lbf_matrix;
     println!(" = {}", MatrixFormat(&result, &transs, &poss));
 
 
@@ -844,7 +845,7 @@ pub fn synthesis(mut nets: Vec<PetriNet>) -> PetriNet {
 
     new_net.connections = connections;
 
-    new_net
+    (new_net, c_matrix)
 
 }
 

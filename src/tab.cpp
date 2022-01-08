@@ -74,9 +74,9 @@ void Tab::splitAction() {
 
     this->m_split_actions->clear();
 
-    auto net = split_net(petri);
+    auto common_result = split_net(petri);
 
-    dynamic_cast<MainWindow*>(parent()->parent()->parent())->addTabFromNet(std::move(net), this);
+    dynamic_cast<MainWindow*>(parent()->parent()->parent())->addTabFromNet(std::move(common_result), this);
 
     del(petri);
 

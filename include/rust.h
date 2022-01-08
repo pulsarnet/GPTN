@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include "petri_net.h"
+#include "matrix.h"
 
 extern "C" struct PetriNet;
 
@@ -53,16 +54,35 @@ extern "C" struct FFIBoxedSlice {
     }
 };
 
-extern "C" struct SplitNet {
-    FFIBoxedSlice** ptr;
-    unsigned long size;
+extern "C" struct FFIMatrix {
+    unsigned long rows_len;
+    unsigned long cols_len;
+    long* matrix;
+
+    [[nodiscard]] Matrix into() const {
+        QList<long> elements;
+        elements.resize(rows_len * cols_len, 0);
+
+        for (int i = 0; i < rows_len; i++) {
+            for (int j = 0; j < cols_len; j++) {
+                elements[rows_len * i + j] = *(matrix + rows_len * i + j);
+            }
+        }
+
+        return Matrix{rows_len, cols_len, elements};
+    }
 };
 
-extern "C" FFIBoxedSlice* split(PetriNet*);
+extern "C" struct CommonResult {
+    FFIBoxedSlice* petri_net;
+    FFIMatrix* c_matrix;
+};
 
-InnerPetriNet split_net(PetriNet* net) {
+extern "C" CommonResult* split(PetriNet*);
+
+InnerCommonResult split_net(PetriNet* net) {
     auto result = split(net);
-    return result->into();
+    return InnerCommonResult { result->petri_net->into(), result->c_matrix->into() };
 }
 
 #endif //FFI_RUST_RUST_H

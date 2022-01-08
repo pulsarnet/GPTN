@@ -9,6 +9,8 @@ extern crate libc;
 
 use std::ffi::CString;
 use std::os::raw::c_char;
+use libc::c_long;
+use nalgebra::DMatrix;
 
 mod net;
 
@@ -121,9 +123,46 @@ impl FFIBoxedSlice {
     }
 }
 
+#[repr(C)]
+pub struct FFIMatrix {
+    rows_len: usize,
+    cols_len: usize,
+    matrix: *const c_long
+}
+
+impl FFIMatrix {
+    fn from_matrix(matrix: DMatrix<i32>) -> FFIMatrix {
+        let result_matrix_len = matrix.nrows() * matrix.ncols();
+        let mut matrix_vector = Vec::with_capacity(result_matrix_len);
+        matrix_vector.resize(result_matrix_len, 0 as c_long);
+
+        for i in 0..matrix.nrows() {
+            for j in 0..matrix.ncols() {
+                matrix_vector[i * matrix.nrows() + j] = matrix.row(i)[j] as c_long;
+            }
+        }
+
+        let result = FFIMatrix {
+            rows_len: matrix.nrows(),
+            cols_len: matrix.ncols(),
+            matrix: matrix_vector.as_ptr(),
+        };
+
+        std::mem::forget(matrix_vector);
+
+        result
+    }
+}
+
+#[repr(C)]
+pub struct CommonResult {
+    petri_net: *mut FFIBoxedSlice,
+    c_matrix: *mut FFIMatrix
+}
+
 
 #[no_mangle]
-pub unsafe extern "C" fn split(v: *mut PetriNet) -> *mut FFIBoxedSlice {
+pub unsafe extern "C" fn split(v: *mut PetriNet) -> *mut CommonResult {
     let v = &mut *v;
 
     println!("V: {:?}", v);
@@ -144,10 +183,16 @@ pub unsafe extern "C" fn split(v: *mut PetriNet) -> *mut FFIBoxedSlice {
     parts.iter_mut().for_each(|net| net.normalize());
     parts.iter_mut().for_each(|net| println!("PART: {:?}", net));
 
-    let res = synthesis(parts).downgrade_transitions().downgrade_pos();
+    let res = synthesis(parts);
 
-    let boxed_result = Box::new(FFIBoxedSlice::from_net(res));
-    //std::mem::forget(result);
+    let boxed_ffi_slice = Box::new(FFIBoxedSlice::from_net(res.0));
+    let boxed_ffi_matrix = Box::new(FFIMatrix::from_matrix(res.1));
 
-    Box::into_raw(boxed_result)
+    Box::into_raw(Box::new(
+        CommonResult {
+            petri_net: Box::into_raw(boxed_ffi_slice),
+            c_matrix: Box::into_raw(boxed_ffi_matrix)
+        }
+    ))
+
 }

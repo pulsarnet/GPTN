@@ -37,7 +37,7 @@ add_executable(ffi_rust
         mainwindow.ui
         src/mainwindow.cpp src/graphics_view.cpp include/graphics_view.h src/position.cpp include/position.h src/arrow_line.cpp include/arrow_line.h
         resources/resources.qrc src/graphics_view_zoom.cpp include/graphics_view_zoom.h src/tab.cpp include/tab.h include/rust.h include/split_list_model.h
-        include/petri_net.h)
+        include/petri_net.h src/matrix_model.cpp include/matrix_model.h include/matrix.h)
 
 add_dependencies(ffi_rust rust)
 
