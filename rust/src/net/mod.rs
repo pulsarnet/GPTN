@@ -6,6 +6,7 @@ use std::cmp::min_by;
 pub use net::connection::Connection;
 pub use net::vertex::Vertex;
 use std::collections::{HashMap, HashSet};
+use std::io::{stdout, Write};
 use std::rc::Rc;
 use nalgebra::DMatrix;
 use ndarray_linalg::Solve;
@@ -661,7 +662,7 @@ pub fn lbf(nets: &Vec<PetriNet>) -> Vec<Vec<Vertex>> {
 
 }
 
-pub fn synthesis(mut nets: Vec<PetriNet>) -> (PetriNet, DMatrix<i32>) {
+pub fn synthesis(mut nets: Vec<PetriNet>) -> SynResult {
 
     nets.sort_by(|net_a, net_b| {
         net_b.elements.iter().filter(|e| e.is_position()).count()
@@ -714,6 +715,8 @@ pub fn synthesis(mut nets: Vec<PetriNet>) -> (PetriNet, DMatrix<i32>) {
     let poss = nets.iter().flat_map(|net| net.elements.iter().filter(|e| e.is_position()).cloned()).collect::<Vec<_>>();
     let transs = nets.iter().flat_map(|net| net.elements.iter().filter(|e| e.is_transition()).cloned()).collect::<Vec<_>>();
 
+    //d_input => p -> t;
+    //d_output => t -> p;
     for element in all_elements.iter() {
         let mut general = element.clone();
         while let Some(el) = general.get_parent() {
@@ -770,7 +773,7 @@ pub fn synthesis(mut nets: Vec<PetriNet>) -> (PetriNet, DMatrix<i32>) {
             for d in 0..entry.ncols() {
                 if entry.row(j)[d] == -1.0 {
                     entry.row_mut(j + lbf_matrix.ncols())[d] = 1.0;
-                    result_entry[j + lbf_matrix.ncols()] = (rand::random::<u8>() % 4).into();
+                    result_entry[j + lbf_matrix.ncols()] = 0.0;//(rand::random::<u8>() % 4).into();
                 }
             }
         }
@@ -815,7 +818,7 @@ pub fn synthesis(mut nets: Vec<PetriNet>) -> (PetriNet, DMatrix<i32>) {
     println!("LBF: => {}", MatrixFormat(&lbf_matrix, &transs, &poss));
     println!("{} * {}", c_matrix, MatrixFormat(&lbf_matrix, &transs, &poss));
 
-    let result = c_matrix.clone() * lbf_matrix;
+    let result = c_matrix.clone() * lbf_matrix.clone();
     println!(" = {}", MatrixFormat(&result, &transs, &poss));
 
 
@@ -845,8 +848,24 @@ pub fn synthesis(mut nets: Vec<PetriNet>) -> (PetriNet, DMatrix<i32>) {
 
     new_net.connections = connections;
 
-    (new_net, c_matrix)
+    SynResult {
+        result_net: new_net,
+        c_matrix,
+        d_matrix,
+        lbf_matrix,
+        pos_indexes,
+        tran_indexes
+    }
 
+}
+
+pub struct SynResult {
+    pub result_net: PetriNet,
+    pub c_matrix: DMatrix<i32>,
+    pub d_matrix: DMatrix<i32>,
+    pub lbf_matrix: DMatrix<i32>,
+    pub pos_indexes: HashMap<Vertex, usize>,
+    pub tran_indexes: HashMap<Vertex, usize>
 }
 
 impl From<Vec<Vertex>> for PetriNet {

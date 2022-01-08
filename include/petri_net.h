@@ -3,6 +3,7 @@
 
 #include <QString>
 #include "matrix.h"
+#include "named_matrix.h"
 
 struct InnerPetriNet {
     QList<QString> elements;
@@ -11,7 +12,9 @@ struct InnerPetriNet {
 
 struct InnerCommonResult {
     InnerPetriNet net;
-    Matrix matrix;
+    Matrix c_matrix;
+    NamedMatrix d_matrix;
+    NamedMatrix lbf_matrix;
 };
 
 #endif

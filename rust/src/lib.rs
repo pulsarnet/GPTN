@@ -7,8 +7,10 @@ extern crate nalgebra;
 extern crate ndarray_linalg;
 extern crate libc;
 
+use std::collections::HashMap;
 use std::ffi::CString;
 use std::os::raw::c_char;
+use std::ptr::null;
 use libc::c_long;
 use nalgebra::DMatrix;
 
@@ -138,7 +140,7 @@ impl FFIMatrix {
 
         for i in 0..matrix.nrows() {
             for j in 0..matrix.ncols() {
-                matrix_vector[i * matrix.nrows() + j] = matrix.row(i)[j] as c_long;
+                matrix_vector[i * matrix.ncols() + j] = matrix.row(i)[j] as c_long;
             }
         }
 
@@ -155,9 +157,68 @@ impl FFIMatrix {
 }
 
 #[repr(C)]
+pub struct FFINamedMatrix {
+    rows: *const *const c_char,
+    rows_len: usize,
+
+    cols: *const *const c_char,
+    cols_len: usize,
+    matrix: *const c_long
+}
+
+impl FFINamedMatrix {
+    fn from_matrix(matrix: DMatrix<i32>, rows: &HashMap<Vertex, usize>, cols: &HashMap<Vertex, usize>) -> FFINamedMatrix {
+        let result_matrix_len = matrix.nrows() * matrix.ncols();
+        let mut matrix_vector = Vec::with_capacity(result_matrix_len);
+        matrix_vector.resize(result_matrix_len, 0 as c_long);
+
+        for i in 0..matrix.nrows() {
+            for j in 0..matrix.ncols() {
+                matrix_vector[i * matrix.ncols() + j] = matrix.row(i)[j] as c_long;
+            }
+        }
+
+        let mut rows_elements = vec![];
+        rows_elements.resize(matrix.nrows(), null());
+        for (s, i) in rows.into_iter() {
+            let c_str = CString::new(s.name()).unwrap();
+            rows_elements[*i] = c_str.as_ptr();
+            std::mem::forget(c_str);
+        }
+
+        let mut cols_elements = vec![];
+        cols_elements.resize(matrix.ncols(), null());
+        for (s, i) in cols.into_iter() {
+            let c_str = CString::new(s.name()).unwrap();
+            cols_elements[*i] = c_str.as_ptr();
+            std::mem::forget(c_str);
+        }
+
+        rows_elements.shrink_to_fit();
+        cols_elements.shrink_to_fit();
+
+        let result = FFINamedMatrix {
+            rows: rows_elements.as_ptr(),
+            rows_len: matrix.nrows(),
+            cols: cols_elements.as_ptr(),
+            cols_len: matrix.ncols(),
+            matrix: matrix_vector.as_ptr(),
+        };
+
+        std::mem::forget(rows_elements);
+        std::mem::forget(cols_elements);
+        std::mem::forget(matrix_vector);
+
+        result
+    }
+}
+
+#[repr(C)]
 pub struct CommonResult {
     petri_net: *mut FFIBoxedSlice,
-    c_matrix: *mut FFIMatrix
+    c_matrix: *mut FFIMatrix,
+    d_matrix: *mut FFINamedMatrix,
+    lbf_matrix: *mut FFINamedMatrix
 }
 
 
@@ -185,13 +246,24 @@ pub unsafe extern "C" fn split(v: *mut PetriNet) -> *mut CommonResult {
 
     let res = synthesis(parts);
 
-    let boxed_ffi_slice = Box::new(FFIBoxedSlice::from_net(res.0));
-    let boxed_ffi_matrix = Box::new(FFIMatrix::from_matrix(res.1));
+    // VT => max(zt)
+    // VP => max(zp)
+    // D' => VP(N) * VT(N)
+    // C * D' => D''
+    // D'' убираем эквивалентные позиции и переходы
+
+
+    let boxed_ffi_slice = Box::new(FFIBoxedSlice::from_net(res.result_net.downgrade_transitions()));
+    let boxed_ffi_matrix = Box::new(FFIMatrix::from_matrix(res.c_matrix));
+    let boxed_d_matrix = Box::new(FFINamedMatrix::from_matrix(res.d_matrix, &res.pos_indexes, &res.tran_indexes));
+    let boxed_lbf_matrix = Box::new(FFINamedMatrix::from_matrix(res.lbf_matrix, &res.pos_indexes, &res.tran_indexes));
 
     Box::into_raw(Box::new(
         CommonResult {
             petri_net: Box::into_raw(boxed_ffi_slice),
-            c_matrix: Box::into_raw(boxed_ffi_matrix)
+            c_matrix: Box::into_raw(boxed_ffi_matrix),
+            d_matrix: Box::into_raw(boxed_d_matrix),
+            lbf_matrix: Box::into_raw(boxed_lbf_matrix)
         }
     ))
 

@@ -12,6 +12,7 @@
 #include <QDir>
 #include <fmt/format.h>
 #include "../include/matrix_model.h"
+#include "../include/named_matrix_model.h"
 #include <QTableView>
 #include <QHeaderView>
 
@@ -347,6 +348,7 @@ void MainWindow::slotSplitAction(bool checked) {
 
 }
 
+
 void MainWindow::slotSplitChecked(const QModelIndex& index) {
     auto result = index.data(Qt::UserRole);
     auto list = result.toList();
@@ -369,6 +371,20 @@ void MainWindow::slotSplitChecked(const QModelIndex& index) {
 
         if (it != items.end()) dynamic_cast<PetriObject*>(*it)->setColored(true);
     }
+}
+
+void showTable(QAbstractTableModel* model, int sectionSize) {
+    QTableView* c_view = new QTableView;
+    QHeaderView* vert = c_view->verticalHeader();
+    vert->setSectionResizeMode(QHeaderView::Fixed);
+    vert->setDefaultSectionSize(sectionSize);
+
+    QHeaderView* horz = c_view->horizontalHeader();
+    horz->setSectionResizeMode(QHeaderView::Fixed);
+    horz->setDefaultSectionSize(sectionSize);
+
+    c_view->setModel(model);
+    c_view->show();
 }
 
 void MainWindow::addTabFromNet(InnerCommonResult common_result, Tab* current) {
@@ -413,16 +429,9 @@ void MainWindow::addTabFromNet(InnerCommonResult common_result, Tab* current) {
 
     tabWidget->setCurrentIndex(tab_index);
 
-    QTableView* view = new QTableView;
-    QHeaderView* vert = view->verticalHeader();
-    vert->setSectionResizeMode(QHeaderView::Fixed);
-    vert->setDefaultSectionSize(25);
-
-    QHeaderView* horz = view->horizontalHeader();
-    horz->setSectionResizeMode(QHeaderView::Fixed);
-    horz->setDefaultSectionSize(25);
-
-    view->setModel(MatrixModel::loadFromMatrix(common_result.matrix));
-    view->show();
+    /// C_MATRIX
+    showTable(MatrixModel::loadFromMatrix(common_result.c_matrix), 25);
+    showTable(NamedMatrixModel::loadFromMatrix(common_result.d_matrix), 40);
+    showTable(NamedMatrixModel::loadFromMatrix(common_result.lbf_matrix), 40);
 
 }

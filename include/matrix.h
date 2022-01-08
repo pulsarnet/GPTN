@@ -14,7 +14,7 @@ struct Matrix {
     QList<long> matrix;
 
     long operator()(int i, int j) const {
-        return matrix[rows * i + j];
+        return matrix[cols * i + j];
     }
 };
 
