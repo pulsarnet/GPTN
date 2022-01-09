@@ -16,6 +16,10 @@ struct NamedMatrix {
     long operator()(int i, int j) const {
         return matrix[cols.length() * i + j];
     }
+
+    long& operator()(int i, int j) {
+        return matrix[cols.length() * i + j];
+    }
 };
 
 #endif //FFI_RUST_NAMED_MATRIX_H

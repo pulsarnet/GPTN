@@ -18,7 +18,7 @@ mod net;
 
 mod core;
 
-use net::{PetriNet, synthesis, Vertex};
+use net::{PetriNet, synthesis, synthesis_program, Vertex};
 
 #[no_mangle]
 pub extern "C" fn make() -> *mut PetriNet {
@@ -221,14 +221,11 @@ impl FFINamedMatrix {
 pub struct CommonResult {
     petri_net: *mut FFIBoxedSlice,
     c_matrix: *mut FFIMatrix,
-    d_input: *mut FFINamedMatrix,
-    d_output: *mut FFINamedMatrix,
-    lbf_matrix: *mut FFINamedMatrix
 }
 
 
 #[no_mangle]
-pub unsafe extern "C" fn split(v: *mut PetriNet) -> *mut CommonResult {
+pub unsafe extern "C" fn synthesis_start(v: *mut PetriNet) -> *mut SynthesisProgram {
     let v = &mut *v;
 
     println!("V: {:?}", v);
@@ -249,7 +246,6 @@ pub unsafe extern "C" fn split(v: *mut PetriNet) -> *mut CommonResult {
     parts.iter_mut().for_each(|net| net.normalize());
     parts.iter_mut().for_each(|net| println!("PART: {:?}", net));
 
-    let res = synthesis(parts);
 
     // VT => max(zt)
     // VP => max(zp)
@@ -258,20 +254,113 @@ pub unsafe extern "C" fn split(v: *mut PetriNet) -> *mut CommonResult {
     // D'' убираем эквивалентные позиции и переходы
 
 
-    let boxed_ffi_slice = Box::new(FFIBoxedSlice::from_net(res.result_net));
-    let boxed_ffi_matrix = Box::new(FFIMatrix::from_matrix(res.c_matrix));
-    let boxed_d_input = Box::new(FFINamedMatrix::from_matrix(res.d_input));
-    let boxed_d_output = Box::new(FFINamedMatrix::from_matrix(res.d_output));
-    let boxed_lbf_matrix = Box::new(FFINamedMatrix::from_matrix(res.lbf_matrix));
+    Box::into_raw(Box::new(synthesis(parts)))
+
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn synthesis_end(v: *mut SynthesisProgram) -> *mut CommonResult {
+    let program = &mut *v;
+    let result = synthesis_program(program);
+
+    let petri_net = Box::new(FFIBoxedSlice::from_net(result.result_net));
+    let c_matrix = Box::new(FFIMatrix::from_matrix(result.c_matrix));
 
     Box::into_raw(Box::new(
         CommonResult {
-            petri_net: Box::into_raw(boxed_ffi_slice),
-            c_matrix: Box::into_raw(boxed_ffi_matrix),
-            d_input: Box::into_raw(boxed_d_input),
-            d_output: Box::into_raw(boxed_d_output),
-            lbf_matrix: Box::into_raw(boxed_lbf_matrix)
+            petri_net: Box::into_raw(petri_net),
+            c_matrix: Box::into_raw(c_matrix)
         }
     ))
+}
 
+// extern "C" unsigned long positions(SynthesisProgram*);
+// extern "C" unsigned long transitions(SynthesisProgram*);
+//
+// extern "C" char* position(SynthesisProgram*, unsigned long);
+// extern "C" char* transition(SynthesisProgram*, unsigned long);
+//
+// extern "C" unsigned long programs(SynthesisProgram*);
+// extern "C" void add_program(SynthesisProgram*);
+//
+// extern "C" void set_program_value(SynthesisProgram*, unsigned long, unsigned long, unsigned long);
+// extern "C" unsigned long get_program_value(SynthesisProgram*, unsigned long, unsigned long);
+
+pub struct SynthesisResult {
+    pub result_net: PetriNet,
+    pub c_matrix: DMatrix<i32>,
+}
+
+pub struct SynthesisProgram {
+    pub positions: Vec<Vertex>,
+    pub transitions: Vec<Vertex>,
+    pub programs: Vec<Vec<usize>>,
+    pub c_matrix: DMatrix<i32>,
+    pub lbf_matrix: DMatrix<i32>
+}
+
+#[no_mangle]
+extern "C" fn positions(p: *mut SynthesisProgram) -> usize {
+    let program = unsafe { &mut *p };
+    program.positions.len()
+}
+
+#[no_mangle]
+extern "C" fn transitions(p: *mut SynthesisProgram) -> usize {
+    let program = unsafe { &mut *p };
+    program.transitions.len()
+}
+
+#[no_mangle]
+extern "C" fn programs(p: *mut SynthesisProgram) -> usize {
+    let program = unsafe { &mut *p };
+    program.programs.len()
+}
+
+#[no_mangle]
+extern "C" fn add_program(p: *mut SynthesisProgram) {
+    let program = unsafe { &mut *p };
+
+    let mut n = vec![];
+    n.resize(transitions(p) + positions(p), 0);
+    program.programs.push(n);
+}
+
+#[no_mangle]
+extern "C" fn set_program_value(p: *mut SynthesisProgram, program_i: usize, index: usize, value: usize) {
+    let program = unsafe { &mut *p };
+    program.programs[program_i][index] = value;
+}
+
+#[no_mangle]
+extern "C" fn get_program_value(p: *mut SynthesisProgram, program_i: usize, index: usize) -> usize {
+    let program = unsafe { &mut *p };
+    program.programs[program_i][index]
+}
+
+#[no_mangle]
+extern "C" fn position(p: *mut SynthesisProgram, index: usize) -> *const c_char {
+    let program = unsafe { &mut *p };
+    let c_str = CString::new(program.positions[index].name()).unwrap();
+    let ptr = c_str.as_ptr();
+
+    std::mem::forget(c_str);
+
+    ptr
+}
+
+#[no_mangle]
+extern "C" fn transition(p: *mut SynthesisProgram, index: usize) -> *const c_char {
+    let program = unsafe { &mut *p };
+    let c_str = CString::new(program.transitions[index].name()).unwrap();
+    let ptr = c_str.as_ptr();
+
+    std::mem::forget(c_str);
+
+    ptr
+}
+
+#[no_mangle]
+extern "C" fn drop_string(s: *mut c_char) {
+    unsafe { CString::from_raw(s) };
 }

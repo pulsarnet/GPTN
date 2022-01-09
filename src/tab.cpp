@@ -4,8 +4,10 @@
 
 #include <QHBoxLayout>
 #include "../include/tab.h"
-#include "../include/rust.h"
+
 #include "../include/mainwindow.h"
+#include "../include/synthesis/synthesis_view.h"
+#include "../include/rust.h"
 
 Tab::Tab(QWidget *parent) : QWidget(parent) {
 
@@ -74,9 +76,11 @@ void Tab::splitAction() {
 
     this->m_split_actions->clear();
 
-    auto common_result = split_net(petri);
+    auto synthesis_program = split_net(petri);
 
-    dynamic_cast<MainWindow*>(parent()->parent()->parent())->addTabFromNet(std::move(common_result), this);
+    SynthesisView* view = new Synthe2sisView(synthesis_program, this);
+    view->show();
+
 
     del(petri);
 

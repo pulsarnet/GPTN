@@ -9,6 +9,7 @@
 #include "petri_net.h"
 #include "matrix.h"
 #include "named_matrix.h"
+#include "synthesis/synthesis_program.h"
 
 extern "C" struct PetriNet;
 
@@ -114,21 +115,13 @@ extern "C" struct FFINamedMatrix {
 extern "C" struct CommonResult {
     FFIBoxedSlice* petri_net;
     FFIMatrix* c_matrix;
-    FFINamedMatrix* d_input;
-    FFINamedMatrix* d_output;
-    FFINamedMatrix* lbf_matrix;
 };
 
-extern "C" CommonResult* split(PetriNet*);
+extern "C" SynthesisProgram* synthesis_start(PetriNet*);
+extern "C" CommonResult* synthesis_end(SynthesisProgram*);
 
-InnerCommonResult split_net(PetriNet* net) {
-    auto result = split(net);
-    return InnerCommonResult {
-        result->petri_net->into(),
-        result->c_matrix->into(),
-        result->d_input->into(),
-        result->d_output->into(),
-        result->lbf_matrix->into() };
-}
+SynthesisProgram* split_net(PetriNet* net);
+
+InnerCommonResult split_finish(SynthesisProgram* program);
 
 #endif //FFI_RUST_RUST_H

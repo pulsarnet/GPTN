@@ -3,7 +3,7 @@
 //
 
 #include "../include/mainwindow.h"
-#include "../include/tab.h"
+
 
 #include <QFileDialog>
 #include <QMessageBox>
@@ -12,7 +12,7 @@
 #include <QDir>
 #include <fmt/format.h>
 #include "../include/matrix_model.h"
-#include "../include/named_matrix_model.h"
+#include "../include/synthesis/synthesis_program_item_delegate.h"
 #include <QTableView>
 #include <QHeaderView>
 
@@ -379,6 +379,7 @@ void showTable(QAbstractTableModel* model, QString title, int sectionSize) {
     QHeaderView* vert = c_view->verticalHeader();
     vert->setSectionResizeMode(QHeaderView::Fixed);
     vert->setDefaultSectionSize(sectionSize);
+    c_view->setItemDelegate(new ProgramItemDelegate);
 
     QHeaderView* horz = c_view->horizontalHeader();
     horz->setSectionResizeMode(QHeaderView::Fixed);
@@ -434,8 +435,8 @@ void MainWindow::addTabFromNet(InnerCommonResult common_result, Tab* current) {
 
     /// C_MATRIX
     showTable(MatrixModel::loadFromMatrix(common_result.c_matrix), "Тензор преобразования", 25);
-    showTable(NamedMatrixModel::loadFromMatrix(common_result.d_input), "D input",35);
-    showTable(NamedMatrixModel::loadFromMatrix(common_result.d_output), "D output", 35);
-    showTable(NamedMatrixModel::loadFromMatrix(common_result.lbf_matrix), "Примитивная система", 35);
+//    showTable(NamedMatrixModel::loadFromMatrix(common_result.d_input), "D input",35);
+//    showTable(NamedMatrixModel::loadFromMatrix(common_result.d_output), "D output", 35);
+//    showTable(NamedMatrixModel::loadFromMatrix(common_result.lbf_matrix), "Примитивная система", 35);
 
 }

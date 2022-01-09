@@ -17,7 +17,7 @@ public:
     }
 
     Qt::ItemFlags flags(const QModelIndex &index) const override {
-        return Qt::ItemFlag::NoItemFlags;
+        return Qt::ItemFlag::ItemIsEnabled;
     }
 
     int rowCount(const QModelIndex &parent) const override {

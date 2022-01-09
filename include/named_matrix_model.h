@@ -17,7 +17,7 @@ public:
     }
 
     Qt::ItemFlags flags(const QModelIndex &index) const override {
-        return Qt::ItemFlag::NoItemFlags;
+        return Qt::ItemFlag::ItemIsEditable | Qt::ItemFlag::ItemIsEnabled;
     }
 
     int rowCount(const QModelIndex &parent) const override {
@@ -47,6 +47,14 @@ public:
         }
 
         return QVariant();
+    }
+
+    bool setData(const QModelIndex &index, const QVariant &value, int role) override {
+        if (role == Qt::EditRole) {
+            m_matrix(index.row(), index.column()) = value.toInt();
+            return true;
+        }
+        return QAbstractItemModel::setData(index, value, role);
     }
 
     QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override {
