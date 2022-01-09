@@ -117,3 +117,23 @@ impl<T: Default + PartialEq + Clone> Unique for Vec<T> {
         *self = result;
     }
 }
+
+pub struct NamedMatrix {
+    pub rows: HashMap<Vertex, usize>,
+    pub cols: HashMap<Vertex, usize>,
+    pub matrix: DMatrix<i32>,
+}
+
+impl NamedMatrix {
+    pub fn new(rows: HashMap<Vertex, usize>,
+               cols: HashMap<Vertex, usize>,
+               matrix: DMatrix<i32>,
+    ) -> Self
+    {
+        NamedMatrix {
+            rows,
+            cols,
+            matrix
+        }
+    }
+}

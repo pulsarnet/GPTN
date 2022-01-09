@@ -7,12 +7,12 @@ extern crate nalgebra;
 extern crate ndarray_linalg;
 extern crate libc;
 
-use std::collections::HashMap;
 use std::ffi::CString;
 use std::os::raw::c_char;
 use std::ptr::null;
 use libc::c_long;
 use nalgebra::DMatrix;
+use core::NamedMatrix;
 
 mod net;
 
@@ -167,7 +167,11 @@ pub struct FFINamedMatrix {
 }
 
 impl FFINamedMatrix {
-    fn from_matrix(matrix: DMatrix<i32>, rows: &HashMap<Vertex, usize>, cols: &HashMap<Vertex, usize>) -> FFINamedMatrix {
+    fn from_matrix(matrix: NamedMatrix) -> FFINamedMatrix {
+        let rows = matrix.rows;
+        let cols = matrix.cols;
+        let matrix = matrix.matrix;
+
         let result_matrix_len = matrix.nrows() * matrix.ncols();
         let mut matrix_vector = Vec::with_capacity(result_matrix_len);
         matrix_vector.resize(result_matrix_len, 0 as c_long);
@@ -182,7 +186,7 @@ impl FFINamedMatrix {
         rows_elements.resize(matrix.nrows(), null());
         for (s, i) in rows.into_iter() {
             let c_str = CString::new(s.name()).unwrap();
-            rows_elements[*i] = c_str.as_ptr();
+            rows_elements[i] = c_str.as_ptr();
             std::mem::forget(c_str);
         }
 
@@ -190,7 +194,7 @@ impl FFINamedMatrix {
         cols_elements.resize(matrix.ncols(), null());
         for (s, i) in cols.into_iter() {
             let c_str = CString::new(s.name()).unwrap();
-            cols_elements[*i] = c_str.as_ptr();
+            cols_elements[i] = c_str.as_ptr();
             std::mem::forget(c_str);
         }
 
@@ -217,7 +221,8 @@ impl FFINamedMatrix {
 pub struct CommonResult {
     petri_net: *mut FFIBoxedSlice,
     c_matrix: *mut FFIMatrix,
-    d_matrix: *mut FFINamedMatrix,
+    d_input: *mut FFINamedMatrix,
+    d_output: *mut FFINamedMatrix,
     lbf_matrix: *mut FFINamedMatrix
 }
 
@@ -253,16 +258,18 @@ pub unsafe extern "C" fn split(v: *mut PetriNet) -> *mut CommonResult {
     // D'' убираем эквивалентные позиции и переходы
 
 
-    let boxed_ffi_slice = Box::new(FFIBoxedSlice::from_net(res.result_net.downgrade_transitions()));
+    let boxed_ffi_slice = Box::new(FFIBoxedSlice::from_net(res.result_net));
     let boxed_ffi_matrix = Box::new(FFIMatrix::from_matrix(res.c_matrix));
-    let boxed_d_matrix = Box::new(FFINamedMatrix::from_matrix(res.d_matrix, &res.pos_indexes, &res.tran_indexes));
-    let boxed_lbf_matrix = Box::new(FFINamedMatrix::from_matrix(res.lbf_matrix, &res.pos_indexes, &res.tran_indexes));
+    let boxed_d_input = Box::new(FFINamedMatrix::from_matrix(res.d_input));
+    let boxed_d_output = Box::new(FFINamedMatrix::from_matrix(res.d_output));
+    let boxed_lbf_matrix = Box::new(FFINamedMatrix::from_matrix(res.lbf_matrix));
 
     Box::into_raw(Box::new(
         CommonResult {
             petri_net: Box::into_raw(boxed_ffi_slice),
             c_matrix: Box::into_raw(boxed_ffi_matrix),
-            d_matrix: Box::into_raw(boxed_d_matrix),
+            d_input: Box::into_raw(boxed_d_input),
+            d_output: Box::into_raw(boxed_d_output),
             lbf_matrix: Box::into_raw(boxed_lbf_matrix)
         }
     ))

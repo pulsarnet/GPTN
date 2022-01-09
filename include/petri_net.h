@@ -13,7 +13,8 @@ struct InnerPetriNet {
 struct InnerCommonResult {
     InnerPetriNet net;
     Matrix c_matrix;
-    NamedMatrix d_matrix;
+    NamedMatrix d_input;
+    NamedMatrix d_output;
     NamedMatrix lbf_matrix;
 };
 

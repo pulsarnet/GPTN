@@ -114,7 +114,8 @@ extern "C" struct FFINamedMatrix {
 extern "C" struct CommonResult {
     FFIBoxedSlice* petri_net;
     FFIMatrix* c_matrix;
-    FFINamedMatrix* d_matrix;
+    FFINamedMatrix* d_input;
+    FFINamedMatrix* d_output;
     FFINamedMatrix* lbf_matrix;
 };
 
@@ -122,7 +123,12 @@ extern "C" CommonResult* split(PetriNet*);
 
 InnerCommonResult split_net(PetriNet* net) {
     auto result = split(net);
-    return InnerCommonResult { result->petri_net->into(), result->c_matrix->into(), result->d_matrix->into(), result->lbf_matrix->into() };
+    return InnerCommonResult {
+        result->petri_net->into(),
+        result->c_matrix->into(),
+        result->d_input->into(),
+        result->d_output->into(),
+        result->lbf_matrix->into() };
 }
 
 #endif //FFI_RUST_RUST_H

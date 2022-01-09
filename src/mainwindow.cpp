@@ -373,8 +373,9 @@ void MainWindow::slotSplitChecked(const QModelIndex& index) {
     }
 }
 
-void showTable(QAbstractTableModel* model, int sectionSize) {
+void showTable(QAbstractTableModel* model, QString title, int sectionSize) {
     QTableView* c_view = new QTableView;
+    c_view->setWindowTitle(title);
     QHeaderView* vert = c_view->verticalHeader();
     vert->setSectionResizeMode(QHeaderView::Fixed);
     vert->setDefaultSectionSize(sectionSize);
@@ -384,6 +385,8 @@ void showTable(QAbstractTableModel* model, int sectionSize) {
     horz->setDefaultSectionSize(sectionSize);
 
     c_view->setModel(model);
+    c_view->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
+    c_view->adjustSize();
     c_view->show();
 }
 
@@ -430,8 +433,9 @@ void MainWindow::addTabFromNet(InnerCommonResult common_result, Tab* current) {
     tabWidget->setCurrentIndex(tab_index);
 
     /// C_MATRIX
-    showTable(MatrixModel::loadFromMatrix(common_result.c_matrix), 25);
-    showTable(NamedMatrixModel::loadFromMatrix(common_result.d_matrix), 40);
-    showTable(NamedMatrixModel::loadFromMatrix(common_result.lbf_matrix), 40);
+    showTable(MatrixModel::loadFromMatrix(common_result.c_matrix), "Тензор преобразования", 25);
+    showTable(NamedMatrixModel::loadFromMatrix(common_result.d_input), "D input",35);
+    showTable(NamedMatrixModel::loadFromMatrix(common_result.d_output), "D output", 35);
+    showTable(NamedMatrixModel::loadFromMatrix(common_result.lbf_matrix), "Примитивная система", 35);
 
 }
