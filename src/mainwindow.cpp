@@ -33,6 +33,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
     QDockWidget* dock = new QDockWidget(this);
     dock->setWidget(this->splitItems);
+    dock->hide();
 
     this->addDockWidget(Qt::RightDockWidgetArea, dock);
     tabChanged(-1);

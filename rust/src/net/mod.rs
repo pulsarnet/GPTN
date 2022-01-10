@@ -31,31 +31,15 @@ impl Clone for PetriNet {
 
         let new_connections = self
             .connections
-            .clone()
-            .into_iter()
-            .map(|mut conn| {
-                *conn.first_mut() = new_elements
-                    .iter()
-                    .filter(|el| el.is_position() == conn.first().is_position())
-                    .find(|el| el.index() == conn.first().index())
-                    .unwrap()
-                    .clone();
-
-                *conn.second_mut() = new_elements
-                    .iter()
-                    .filter(|el| el.is_position() == conn.second().is_position())
-                    .find(|el| el.index() == conn.second().index())
-                    .unwrap()
-                    .clone();
-                conn
-            })
+            .iter()
+            .map(|conn| Connection::new(conn.first().clone_inner(), conn.second().clone_inner()))
             .collect::<Vec<_>>();
 
         PetriNet {
             elements: new_elements,
             connections: new_connections,
-            position_index: self.position_index.clone(),
-            transition_index: self.transition_index.clone(),
+            position_index: Rc::new(RefCell::new(*self.position_index.borrow())),
+            transition_index: Rc::new(RefCell::new(*self.transition_index.borrow())),
             is_loop: self.is_loop,
         }
     }
@@ -912,8 +896,8 @@ pub fn synthesis_program(programs: &SynthesisProgram) -> SynthesisResult {
     let positions = programs.positions.len();
     let transitions = programs.transitions.len();
 
-    let mut pos_indexes_vec = programs.positions.clone();
-    let mut tran_indexes_vec = programs.transitions.clone();
+    let mut pos_indexes_vec = programs.positions.iter().map(|p| p.clone_inner()).collect::<Vec<_>>();
+    let mut tran_indexes_vec = programs.transitions.iter().map(|t| t.clone_inner()).collect::<Vec<_>>();
 
     let c_matrix = programs.c_matrix.clone();
     let lbf_matrix = programs.lbf_matrix.clone();
@@ -1155,6 +1139,7 @@ pub fn synthesis_program(programs: &SynthesisProgram) -> SynthesisResult {
         .filter(|e| e.is_position())
         .enumerate()
     {
+        println!("SET MARKERS: {} <= {}", index, markers.row(index)[0]);
         position.set_markers(markers.row(index)[0] as u64);
         pos_new_indexes.insert(position.clone(), index);
     }

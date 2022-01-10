@@ -350,5 +350,7 @@ void GraphicsView::newConnection(PetriObject *from, PetriObject *to) {
 
     scene->addItem(conn_line);
 
+    conn_line->from()->connectTo(m_net, conn_line->to());
+
     connections.push_back(conn_line);
 }
