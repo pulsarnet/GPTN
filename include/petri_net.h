@@ -8,6 +8,7 @@
 struct InnerPetriNet {
     QList<QString> elements;
     QList<std::tuple<QString, QString>> connections;
+    QList<unsigned long> markers;
 };
 
 struct InnerCommonResult {

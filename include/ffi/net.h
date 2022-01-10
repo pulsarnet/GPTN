@@ -5,30 +5,8 @@
 #ifndef FFI_RUST_NET_H
 #define FFI_RUST_NET_H
 
-struct FFIElement {};
-
-extern "C" struct PetriNet;
-extern "C" struct FFIPosition;
-extern "C" struct FFITransition;
-
-extern "C" PetriNet* make();
-extern "C" void del(PetriNet*);
-extern "C" void connect_p(PetriNet*, FFIPosition*, FFITransition*);
-extern "C" void connect_t(PetriNet*, FFITransition*, FFIPosition*);
-extern "C" void remove_connection_p(PetriNet*, FFIPosition*, FFITransition*);
-extern "C" void remove_connection_t(PetriNet*, FFITransition*, FFIPosition*);
-
-extern "C" FFIPosition* add_position(PetriNet*);
-extern "C" FFIPosition* add_position_with(PetriNet*, unsigned long);
-extern "C" FFIPosition* get_position(PetriNet*, unsigned long);
-extern "C" unsigned long position_index(FFIPosition*);
-extern "C" void remove_position(PetriNet*, FFIPosition*);
-
-extern "C" FFITransition* add_transition(PetriNet*);
-extern "C" FFITransition* add_transition_with(PetriNet*, unsigned long);
-extern "C" FFITransition* get_transition(PetriNet*, unsigned long);
-extern "C" unsigned long transition_index(FFITransition*);
-extern "C" void remove_transition(PetriNet*, FFITransition*);
+#include "methods.h"
+#include "../elements/petri_object.h"
 
 struct PetriNet {
 
@@ -84,23 +62,11 @@ struct PetriNet {
         return ::remove_transition(this, self);
     }
 
+    void remove_object(PetriObject* object);
+
     ~PetriNet() {
         ::del(this);
     }
 };
-
-struct FFIPosition : public FFIElement {
-    unsigned long index() {
-        return ::position_index(this);
-    }
-};
-
-struct FFITransition : public FFIElement {
-    unsigned long index() {
-        return ::transition_index(this);
-    }
-};
-
-
 
 #endif //FFI_RUST_NET_H

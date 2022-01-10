@@ -2,30 +2,28 @@
 #![feature(drain_filter)]
 #![feature(option_result_contains)]
 
-
+extern crate libc;
 extern crate nalgebra;
 extern crate ndarray_linalg;
-extern crate libc;
 
+use core::NamedMatrix;
+use libc::c_long;
+use nalgebra::DMatrix;
 use std::ffi::CString;
 use std::os::raw::c_char;
 use std::ptr::null;
-use libc::c_long;
-use nalgebra::DMatrix;
-use core::NamedMatrix;
 
-mod net;
 pub mod ffi;
+mod net;
 
 mod core;
 
-use net::{PetriNet, synthesis, synthesis_program, Vertex};
-
+use net::{synthesis, synthesis_program, PetriNet, Vertex};
 
 #[repr(C)]
 pub struct FFIConnection {
     from: *const c_char,
-    to: *const c_char
+    to: *const c_char,
 }
 
 #[repr(C)]
@@ -34,17 +32,24 @@ pub struct FFIBoxedSlice {
     len_elements: usize,
 
     connections: *const *mut FFIConnection,
-    len_connections: usize
+    len_connections: usize,
+
+    markers: *const usize,
 }
 
 impl FFIBoxedSlice {
     fn from_net(net: PetriNet) -> Self {
         let mut elements_vec: Vec<CString> = vec![];
         let mut connections_vec: Vec<*mut FFIConnection> = vec![];
+        let mut markers_vec: Vec<usize> = vec![];
 
         for s in net.elements.into_iter() {
             let c_str = CString::new(s.name()).unwrap();
             elements_vec.push(c_str);
+
+            if s.is_position() {
+                markers_vec.push(s.markers() as usize);
+            }
         }
         elements_vec.shrink_to_fit();
 
@@ -57,7 +62,10 @@ impl FFIBoxedSlice {
         for s in net.connections.into_iter() {
             let s1 = CString::new(s.first().name()).unwrap();
             let s2 = CString::new(s.second().name()).unwrap();
-            let conn = Box::new(FFIConnection { from: s1.as_ptr(), to: s2.as_ptr() });
+            let conn = Box::new(FFIConnection {
+                from: s1.as_ptr(),
+                to: s2.as_ptr(),
+            });
             let conn = Box::into_raw(conn);
 
             connections_vec.push(conn);
@@ -70,11 +78,13 @@ impl FFIBoxedSlice {
             elements: c_char_vec.as_ptr(),
             len_elements: c_char_vec.len(),
             connections: connections_vec.as_ptr(),
-            len_connections: connections_vec.len()
+            len_connections: connections_vec.len(),
+            markers: markers_vec.as_ptr(),
         };
 
         std::mem::forget(c_char_vec);
         std::mem::forget(connections_vec);
+        std::mem::forget(markers_vec);
         slice
     }
 }
@@ -83,7 +93,7 @@ impl FFIBoxedSlice {
 pub struct FFIMatrix {
     rows_len: usize,
     cols_len: usize,
-    matrix: *const c_long
+    matrix: *const c_long,
 }
 
 impl FFIMatrix {
@@ -117,7 +127,7 @@ pub struct FFINamedMatrix {
 
     cols: *const *const c_char,
     cols_len: usize,
-    matrix: *const c_long
+    matrix: *const c_long,
 }
 
 impl FFINamedMatrix {
@@ -177,7 +187,6 @@ pub struct CommonResult {
     c_matrix: *mut FFIMatrix,
 }
 
-
 #[no_mangle]
 pub unsafe extern "C" fn synthesis_start(v: *mut PetriNet) -> *mut SynthesisProgram {
     let v = &mut *v;
@@ -201,16 +210,13 @@ pub unsafe extern "C" fn synthesis_start(v: *mut PetriNet) -> *mut SynthesisProg
     parts.iter_mut().for_each(|net| net.normalize());
     parts.iter_mut().for_each(|net| println!("PART: {:?}", net));
 
-
     // VT => max(zt)
     // VP => max(zp)
     // D' => VP(N) * VT(N)
     // C * D' => D''
     // D'' убираем эквивалентные позиции и переходы
 
-
     Box::into_raw(Box::new(synthesis(parts)))
-
 }
 
 #[no_mangle]
@@ -221,12 +227,10 @@ pub unsafe extern "C" fn synthesis_end(v: *mut SynthesisProgram) -> *mut CommonR
     let petri_net = Box::new(FFIBoxedSlice::from_net(result.result_net));
     let c_matrix = Box::new(FFIMatrix::from_matrix(result.c_matrix));
 
-    Box::into_raw(Box::new(
-        CommonResult {
-            petri_net: Box::into_raw(petri_net),
-            c_matrix: Box::into_raw(c_matrix)
-        }
-    ))
+    Box::into_raw(Box::new(CommonResult {
+        petri_net: Box::into_raw(petri_net),
+        c_matrix: Box::into_raw(c_matrix),
+    }))
 }
 
 // extern "C" unsigned long positions(SynthesisProgram*);
@@ -251,7 +255,7 @@ pub struct SynthesisProgram {
     pub transitions: Vec<Vertex>,
     pub programs: Vec<Vec<usize>>,
     pub c_matrix: DMatrix<i32>,
-    pub lbf_matrix: DMatrix<i32>
+    pub lbf_matrix: DMatrix<i32>,
 }
 
 #[no_mangle]
@@ -282,7 +286,12 @@ extern "C" fn add_program(p: *mut SynthesisProgram) {
 }
 
 #[no_mangle]
-extern "C" fn set_program_value(p: *mut SynthesisProgram, program_i: usize, index: usize, value: usize) {
+extern "C" fn set_program_value(
+    p: *mut SynthesisProgram,
+    program_i: usize,
+    index: usize,
+    value: usize,
+) {
     let program = unsafe { &mut *p };
     program.programs[program_i][index] = value;
 }

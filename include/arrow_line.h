@@ -8,7 +8,8 @@
 #include <QGraphicsItem>
 #include <QPainter>
 #include "elements/position.h"
-#include "petri_object.h"
+#include "elements/petri_object.h"
+#include "elements/transition.h"
 
 class ArrowLine : public QGraphicsLineItem {
 
@@ -34,6 +35,15 @@ public:
 
     PetriObject* to() {
         return m_to;
+    }
+
+    void disconnect(PetriNet* net) {
+        if (auto pos = dynamic_cast<Position*>(this->from()); pos) {
+            net->remove_connection_p(pos->position(), dynamic_cast<Transition*>(this->to())->transition());
+        }
+        else if (auto transition = dynamic_cast<Transition*>(this->to()); transition) {
+            net->remove_connection_t(transition->transition(), dynamic_cast<Position*>(this->to())->position());
+        }
     }
 
 private:

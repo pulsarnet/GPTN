@@ -14,7 +14,7 @@
 #include "graphics_view_zoom.h"
 #include "elements/position.h"
 #include "arrow_line.h"
-#include "petri_object.h"
+#include "elements/petri_object.h"
 
 class GraphicsView : public QGraphicsView {
 
@@ -28,6 +28,7 @@ public:
         A_Move,
         A_Rotate,
         A_Remove,
+        A_Marker,
         A_Nothing
     };
 

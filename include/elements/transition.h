@@ -5,6 +5,14 @@
 #ifndef FFI_RUST_TRANSITION_H
 #define FFI_RUST_TRANSITION_H
 
+#include <QGraphicsItem>
+#include <QPainter>
+#include <QStyleOptionGraphicsItem>
+#include <QtMath>
+#include <QGraphicsSceneMouseEvent>
+#include "../ffi/net.h"
+#include "petri_object.h"
+
 class Transition : public PetriObject {
 
 public:
@@ -19,7 +27,7 @@ public:
 
     QPointF connectionPos(PetriObject*, bool reverse) override;
 
-    ObjectType objectType() override { return Transition; }
+    ObjectType objectType() override { return PetriObject::Transition; }
 
     QString objectTypeStr() override { return "transition"; }
 
@@ -31,6 +39,8 @@ public:
         return m_transition->index();
     }
 
+    void connectTo(PetriNet* net, PetriObject* other) override;
+
     FFITransition* transition() {
         return m_transition;
     }
@@ -41,13 +51,5 @@ private:
     FFITransition* m_transition = nullptr;
 
 };
-
-#include <QGraphicsItem>
-#include <QPainter>
-#include <QStyleOptionGraphicsItem>
-#include <QtMath>
-#include <QGraphicsSceneMouseEvent>
-#include "../ffi/net.h"
-#include "petri_object.h"
 
 #endif //FFI_RUST_TRANSITION_H

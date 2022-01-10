@@ -4,7 +4,6 @@
 
 #include <fmt/format.h>
 #include "../../include/elements/position.h"
-#include "transition.h"
 #include "../../include/elements/transition.h"
 
 Position::Position(const QPointF& origin, FFIPosition* position, QGraphicsItem *parent) : PetriObject(parent) {
@@ -28,10 +27,15 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 
     painter->drawEllipse(boundingRect().center(), radius, radius);
 
-    auto name = QString::fromStdString(fmt::format("p{}", this->index()));
-    painter->drawText(boundingRect().center() - QPointF(5.0, 5.0), name);
+    auto name = QString::fromStdString(
+            fmt::format("p{}{}",
+                        this->index(),
+                        this->markers() == 0 ? "" : fmt::format("({})",
+                                                                this->markers()))
+            );
+
+    painter->drawText(boundingRect(), Qt::AlignCenter, name);
     painter->restore();
-    //painter->drawText(boundingRect().center(), QTextFormat())
 }
 
 QPointF Position::center() {
@@ -52,10 +56,8 @@ QPointF Position::connectionPos(PetriObject* to, bool reverse) {
     return {xPosy, yPosy};
 }
 
-QPointF getIntersection(qreal dx, qreal dy, qreal cx, qreal cy, qreal width, qreal height) {
-    if (qAbs(dy / dx) < height / width) {
-        return QPointF(cx + (dx > 0 ? width : -width), cy + dy * width / qAbs(dx));
-    }
-    return QPointF(cx + dx * height / qAbs(dy), cy + (dy > 0 ? height : -height));
+void Position::connectTo(PetriNet *net, PetriObject *other) {
+    auto transition = dynamic_cast<class Transition*>(other)->transition();
+    net->connect_p(this->position(), transition);
 }
 

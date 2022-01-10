@@ -52,6 +52,8 @@ public slots:
 
     void removeChecked(bool checked);
 
+    void markerChecked(bool checked);
+
     void newFile(bool trigger);
 
     void tabChanged(int index);
@@ -94,6 +96,7 @@ private:
     QAction* connect_action = nullptr;
     QAction* rotation_action = nullptr;
     QAction* remove_action = nullptr;
+    QAction* marker_action = nullptr;
     QActionGroup* actionGroup = nullptr;
 
     QToolBar* toolBar = nullptr;

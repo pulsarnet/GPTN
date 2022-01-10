@@ -10,7 +10,7 @@
 #include <QStyleOptionGraphicsItem>
 #include <QtMath>
 #include <QGraphicsSceneMouseEvent>
-#include "../ffi/net.h"
+#include "../ffi/methods.h"
 
 class PetriObject : public QObject, public QGraphicsItem {
 
@@ -49,6 +49,8 @@ public:
     virtual QString objectTypeStr() = 0;
 
     virtual bool allowConnection(PetriObject* other) = 0;
+
+    virtual void connectTo(PetriNet* net, PetriObject* other) = 0;
 
     void setColored(bool colored) {
         m_colored = colored;

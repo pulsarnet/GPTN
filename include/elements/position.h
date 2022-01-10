@@ -40,6 +40,24 @@ public:
         return m_position->index();
     }
 
+    void connectTo(PetriNet* net, PetriObject* other) override;
+
+    void add_marker() {
+        m_position->add_marker();
+    }
+
+    void remove_marker() {
+        m_position->remove_marker();
+    }
+
+    unsigned long markers() {
+        return m_position->markers();
+    }
+
+    void setMarkers(unsigned long count) {
+        m_position->set_markers(count);
+    }
+
     FFIPosition* position() {
         return m_position;
     }

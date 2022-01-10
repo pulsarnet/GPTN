@@ -4,7 +4,6 @@
 
 #include <fmt/format.h>
 #include "../../include/elements/position.h"
-#include "transition.h"
 #include "../../include/elements/transition.h"
 
 Transition::Transition(const QPointF& origin, FFITransition* transition, QGraphicsItem *parent) : PetriObject(parent), m_origin(origin) {
@@ -28,12 +27,19 @@ void Transition::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
 
     painter->setPen(Qt::white);
     auto name = QString::fromStdString(fmt::v8::format("t{}", this->index()));
-    painter->drawText(boundingRect().left(), boundingRect().center().y(), name);
+    painter->drawText(boundingRect(), Qt::AlignCenter, name);
     painter->restore();
 }
 
 QPointF Transition::center() {
     return this->scenePos();
+}
+
+QPointF getIntersection(qreal dx, qreal dy, qreal cx, qreal cy, qreal width, qreal height) {
+    if (qAbs(dy / dx) < height / width) {
+        return QPointF(cx + (dx > 0 ? width : -width), cy + dy * width / qAbs(dx));
+    }
+    return QPointF(cx + dx * height / qAbs(dy), cy + (dy > 0 ? height : -height));
 }
 
 QPointF Transition::connectionPos(PetriObject* to, bool reverse) {
@@ -65,4 +71,9 @@ QPointF Transition::connectionPos(PetriObject* to, bool reverse) {
 
 
     return intersection;
+}
+
+void Transition::connectTo(PetriNet *net, PetriObject *other) {
+    auto position = dynamic_cast<class Position*>(other)->position();
+    net->connect_t(this->transition(), position);
 }

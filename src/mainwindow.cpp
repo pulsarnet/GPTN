@@ -13,8 +13,6 @@
 #include <fmt/format.h>
 #include "../include/matrix_model.h"
 #include "../include/synthesis/synthesis_program_item_delegate.h"
-#include "petri_object.h"
-#include "transition.h"
 #include <QTableView>
 #include <QHeaderView>
 
@@ -102,6 +100,13 @@ void MainWindow::removeChecked(bool checked) {
         scene->setAction(checked ? GraphicsView::A_Remove : GraphicsView::A_Nothing);
     }
 }
+
+void MainWindow::markerChecked(bool checked) {
+    if (auto scene = currentScene(); scene) {
+        scene->setAction(checked ? GraphicsView::A_Marker : GraphicsView::A_Nothing);
+    }
+}
+
 
 void MainWindow::configureTab() {
 
@@ -193,6 +198,7 @@ void MainWindow::createToolBar() {
     connect_action = makeAction("Connect", QIcon(":/images/connect.png"), true, actionGroup);
     rotation_action = makeAction("Rotate", QIcon(":/images/rotation.png"), true, actionGroup);
     remove_action = makeAction("Remove", QIcon(":/images/remove.png"), true, actionGroup);
+    marker_action = makeAction("Marker", QIcon(":/images/marker.png"), true, actionGroup);
 
 
     connect(position_action, &QAction::toggled, this, &MainWindow::positionChecked);
@@ -201,6 +207,7 @@ void MainWindow::createToolBar() {
     connect(connect_action, &QAction::toggled, this, &MainWindow::connectChecked);
     connect(rotation_action, &QAction::toggled, this, &MainWindow::rotateChecked);
     connect(remove_action, &QAction::toggled, this, &MainWindow::removeChecked);
+    connect(marker_action, &QAction::toggled, this, &MainWindow::markerChecked);
 
 
     toolBar->addAction(position_action);
@@ -209,6 +216,7 @@ void MainWindow::createToolBar() {
     toolBar->addAction(connect_action);
     toolBar->addAction(rotation_action);
     toolBar->addAction(remove_action);
+    toolBar->addAction(marker_action);
 }
 
 GraphicsView *MainWindow::currentScene() {
@@ -258,6 +266,9 @@ void MainWindow::tabChanged(int index) {
             break;
         case GraphicsView::A_Remove:
             remove_action->toggle();
+            break;
+        case GraphicsView::A_Marker:
+            marker_action->toggle();
             break;
         case GraphicsView::A_Nothing:
             break;
@@ -351,6 +362,8 @@ void MainWindow::slotSplitAction(bool checked) {
 }
 
 
+
+
 void MainWindow::slotSplitChecked(const QModelIndex& index) {
     auto result = index.data(Qt::UserRole);
     auto list = result.toList();
@@ -413,11 +426,16 @@ void MainWindow::addTabFromNet(InnerCommonResult common_result, Tab* current) {
     auto scene = tab->scene();
 
     auto added_objects = std::map<QString, PetriObject*>();
-    for (auto element : net.elements) {
+    for (int i = 0; i < net.elements.size(); i++) {
+        auto element = net.elements[i];
         auto position = points.find(element) != points.end() ? (*points.find(element)).second : nullptr;
         auto point = position ? position->pos() : QPointF(150.0, 150.0);
 
-        if (element.startsWith('p')) added_objects.insert({element, scene->addPosition(element, point)});
+        if (element.startsWith('p')) {
+            auto added_position = PetriObject::castTo<Position>(scene->addPosition(element, point));
+            added_position->setMarkers(net.markers[i]);
+            added_objects.insert({element, added_position});
+        }
         else {
             auto rotation = position ? position->rotation() : 0.;
             auto added = scene->addTransition(element, point);

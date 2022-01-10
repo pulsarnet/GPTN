@@ -22,10 +22,12 @@ extern "C" struct FFIBoxedSlice {
     unsigned long len_elements;
     FFIConnection** connections;
     unsigned long len_connections;
+    unsigned long* markers;
 
     [[nodiscard]] InnerPetriNet into() const {
         QList<QString> r_elements;
         QList<std::tuple<QString, QString>> r_connections;
+        QList<unsigned long> r_markers;
 
         auto cursor = this->elements;
         for (int i = 0; i < len_elements; i++) {
@@ -42,7 +44,13 @@ extern "C" struct FFIBoxedSlice {
             connections_cursor++;
         }
 
-        return InnerPetriNet{ r_elements, r_connections };
+        auto markers_cursor = this->markers;
+        for (int i = 0; i < len_elements; i++) {
+            r_markers.push_back(*markers_cursor);
+            markers_cursor++;
+        }
+
+        return InnerPetriNet{ r_elements, r_connections, r_markers};
     }
 };
 

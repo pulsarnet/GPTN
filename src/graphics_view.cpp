@@ -5,8 +5,6 @@
 #include <QFile>
 #include <QSettings>
 #include "../include/graphics_view.h"
-#include "petri_object.h"
-#include "transition.h"
 
 GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
 
@@ -79,6 +77,7 @@ void GraphicsView::mousePressEvent(QMouseEvent *event) {
                     while (connection_mut.hasNext()) {
                         auto next = connection_mut.next();
                         if (next->from() == petriObject || next->to() == petriObject) {
+                            next->disconnect(m_net);
                             scene->removeItem(next);
                             connection_mut.remove();
                             delete next;
@@ -92,8 +91,12 @@ void GraphicsView::mousePressEvent(QMouseEvent *event) {
                             items_mut.remove();
                         }
                     }
+
+                    m_net->remove_object(petriObject);
                 }
                 else if (auto connection = dynamic_cast<ArrowLine*>(item); connection) {
+                    connection->from()->connectTo(m_net, connection->to());
+                    connection->disconnect(m_net);
                     QMutableListIterator<ArrowLine*> connection_mut(connections);
                     while (connection_mut.hasNext()) {
                         auto next = connection_mut.next();
@@ -154,9 +157,9 @@ void GraphicsView::mouseReleaseEvent(QMouseEvent *event) {
     if (auto item = itemAt(this->mapToScene(event->pos())); item && current_connection) {
         if (current_connection->from()->allowConnection(item))
         {
-            current_connection->from()
             current_connection->setLine(connectObjects(current_connection->from(), item));
             current_connection->setTo(item);
+            current_connection->from()->connectTo(m_net, current_connection->to());
             current_connection = nullptr;
         }
     }
@@ -170,6 +173,15 @@ void GraphicsView::mouseReleaseEvent(QMouseEvent *event) {
             }
         }
         current_connection = nullptr;
+    }
+
+    if (this->action == A_Marker) {
+        if (auto item = itemAt(this->mapToScene(event->pos())); item && item->objectType() == PetriObject::Position) {
+            auto position = PetriObject::castTo<Position>(item);
+            if (event->button() == Qt::LeftButton) position->add_marker();
+            else if (event->button() == Qt::RightButton) position->remove_marker();
+            update();
+        }
     }
 
     QGraphicsView::mouseReleaseEvent(event);
@@ -303,6 +315,7 @@ void GraphicsView::openFile(QFile &file) {
             line_item->setTo(point2);
             scene->addItem(line_item);
             connections.push_back(line_item);
+            point1->connectTo(m_net, point2);
         }
 
         updateConnections();
