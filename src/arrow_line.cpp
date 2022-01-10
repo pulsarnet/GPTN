@@ -3,6 +3,7 @@
 //
 
 #include "../include/arrow_line.h"
+#include "petri_object.h"
 
 QRectF ArrowLine::boundingRect() const {
     auto rect = QGraphicsLineItem::boundingRect();

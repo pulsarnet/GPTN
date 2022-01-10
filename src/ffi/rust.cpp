@@ -1,7 +1,7 @@
 //
 // Created by Николай Муравьев on 09.01.2022.
 //
-#include "../include/rust.h"
+#include "../../include/ffi/rust.h"
 
 InnerCommonResult split_finish(SynthesisProgram *program) {
     auto common = synthesis_end(program);

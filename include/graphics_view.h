@@ -12,8 +12,9 @@
 #include <QScrollBar>
 #include <QTransform>
 #include "graphics_view_zoom.h"
-#include "position.h"
+#include "elements/position.h"
 #include "arrow_line.h"
+#include "petri_object.h"
 
 class GraphicsView : public QGraphicsView {
 
@@ -74,6 +75,10 @@ public:
         return this->connections;
     }
 
+    PetriNet* net() {
+        return m_net;
+    }
+
 protected slots:
 
     void slotSceneChanged(const QList<QRectF>& region);
@@ -97,9 +102,7 @@ private:
     GraphicsViewZoom* zoom = nullptr;
     QPointF m_origin;
 
-    uint64_t lastPositionIndex = 0;
-    uint64_t lastTransitionIndex = 0;
-
+    PetriNet* m_net;
 };
 
 

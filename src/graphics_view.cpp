@@ -5,8 +5,13 @@
 #include <QFile>
 #include <QSettings>
 #include "../include/graphics_view.h"
+#include "petri_object.h"
+#include "transition.h"
 
 GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
+
+    m_net = PetriNet::make();
+
     this->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     this->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
@@ -45,11 +50,11 @@ void GraphicsView::mousePressEvent(QMouseEvent *event) {
     auto mapToScenePos = this->mapToScene(event->pos());
     if (event->button() == Qt::LeftButton) {
         if (action == Action::A_Position) {
-            items.push_back(new Position(mapToScenePos, this->getPositionIndex()));
+            items.push_back(new Position(mapToScenePos, m_net->add_position()));
             scene->addItem(items.back());
         }
         else if (action == Action::A_Transition) {
-            items.push_back(new Transition(mapToScenePos, this->getTransitionIndex()));
+            items.push_back(new Transition(mapToScenePos, m_net->add_transition()));
             scene->addItem(items.back());
         }
         else if (action == Action::A_Rotate) {
@@ -149,6 +154,7 @@ void GraphicsView::mouseReleaseEvent(QMouseEvent *event) {
     if (auto item = itemAt(this->mapToScene(event->pos())); item && current_connection) {
         if (current_connection->from()->allowConnection(item))
         {
+            current_connection->from()
             current_connection->setLine(connectObjects(current_connection->from(), item));
             current_connection->setTo(item);
             current_connection = nullptr;
@@ -231,8 +237,6 @@ void GraphicsView::saveToFile(QFile &file) {
     QVariantHash common_data;
     common_data["items"] = data_list;
     common_data["connections"] = connections_list;
-    common_data["last_position_index"] = QVariant(this->lastPositionIndex);
-    common_data["last_transition_index"] = QVariant(this->lastTransitionIndex);
 
     QVariant data(common_data);
 
@@ -258,12 +262,12 @@ void GraphicsView::openFile(QFile &file) {
             PetriObject* object = nullptr;
             qDebug() << hash["id"].toInt();
             if (hash["type"] == "position") {
-                object = new Position(hash["pos"].toPointF(), hash["id"].toInt());
+                object = new Position(hash["pos"].toPointF(), this->m_net->add_position_with(hash["id"].toInt()));
                 object->setPos(hash["pos"].toPointF());
                 object->setRotation(hash["transition"].toDouble());
             }
             else if (hash["type"] == "transition") {
-                object = new Transition(hash["pos"].toPointF(), hash["id"].toInt());
+                object = new Transition(hash["pos"].toPointF(), this->m_net->add_transition_with(hash["id"].toInt()));
                 object->setRotation(hash["rotation"].toDouble());
             }
 
@@ -304,28 +308,13 @@ void GraphicsView::openFile(QFile &file) {
         updateConnections();
     }
 
-    this->lastPositionIndex = common_data["last_position_index"].toInt();
-    this->lastTransitionIndex = common_data["last_transition_index"].toInt();
-
-}
-
-uint64_t GraphicsView::getPositionIndex() {
-    return ++this->lastPositionIndex;
-}
-
-uint64_t GraphicsView::getTransitionIndex() {
-    return ++this->lastTransitionIndex;
 }
 
 PetriObject *GraphicsView::addPosition(QString &name, QPointF point) {
 
     auto index = name.mid(1).toInt();
 
-    if (this->lastPositionIndex < index) {
-        this->lastPositionIndex = index;
-    }
-
-    auto pos = new Position(point, index);
+    auto pos = new Position(point, m_net->add_position_with(index));
     items.push_back(pos);
     scene->addItem(pos);
 
@@ -335,12 +324,7 @@ PetriObject *GraphicsView::addPosition(QString &name, QPointF point) {
 PetriObject *GraphicsView::addTransition(QString &name, QPointF point) {
     auto index = name.mid(1).toInt();
 
-    if (this->lastTransitionIndex < index) {
-        this->lastTransitionIndex = index;
-    }
-
-
-    auto tran = new Transition(point, index);
+    auto tran = new Transition(point, m_net->add_transition_with(index));
     items.push_back(tran);
     scene->addItem(tran);
 

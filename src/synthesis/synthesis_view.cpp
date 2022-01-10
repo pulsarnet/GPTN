@@ -3,7 +3,7 @@
 //
 
 #include "../../include/synthesis/synthesis_view.h"
-#include "../../include/rust.h"
+#include "../../include/ffi/rust.h"
 #include "../../include/mainwindow.h"
 #include "../../include/synthesis/synthesis_program_item_delegate.h"
 #include <QHeaderView>

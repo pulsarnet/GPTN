@@ -17,7 +17,7 @@ pub struct PetriNet {
     pub elements: Vec<Vertex>,
     pub connections: Vec<Connection>,
     position_index: Rc<RefCell<u64>>,
-    transition_index: u64,
+    transition_index: Rc<RefCell<u64>>,
     is_loop: bool
 }
 
@@ -27,7 +27,7 @@ impl Default for PetriNet {
             elements: vec![],
             connections: vec![],
             position_index: Rc::new(RefCell::new(1)),
-            transition_index: 1,
+            transition_index: Rc::new(RefCell::new(1)),
             is_loop: false
         }
     }
@@ -45,11 +45,23 @@ impl PetriNet {
             .find(|p| (*p).index().eq(&index))
     }
 
+    pub fn remove_position(&mut self, index: u64) {
+        let position = self.get_position(index).cloned().unwrap();
+        self.connections.drain_filter(|c| c.first().eq(&position) || c.second().eq(&position));
+        self.elements.remove(self.elements.iter().position(|e| e.eq(&position)).unwrap());
+    }
+
     pub fn get_transition(&self, index: u64) -> Option<&Vertex> {
         self.elements
             .iter()
             .filter(|p| p.is_transition())
             .find(|p| (*p).index().eq(&index))
+    }
+
+    pub fn remove_transition(&mut self, index: u64) {
+        let transition = self.get_transition(index).cloned().unwrap();
+        self.connections.drain_filter(|c| c.first().eq(&transition) || c.second().eq(&transition));
+        self.elements.remove(self.elements.iter().position(|e| e.eq(&transition)).unwrap());
     }
 
     pub fn add_position(&mut self, index: u64) -> Vertex {
@@ -82,8 +94,8 @@ impl PetriNet {
         }
 
         self.elements.push(Vertex::transition(index));
-        if index >= self.transition_index {
-            self.transition_index = index + 1;
+        if index >= self.get_transition_index() {
+            *(*self.transition_index).borrow_mut() = index + 1;
         }
         self.elements.last().cloned().unwrap()
     }
@@ -131,8 +143,8 @@ impl PetriNet {
         }
 
         self.elements.push(element.clone());
-        if element.index() >= self.transition_index {
-            self.transition_index = element.index() + 1;
+        if element.index() >= self.get_transition_index() {
+            *(*self.transition_index).borrow_mut() = element.index() + 1;
         }
         self.elements.last().cloned().unwrap()
     }
@@ -377,6 +389,22 @@ impl PetriNet {
         ret
     }
 
+    #[inline]
+    pub fn update_transition_index(&self) {
+        *(*self.transition_index).borrow_mut() += 1;
+    }
+
+    #[inline]
+    pub fn get_transition_index(&self) -> u64 {
+        *self.transition_index.borrow_mut()
+    }
+
+    pub fn next_transition_index(&self) -> u64 {
+        let ret = self.get_transition_index();
+        self.update_transition_index();
+        ret
+    }
+
     pub fn normalize(&mut self) {
 
         let positions = self.elements.iter().filter(|p| p.is_position()).count();
@@ -429,7 +457,7 @@ impl PetriNet {
         for loop_element in part.iter() {
             let mut new_element = match loop_element.is_position() {
                 true => loop_element.split(self.get_position_index()),
-                false => loop_element.split(self.transition_index)
+                false => loop_element.split(self.get_transition_index())
             };
 
             if !self.elements.contains(loop_element) {
@@ -507,7 +535,7 @@ impl PetriNet {
         // Если у перехода нет входа или выхода то надо добавить
         let mut new_self = PetriNet::new();
         new_self.position_index = self.position_index.clone();
-        new_self.transition_index = self.transition_index;
+        new_self.transition_index = self.transition_index.clone();
         new_self.elements.extend(self.elements.iter().cloned());
 
         new_self
@@ -520,7 +548,7 @@ impl PetriNet {
 
         let mut part = PetriNet::from(part.clone());
         part.position_index = self.position_index.clone();
-        part.transition_index = self.transition_index;
+        part.transition_index = self.transition_index.clone();
         part
     }
 

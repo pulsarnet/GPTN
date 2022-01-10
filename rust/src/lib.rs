@@ -15,58 +15,12 @@ use nalgebra::DMatrix;
 use core::NamedMatrix;
 
 mod net;
+pub mod ffi;
 
 mod core;
 
 use net::{PetriNet, synthesis, synthesis_program, Vertex};
 
-#[no_mangle]
-pub extern "C" fn make() -> *mut PetriNet {
-    let v = Box::new(PetriNet::new());
-    Box::into_raw(v)
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn del(v: *mut PetriNet) {
-    Box::from_raw(v);
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn count(_: *mut PetriNet) -> std::os::raw::c_ulong {
-    0
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn add_position(v: *mut PetriNet, index: u64) {
-    let v = &mut *v;
-    v.add_position(index);
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn add_transition(v: *mut PetriNet, index: u64) {
-    let v = &mut *v;
-    v.add_transition(index);
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn connect_p(v: *mut PetriNet, position: u64, transition: u64) {
-    let v = &mut *v;
-
-    let position = Vertex::position(position);
-    let transition = Vertex::transition(transition);
-
-    v.connect(position, transition);
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn connect_t(v: *mut PetriNet, transition: u64, position: u64) {
-    let v = &mut *v;
-
-    let position = Vertex::position(position);
-    let transition = Vertex::transition(transition);
-
-    v.connect(transition, position);
-}
 
 #[repr(C)]
 pub struct FFIConnection {
@@ -227,6 +181,7 @@ pub struct CommonResult {
 #[no_mangle]
 pub unsafe extern "C" fn synthesis_start(v: *mut PetriNet) -> *mut SynthesisProgram {
     let v = &mut *v;
+    let mut v = v.clone();
 
     println!("V: {:?}", v);
 

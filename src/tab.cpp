@@ -7,7 +7,7 @@
 
 #include "../include/mainwindow.h"
 #include "../include/synthesis/synthesis_view.h"
-#include "../include/rust.h"
+#include "../include/ffi/rust.h"
 
 Tab::Tab(QWidget *parent) : QWidget(parent) {
 
@@ -53,36 +53,10 @@ void Tab::closeFile() {
 
 void Tab::splitAction() {
 
-    auto petri = make();
-
-    for (auto item : this->view->getItems()) {
-        auto petriItem = dynamic_cast<PetriObject*>(item);
-        if (petriItem->objectType() == PetriObject::Position) {
-            add_position(petri, petriItem->index());
-        }
-        else if (petriItem->objectType() == PetriObject::Transition) {
-            add_transition(petri, petriItem->index());
-        }
-    }
-
-    for (auto conn : this->view->getConnections()) {
-        if (conn->from()->objectType() == PetriObject::Position) {
-            connect_p(petri, conn->from()->index(), conn->to()->index());
-        }
-        else if (conn->from()->objectType() == PetriObject::Transition) {
-            connect_t(petri, conn->from()->index(), conn->to()->index());
-        }
-    }
-
-    this->m_split_actions->clear();
-
-    auto synthesis_program = split_net(petri);
+    auto synthesis_program = split_net(this->view->net());
 
     SynthesisView* view = new SynthesisView(synthesis_program, this);
     view->show();
-
-
-    del(petri);
 
 }
 

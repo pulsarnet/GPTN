@@ -13,6 +13,8 @@
 #include <fmt/format.h>
 #include "../include/matrix_model.h"
 #include "../include/synthesis/synthesis_program_item_delegate.h"
+#include "petri_object.h"
+#include "transition.h"
 #include <QTableView>
 #include <QHeaderView>
 

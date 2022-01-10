@@ -7,6 +7,7 @@
 
 #include <QList>
 #include "arrow_line.h"
+#include "petri_object.h"
 
 class ConnectionList {
 

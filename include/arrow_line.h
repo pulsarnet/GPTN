@@ -7,7 +7,8 @@
 
 #include <QGraphicsItem>
 #include <QPainter>
-#include "position.h"
+#include "elements/position.h"
+#include "petri_object.h"
 
 class ArrowLine : public QGraphicsLineItem {
 

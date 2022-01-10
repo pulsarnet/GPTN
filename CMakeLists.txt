@@ -35,10 +35,10 @@ add_executable(ffi_rust
         main.cpp
         src/mainwindow.cpp
         mainwindow.ui
-        src/mainwindow.cpp src/graphics_view.cpp include/graphics_view.h src/position.cpp include/position.h src/arrow_line.cpp include/arrow_line.h
-        resources/resources.qrc src/graphics_view_zoom.cpp include/graphics_view_zoom.h src/tab.cpp include/tab.h include/rust.h include/split_list_model.h
+        src/mainwindow.cpp src/graphics_view.cpp include/graphics_view.h src/elements/position.cpp include/elements/position.h src/arrow_line.cpp include/arrow_line.h
+        resources/resources.qrc src/graphics_view_zoom.cpp include/graphics_view_zoom.h src/tab.cpp include/tab.h include/ffi/rust.h include/split_list_model.h
         include/petri_net.h src/matrix_model.cpp include/matrix_model.h include/matrix.h include/named_matrix.h include/named_matrix_model.h
-        include/synthesis/synthesis_programs_model.h include/synthesis/synthesis_program.h include/synthesis/synthesis_program_item_delegate.h include/synthesis/synthesis_view.h src/synthesis/synthesis_view.cpp src/rust.cpp include/connection_list.h)
+        include/synthesis/synthesis_programs_model.h include/synthesis/synthesis_program.h include/synthesis/synthesis_program_item_delegate.h include/synthesis/synthesis_view.h src/synthesis/synthesis_view.cpp src/ffi/rust.cpp include/connection_list.h include/ffi/net.h include/elements/transition.h include/elements/petri_object.h src/elements/transition.cpp src/elements/petri_object.cpp)
 
 add_dependencies(ffi_rust rust)
 
