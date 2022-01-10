@@ -23,11 +23,22 @@ public:
     }
 
     void update_lines(PetriObject* object) {
-        auto proceed = std::vector<ArrowLine*>();
-        proceed.reserve(connections.size());
+        auto proceed_in = std::vector<ArrowLine*>();
+        auto proceed_out = std::vector<ArrowLine*>();
+        proceed_in.reserve(connections.size());
+        proceed_out.reserve(connections.size());
 
         for (auto connection: connections) {
-            if (connection->from() == object || connection->to() == object) {
+            if (connection->to() == object) proceed_in.push_back(connection);
+            else if (connection->from() == object) proceed_out.push_back(connection);
+        }
+
+        for (auto connection_in : proceed_in) {
+            for (auto connection_out : proceed_out) {
+
+                if (connection_in->from() == connection_out->to()) {
+
+                }
 
             }
         }

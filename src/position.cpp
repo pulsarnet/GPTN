@@ -32,7 +32,7 @@ void PetriObject::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
     Q_UNUSED(event)
 }
 
-QPointF PetriObject::connectionPos(qreal angle) {
+QPointF PetriObject::connectionPos(PetriObject* to, bool reverse) {
     return {0, 0};
 }
 
@@ -80,11 +80,14 @@ QPointF Position::center() {
     return scenePos();
 }
 
-QPointF Position::connectionPos(qreal angle) {
+QPointF Position::connectionPos(PetriObject* to, bool reverse) {
+
+    qreal angle = this->angleBetween(to->pos());
+
     double x = scenePos().x();
     double y = scenePos().y();
 
-    angle = angle - qDegreesToRadians(90);
+    angle = angle - qDegreesToRadians(reverse ? 100 : 80);
     qreal xPosy = round((x + qCos(angle) * radius));
     qreal yPosy = round((y + qSin(angle) * radius));
 
@@ -120,13 +123,40 @@ QPointF Transition::center() {
     return this->scenePos();
 }
 
-QPointF Transition::connectionPos(qreal angle) {
-    double x = center().x();
-    double y = center().y();
+QPointF getIntersection(qreal dx, qreal dy, qreal cx, qreal cy, qreal width, qreal height) {
+    if (qAbs(dy / dx) < height / width) {
+        return QPointF(cx + (dx > 0 ? width : -width), cy + dy * width / qAbs(dx));
+    }
+    return QPointF(cx + dx * height / qAbs(dy), cy + (dy > 0 ? height : -height));
+}
 
-    angle = angle - qDegreesToRadians(90);
-    qreal xPosy = round((x + qCos(angle) * sceneBoundingRect().width() / 2.));
-    qreal yPosy = round((y + qSin(angle) * sceneBoundingRect().height() / 2.));
+QPointF Transition::connectionPos(PetriObject* to, bool reverse) {
 
-    return {xPosy, yPosy};
+
+    qreal angle = this->angleBetween(to->pos());
+
+    double x = scenePos().x();
+    double y = scenePos().y();
+
+    qreal w = sceneBoundingRect().width() / 2.;
+    qreal h = sceneBoundingRect().height() / 2.;
+
+
+    angle = angle - qDegreesToRadians(reverse ? 100 : 80);
+    qreal xPosy = round((x + qCos(angle) * w));
+    qreal yPosy = round((y + qSin(angle) * h));
+
+    qreal dx = xPosy - center().x();
+    qreal dy = yPosy - center().y();
+
+
+    auto intersection = getIntersection(dx, dy,
+                                        center().x(), center().y(),
+                                        w, h);
+
+    //if (qAbs(dy / dx) < h / w) xPosy = intersection.x();
+    //else yPosy = intersection.y();
+
+
+    return intersection;
 }

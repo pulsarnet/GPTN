@@ -170,11 +170,9 @@ void GraphicsView::mouseReleaseEvent(QMouseEvent *event) {
 }
 
 QLineF GraphicsView::connectObjects(PetriObject *from, PetriObject *to) {
-    qreal from_angle = from->angleBetween(to->center());
-    qreal to_angle = to->angleBetween(from->center());
 
-    QPointF pointFrom = from->connectionPos(from_angle);
-    QPointF pointTo = to->connectionPos(to_angle);
+    QPointF pointFrom = from->connectionPos(to, true);
+    QPointF pointTo = to->connectionPos(from, false);
 
     return {pointFrom, pointTo};
 }

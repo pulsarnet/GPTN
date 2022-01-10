@@ -33,7 +33,7 @@ protected:
 
 public:
 
-    virtual QPointF connectionPos(qreal angle);
+    virtual QPointF connectionPos(PetriObject*, bool reverse);
 
     virtual QPointF center() = 0;
 
@@ -77,7 +77,7 @@ public:
 
     QPointF center() override;
 
-    QPointF connectionPos(qreal angle) override;
+    QPointF connectionPos(PetriObject*, bool reverse) override;
 
     ObjectType objectType() override { return PetriObject::Position; }
 
@@ -105,7 +105,7 @@ public:
 
     QPointF center() override;
 
-    QPointF connectionPos(qreal angle) override;
+    QPointF connectionPos(PetriObject*, bool reverse) override;
 
     ObjectType objectType() override { return PetriObject::Transition; }
 

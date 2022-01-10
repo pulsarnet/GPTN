@@ -948,6 +948,11 @@ pub fn synthesis_program(programs: &SynthesisProgram) -> SynthesisResult {
 
     let mut remove_rows = vec![];
     for (index_a, row_a) in result.row_iter().enumerate() {
+        if result.row(index_a).iter().all(|e| *e == 0) && save_vec.row(index_a).iter().all(|e| *e == 0) {
+            remove_rows.push(index_a);
+            continue;
+        }
+
         for (index_b, row_b) in result.row_iter().enumerate().skip(index_a) {
             if index_a == index_b {
                 continue;
@@ -967,6 +972,11 @@ pub fn synthesis_program(programs: &SynthesisProgram) -> SynthesisResult {
 
     let mut remove_cols = vec![];
     for (index_a, column_a) in result.column_iter().enumerate() {
+        if result.column(index_a).iter().all(|e| *e == 0) && save_vec.column(index_a).iter().all(|e| *e == 0) {
+            remove_cols.push(index_a);
+            continue;
+        }
+
         for (index_b, column_b) in result.column_iter().enumerate().skip(index_a) {
             if index_a == index_b {
                 continue;

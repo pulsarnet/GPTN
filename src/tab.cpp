@@ -78,7 +78,7 @@ void Tab::splitAction() {
 
     auto synthesis_program = split_net(petri);
 
-    SynthesisView* view = new Synthe2sisView(synthesis_program, this);
+    SynthesisView* view = new SynthesisView(synthesis_program, this);
     view->show();
 
 
