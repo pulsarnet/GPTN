@@ -149,13 +149,13 @@ QPointF Transition::connectionPos(PetriObject* to, bool reverse) {
     qreal dx = xPosy - center().x();
     qreal dy = yPosy - center().y();
 
+    qreal cx = center().x();
+    qreal cy = center().y();
+
 
     auto intersection = getIntersection(dx, dy,
-                                        center().x(), center().y(),
+                                        cx, cy,
                                         w, h);
-
-    //if (qAbs(dy / dx) < h / w) xPosy = intersection.x();
-    //else yPosy = intersection.y();
 
 
     return intersection;
