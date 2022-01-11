@@ -12,9 +12,9 @@
 #include <QScrollBar>
 #include <QTransform>
 #include "graphics_view_zoom.h"
-#include "elements/position.h"
-#include "arrow_line.h"
-#include "elements/petri_object.h"
+#include "../elements/position.h"
+#include "../arrow_line.h"
+#include "../elements/petri_object.h"
 
 class GraphicsView : public QGraphicsView {
 

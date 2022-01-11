@@ -15,14 +15,18 @@ Tab::Tab(QWidget *parent) : QWidget(parent) {
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
-    this->view = new GraphicsView(this);
-    this->view->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding));
-    layout->addWidget(this->view);
+    this->view = new GraphicsView;
+    //this->view->setSizePolicy(QSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred));
+    layout->addWidget(this->view, 0, 0, 1, 1);
+    layout->addWidget(this->view, 0, 1, 1, 1);
+    layout->addWidget(this->view, 1, 0, 1, 1);
+    layout->addWidget(this->view, 1, 1, 1, 1);
 
     connect(this->view, &GraphicsView::signalSceneChanged, this, &Tab::slotDocumentChanged);
     connect(this->view, &GraphicsView::signalRemoveItem, this, &Tab::slotRemoveItem);
 
     this->m_split_actions = new SplitListModel();
+    this->setLayout(layout);
 
 }
 

@@ -31,15 +31,44 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt6 COMPONENTS Widgets REQUIRED)
 find_package(fmt)
 
-add_executable(ffi_rust
+set(SRC_FILES
         main.cpp
         src/mainwindow.cpp
-        mainwindow.ui
-        src/mainwindow.cpp src/graphics_view.cpp include/graphics_view.h src/elements/position.cpp include/elements/position.h src/arrow_line.cpp include/arrow_line.h
-        resources/resources.qrc src/graphics_view_zoom.cpp include/graphics_view_zoom.h src/tab.cpp include/tab.h include/ffi/rust.h include/split_list_model.h
-        include/petri_net.h src/matrix_model.cpp include/matrix_model.h include/matrix.h include/named_matrix.h include/named_matrix_model.h
-        include/synthesis/synthesis_programs_model.h include/synthesis/synthesis_program.h include/synthesis/synthesis_program_item_delegate.h include/synthesis/synthesis_view.h src/synthesis/synthesis_view.cpp src/ffi/rust.cpp include/connection_list.h include/ffi/net.h include/elements/transition.h include/elements/petri_object.h src/elements/transition.cpp src/elements/petri_object.cpp src/ffi/net.cpp include/ffi/methods.h src/ffi/transition.cpp src/ffi/position.cpp)
+        src/tab.cpp
+        src/matrix_model.cpp
+        src/arrow_line.cpp
+        src/elements/position.cpp
+        src/elements/transition.cpp
+        src/elements/petri_object.cpp
+        src/synthesis/synthesis_view.cpp
+        src/ffi/net.cpp
+        src/ffi/position.cpp
+        src/ffi/transition.cpp
+        src/ffi/rust.cpp
+        src/view/graphics_view.cpp
+        src/view/graphics_view_zoom.cpp
+        )
 
+set(HEADERS
+        include/mainwindow.h
+        include/tab.h
+        include/matrix_model.h
+        include/arrow_line.h
+        include/elements/position.h
+        include/elements/transition.h
+        include/elements/petri_object.h
+        include/synthesis/synthesis_view.h
+        include/ffi/net.h
+        include/ffi/rust.h
+        include/view/graphics_view.h
+        include/view/graphics_view_zoom.h
+        )
+
+add_executable(ffi_rust
+        ${SRC_FILES}
+        ${HEADERS}
+        mainwindow.ui
+        )
 add_dependencies(ffi_rust rust)
 
 target_link_libraries(ffi_rust PRIVATE

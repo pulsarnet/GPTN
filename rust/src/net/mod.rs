@@ -863,7 +863,7 @@ pub fn synthesis(mut nets: Vec<PetriNet>) -> SynthesisProgram {
     }
 
     println!("D: => {}", d_matrix);
-    println!("PRIMITIVE: => {}", lbf_matrix);
+    println!("PRIMITIVE: => {}", MatrixFormat(&lbf_matrix, &transs, &poss));
     println!("SLAE MATRIX => {:?}", entries);
     println!("SLAE RESULTS => {:?}", result_entries);
 

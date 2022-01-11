@@ -8,7 +8,7 @@
 #include <QWidget>
 #include <QFile>
 #include <QAction>
-#include "graphics_view.h"
+#include "view/graphics_view.h"
 #include "split_list_model.h"
 
 class Tab : public QWidget {

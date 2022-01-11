@@ -18,7 +18,7 @@
 #include <QPushButton>
 #include <QToolButton>
 #include <QLabel>
-#include "graphics_view.h"
+#include "view/graphics_view.h"
 #include "tab.h"
 #include "petri_net.h"
 
