@@ -76,9 +76,7 @@ public:
         return this->connections;
     }
 
-    PetriNet* net() {
-        return m_net;
-    }
+    PetriNet* net();
 
 protected slots:
 
@@ -103,7 +101,6 @@ private:
     GraphicsViewZoom* zoom = nullptr;
     QPointF m_origin;
 
-    PetriNet* m_net;
 };
 
 

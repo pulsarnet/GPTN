@@ -62,12 +62,13 @@ set(HEADERS
         include/ffi/rust.h
         include/view/graphics_view.h
         include/view/graphics_view_zoom.h
-        )
+        include/toolbox/toolbox.h include/toolbox/tool.h)
 
 add_executable(ffi_rust
         ${SRC_FILES}
         ${HEADERS}
         mainwindow.ui
+        resources/resources.qrc
         )
 add_dependencies(ffi_rust rust)
 

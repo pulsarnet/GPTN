@@ -37,6 +37,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
     this->addDockWidget(Qt::RightDockWidgetArea, dock);
     tabChanged(-1);
+
+    this->toolBar->setParent(this->centralWidget());
+    this->toolBar->setVisible(true);
+
 }
 
 void MainWindow::closeTab(int index) {
@@ -188,8 +192,9 @@ void MainWindow::createStatusBar() {
 }
 
 void MainWindow::createToolBar() {
-    toolBar = new QToolBar;
-    this->addToolBar(Qt::LeftToolBarArea, toolBar);
+    toolBar = new ToolBox;
+    toolBar->setVisible(true);
+    toolBar->setButtonSize(QSize(40, 40));
 
     actionGroup = new QActionGroup(toolBar);
 
@@ -211,13 +216,15 @@ void MainWindow::createToolBar() {
     connect(marker_action, &QAction::toggled, this, &MainWindow::markerChecked);
 
 
-    toolBar->addAction(position_action);
-    toolBar->addAction(transition_action);
-    toolBar->addAction(move_action);
-    toolBar->addAction(connect_action);
-    toolBar->addAction(rotation_action);
-    toolBar->addAction(remove_action);
-    toolBar->addAction(marker_action);
+    toolBar->addTool(position_action);
+    toolBar->addTool(marker_action);
+    toolBar->addTool(transition_action);
+    toolBar->addTool(connect_action);
+    toolBar->addTool(remove_action);
+
+    toolBar->addTool(move_action);
+    toolBar->addTool(rotation_action);
+
 }
 
 GraphicsView *MainWindow::currentScene() {
@@ -389,7 +396,7 @@ void MainWindow::slotSplitChecked(const QModelIndex& index) {
     }
 }
 
-void showTable(QAbstractTableModel* model, QString title, int sectionSize) {
+QTableView* getTable(QAbstractTableModel* model, QString title, int sectionSize) {
     QTableView* c_view = new QTableView;
     c_view->setWindowTitle(title);
     QHeaderView* vert = c_view->verticalHeader();
@@ -404,7 +411,8 @@ void showTable(QAbstractTableModel* model, QString title, int sectionSize) {
     c_view->setModel(model);
     c_view->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
     c_view->adjustSize();
-    c_view->show();
+
+    return c_view;
 }
 
 void MainWindow::addTabFromNet(InnerCommonResult common_result, Tab* current) {
@@ -422,9 +430,7 @@ void MainWindow::addTabFromNet(InnerCommonResult common_result, Tab* current) {
         }
     }
 
-    auto tab_index = tabWidget->addTab(new Tab(this), "Результат синтеза");
-    auto tab = dynamic_cast<Tab*>(tabWidget->widget(tab_index));
-    auto scene = tab->scene();
+    auto scene = current->primitive();
 
     auto added_objects = std::map<QString, PetriObject*>();
     for (int i = 0; i < net.elements.size(); i++) {
@@ -452,10 +458,10 @@ void MainWindow::addTabFromNet(InnerCommonResult common_result, Tab* current) {
         scene->newConnection(s1, s2);
     }
 
-    tabWidget->setCurrentIndex(tab_index);
 
     /// C_MATRIX
-    showTable(MatrixModel::loadFromMatrix(common_result.c_matrix), "Тензор преобразования", 25);
+    auto table = getTable(MatrixModel::loadFromMatrix(common_result.c_matrix), "Тензор преобразования", 25);
+
 //    showTable(NamedMatrixModel::loadFromMatrix(common_result.d_input), "D input",35);
 //    showTable(NamedMatrixModel::loadFromMatrix(common_result.d_output), "D output", 35);
 //    showTable(NamedMatrixModel::loadFromMatrix(common_result.lbf_matrix), "Примитивная система", 35);

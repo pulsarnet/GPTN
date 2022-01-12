@@ -5,10 +5,9 @@
 #include <QFile>
 #include <QSettings>
 #include "../../include/view/graphics_view.h"
+#include "../../include/tab.h"
 
 GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
-
-    m_net = PetriNet::make();
 
     this->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     this->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -21,6 +20,7 @@ GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
 
     scene = new QGraphicsScene();
     scene->setItemIndexMethod(QGraphicsScene::NoIndex);
+    scene->setSceneRect(-12500, -12500, 25000, 25000);
     this->setScene(scene);
 
     this->setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
@@ -31,6 +31,7 @@ GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
     setTransformationAnchor(QGraphicsView::NoAnchor);
 
     connect(scene, &QGraphicsScene::changed, this, &GraphicsView::slotSceneChanged);
+
 }
 
 void GraphicsView::setAction(GraphicsView::Action action) {
@@ -48,11 +49,11 @@ void GraphicsView::mousePressEvent(QMouseEvent *event) {
     auto mapToScenePos = this->mapToScene(event->pos());
     if (event->button() == Qt::LeftButton) {
         if (action == Action::A_Position) {
-            items.push_back(new Position(mapToScenePos, m_net->add_position()));
+            items.push_back(new Position(mapToScenePos, net()->add_position()));
             scene->addItem(items.back());
         }
         else if (action == Action::A_Transition) {
-            items.push_back(new Transition(mapToScenePos, m_net->add_transition()));
+            items.push_back(new Transition(mapToScenePos, net()->add_transition()));
             scene->addItem(items.back());
         }
         else if (action == Action::A_Rotate) {
@@ -77,7 +78,7 @@ void GraphicsView::mousePressEvent(QMouseEvent *event) {
                     while (connection_mut.hasNext()) {
                         auto next = connection_mut.next();
                         if (next->from() == petriObject || next->to() == petriObject) {
-                            next->disconnect(m_net);
+                            next->disconnect(net());
                             scene->removeItem(next);
                             connection_mut.remove();
                             delete next;
@@ -92,11 +93,11 @@ void GraphicsView::mousePressEvent(QMouseEvent *event) {
                         }
                     }
 
-                    m_net->remove_object(petriObject);
+                    net()->remove_object(petriObject);
                 }
                 else if (auto connection = dynamic_cast<ArrowLine*>(item); connection) {
-                    connection->from()->connectTo(m_net, connection->to());
-                    connection->disconnect(m_net);
+                    connection->from()->connectTo(net(), connection->to());
+                    connection->disconnect(net());
                     QMutableListIterator<ArrowLine*> connection_mut(connections);
                     while (connection_mut.hasNext()) {
                         auto next = connection_mut.next();
@@ -159,7 +160,7 @@ void GraphicsView::mouseReleaseEvent(QMouseEvent *event) {
         {
             current_connection->setLine(connectObjects(current_connection->from(), item));
             current_connection->setTo(item);
-            current_connection->from()->connectTo(m_net, current_connection->to());
+            current_connection->from()->connectTo(net(), current_connection->to());
             current_connection = nullptr;
         }
     }
@@ -196,7 +197,6 @@ QLineF GraphicsView::connectObjects(PetriObject *from, PetriObject *to) {
 }
 
 void GraphicsView::resizeEvent(QResizeEvent *event) {
-    scene->setSceneRect(0, 0, 65535, 65535);
     QGraphicsView::resizeEvent(event);
 }
 
@@ -274,12 +274,12 @@ void GraphicsView::openFile(QFile &file) {
             PetriObject* object = nullptr;
             qDebug() << hash["id"].toInt();
             if (hash["type"] == "position") {
-                object = new Position(hash["pos"].toPointF(), this->m_net->add_position_with(hash["id"].toInt()));
+                object = new Position(hash["pos"].toPointF(), this->net()->add_position_with(hash["id"].toInt()));
                 object->setPos(hash["pos"].toPointF());
                 object->setRotation(hash["transition"].toDouble());
             }
             else if (hash["type"] == "transition") {
-                object = new Transition(hash["pos"].toPointF(), this->m_net->add_transition_with(hash["id"].toInt()));
+                object = new Transition(hash["pos"].toPointF(), this->net()->add_transition_with(hash["id"].toInt()));
                 object->setRotation(hash["rotation"].toDouble());
             }
 
@@ -315,7 +315,7 @@ void GraphicsView::openFile(QFile &file) {
             line_item->setTo(point2);
             scene->addItem(line_item);
             connections.push_back(line_item);
-            point1->connectTo(m_net, point2);
+            point1->connectTo(net(), point2);
         }
 
         updateConnections();
@@ -327,7 +327,7 @@ PetriObject *GraphicsView::addPosition(QString &name, QPointF point) {
 
     auto index = name.mid(1).toInt();
 
-    auto pos = new Position(point, m_net->add_position_with(index));
+    auto pos = new Position(point, net()->add_position_with(index));
     items.push_back(pos);
     scene->addItem(pos);
 
@@ -337,7 +337,7 @@ PetriObject *GraphicsView::addPosition(QString &name, QPointF point) {
 PetriObject *GraphicsView::addTransition(QString &name, QPointF point) {
     auto index = name.mid(1).toInt();
 
-    auto tran = new Transition(point, m_net->add_transition_with(index));
+    auto tran = new Transition(point, net()->add_transition_with(index));
     items.push_back(tran);
     scene->addItem(tran);
 
@@ -350,7 +350,11 @@ void GraphicsView::newConnection(PetriObject *from, PetriObject *to) {
 
     scene->addItem(conn_line);
 
-    conn_line->from()->connectTo(m_net, conn_line->to());
+    conn_line->from()->connectTo(net(), conn_line->to());
 
     connections.push_back(conn_line);
+}
+
+PetriNet *GraphicsView::net() {
+    return dynamic_cast<Tab*>(parent())->getNetObject();
 }

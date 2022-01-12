@@ -23,7 +23,6 @@ QDockWidget::close-button:hover, QDockWidget::float-button:hover {
 }
 
 QGraphicsView {
-    /* border: none; */
     background-color: #24292E;
 }
 

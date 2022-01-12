@@ -21,6 +21,7 @@
 #include "view/graphics_view.h"
 #include "tab.h"
 #include "petri_net.h"
+#include "toolbox/toolbox.h"
 
 
 class MainWindow : public QMainWindow {
@@ -99,7 +100,7 @@ private:
     QAction* marker_action = nullptr;
     QActionGroup* actionGroup = nullptr;
 
-    QToolBar* toolBar = nullptr;
+    ToolBox* toolBar = nullptr;
 
     QStatusBar* statusBar = nullptr;
     QMenuBar* menuBar = nullptr;

@@ -21,6 +21,10 @@ public:
 
     GraphicsView* scene();
 
+    GraphicsView* primitive() {
+        return primitive_view;
+    }
+
     [[nodiscard]] bool changed() const { return m_changed; }
 
     /*
@@ -40,6 +44,8 @@ public:
 
     SplitListModel* splitActions() { return m_split_actions; }
 
+    PetriNet* getNetObject() { return m_net; }
+
 public slots:
 
     void slotDocumentChanged();
@@ -48,12 +54,16 @@ public slots:
 
 private:
 
-    GraphicsView* view = nullptr;
+    GraphicsView* edit_view = nullptr;
+    GraphicsView* primitive_view = nullptr;
+    GraphicsView* lbf_view = nullptr;
 
     bool m_changed = false;
     QFile m_file;
 
     SplitListModel* m_split_actions;
+
+    PetriNet* m_net;
 
 };
 

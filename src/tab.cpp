@@ -11,19 +11,22 @@
 
 Tab::Tab(QWidget *parent) : QWidget(parent) {
 
+    m_net = PetriNet::make();
+
     QGridLayout* layout = new QGridLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
-    this->view = new GraphicsView;
-    //this->view->setSizePolicy(QSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred));
-    layout->addWidget(this->view, 0, 0, 1, 1);
-    layout->addWidget(this->view, 0, 1, 1, 1);
-    layout->addWidget(this->view, 1, 0, 1, 1);
-    layout->addWidget(this->view, 1, 1, 1, 1);
+    this->edit_view = new GraphicsView(this);
+    this->primitive_view = new GraphicsView(this);
+    this->lbf_view = new GraphicsView(this);
+    //this->edit_view->setSizePolicy(QSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred));
+    layout->addWidget(this->edit_view, 0, 0, 1, 2);
+    layout->addWidget(this->primitive_view, 1, 0, 1, 1);
+    layout->addWidget(this->lbf_view, 1, 1, 1, 1);
 
-    connect(this->view, &GraphicsView::signalSceneChanged, this, &Tab::slotDocumentChanged);
-    connect(this->view, &GraphicsView::signalRemoveItem, this, &Tab::slotRemoveItem);
+    connect(this->edit_view, &GraphicsView::signalSceneChanged, this, &Tab::slotDocumentChanged);
+    connect(this->edit_view, &GraphicsView::signalRemoveItem, this, &Tab::slotRemoveItem);
 
     this->m_split_actions = new SplitListModel();
     this->setLayout(layout);
@@ -31,7 +34,7 @@ Tab::Tab(QWidget *parent) : QWidget(parent) {
 }
 
 GraphicsView *Tab::scene() {
-    return this->view;
+    return this->edit_view;
 }
 
 void Tab::slotDocumentChanged() {
@@ -57,7 +60,7 @@ void Tab::closeFile() {
 
 void Tab::splitAction() {
 
-    auto synthesis_program = split_net(this->view->net());
+    auto synthesis_program = split_net(this->edit_view->net());
 
     SynthesisView* view = new SynthesisView(synthesis_program, this);
     view->show();
