@@ -12,6 +12,7 @@
 #include <QDir>
 #include <fmt/format.h>
 #include "../include/matrix_model.h"
+#include "../include/named_matrix_model.h"
 #include "../include/synthesis/synthesis_program_item_delegate.h"
 #include <QTableView>
 #include <QHeaderView>
@@ -430,7 +431,7 @@ void MainWindow::addTabFromNet(InnerCommonResult common_result, Tab* current) {
         }
     }
 
-    auto scene = current->primitive();
+    auto scene = current->lbf();
 
     auto added_objects = std::map<QString, PetriObject*>();
     for (int i = 0; i < net.elements.size(); i++) {
@@ -462,6 +463,51 @@ void MainWindow::addTabFromNet(InnerCommonResult common_result, Tab* current) {
     /// C_MATRIX
     auto table = getTable(MatrixModel::loadFromMatrix(common_result.c_matrix), "Тензор преобразования", 25);
 
+    scene = current->primitive();
+    auto primitive_matrix = common_result.lbf_matrix;
+    auto transitions_count = primitive_matrix.cols.count();
+    int tran_rows = round((double)transitions_count / 3.);
+    int tran_cols = round((double)transitions_count / (double)tran_rows);
+
+    qDebug() << tran_rows << tran_cols;
+
+    int start_x = 0;
+    int start_y = 0;
+    int offset_x = 120;
+    int offset_y = 120;
+
+    for (int i = 0; i < tran_rows; i++) {
+        for (int j = 0; j < tran_cols; j++) {
+
+            auto transition = i * tran_cols + j;
+
+            if (transition >= primitive_matrix.cols.count()) break;
+
+            PetriObject *first, *second;
+
+            for (int p = 0; p < primitive_matrix.rows.count(); p++) {
+                auto tmp = primitive_matrix(p, transition);
+                if (tmp < 0) {
+                    first = scene->addPosition(primitive_matrix.rows[p], QPoint(start_x, start_y));
+                }
+                else if (tmp > 0) {
+                    second = scene->addPosition(primitive_matrix.rows[p], QPoint(start_x + offset_x * 2, start_y));
+                }
+            }
+
+            auto center =
+                    scene->addTransition(primitive_matrix.cols[transition], QPoint(start_x + offset_x, start_y));
+
+            scene->newConnection(first, center);
+            scene->newConnection(center, second);
+
+            start_x += offset_x * 3 + 20;
+
+        }
+
+        start_x = 0;
+        start_y += offset_y;
+    }
 //    showTable(NamedMatrixModel::loadFromMatrix(common_result.d_input), "D input",35);
 //    showTable(NamedMatrixModel::loadFromMatrix(common_result.d_output), "D output", 35);
 //    showTable(NamedMatrixModel::loadFromMatrix(common_result.lbf_matrix), "Примитивная система", 35);

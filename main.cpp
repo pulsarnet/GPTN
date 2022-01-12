@@ -41,8 +41,7 @@ int main(int argc, char **argv) {
 //    )");
 
     MainWindow window(nullptr);
-    window.setMinimumWidth(800);
-    window.setMinimumHeight(600);
+    window.setWindowState(Qt::WindowMaximized);
     window.show();
 
     return app.exec();

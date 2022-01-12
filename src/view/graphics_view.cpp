@@ -12,9 +12,6 @@ GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
     this->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     this->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    this->setMinimumHeight(100);
-    this->setMinimumWidth(100);
-
     this->setViewportUpdateMode(QGraphicsView::BoundingRectViewportUpdate);
     this->setWindowFlag(Qt::BypassGraphicsProxyWidget);
 
@@ -137,8 +134,11 @@ void GraphicsView::mouseMoveEvent(QMouseEvent *event) {
         translate(translation.x(), translation.y());
 
         m_origin = event->pos();
+        emit viewportPositionChanged(mapToScene(m_origin.toPoint()));
     }
     else updateConnections();
+
+    emit mouseMoved(mapToScene(event->pos()));
 
     if (action == Action::A_Move) QGraphicsView::mouseMoveEvent(event);
 }
@@ -357,4 +357,13 @@ void GraphicsView::newConnection(PetriObject *from, PetriObject *to) {
 
 PetriNet *GraphicsView::net() {
     return dynamic_cast<Tab*>(parent())->getNetObject();
+}
+
+void GraphicsView::paintEvent(QPaintEvent *event) {
+    QGraphicsView::paintEvent(event);
+
+    QPainter painter(viewport());
+    painter.setPen(Qt::white);
+    painter.setFont(QFont());
+    painter.drawText(rect().x() / 2., rect().y() / 2., rect().width(), 40, Qt::AlignCenter, this->windowTitle());
 }

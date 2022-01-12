@@ -7,7 +7,8 @@ InnerCommonResult split_finish(SynthesisProgram *program) {
     auto common = synthesis_end(program);
     return InnerCommonResult {
             common->petri_net->into(),
-            common->c_matrix->into()
+            common->c_matrix->into(),
+            common->lbf_matrix->into()
     };
 }
 

@@ -47,7 +47,6 @@ public:
     }
 
     void resizeEvent(QResizeEvent *event) override {
-        qDebug() << event;
         QWidget::resizeEvent(event);
     }
 

@@ -18,8 +18,14 @@ Tab::Tab(QWidget *parent) : QWidget(parent) {
     layout->setSpacing(0);
 
     this->edit_view = new GraphicsView(this);
+    this->edit_view->setWindowTitle("Main view");
+
     this->primitive_view = new GraphicsView(this);
+    this->primitive_view->setWindowTitle("Primitive View");
+
     this->lbf_view = new GraphicsView(this);
+    this->lbf_view->setWindowTitle("Logical Base Fragments View");
+
     //this->edit_view->setSizePolicy(QSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred));
     layout->addWidget(this->edit_view, 0, 0, 1, 2);
     layout->addWidget(this->primitive_view, 1, 0, 1, 1);

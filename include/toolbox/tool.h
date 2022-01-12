@@ -37,8 +37,6 @@ public:
         else if (opts.state & QStyle::StateFlag::State_MouseOver) painter.setBackground(QBrush(hover));
         else painter.setBackground(QBrush(back));
 
-        qDebug() << opts.state;
-
         QPainterPath path;
         path.addRoundedRect(rect(), 5, 5);
         painter.fillPath(path, painter.background());

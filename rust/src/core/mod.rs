@@ -134,4 +134,16 @@ impl NamedMatrix {
     ) -> Self {
         NamedMatrix { rows, cols, matrix }
     }
+
+    pub fn new_from(
+        pos: Vec<Vertex>,
+        trans: Vec<Vertex>,
+        matrix: DMatrix<i32>,
+    ) -> Self {
+        NamedMatrix::new(
+            pos.into_iter().enumerate().map(|a| (a.1, a.0)).collect(),
+            trans.into_iter().enumerate().map(|a| (a.1, a.0)).collect(),
+            matrix
+        )
+    }
 }

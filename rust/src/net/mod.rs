@@ -11,6 +11,7 @@ use std::cmp::{max, min_by};
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 use {SynthesisProgram, SynthesisResult};
+use NamedMatrix;
 
 #[derive(Debug)]
 pub struct PetriNet {
@@ -1186,6 +1187,7 @@ pub fn synthesis_program(programs: &SynthesisProgram) -> SynthesisResult {
     SynthesisResult {
         result_net: new_net,
         c_matrix,
+        lbf_matrix: NamedMatrix::new_from(programs.positions.clone(), programs.transitions.clone(), programs.lbf_matrix.clone())
     }
 }
 

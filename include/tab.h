@@ -25,6 +25,10 @@ public:
         return primitive_view;
     }
 
+    GraphicsView* lbf() {
+        return lbf_view;
+    }
+
     [[nodiscard]] bool changed() const { return m_changed; }
 
     /*

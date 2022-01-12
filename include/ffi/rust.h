@@ -113,6 +113,7 @@ extern "C" struct FFINamedMatrix {
 extern "C" struct CommonResult {
     FFIBoxedSlice* petri_net;
     FFIMatrix* c_matrix;
+    FFINamedMatrix* lbf_matrix;
 };
 
 extern "C" SynthesisProgram* synthesis_start(PetriNet*);

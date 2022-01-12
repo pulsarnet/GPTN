@@ -72,7 +72,6 @@ public:
     }
 
 
-
 private:
 
     NamedMatrix m_matrix = NamedMatrix{};

@@ -185,6 +185,7 @@ impl FFINamedMatrix {
 pub struct CommonResult {
     petri_net: *mut FFIBoxedSlice,
     c_matrix: *mut FFIMatrix,
+    lbf_matrix: *mut FFINamedMatrix
 }
 
 #[no_mangle]
@@ -226,10 +227,12 @@ pub unsafe extern "C" fn synthesis_end(v: *mut SynthesisProgram) -> *mut CommonR
 
     let petri_net = Box::new(FFIBoxedSlice::from_net(result.result_net));
     let c_matrix = Box::new(FFIMatrix::from_matrix(result.c_matrix));
+    let lbf_matrix = Box::new(FFINamedMatrix::from_matrix(result.lbf_matrix));
 
     Box::into_raw(Box::new(CommonResult {
         petri_net: Box::into_raw(petri_net),
         c_matrix: Box::into_raw(c_matrix),
+        lbf_matrix: Box::into_raw(lbf_matrix)
     }))
 }
 
@@ -248,6 +251,7 @@ pub unsafe extern "C" fn synthesis_end(v: *mut SynthesisProgram) -> *mut CommonR
 pub struct SynthesisResult {
     pub result_net: PetriNet,
     pub c_matrix: DMatrix<i32>,
+    pub lbf_matrix: NamedMatrix
 }
 
 pub struct SynthesisProgram {

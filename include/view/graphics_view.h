@@ -68,6 +68,8 @@ public:
 
     uint64_t getTransitionIndex();
 
+    void paintEvent(QPaintEvent *event) override;
+
     [[nodiscard]] const QList<QGraphicsItem*>& getItems() const {
         return this->items;
     }
@@ -87,6 +89,10 @@ signals:
     void signalSceneChanged();
 
     void signalRemoveItem();
+
+    void viewportPositionChanged(QPointF);
+
+    void mouseMoved(QPointF);
 
 private:
 
