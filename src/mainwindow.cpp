@@ -467,8 +467,8 @@ void MainWindow::addTabFromNet(InnerCommonResult common_result, Tab* current) {
     scene->clear();
     auto primitive_matrix = common_result.lbf_matrix;
     auto transitions_count = primitive_matrix.cols.count();
-    int tran_rows = round((double)transitions_count / 3.);
-    int tran_cols = round((double)transitions_count / (double)tran_rows);
+    int tran_rows = ceil((double)transitions_count / 3.);
+    int tran_cols = 3;
 
     qDebug() << tran_rows << tran_cols;
 
