@@ -48,8 +48,6 @@ public:
 
     SplitListModel* splitActions() { return m_split_actions; }
 
-    PetriNet* getNetObject() { return m_net; }
-
 public slots:
 
     void slotDocumentChanged();
@@ -66,8 +64,6 @@ private:
     QFile m_file;
 
     SplitListModel* m_split_actions;
-
-    PetriNet* m_net;
 
 };
 

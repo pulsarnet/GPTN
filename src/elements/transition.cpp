@@ -2,7 +2,6 @@
 // Created by Николай Муравьев on 10.01.2022.
 //
 
-#include <fmt/format.h>
 #include "../../include/elements/position.h"
 #include "../../include/elements/transition.h"
 
@@ -26,7 +25,7 @@ void Transition::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
     painter->drawRect(boundingRect());
 
     painter->setPen(Qt::white);
-    auto name = QString::fromStdString(fmt::v8::format("t{}", this->index()));
+    auto name = QString("t%1").arg(this->index());
     painter->drawText(boundingRect(), Qt::AlignCenter, name);
     painter->restore();
 }

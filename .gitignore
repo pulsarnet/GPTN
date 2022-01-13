@@ -2,3 +2,4 @@ rust/target
 .git
 cmake-build-*
 .idea
+lib

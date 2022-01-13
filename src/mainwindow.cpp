@@ -10,7 +10,6 @@
 #include <QGraphicsDropShadowEffect>
 #include <QDockWidget>
 #include <QDir>
-#include <fmt/format.h>
 #include "../include/matrix_model.h"
 #include "../include/named_matrix_model.h"
 #include "../include/synthesis/synthesis_program_item_delegate.h"
@@ -424,14 +423,15 @@ void MainWindow::addTabFromNet(InnerCommonResult common_result, Tab* current) {
     auto points = std::map<QString, PetriObject*>();
     for (auto item : items) {
         if (auto position = dynamic_cast<Position*>(item); position) {
-            points.insert({QString::fromStdString(fmt::format("p{}", position->index())), position});
+            points.insert({QString("p%1").arg(position->index()), position});
         }
         else if (auto transition = dynamic_cast<Transition*>(item); transition) {
-            points.insert({QString::fromStdString(fmt::format("t{}", transition->index())), transition});
+            points.insert({QString("t%1").arg(transition->index()), transition});
         }
     }
 
     auto scene = current->lbf();
+    scene->clear();
 
     auto added_objects = std::map<QString, PetriObject*>();
     for (int i = 0; i < net.elements.size(); i++) {
@@ -464,6 +464,7 @@ void MainWindow::addTabFromNet(InnerCommonResult common_result, Tab* current) {
     auto table = getTable(MatrixModel::loadFromMatrix(common_result.c_matrix), "Тензор преобразования", 25);
 
     scene = current->primitive();
+    scene->clear();
     auto primitive_matrix = common_result.lbf_matrix;
     auto transitions_count = primitive_matrix.cols.count();
     int tran_rows = round((double)transitions_count / 3.);

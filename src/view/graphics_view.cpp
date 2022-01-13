@@ -9,6 +9,8 @@
 
 GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
 
+    m_net = make();
+
     this->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     this->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
@@ -356,7 +358,7 @@ void GraphicsView::newConnection(PetriObject *from, PetriObject *to) {
 }
 
 PetriNet *GraphicsView::net() {
-    return dynamic_cast<Tab*>(parent())->getNetObject();
+    return m_net;
 }
 
 void GraphicsView::paintEvent(QPaintEvent *event) {

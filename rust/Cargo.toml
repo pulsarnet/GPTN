@@ -3,8 +3,13 @@ name = "hello_world" # the name of the package
 version = "0.1.0"    # the current version, obeying semver
 authors = ["Alice <a@example.com>", "Bob <b@example.com>"]
 
+build = "build.rs"
+
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["staticlib"]
+
+[build-dependencies]
+cc = "1.0.72"
 
 [dependencies]
 nalgebra = "0.30.0"
@@ -13,3 +18,4 @@ sparse21 = "0.2.1"
 ndarray-linalg = "0.14.1"
 ndarray = "0.15.4"
 rand = "0.8.4"
+

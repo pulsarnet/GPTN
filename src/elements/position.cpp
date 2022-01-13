@@ -2,7 +2,6 @@
 // Created by nmuravev on 12/13/2021.
 //
 
-#include <fmt/format.h>
 #include "../../include/elements/position.h"
 #include "../../include/elements/transition.h"
 
@@ -27,12 +26,8 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 
     painter->drawEllipse(boundingRect().center(), radius, radius);
 
-    auto name = QString::fromStdString(
-            fmt::format("p{}{}",
-                        this->index(),
-                        this->markers() == 0 ? "" : fmt::format("({})",
-                                                                this->markers()))
-            );
+    auto name = QString("p%1%2").arg(this->index()).arg(this->markers() == 0 ? "" : QString("(%1)").arg(
+                                                                this->markers()));
 
     painter->drawText(boundingRect(), Qt::AlignCenter, name);
     painter->restore();

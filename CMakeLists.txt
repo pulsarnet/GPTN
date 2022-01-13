@@ -5,12 +5,11 @@ include(ExternalProject)
 set(CMAKE_CXX_STANDARD 20)
 
 if(WIN32)
-    set(CMAKE_PREFIX_PATH "C:\\Qt\\6.2.2\\msvc2019_64\\lib\\cmake")
+    set(CMAKE_PREFIX_PATH "C:/Qt/6.2.2/msvc2019_64/lib/cmake")
 else()
     set(CMAKE_PREFIX_PATH "/Users/nikolajmuravev/Qt/6.2.1/macos/lib/cmake")
+    add_compile_definitions(__cpp_lib_format=201907L)
 endif()
-
-add_compile_definitions(__cpp_lib_format=201907L)
 
 ExternalProject_Add(
         rust
@@ -29,7 +28,6 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 COMPONENTS Widgets REQUIRED)
-find_package(fmt)
 
 set(SRC_FILES
         main.cpp
@@ -64,15 +62,17 @@ set(HEADERS
         include/view/graphics_view_zoom.h
         include/toolbox/toolbox.h include/toolbox/tool.h)
 
+
 add_executable(ffi_rust
         ${SRC_FILES}
         ${HEADERS}
         mainwindow.ui
         resources/resources.qrc
         )
+
 add_dependencies(ffi_rust rust)
 
 target_link_libraries(ffi_rust PRIVATE
-        debug "${CMAKE_SOURCE_DIR}/rust/target/debug/libhello_world.dylib" Qt6::Widgets fmt::fmt
-        optimized "${CMAKE_SOURCE_DIR}/rust/target/release/libhello_world.dylib" Qt6::Widgets fmt::fmt
+        debug "${CMAKE_SOURCE_DIR}/lib/liblapack.lib" "${CMAKE_SOURCE_DIR}/lib/libblas.lib" "${CMAKE_SOURCE_DIR}/lib/liblapacke.lib" "${CMAKE_SOURCE_DIR}/rust/target/debug/hello_world.lib" Qt6::Widgets
+        optimized "${CMAKE_SOURCE_DIR}/lib/liblapack.lib" "${CMAKE_SOURCE_DIR}/lib/libblas.lib" "${CMAKE_SOURCE_DIR}/lib/liblapacke.lib" "${CMAKE_SOURCE_DIR}/rust/target/release/hello_world.lib" Qt6::Widgets
         )

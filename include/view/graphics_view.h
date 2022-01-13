@@ -70,6 +70,14 @@ public:
 
     void paintEvent(QPaintEvent *event) override;
 
+    void clear() {
+        this->scene->clear();
+        this->items.clear();
+        this->connections.clear();
+        current_connection = nullptr;
+        update();
+    }
+
     [[nodiscard]] const QList<QGraphicsItem*>& getItems() const {
         return this->items;
     }
@@ -106,6 +114,8 @@ private:
 
     GraphicsViewZoom* zoom = nullptr;
     QPointF m_origin;
+
+    PetriNet* m_net;
 
 };
 
