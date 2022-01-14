@@ -22,6 +22,7 @@
 #include "tab.h"
 #include "petri_net.h"
 #include "toolbox/toolbox.h"
+#include "view/graphics_scene.h"
 
 
 class MainWindow : public QMainWindow {
@@ -87,7 +88,9 @@ private:
 
     void createToolBar();
 
-    GraphicsView* currentScene();
+    GraphicScene* currentScene() {
+        return qobject_cast<Tab*>(tabWidget->currentWidget())->scene();
+    }
 
 private:
 

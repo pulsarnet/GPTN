@@ -10,16 +10,21 @@
 #include <QAction>
 #include "view/graphics_view.h"
 #include "split_list_model.h"
+#include "view/graphics_scene.h"
 
 class Tab : public QWidget {
 
     Q_OBJECT
 
+    void setFileName(QString filename);
+
 public:
 
     explicit Tab(QWidget* parent = nullptr);
 
-    GraphicsView* scene();
+    GraphicScene* scene() {
+        return qobject_cast<GraphicScene*>(edit_view->scene());
+    }
 
     GraphicsView* primitive() {
         return primitive_view;
@@ -29,8 +34,6 @@ public:
         return lbf_view;
     }
 
-    [[nodiscard]] bool changed() const { return m_changed; }
-
     /*
      * Mark document changed
      *
@@ -38,32 +41,32 @@ public:
      */
     void setChanged(bool changed);
 
-    bool setFile(const QString&);
-
-    QFile& file();
-
-    void closeFile();
-
     void splitAction();
 
-    SplitListModel* splitActions() { return m_split_actions; }
+    void saveToFile();
+    void loadFromFile();
 
 public slots:
 
-    void slotDocumentChanged();
-
-    void slotRemoveItem();
+    void slotDocumentChanged() {}
 
 private:
 
-    GraphicsView* edit_view = nullptr;
+    QVariant toData();
+    void fromData(QVariant data);
+
+
+private:
+
+    QGraphicsView* edit_view = nullptr;
     GraphicsView* primitive_view = nullptr;
     GraphicsView* lbf_view = nullptr;
 
-    bool m_changed = false;
-    QFile m_file;
-
     SplitListModel* m_split_actions;
+
+    PetriNet* m_net;
+
+    QString m_filename;
 
 };
 

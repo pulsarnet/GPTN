@@ -14,6 +14,8 @@
 
 class PetriObject : public QObject, public QGraphicsItem {
 
+    Q_OBJECT
+
 public:
 
     enum ObjectType {

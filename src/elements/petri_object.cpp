@@ -43,7 +43,7 @@ qreal PetriObject::angleBetween(const QPointF &to) {
     qreal deltaY = to.y() - y;
 
     qreal rotation = -atan2(deltaX, deltaY);
-    rotation = qDegreesToRadians(qRadiansToDegrees(rotation) + 180);
+    rotation = qDegreesToRadians(qRadiansToDegrees(rotation) + 180.0);
 
     return rotation;
 }

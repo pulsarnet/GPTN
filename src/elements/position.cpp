@@ -11,10 +11,9 @@ Position::Position(const QPointF& origin, FFIPosition* position, QGraphicsItem *
 }
 
 QRectF Position::boundingRect() const {
-    qreal penWidth = 1;
-    qreal diameter = 2 * radius;
-    return {-radius - penWidth / 2, -radius - penWidth / 2,
-            diameter + penWidth, diameter + penWidth};
+    qreal diameter = 2. * radius;
+    return {-radius, -radius,
+            diameter, diameter};
 }
 
 void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
@@ -22,9 +21,10 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     Q_UNUSED(widget)
 
     painter->save();
-    if (colored()) painter->setPen(Qt::red);
+    qreal penWidth = 2;
+    painter->setPen(QPen(painter->pen().color(), penWidth));
 
-    painter->drawEllipse(boundingRect().center(), radius, radius);
+    painter->drawEllipse(boundingRect().center(), radius - penWidth / 2., radius - penWidth / 2.);
 
     auto name = QString("p%1%2").arg(this->index()).arg(this->markers() == 0 ? "" : QString("(%1)").arg(
                                                                 this->markers()));
@@ -39,14 +39,14 @@ QPointF Position::center() {
 
 QPointF Position::connectionPos(PetriObject* to, bool reverse) {
 
-    qreal angle = this->angleBetween(to->pos());
+    qreal angle = this->angleBetween(to->scenePos());
 
-    double x = scenePos().x();
-    double y = scenePos().y();
+    qreal x = scenePos().x();
+    qreal y = scenePos().y();
 
-    angle = angle - qDegreesToRadians(reverse ? 100 : 80);
-    qreal xPosy = round((x + qCos(angle) * radius));
-    qreal yPosy = round((y + qSin(angle) * radius));
+    angle = angle - qDegreesToRadians(90);
+    qreal xPosy = (x + qCos(angle) * radius);
+    qreal yPosy = (y + qSin(angle) * radius);
 
     return {xPosy, yPosy};
 }

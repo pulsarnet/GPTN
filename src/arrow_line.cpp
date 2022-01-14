@@ -3,7 +3,6 @@
 //
 
 #include "../include/arrow_line.h"
-#include "../include/elements/petri_object.h"
 
 QRectF ArrowLine::boundingRect() const {
     auto rect = QGraphicsLineItem::boundingRect();
@@ -17,27 +16,31 @@ QRectF ArrowLine::boundingRect() const {
 void ArrowLine::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     qreal arrowSize = 10;
     painter->save();
-
-    if (this->m_to && this->m_from->colored() && this->m_to->colored()) {
-        painter->setPen(Qt::red);
-        painter->setBrush(Qt::darkRed);
-    }
-    else {
-        painter->setBrush(Qt::black);
-    }
+    painter->setBrush(Qt::black);
 
     QLineF line(this->line().p2(), this->line().p1());
 
     double angle = std::atan2(-line.dy(), line.dx());
-    QPointF arrowP1 = line.p1() + QPointF(sin(angle + M_PI / 3) * arrowSize,
-                                          cos(angle + M_PI / 3) * arrowSize);
-    QPointF arrowP2 = line.p1() + QPointF(sin(angle + M_PI - M_PI / 3) * arrowSize,
-                                          cos(angle + M_PI - M_PI / 3) * arrowSize);
+    QPointF arrowP1 = line.p1() + QPointF(sin(angle + M_PI / 3.) * arrowSize,
+                                          cos(angle + M_PI / 3.) * arrowSize);
+    QPointF arrowP2 = line.p1() + QPointF(sin(angle + M_PI - M_PI / 3.) * arrowSize,
+                                          cos(angle + M_PI - M_PI / 3.) * arrowSize);
+
+    QPointF arrowLineCenter = QLineF(arrowP1, arrowP2).center();
+    QPointF endPoint = line.p1();
+    endPoint.setX(arrowLineCenter.x());
+    endPoint.setY(arrowLineCenter.y());
 
     QPolygonF arrowHead;
     arrowHead.clear();
     arrowHead << line.p1() << arrowP1 << arrowP2;
-    painter->drawLine(line);
+
+    painter->save();
+    painter->setPen(QPen(painter->pen().color(), LINE_WIDTH));
+    painter->drawLine(QLineF(endPoint, line.p2()));
+    painter->restore();
+
+    painter->setPen(Qt::NoPen);
     painter->drawPolygon(arrowHead);
     painter->restore();
 }

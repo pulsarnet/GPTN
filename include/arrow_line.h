@@ -5,6 +5,8 @@
 #ifndef FFI_RUST_ARROW_LINE_H
 #define FFI_RUST_ARROW_LINE_H
 
+#define LINE_WIDTH 2
+
 #include <QGraphicsItem>
 #include <QPainter>
 #include "elements/position.h"

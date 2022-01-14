@@ -45,7 +45,7 @@ set(SRC_FILES
         src/ffi/rust.cpp
         src/view/graphics_view.cpp
         src/view/graphics_view_zoom.cpp
-        )
+        src/view/graphics_scene.cpp)
 
 set(HEADERS
         include/mainwindow.h
@@ -60,7 +60,7 @@ set(HEADERS
         include/ffi/rust.h
         include/view/graphics_view.h
         include/view/graphics_view_zoom.h
-        include/toolbox/toolbox.h include/toolbox/tool.h)
+        include/toolbox/toolbox.h include/toolbox/tool.h include/view/graphics_scene.h)
 
 
 add_executable(ffi_rust
@@ -72,7 +72,8 @@ add_executable(ffi_rust
 
 add_dependencies(ffi_rust rust)
 
+
 target_link_libraries(ffi_rust PRIVATE
-        debug "${CMAKE_SOURCE_DIR}/lib/liblapack.lib" "${CMAKE_SOURCE_DIR}/lib/libblas.lib" "${CMAKE_SOURCE_DIR}/lib/liblapacke.lib" "${CMAKE_SOURCE_DIR}/rust/target/debug/hello_world.lib" Qt6::Widgets
-        optimized "${CMAKE_SOURCE_DIR}/lib/liblapack.lib" "${CMAKE_SOURCE_DIR}/lib/libblas.lib" "${CMAKE_SOURCE_DIR}/lib/liblapacke.lib" "${CMAKE_SOURCE_DIR}/rust/target/release/hello_world.lib" Qt6::Widgets
+        debug "${CMAKE_SOURCE_DIR}/rust/target/debug/libhello_world.a" Qt6::Widgets lapack
+        optimized "${CMAKE_SOURCE_DIR}/rust/target/release/libhello_world.a" Qt6::Widgets lapack
         )
