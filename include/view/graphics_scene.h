@@ -38,6 +38,8 @@ public:
     void fromVariant(const QVariant&);
 
     void removeAll();
+    PetriObject* netItemAt(const QPointF& pos);
+
     Position* addPosition(const QString& name, const QPointF& point);
     Position* addPosition(int index, const QPointF& point);
     Transition* addTransition(const QString& name, const QPointF& point);
@@ -50,6 +52,9 @@ public slots:
 
     void setMode(GraphicScene::Mode mode);
     void slotSelectionChanged();
+
+    void slotHorizontalAlignment(bool triggered);
+    void slotVerticalAlignment(bool triggered);
 
 signals:
     void itemInserted(QGraphicsItem* item);
@@ -69,13 +74,11 @@ protected:
     void removeObject(QGraphicsSceneMouseEvent *event);
 
     void removeConnectionsAssociatedWith(PetriObject*);
-    void updateConnections();
+    void updateConnections(bool onlySelected = false);
 
     void connectionStart(QGraphicsSceneMouseEvent *);
     void connectionCommit(QGraphicsSceneMouseEvent *event);
     void connectionRollback(QGraphicsSceneMouseEvent* event);
-
-    PetriObject* netItemAt(const QPointF& pos);
 
 private:
 

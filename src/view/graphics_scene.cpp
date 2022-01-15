@@ -3,6 +3,7 @@
 //
 
 #include "../../include/view/graphics_scene.h"
+#include <QMenu>
 
 GraphicScene::GraphicScene(QObject *parent) : QGraphicsScene(parent) {
     m_mod = Mode::A_Nothing;
@@ -33,36 +34,34 @@ void GraphicScene::setAllowMods(Modes mods) {
 
 void GraphicScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
 
-    switch (m_mod) {
-        case A_Position:
-            insertPosition(event);
-            break;
-        case A_Transition:
-            insertTransition(event);
-            break;
-        case A_Remove:
-            removeObject(event);
-            break;
-        case A_Connection:
-            switch (event->button()) {
-                case Qt::LeftButton:
-                    if (m_currentConnection) connectionCommit(event);
-                    else connectionStart(event);
-                    break;
-                case Qt::RightButton:
-                    connectionRollback(event);
-                default:
-                    break;
-            }
-            break;
-        case A_Move:
-            QGraphicsScene::mousePressEvent(event);
-            break;
-        case A_Rotation:
-            rotateObject(event);
-            break;
-        default:
-            break;
+    if (event->button() == Qt::LeftButton) {
+        switch (m_mod) {
+            case A_Position:
+                insertPosition(event);
+                break;
+            case A_Transition:
+                insertTransition(event);
+                break;
+            case A_Remove:
+                removeObject(event);
+                break;
+            case A_Connection:
+                if (m_currentConnection) connectionCommit(event);
+                else connectionStart(event);
+                break;
+            case A_Move:
+                QGraphicsScene::mousePressEvent(event);
+                break;
+            case A_Rotation:
+                rotateObject(event);
+                break;
+            default:
+                break;
+        }
+    }
+    else if (event->button() == Qt::RightButton) {
+        if (m_mod == A_Connection) connectionRollback(event);
+        else QGraphicsScene::mousePressEvent(event);
     }
 
     //QGraphicsScene::mousePressEvent(event);
@@ -195,8 +194,10 @@ void GraphicScene::removeConnectionsAssociatedWith(PetriObject *object) {
 
 }
 
-void GraphicScene::updateConnections() {
-    foreach(auto connection, m_connections) {
+void GraphicScene::updateConnections(bool onlySelected) {
+    for(auto connection: m_connections) {
+        if (onlySelected && !connection->from()->isSelected() && !connection->to()->isSelected()) continue;
+
         connection->setLine(QLineF(connection->from()->connectionPos(connection->to(), true),
                                    connection->to()->connectionPos(connection->from(), false)));
     }
@@ -405,4 +406,50 @@ void GraphicScene::connectItems(PetriObject *from, PetriObject *to) {
     m_connections.push_back(arrowLine);
     addItem(arrowLine);
 
+}
+
+void GraphicScene::slotHorizontalAlignment(bool triggered) {
+    qreal y = 0;
+    int elements = 0;
+
+    for (auto item : selectedItems()) {
+        if (dynamic_cast<PetriObject*>(item)) {
+            y += item->pos().y();
+            elements++;
+        }
+    }
+
+    if (elements > 0) {
+        y /= (qreal)elements;
+        for (auto item : selectedItems()) {
+            if (dynamic_cast<PetriObject*>(item)) {
+                item->setPos(QPointF(item->pos().x(), y));
+            }
+        }
+    }
+
+    updateConnections(true);
+}
+
+void GraphicScene::slotVerticalAlignment(bool triggered) {
+    qreal x = 0;
+    int elements = 0;
+
+    for (auto item : selectedItems()) {
+        if (dynamic_cast<PetriObject*>(item)) {
+            x += item->pos().x();
+            elements++;
+        }
+    }
+
+    if (elements > 0) {
+        x /= (qreal)elements;
+        for (auto item : selectedItems()) {
+            if (dynamic_cast<PetriObject*>(item)) {
+                item->setPos(QPointF(x, item->pos().y()));
+            }
+        }
+    }
+
+    updateConnections(true);
 }

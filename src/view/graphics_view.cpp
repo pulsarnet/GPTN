@@ -3,6 +3,7 @@
 //
 
 #include <QFile>
+#include <QMenu>
 #include "../../include/view/graphics_view.h"
 #include "../../include/tab.h"
 
@@ -69,4 +70,27 @@ void GraphicsView::paintEvent(QPaintEvent *event) {
     QPainter painter(viewport());
     painter.setFont(QFont());
     painter.drawText(rect().x() / 2., rect().y() / 2., rect().width(), 40, Qt::AlignCenter, this->windowTitle());
+}
+
+void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
+    auto gScene = dynamic_cast<GraphicScene*>(scene());
+    auto item = gScene->netItemAt(mapToScene(event->pos()));
+    if (!item) return;
+
+    if (item->isSelected() && scene()->selectedItems().length() > 1) {
+        QMenu *menu = new QMenu;
+
+        auto horz = new QAction("Horizontal alignment", this);
+        connect(horz, &QAction::triggered, gScene, &GraphicScene::slotHorizontalAlignment);
+
+        auto vert = new QAction("Vertical alignment", this);
+        connect(vert, &QAction::triggered, gScene, &GraphicScene::slotVerticalAlignment);
+
+        menu->addAction(horz);
+        menu->addAction(vert);
+        menu->popup(event->pos());
+    }
+
+
+    QGraphicsView::contextMenuEvent(event);
 }

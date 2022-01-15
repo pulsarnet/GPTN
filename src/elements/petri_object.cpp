@@ -3,6 +3,8 @@
 //
 
 #include "../../include/elements/position.h"
+#include "../../include/elements/petri_object.h"
+
 
 PetriObject::PetriObject(QGraphicsItem *parent) : QGraphicsItem(parent) {
     setFlags(ItemIsMovable | ItemSendsGeometryChanges | ItemIsSelectable);

@@ -32,6 +32,8 @@ protected:
     void resizeEvent(QResizeEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
 
+    void contextMenuEvent(QContextMenuEvent *event) override;
+
 protected slots:
 
 signals:

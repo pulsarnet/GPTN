@@ -20,7 +20,7 @@ void Transition::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
 
     painter->save();
 
-    painter->setPen(isSelected() ? Qt::red : Qt::NoPen);
+    painter->setPen(isSelected() ? QPen(Qt::red) : Qt::NoPen);
     painter->setBrush(Qt::black);
 
     auto rect = boundingRect();
@@ -31,6 +31,7 @@ void Transition::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
 
     painter->setPen(Qt::white);
     auto name = QString("t%1").arg(this->index());
+    painter->rotate(-rotation());
     painter->drawText(boundingRect(), Qt::AlignCenter, name);
     painter->restore();
 }
