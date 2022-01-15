@@ -20,10 +20,10 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     Q_UNUSED(option)
     Q_UNUSED(widget)
 
-    painter->save();
     qreal penWidth = 2;
-    painter->setPen(QPen(painter->pen().color(), penWidth));
 
+    painter->save();
+    painter->setPen(QPen(isSelected() ? Qt::red : painter->pen().color(), penWidth));
     painter->drawEllipse(boundingRect().center(), radius - penWidth / 2., radius - penWidth / 2.);
 
     auto name = QString("p%1%2").arg(this->index()).arg(this->markers() == 0 ? "" : QString("(%1)").arg(

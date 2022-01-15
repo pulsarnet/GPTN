@@ -15,8 +15,6 @@ QRectF ArrowLine::boundingRect() const {
 
 void ArrowLine::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     qreal arrowSize = 10;
-    painter->save();
-    painter->setBrush(Qt::black);
 
     QLineF line(this->line().p2(), this->line().p1());
 
@@ -36,9 +34,9 @@ void ArrowLine::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
     arrowHead << line.p1() << arrowP1 << arrowP2;
 
     painter->save();
-    painter->setPen(QPen(painter->pen().color(), LINE_WIDTH));
+    painter->setBrush(isSelected() ? Qt::red : Qt::black);
+    painter->setPen(QPen(isSelected() ? Qt::red : painter->pen().color(), LINE_WIDTH));
     painter->drawLine(QLineF(endPoint, line.p2()));
-    painter->restore();
 
     painter->setPen(Qt::NoPen);
     painter->drawPolygon(arrowHead);
@@ -48,4 +46,6 @@ void ArrowLine::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
 
 ArrowLine::ArrowLine(PetriObject *from, const QLineF &line, QGraphicsItem *parent) : QGraphicsLineItem(line, parent) {
     this->m_from = from;
+
+    setFlags(ItemIsSelectable);
 }

@@ -20,7 +20,7 @@ void Transition::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
 
     painter->save();
 
-    painter->setPen(Qt::NoPen);
+    painter->setPen(isSelected() ? Qt::red : Qt::NoPen);
     painter->setBrush(Qt::black);
 
     auto rect = boundingRect();
