@@ -9,7 +9,6 @@
 #include <QMessageBox>
 #include <QGraphicsDropShadowEffect>
 #include <QDockWidget>
-#include <QDir>
 #include "../include/matrix_model.h"
 #include "../include/synthesis/synthesis_program_item_delegate.h"
 #include <QTableView>
@@ -27,14 +26,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
     this->setCentralWidget(this->tabWidget);
 
-    this->splitItems = new QListView;
-    connect(this->splitItems, &QListView::clicked, this, &MainWindow::slotSplitChecked);
-
-    QDockWidget* dock = new QDockWidget(this);
-    dock->setWidget(this->splitItems);
-    dock->hide();
-
-    this->addDockWidget(Qt::RightDockWidgetArea, dock);
     tabChanged(-1);
 
     this->toolBar->setParent(this->centralWidget());
@@ -45,8 +36,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 void MainWindow::closeTab(int index) {
     auto tab = dynamic_cast<Tab*>(this->tabWidget->widget(index));
     tab->saveToFile();
-
-    auto tab_object = dynamic_cast<Tab*>(this->tabWidget->widget(index));
     this->tabWidget->removeTab(index);
 }
 
@@ -94,17 +83,21 @@ void MainWindow::markerChecked(bool checked) {
 
 
 void MainWindow::configureTab() {
-
     this->tabWidget = new QTabWidget;
     this->tabWidget->setDocumentMode(false);
     this->tabWidget->setTabsClosable(true);
 
+    auto tool = new QToolButton(tabWidget);
+    tool->setPopupMode(QToolButton::InstantPopup);
+    tool->setText("View");
+    this->tabWidget->setCornerWidget(tool);
 }
 
 Tab* MainWindow::newTab() {
     auto tab = new Tab(this);
     auto index = tabWidget->addTab(tab, "New Tab");
     this->tabWidget->setCurrentIndex(index);
+    updateTabViewMenu();
     return tab;
 }
 
@@ -213,50 +206,8 @@ void MainWindow::newFile(bool trigger) {
 }
 
 void MainWindow::tabChanged(int index) {
-//    auto checked = this->actionGroup->checkedAction();
-//
-//    if (index == -1) {
-//        if (checked) checked->toggle();
-//        this->toolBar->setEnabled(false);
-//        this->splitItems->setModel(nullptr);
-//        return;
-//    }
-//
-//    this->toolBar->setEnabled(true);
-//
-//    auto currentAction = currentScene()->currentAction();
-//
-//    if (checked) checked->toggle();
-//
-//    switch (currentAction) {
-//        case GraphicsView::A_Position:
-//            position_action->toggle();
-//            break;
-//        case GraphicsView::A_Transition:
-//            transition_action->toggle();
-//            break;
-//        case GraphicsView::A_Connect:
-//            connect_action->toggle();
-//            break;
-//        case GraphicsView::A_Move:
-//            move_action->toggle();
-//            break;
-//        case GraphicsView::A_Rotate:
-//            rotation_action->toggle();
-//            break;
-//        case GraphicsView::A_Remove:
-//            remove_action->toggle();
-//            break;
-//        case GraphicsView::A_Marker:
-//            marker_action->toggle();
-//            break;
-//        case GraphicsView::A_Nothing:
-//            break;
-//    }
-//
-//    // Update list
-//
-//    this->splitItems->setModel(dynamic_cast<Tab*>(this->tabWidget->currentWidget())->splitActions());
+    Q_UNUSED(index);
+    updateTabViewMenu();
 }
 
 MainWindow::SaveFileAnswer MainWindow::askSaveFile() {

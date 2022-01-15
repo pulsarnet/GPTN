@@ -14,10 +14,6 @@
 
 Tab::Tab(QWidget *parent) : QWidget(parent) {
 
-    QGridLayout* layout = new QGridLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(0);
-
     auto main_scene = new GraphicScene;
     main_scene->setAllowMods(GraphicScene::A_Default);
     this->edit_view = new GraphicsView(this);
@@ -36,14 +32,31 @@ Tab::Tab(QWidget *parent) : QWidget(parent) {
     this->lbf_view->setWindowTitle("Logical Base Fragments View");
     this->lbf_view->setScene(lbf_scene);
 
-    layout->addWidget(this->edit_view, 0, 0, 1, 2);
-    layout->addWidget(this->primitive_view, 1, 0, 1, 1);
-    layout->addWidget(this->lbf_view, 1, 1, 1, 1);
+    auto manager = new CDockManager;
 
-    this->m_split_actions = new SplitListModel();
-    this->setLayout(layout);
+    auto edit_docker = new CDockWidget("Main view");
+    edit_docker->setWidget(edit_view);
+
+    auto primitive_docker = new CDockWidget("Primitive view");
+    primitive_docker->setWidget(primitive_view);
+
+    auto lbf_docker = new CDockWidget("Lbf view");
+    lbf_docker->setWidget(lbf_view);
+
+    manager->addDockWidget(DockWidgetArea::OuterDockAreas, edit_docker);
+    manager->addDockWidget(DockWidgetArea::BottomDockWidgetArea, primitive_docker);
+    manager->addDockWidget(DockWidgetArea::RightDockWidgetArea, lbf_docker);
+
+    this->setLayout(new QGridLayout);
+    this->layout()->addWidget(manager);
+    this->layout()->setContentsMargins(QMargins());
 
     connect(main_scene, &QGraphicsScene::changed, this, &Tab::slotDocumentChanged);
+
+    m_actionToggleMenu = new QMenu("View");
+    m_actionToggleMenu->addAction(edit_docker->toggleViewAction());
+    m_actionToggleMenu->addAction(primitive_docker->toggleViewAction());
+    m_actionToggleMenu->addAction(lbf_docker->toggleViewAction());
 
 }
 
@@ -59,7 +72,7 @@ void Tab::splitAction() {
 
     auto primitive_matrix = result.lbf_matrix;
     auto transitions_count = primitive_matrix.cols.count();
-    int tran_rows = round((double)transitions_count / 3.);
+    int tran_rows = qMax(1., round((double)transitions_count / 3.));
     int tran_cols = 3;
 
     qDebug() << tran_rows << tran_cols;

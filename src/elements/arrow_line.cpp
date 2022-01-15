@@ -18,6 +18,8 @@ void ArrowLine::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
 
     QLineF line(this->line().p2(), this->line().p1());
 
+    if (line.isNull()) return;
+
     double angle = std::atan2(-line.dy(), line.dx());
     QPointF arrowP1 = line.p1() + QPointF(sin(angle + M_PI / 3.) * arrowSize,
                                           cos(angle + M_PI / 3.) * arrowSize);
@@ -32,6 +34,8 @@ void ArrowLine::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
     QPolygonF arrowHead;
     arrowHead.clear();
     arrowHead << line.p1() << arrowP1 << arrowP2;
+
+    qDebug() << line.p1() << arrowP1 << arrowP2;
 
     painter->save();
     painter->setBrush(isSelected() ? Qt::red : Qt::black);

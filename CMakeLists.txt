@@ -70,10 +70,14 @@ add_executable(ffi_rust
         resources/resources.qrc
         )
 
+target_include_directories(ffi_rust PRIVATE "/usr/local/include")
+
+find_package(qtadvanceddocking)
+
 add_dependencies(ffi_rust rust)
 
 
 target_link_libraries(ffi_rust PRIVATE
-        debug "${CMAKE_SOURCE_DIR}/rust/target/debug/libhello_world.a" Qt6::Widgets lapack
-        optimized "${CMAKE_SOURCE_DIR}/rust/target/release/libhello_world.a" Qt6::Widgets lapack
+        debug "${CMAKE_SOURCE_DIR}/rust/target/debug/libhello_world.a" Qt6::Widgets Qt6::Core Qt6::Gui lapack ads::qtadvanceddocking
+        optimized "${CMAKE_SOURCE_DIR}/rust/target/release/libhello_world.a" Qt6::Widgets Qt6::Core Qt6::Gui lapack ads::qtadvanceddocking
         )

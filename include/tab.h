@@ -46,6 +46,10 @@ public:
     void saveToFile();
     void loadFromFile();
 
+    QMenu* menuOfDockToggle() {
+        return m_actionToggleMenu;
+    }
+
 public slots:
 
     void slotDocumentChanged() {}
@@ -61,6 +65,7 @@ private:
     QGraphicsView* edit_view = nullptr;
     GraphicsView* primitive_view = nullptr;
     GraphicsView* lbf_view = nullptr;
+    QMenu* m_actionToggleMenu = nullptr;
 
     SplitListModel* m_split_actions;
 

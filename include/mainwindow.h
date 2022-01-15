@@ -24,6 +24,11 @@
 #include "toolbox/toolbox.h"
 #include "view/graphics_scene.h"
 
+#include <DockAreaWidget.h>
+#include <DockManager.h>
+
+using namespace ads;
+
 
 class MainWindow : public QMainWindow {
 
@@ -88,6 +93,13 @@ private:
 
     void createToolBar();
 
+    void updateTabViewMenu() {
+        if (auto tab = tabWidget->currentWidget(); tab) {
+            auto menu = dynamic_cast<Tab*>(tab)->menuOfDockToggle();
+            dynamic_cast<QToolButton*>(tabWidget->cornerWidget())->setMenu(menu);
+        }
+    }
+
     GraphicScene* currentScene() {
         return qobject_cast<Tab*>(tabWidget->currentWidget())->scene();
     }
@@ -110,7 +122,7 @@ private:
 
     QTabWidget* tabWidget = nullptr;
 
-    QListView* splitItems = nullptr;
+    CDockManager* manager = nullptr;
 };
 
 #endif //FFI_RUST_MAINWINDOW_H

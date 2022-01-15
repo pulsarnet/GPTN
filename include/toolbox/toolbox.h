@@ -40,7 +40,7 @@ public:
 
         this->setGeometry(
                 20,
-                60,
+                80,
                 m_buttonSize.width(),
                 (m_buttonSize.height() + 6) * m_buttons.count()
                 );

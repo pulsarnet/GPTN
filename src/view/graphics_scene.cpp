@@ -22,10 +22,7 @@ void GraphicScene::setMode(Mode mod) {
 }
 
 void GraphicScene::slotSelectionChanged() {
-    auto items = this->selectedItems();
-    for (auto item : this->items()) {
 
-    }
 }
 
 void GraphicScene::setAllowMods(Modes mods) {

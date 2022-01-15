@@ -14,7 +14,7 @@ GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
 
     this->setViewportUpdateMode(QGraphicsView::BoundingRectViewportUpdate);
     this->setWindowFlag(Qt::BypassGraphicsProxyWidget);
-    this->setRubberBandSelectionMode(Qt::ItemSelectionMode::ContainsItemBoundingRect);
+    this->setRubberBandSelectionMode(Qt::ContainsItemBoundingRect);
     this->setDragMode(QGraphicsView::RubberBandDrag);
 
     this->setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);

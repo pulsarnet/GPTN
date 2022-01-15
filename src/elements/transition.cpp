@@ -76,9 +76,9 @@ QPointF Transition::connectionPos(PetriObject* to, bool reverse) {
     qreal cy = center().y();
 
 
-    auto intersection = getIntersection(dx, dy,
-                                        cx, cy,
-                                        w, h);
+    auto intersection = dx == 0. && dy == 0. ? to->scenePos() : getIntersection(dx, dy, cx, cy,w, h);
+
+    qDebug() << intersection;
 
     return intersection;
 }
