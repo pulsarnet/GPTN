@@ -9,7 +9,7 @@
 #include "../elements/petri_object.h"
 #include "../elements/position.h"
 #include "../elements/transition.h"
-#include "../arrow_line.h"
+#include "../elements/arrow_line.h"
 
 class GraphicScene : public QGraphicsScene {
 
@@ -35,13 +35,21 @@ public:
     void setAllowMods(Modes mods);
 
     QVariant toVariant();
-    void fromVariant(QVariant);
+    void fromVariant(const QVariant&);
+
+    void removeAll();
+    Position* addPosition(const QString& name, const QPointF& point);
+    Position* addPosition(int index, const QPointF& point);
+    Transition* addTransition(const QString& name, const QPointF& point);
+    Transition* addTransition(int index, const QPointF& point);
+    void connectItems(PetriObject* from, PetriObject* to);
 
     PetriNet* net();
 
 public slots:
 
-    void setMode(Mode mode);
+    void setMode(GraphicScene::Mode mode);
+    void slotSelectionChanged();
 
 signals:
     void itemInserted(QGraphicsItem* item);
@@ -64,7 +72,8 @@ protected:
     void updateConnections();
 
     void connectionStart(QGraphicsSceneMouseEvent *);
-    void connectionEnd(QGraphicsSceneMouseEvent *);
+    void connectionCommit(QGraphicsSceneMouseEvent *event);
+    void connectionRollback(QGraphicsSceneMouseEvent* event);
 
     PetriObject* netItemAt(const QPointF& pos);
 

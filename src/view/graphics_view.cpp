@@ -13,6 +13,8 @@ GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
 
     this->setViewportUpdateMode(QGraphicsView::BoundingRectViewportUpdate);
     this->setWindowFlag(Qt::BypassGraphicsProxyWidget);
+    this->setRubberBandSelectionMode(Qt::ItemSelectionMode::ContainsItemBoundingRect);
+    this->setDragMode(QGraphicsView::RubberBandDrag);
 
     this->setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
 
@@ -65,7 +67,6 @@ void GraphicsView::paintEvent(QPaintEvent *event) {
     QGraphicsView::paintEvent(event);
 
     QPainter painter(viewport());
-    painter.setPen(Qt::white);
     painter.setFont(QFont());
     painter.drawText(rect().x() / 2., rect().y() / 2., rect().width(), 40, Qt::AlignCenter, this->windowTitle());
 }

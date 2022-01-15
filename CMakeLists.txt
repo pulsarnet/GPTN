@@ -34,7 +34,7 @@ set(SRC_FILES
         src/mainwindow.cpp
         src/tab.cpp
         src/matrix_model.cpp
-        src/arrow_line.cpp
+        src/elements/arrow_line.cpp
         src/elements/position.cpp
         src/elements/transition.cpp
         src/elements/petri_object.cpp
@@ -51,7 +51,7 @@ set(HEADERS
         include/mainwindow.h
         include/tab.h
         include/matrix_model.h
-        include/arrow_line.h
+        include/elements/arrow_line.h
         include/elements/position.h
         include/elements/transition.h
         include/elements/petri_object.h
@@ -60,7 +60,7 @@ set(HEADERS
         include/ffi/rust.h
         include/view/graphics_view.h
         include/view/graphics_view_zoom.h
-        include/toolbox/toolbox.h include/toolbox/tool.h include/view/graphics_scene.h)
+        include/toolbox/toolbox.h include/toolbox/tool.h include/view/graphics_scene.h include/elements/graphicsitem.h)
 
 
 add_executable(ffi_rust

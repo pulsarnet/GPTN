@@ -9,9 +9,9 @@
 
 #include <QGraphicsItem>
 #include <QPainter>
-#include "elements/position.h"
-#include "elements/petri_object.h"
-#include "elements/transition.h"
+#include "position.h"
+#include "petri_object.h"
+#include "transition.h"
 
 class ArrowLine : public QGraphicsLineItem {
 

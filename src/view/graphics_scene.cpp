@@ -10,12 +10,21 @@ GraphicScene::GraphicScene(QObject *parent) : QGraphicsScene(parent) {
     m_net = make();
 
     setSceneRect(-12500, -12500, 25000, 25000);
+
+    connect(this, &QGraphicsScene::selectionChanged, this, &GraphicScene::slotSelectionChanged);
 }
 
 
 void GraphicScene::setMode(Mode mod) {
     if (m_allowMods & mod) m_mod = mod;
     else qDebug() << "Mode " << mod << " not allowed!";
+}
+
+void GraphicScene::slotSelectionChanged() {
+    auto items = this->selectedItems();
+    for (auto item : this->items()) {
+
+    }
 }
 
 void GraphicScene::setAllowMods(Modes mods) {
@@ -35,7 +44,16 @@ void GraphicScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
             removeObject(event);
             break;
         case A_Connection:
-            connectionStart(event);
+            switch (event->button()) {
+                case Qt::LeftButton:
+                    if (m_currentConnection) connectionCommit(event);
+                    else connectionStart(event);
+                    break;
+                case Qt::RightButton:
+                    connectionRollback(event);
+                default:
+                    break;
+            }
             break;
         case A_Move:
             QGraphicsScene::mousePressEvent(event);
@@ -67,13 +85,9 @@ void GraphicScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
     //QGraphicsScene::mouseMoveEvent(event);
 }
 
-
 void GraphicScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
 
     switch (m_mod) {
-        case A_Connection:
-            connectionEnd(event);
-            break;
         default:
             break;
     }
@@ -83,23 +97,11 @@ void GraphicScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
 
 
 void GraphicScene::insertPosition(QGraphicsSceneMouseEvent *event) {
-
-    auto position = new Position(event->scenePos(), m_net->add_position());
-    m_positions.push_back(position);
-    addItem(position);
-
-    emit itemInserted(position);
-
+    addPosition(-1, event->scenePos());
 }
 
 void GraphicScene::insertTransition(QGraphicsSceneMouseEvent *event) {
-
-    auto transition = new Transition(event->scenePos(), m_net->add_transition());
-    m_transition.push_back(transition);
-    addItem(transition);
-
-    emit itemInserted(transition);
-
+    addTransition(-1, event->scenePos());
 }
 
 void GraphicScene::removeObject(QGraphicsSceneMouseEvent *event) {
@@ -139,7 +141,7 @@ void GraphicScene::connectionStart(QGraphicsSceneMouseEvent *event) {
 
 }
 
-void GraphicScene::connectionEnd(QGraphicsSceneMouseEvent *event) {
+void GraphicScene::connectionCommit(QGraphicsSceneMouseEvent *event) {
 
     if (!m_currentConnection) return;
 
@@ -169,6 +171,14 @@ void GraphicScene::connectionEnd(QGraphicsSceneMouseEvent *event) {
     }
 
 }
+
+void GraphicScene::connectionRollback(QGraphicsSceneMouseEvent *event) {
+    if (m_currentConnection) {
+        removeItem(m_currentConnection);
+        m_currentConnection = nullptr;
+    }
+}
+
 
 void GraphicScene::removeConnectionsAssociatedWith(PetriObject *object) {
 
@@ -265,25 +275,24 @@ QVariant GraphicScene::toVariant() {
     return QVariant(common_data);
 }
 
-void GraphicScene::fromVariant(QVariant data) {
+void GraphicScene::fromVariant(const QVariant& data) {
     auto common_data = data.toHash();
 
     if (common_data.contains("items")) {
         foreach(QVariant data, common_data.value("items").toList()) {
             QVariantHash hash = data.toHash();
             if (hash["type"] == "position") {
-                auto object = new Position(hash["pos"].toPointF(), this->net()->add_position_with(hash["id"].toInt()));
-                m_positions.push_back(object);
-                addItem(object);
+                addPosition(hash["id"].toInt(), hash["pos"].toPointF());
             }
             else if (hash["type"] == "transition") {
-                auto object = new Transition(hash["pos"].toPointF(), this->net()->add_transition_with(hash["id"].toInt()));
+                auto object = addTransition(hash["id"].toInt(), hash["pos"].toPointF());
                 object->setRotation(hash["rotation"].toDouble());
-                m_transition.push_back(object);
-                addItem(object);
             }
         }
     }
+
+    qDebug() << "Positions: " << m_positions[0]->index() << m_positions[1]->index() << m_positions[2]->index();
+    qDebug() << "Transitions: " << m_positions[0]->index() << m_positions[1]->index() << m_positions[2]->index();
 
     if (common_data.contains("connections")) {
         foreach(QVariant connection, common_data.value("connections").toList()) {
@@ -292,21 +301,25 @@ void GraphicScene::fromVariant(QVariant data) {
             QVariantHash from = hash["from"].toHash();
             QVariantHash to = hash["to"].toHash();
 
-            qDebug() << from;
-            qDebug() << to;
+            qDebug() << "FROM" << from;
+            qDebug() << "TO" << to;
 
             auto find_from = [=](PetriObject* object) {
+                qDebug() << "FIND FROM TYPE => " << from["type"].toString() << "ID => " << from["id"].toInt() << " OBJECT INDEX => " << object->index()
+                << " OBJECT TYPE => " << object->objectTypeStr();
                 return object->objectTypeStr() == from["type"].toString() && object->index() == from["id"].toInt();
             };
 
             auto find_to = [=](PetriObject* object) {
+                qDebug() << "FIND TO TYPE => " << to["type"].toString() << "ID => " << to["id"].toInt() << " OBJECT INDEX => " << object->index()
+                         << " OBJECT TYPE => " << object->objectTypeStr();
                 return object->objectTypeStr() == to["type"].toString() && object->index() == to["id"].toInt();
             };
 
             PetriObject* point1 = nullptr;
             PetriObject* point2 = nullptr;
 
-            if (from["type"] == "position") {
+            if (from["type"].toString() == "position") {
                 auto point1_it = std::find_if(m_positions.begin(), m_positions.end(), find_from);
                 auto point2_it = std::find_if(m_transition.begin(), m_transition.end(), find_to);
 
@@ -321,13 +334,75 @@ void GraphicScene::fromVariant(QVariant data) {
                 point2 = dynamic_cast<PetriObject*>(*point2_it);
             }
 
-            auto line_item = new ArrowLine(point1, QLineF(point1->scenePos().x(), point1->scenePos().y(), point2->scenePos().x(), point2->scenePos().y()));
-            line_item->setTo(point2);
-            addItem(line_item);
-            m_connections.push_back(line_item);
-            point1->connectTo(net(), point2);
+            qDebug() << (int*)point1 << (int*)point2;
+            connectItems(point1, point2);
         }
 
         updateConnections();
     }
+}
+
+void GraphicScene::removeAll() {
+    QGraphicsScene::clear();
+
+    // TODO: Удаление сети
+    m_net = make();
+    m_transition.clear();
+    m_positions.clear();
+    m_connections.clear();
+}
+
+Position* GraphicScene::addPosition(const QString &name, const QPointF &point) {
+
+    if (!name.startsWith("p")) throw 0;
+
+    auto index = name.mid(1).toInt();
+    return addPosition(index, point);
+}
+
+Position* GraphicScene::addPosition(int index, const QPointF &point) {
+
+    auto position = new Position(point, index == -1 ? m_net->add_position() : m_net->add_position_with(index));
+    m_positions.push_back(position);
+    addItem(position);
+
+    emit itemInserted(position);
+
+    return position;
+}
+
+Transition* GraphicScene::addTransition(const QString &name, const QPointF &point) {
+    if (!name.startsWith("t")) throw 0;
+
+    auto index = name.mid(1).toInt();
+    return addTransition(index, point);
+}
+
+Transition* GraphicScene::addTransition(int index, const QPointF &point) {
+    auto transition = new Transition(point, index == -1 ? m_net->add_transition() : m_net->add_transition_with(index));
+    m_transition.push_back(transition);
+    addItem(transition);
+
+    emit itemInserted(transition);
+
+    return transition;
+}
+
+void GraphicScene::connectItems(PetriObject *from, PetriObject *to) {
+
+    auto arrowLine = new ArrowLine(from, QLineF(from->connectionPos(to, false), to->connectionPos(from, true)));
+    arrowLine->setTo(to);
+
+    if (from->objectType() == PetriObject::Position) {
+        m_net->connect_p(dynamic_cast<Position*>(from)->position(),
+                         dynamic_cast<Transition*>(to)->transition());
+    }
+    else {
+        m_net->connect_t(dynamic_cast<Transition*>(from)->transition(),
+                         dynamic_cast<Position*>(to)->position());
+    }
+
+    m_connections.push_back(arrowLine);
+    addItem(arrowLine);
+
 }

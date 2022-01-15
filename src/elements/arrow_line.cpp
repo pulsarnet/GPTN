@@ -2,7 +2,7 @@
 // Created by nmuravev on 12/14/2021.
 //
 
-#include "../include/arrow_line.h"
+#include "../../include/elements/arrow_line.h"
 
 QRectF ArrowLine::boundingRect() const {
     auto rect = QGraphicsLineItem::boundingRect();

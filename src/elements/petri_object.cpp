@@ -5,7 +5,7 @@
 #include "../../include/elements/position.h"
 
 PetriObject::PetriObject(QGraphicsItem *parent) : QGraphicsItem(parent) {
-    setFlags(ItemIsMovable | ItemSendsGeometryChanges);
+    setFlags(ItemIsMovable | ItemSendsGeometryChanges | ItemIsSelectable);
 }
 
 void PetriObject::mousePressEvent(QGraphicsSceneMouseEvent *event) {

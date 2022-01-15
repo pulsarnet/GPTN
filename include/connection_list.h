@@ -6,7 +6,7 @@
 #define FFI_RUST_CONNECTION_LIST_H
 
 #include <QList>
-#include "arrow_line.h"
+#include "elements/arrow_line.h"
 #include "petri_object.h"
 
 class ConnectionList {
