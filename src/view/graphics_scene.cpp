@@ -450,3 +450,27 @@ void GraphicScene::slotVerticalAlignment(bool triggered) {
 
     updateConnections(true);
 }
+
+QPointF GraphicScene::getTransitionPos(int index) {
+    return getTransition(index)->scenePos();
+}
+
+QPointF GraphicScene::getPositionPos(int index) {
+    return getPosition(index)->scenePos();
+}
+
+Transition *GraphicScene::getTransition(int index) {
+    auto it = std::find_if(m_transition.begin(), m_transition.end(), [=](Transition* t) {
+        return t->index() == index;
+    });
+
+    return it == m_transition.end() ? nullptr : *it;
+}
+
+Position *GraphicScene::getPosition(int index) {
+    auto it = std::find_if(m_positions.begin(), m_positions.end(), [=](Position* p) {
+        return p->index() == index;
+    });
+
+    return it == m_positions.end() ? nullptr : *it;
+}

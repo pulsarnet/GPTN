@@ -46,6 +46,11 @@ public:
     Transition* addTransition(int index, const QPointF& point);
     void connectItems(PetriObject* from, PetriObject* to);
 
+    Transition* getTransition(int index);
+    Position* getPosition(int index);
+    QPointF getTransitionPos(int index);
+    QPointF getPositionPos(int index);
+
     PetriNet* net();
 
 public slots:

@@ -11,10 +11,43 @@ struct InnerPetriNet {
     QList<unsigned long> markers;
 };
 
+
+extern "C" enum FFIVertexType {
+    Position,
+    Transition
+};
+
+extern "C" struct FFIParent {
+    FFIVertexType type;
+    unsigned long long child;
+    unsigned long long parent;
+};
+
+extern "C" struct FFIParentVec {
+    FFIParent* inner;
+    unsigned long long len;
+
+
+    [[nodiscard]] QList<FFIParent> into() const {
+        QList<FFIParent> result;
+
+        auto cursor = inner;
+        for (int i = 0; i < len; i++) {
+            result.push_back(*cursor);
+            cursor++;
+        }
+
+        return result;
+    }
+};
+
 struct InnerCommonResult {
     InnerPetriNet net;
     Matrix c_matrix;
     NamedMatrix lbf_matrix;
+    NamedMatrix d_input;
+    NamedMatrix d_output;
+    QList<FFIParent> parents;
 };
 
 #endif

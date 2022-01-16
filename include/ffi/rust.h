@@ -114,6 +114,9 @@ extern "C" struct CommonResult {
     FFIBoxedSlice* petri_net;
     FFIMatrix* c_matrix;
     FFINamedMatrix* lbf_matrix;
+    FFINamedMatrix* d_input;
+    FFINamedMatrix* d_output;
+    FFIParentVec* parents;
 };
 
 extern "C" SynthesisProgram* synthesis_start(PetriNet*);

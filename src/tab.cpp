@@ -27,7 +27,8 @@ Tab::Tab(QWidget *parent) : QWidget(parent) {
     this->primitive_view->setScene(primitive_scene);
 
     auto lbf_scene = new GraphicScene;
-    lbf_scene->setAllowMods(GraphicScene::A_Nothing);
+    lbf_scene->setAllowMods(GraphicScene::A_Nothing | GraphicScene::A_Move);
+    lbf_scene->setMode(GraphicScene::A_Move);
     this->lbf_view = new GraphicsView(this);
     this->lbf_view->setWindowTitle("Logical Base Fragments View");
     this->lbf_view->setScene(lbf_scene);
@@ -136,6 +137,7 @@ void Tab::markerChecked(bool checked) {
 void Tab::splitAction() {
 
     auto synthesis_program = split_net(qobject_cast<GraphicScene*>(this->edit_view->scene())->net());
+
     // Добавим пустую программу чтобы не падало
     synthesis_program->add_program();
     auto result = split_finish(synthesis_program);
@@ -188,8 +190,52 @@ void Tab::splitAction() {
         start_y += offset_y;
     }
 
-//    auto view = new SynthesisView(synthesis_program, this);
-//    view->show();
+
+    auto main_scene = dynamic_cast<GraphicScene*>(edit_view->scene());
+    scene = dynamic_cast<GraphicScene*>(lbf_view->scene());
+
+    auto& d_input = result.d_input;
+    auto& d_output = result.d_output;
+    auto parents = result.parents.toVector();
+
+    auto& transitions = d_input.cols;
+    auto& positions = d_input.rows;
+
+    for (int ti = 0; ti < transitions.count(); ti++) {
+        auto newTransition = scene->addTransition(d_input.cols[ti], QPoint(0, 0));
+
+        qDebug() << "SEARCHING " << newTransition->index();
+        auto it = std::find_if(parents.begin(), parents.end(), [&](FFIParent& p) {
+            qDebug() << (p.type == FFIVertexType::Transition ? "t" : "p") << p.child << p.parent;
+            return p.type == FFIVertexType::Transition && p.child == newTransition->index();
+        });
+
+        if (it == parents.end()) newTransition->setPos(main_scene->getTransitionPos(newTransition->index()));
+        else newTransition->setPos(main_scene->getTransitionPos((*it).parent));
+
+        for (int pi = 0; pi < positions.count(); pi++) {
+
+            bool inputConnect = d_input(pi, ti) < 0;
+            bool outputConnect = d_output(pi, ti) > 0;
+
+            if (!inputConnect && !outputConnect) continue;
+
+            auto newPosition = scene->getPosition(d_input.rows[pi].mid(1).toInt());
+            if (!newPosition) {
+                newPosition = scene->addPosition(d_input.rows[pi], QPoint(0, 0));
+                auto parentIt = std::find_if(parents.begin(), parents.end(), [&](FFIParent& p) {
+                    return p.type == FFIVertexType::Position && p.child == newPosition->index();
+                });
+
+                if (parentIt == parents.end()) newPosition->setPos(main_scene->getPositionPos(newPosition->index()));
+                else newPosition->setPos(main_scene->getPositionPos((*parentIt).parent));
+            }
+
+            if (inputConnect) scene->connectItems(newPosition, newTransition);
+            if (outputConnect) scene->connectItems(newTransition, newPosition);
+
+        }
+    }
 
 }
 
