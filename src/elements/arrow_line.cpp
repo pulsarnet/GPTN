@@ -35,8 +35,6 @@ void ArrowLine::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
     arrowHead.clear();
     arrowHead << line.p1() << arrowP1 << arrowP2;
 
-    qDebug() << line.p1() << arrowP1 << arrowP2;
-
     painter->save();
     painter->setBrush(isSelected() ? Qt::red : Qt::black);
     painter->setPen(QPen(isSelected() ? Qt::red : painter->pen().color(), LINE_WIDTH));

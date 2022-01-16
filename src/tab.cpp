@@ -58,7 +58,80 @@ Tab::Tab(QWidget *parent) : QWidget(parent) {
     m_actionToggleMenu->addAction(primitive_docker->toggleViewAction());
     m_actionToggleMenu->addAction(lbf_docker->toggleViewAction());
 
+    toolBar = new ToolBox;
+    toolBar->setParent(this);
+    toolBar->setVisible(true);
+    toolBar->setButtonSize(QSize(40, 40));
+
+    actionGroup = new QActionGroup(toolBar);
+
+    position_action = makeAction("Position", QIcon(":/images/circle.png"), true, actionGroup);
+    transition_action = makeAction("Transition", QIcon(":/images/rectangle.png"), true, actionGroup);
+    move_action = makeAction("Move", QIcon(":/images/move.png"), true, actionGroup);
+    connect_action = makeAction("Connect", QIcon(":/images/connect.png"), true, actionGroup);
+    rotation_action = makeAction("Rotate", QIcon(":/images/rotation.png"), true, actionGroup);
+    remove_action = makeAction("Remove", QIcon(":/images/remove.png"), true, actionGroup);
+    marker_action = makeAction("Marker", QIcon(":/images/marker.png"), true, actionGroup);
+
+
+    connect(position_action, &QAction::toggled, this, &Tab::positionChecked);
+    connect(transition_action, &QAction::toggled, this, &Tab::transitionChecked);
+    connect(move_action, &QAction::toggled, this, &Tab::moveChecked);
+    connect(connect_action, &QAction::toggled, this, &Tab::connectChecked);
+    connect(rotation_action, &QAction::toggled, this, &Tab::rotateChecked);
+    connect(remove_action, &QAction::toggled, this, &Tab::removeChecked);
+    connect(marker_action, &QAction::toggled, this, &Tab::markerChecked);
+
+
+    toolBar->addTool(position_action);
+    toolBar->addTool(marker_action);
+    toolBar->addTool(transition_action);
+    toolBar->addTool(connect_action);
+    toolBar->addTool(remove_action);
+
+    toolBar->addTool(move_action);
+    toolBar->addTool(rotation_action);
+
 }
+
+QAction* Tab::makeAction(const QString &name, const QIcon &icon, bool checkable, QActionGroup *actionGroup) {
+    auto action = new QAction(name);
+    action->setIcon(icon);
+    action->setCheckable(checkable);
+
+    if (actionGroup) actionGroup->addAction(action);
+
+    return action;
+}
+
+void Tab::positionChecked(bool checked) {
+    dynamic_cast<GraphicScene*>(edit_view->scene())->setMode(checked ? GraphicScene::A_Position : GraphicScene::A_Nothing);
+}
+
+void Tab::transitionChecked(bool checked) {
+    dynamic_cast<GraphicScene*>(edit_view->scene())->setMode(checked ? GraphicScene::A_Transition : GraphicScene::A_Nothing);
+}
+
+void Tab::moveChecked(bool checked) {
+    dynamic_cast<GraphicScene*>(edit_view->scene())->setMode(checked ? GraphicScene::A_Move : GraphicScene::A_Nothing);
+}
+
+void Tab::connectChecked(bool checked) {
+    dynamic_cast<GraphicScene*>(edit_view->scene())->setMode(checked ? GraphicScene::A_Connection : GraphicScene::A_Nothing);
+}
+
+void Tab::rotateChecked(bool checked) {
+    dynamic_cast<GraphicScene*>(edit_view->scene())->setMode(checked ? GraphicScene::A_Rotation : GraphicScene::A_Nothing);
+}
+
+void Tab::removeChecked(bool checked) {
+    dynamic_cast<GraphicScene*>(edit_view->scene())->setMode(checked ? GraphicScene::A_Remove : GraphicScene::A_Nothing);
+}
+
+void Tab::markerChecked(bool checked) {
+    dynamic_cast<GraphicScene*>(edit_view->scene())->setMode(checked ? GraphicScene::A_Remove : GraphicScene::A_Nothing);
+}
+
 
 void Tab::splitAction() {
 

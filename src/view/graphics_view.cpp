@@ -88,7 +88,7 @@ void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
 
         menu->addAction(horz);
         menu->addAction(vert);
-        menu->popup(event->pos());
+        menu->popup(event->globalPos());
     }
 
 

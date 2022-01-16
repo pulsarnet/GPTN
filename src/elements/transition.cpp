@@ -50,19 +50,6 @@ QPointF getIntersection(qreal dx, qreal dy, qreal cx, qreal cy, qreal width, qre
 QPointF Transition::connectionPos(PetriObject* to, bool reverse) {
 
 
-//    qreal angle = this->angleBetween(to->scenePos());
-//
-//    qreal x = QGraphicsItem::scenePos().x();
-//    qreal y = QGraphicsItem::scenePos().y();
-//
-//    qreal w = QGraphicsItem::sceneBoundingRect().width() / 2.;
-//    qreal h = QGraphicsItem::sceneBoundingRect().height() / 2.;
-//
-//
-//    angle = angle - qDegreesToRadians(90);
-//    qreal xPosy = (x + qCos(angle) * w);
-//    qreal yPosy = (y + qSin(angle) * h);
-
     qreal w = QGraphicsItem::sceneBoundingRect().width() / 2.;
     qreal h = QGraphicsItem::sceneBoundingRect().height() / 2.;
 
@@ -77,8 +64,6 @@ QPointF Transition::connectionPos(PetriObject* to, bool reverse) {
 
 
     auto intersection = dx == 0. && dy == 0. ? to->scenePos() : getIntersection(dx, dy, cx, cy,w, h);
-
-    qDebug() << intersection;
 
     return intersection;
 }
