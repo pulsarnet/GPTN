@@ -22,6 +22,12 @@
 #include "tab.h"
 #include "petri_net.h"
 #include "toolbox/toolbox.h"
+#include "view/graphics_scene.h"
+
+#include <DockAreaWidget.h>
+#include <DockManager.h>
+
+using namespace ads;
 
 
 class MainWindow : public QMainWindow {
@@ -35,25 +41,11 @@ class MainWindow : public QMainWindow {
 public:
     explicit MainWindow(QWidget *parent = nullptr);
 
-    void addTabFromNet(InnerCommonResult common_result, Tab* current);
-
 public slots:
 
     void closeTab(int index);
 
-    void positionChecked(bool checked);
 
-    void transitionChecked(bool checked);
-
-    void moveChecked(bool checked);
-
-    void connectChecked(bool checked);
-
-    void rotateChecked(bool checked);
-
-    void removeChecked(bool checked);
-
-    void markerChecked(bool checked);
 
     void newFile(bool trigger);
 
@@ -67,47 +59,34 @@ public slots:
 
     void slotSplitAction(bool checked);
 
-    void slotSplitChecked(const QModelIndex& index);
 
 private:
-
-    static SaveFileAnswer askSaveFile();
-
-    QString chooseSaveFile();
 
     void configureTab();
 
     Tab* newTab();
 
-    QAction* makeAction(const QString& name, const QIcon& icon, bool checkable, QActionGroup* actionGroup = nullptr);
-
     void createMenuBar();
 
     void createStatusBar();
 
-    void createToolBar();
-
-    GraphicsView* currentScene();
+    void updateTabViewMenu() {
+        if (auto tab = tabWidget->currentWidget(); tab) {
+            auto menu = dynamic_cast<Tab*>(tab)->menuOfDockToggle();
+            dynamic_cast<QToolButton*>(tabWidget->cornerWidget())->setMenu(menu);
+        }
+    }
 
 private:
 
-    QAction* position_action = nullptr;
-    QAction* transition_action = nullptr;
-    QAction* move_action = nullptr;
-    QAction* connect_action = nullptr;
-    QAction* rotation_action = nullptr;
-    QAction* remove_action = nullptr;
-    QAction* marker_action = nullptr;
-    QActionGroup* actionGroup = nullptr;
 
-    ToolBox* toolBar = nullptr;
 
     QStatusBar* statusBar = nullptr;
     QMenuBar* menuBar = nullptr;
 
     QTabWidget* tabWidget = nullptr;
 
-    QListView* splitItems = nullptr;
+    CDockManager* manager = nullptr;
 };
 
 #endif //FFI_RUST_MAINWINDOW_H

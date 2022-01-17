@@ -3,8 +3,6 @@ name = "hello_world" # the name of the package
 version = "0.1.0"    # the current version, obeying semver
 authors = ["Alice <a@example.com>", "Bob <b@example.com>"]
 
-build = "build.rs"
-
 [lib]
 crate-type = ["staticlib"]
 

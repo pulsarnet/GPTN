@@ -8,6 +8,7 @@
         <file>images/remove.png</file>
         <file>images/close.png</file>
         <file>styles/style.qss</file>
+        <file>fonts/JetBrainsMono-Medium.ttf</file>
         <file>images/marker.png</file>
     </qresource>
 </RCC>

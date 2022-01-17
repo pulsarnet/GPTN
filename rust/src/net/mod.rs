@@ -7,7 +7,7 @@ use ndarray_linalg::Solve;
 pub use net::connection::Connection;
 pub use net::vertex::Vertex;
 use std::cell::RefCell;
-use std::cmp::{max, min_by};
+use std::cmp::{max};
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 use {SynthesisProgram, SynthesisResult};
@@ -20,6 +20,220 @@ pub struct PetriNet {
     position_index: Rc<RefCell<u64>>,
     transition_index: Rc<RefCell<u64>>,
     is_loop: bool,
+}
+
+pub struct PetriNetVec(pub Vec<PetriNet>);
+
+impl PetriNetVec {
+
+    pub fn positions(&self) -> Vec<Vertex> {
+        self.0
+            .iter()
+            .flat_map(|n| n.elements.iter().filter(|p| p.is_position()))
+            .cloned()
+            .collect()
+    }
+
+    pub fn transitions(&self) -> Vec<Vertex> {
+        self.0
+            .iter()
+            .flat_map(|n| n.elements.iter().filter(|t| t.is_transition()))
+            .cloned()
+            .collect()
+    }
+
+    pub fn sort(&mut self) {
+        self.0.sort_by(|net_a, net_b| {
+            net_b
+                .elements
+                .iter()
+                .filter(|e| e.is_position())
+                .count()
+                .cmp(&net_a.elements.iter().filter(|e| e.is_position()).count())
+        });
+    }
+
+    pub fn position_indexes(&self) -> HashMap<Vertex, usize> {
+        self.0
+            .iter()
+            .flat_map(|net| net.elements.iter().filter(|e| e.is_position()))
+            .enumerate()
+            .map(|(i, v)| (v.clone(), i))
+            .collect()
+    }
+
+    pub fn transition_indexes(&self) -> HashMap<Vertex, usize> {
+        self.0
+            .iter()
+            .flat_map(|net| net.elements.iter().filter(|e| e.is_transition()))
+            .enumerate()
+            .map(|(i, v)| (v.clone(), i))
+            .collect()
+    }
+
+    pub fn primitive_net(&self) -> Vec<Vec<Vertex>> {
+        let mut result = vec![];
+
+        for net in self.0.iter() {
+            let transitions = net
+                .elements
+                .iter()
+                .filter(|t| t.is_transition())
+                .cloned()
+                .collect::<Vec<_>>();
+            'brk: for transition in transitions.into_iter() {
+                let mut vertexes = vec![
+                    Vertex::position(0),
+                    Vertex::transition(0),
+                    Vertex::position(0),
+                ];
+                let mut from = net.connections.iter().filter(|c| c.first().eq(&transition));
+
+                while let Some(f) = from.next() {
+                    if result
+                        .iter()
+                        .flatten()
+                        .find(|v: &&Vertex| (*v).eq(f.second()))
+                        .is_some()
+                    {
+                        continue;
+                    }
+
+                    let mut to = net
+                        .connections
+                        .iter()
+                        .filter(|c| c.first().ne(f.second()) && c.second().eq(&transition));
+
+                    while let Some(t) = to.next() {
+                        if result
+                            .iter()
+                            .flatten()
+                            .find(|v: &&Vertex| (*v).eq(t.first()))
+                            .is_some()
+                        {
+                            continue;
+                        }
+
+                        vertexes[0] = t.first().clone();
+                        vertexes[1] = f.first().clone();
+                        vertexes[2] = f.second().clone();
+                        result.push(vertexes);
+                        continue 'brk;
+                    }
+                }
+            }
+        }
+
+        result
+    }
+
+
+    pub fn primitive_matrix(&self) -> DMatrix<i32> {
+        let positions = self.position_indexes();
+        let transitions = self.transition_indexes();
+        let mut result = DMatrix::<i32>::zeros(positions.len(), transitions.len());
+
+        let primitive_net = self.primitive_net();
+        for primitive in primitive_net.into_iter() {
+            result.column_mut(*transitions.get(&primitive[1]).unwrap())[*positions.get(&primitive[2]).unwrap()] = 1;
+            result.row_mut(*positions.get(&primitive[0]).unwrap())[*transitions.get(&primitive[1]).unwrap()] = -1;
+        }
+
+        result
+    }
+    
+    pub fn elements(&self) -> Vec<Vertex> {
+        
+        self.0
+            .iter()
+            .flat_map(|n| n.elements.iter())
+            .cloned()
+            .collect()
+        
+    }
+
+    pub fn connections(&self) -> Vec<&Connection> {
+
+        self.0
+            .iter()
+            .flat_map(|n| n.connections.iter())
+            .collect()
+
+    }
+
+    fn get_children(el: Vertex, elements: &Vec<Vertex>) -> HashSet<Vertex> {
+        let mut result = vec![el.clone()];
+        for searched in elements.iter() {
+            if let Some(parent) = searched.get_parent() {
+                if parent.eq(&el) {
+                    result.extend(Self::get_children(searched.clone(), elements).into_iter());
+                }
+            }
+        }
+        result.iter().cloned().collect()
+    }
+
+
+    pub fn equivalent_matrix(&self) -> (DMatrix<i32>, DMatrix<i32>) {
+        
+        let pos_indexes = self.position_indexes();
+        let tran_indexes = self.transition_indexes();
+        
+        let all_elements = self.elements();
+        let all_connections = self.connections();
+
+        let mut d_input = nalgebra::DMatrix::<i32>::zeros(pos_indexes.len(), tran_indexes.len());
+        let mut d_output = nalgebra::DMatrix::<i32>::zeros(pos_indexes.len(), tran_indexes.len());
+        
+        for element in all_elements.iter() {
+            let mut general = element.clone();
+            while let Some(el) = general.get_first_parent() {
+                general = el;
+            }
+
+            let hierarhy = Self::get_children(general, &all_elements);
+
+            for conn in all_connections
+                .iter()
+                .filter(|c| hierarhy.contains(c.first()) || hierarhy.contains(c.second()))
+            {
+                if hierarhy.contains(conn.first()) {
+                    for el in hierarhy.iter() {
+                        match el.is_transition() {
+                            true => {
+                                d_output.column_mut(*tran_indexes.get(el).unwrap())
+                                    [*pos_indexes.get(conn.second()).unwrap()] = 1;
+                            }
+                            false => {
+                                d_input.row_mut(*pos_indexes.get(el).unwrap())
+                                    [*tran_indexes.get(conn.second()).unwrap()] = -1;
+                            }
+                        }
+                    }
+                } else if hierarhy.contains(conn.second()) {
+                    for el in hierarhy.iter() {
+                        match conn.first().is_transition() {
+                            true => {
+                                d_output.column_mut(*tran_indexes.get(conn.first()).unwrap())
+                                    [*pos_indexes.get(el).unwrap()] = 1;
+                            }
+                            false => {
+                                d_input.row_mut(*pos_indexes.get(conn.first()).unwrap())
+                                    [*tran_indexes.get(el).unwrap()] = -1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        (d_input, d_output)
+    }
+
+    pub fn lbf_matrix(&self) -> Vec<(NamedMatrix, NamedMatrix)> {
+        self.0.iter().map(|net| net.as_matrix()).collect()
+    }
+
 }
 
 impl Clone for PetriNet {
@@ -426,6 +640,31 @@ impl PetriNet {
         ret
     }
 
+    pub fn as_matrix(&self) -> (NamedMatrix, NamedMatrix) {
+
+        let positions = self.elements.iter().filter(|p| p.is_position()).cloned().collect::<Vec<_>>();
+        let transitions = self.elements.iter().filter(|p| p.is_transition()).cloned().collect::<Vec<_>>();
+
+        let pos_indexes = positions.iter().enumerate().map(|(i, v)| (v, i)).collect::<HashMap<_, _>>();
+        let tran_indexes = transitions.iter().enumerate().map(|(i, v)| (v, i)).collect::<HashMap<_, _>>();
+
+        let mut d_input = DMatrix::<i32>::zeros(positions.len(), transitions.len());
+        let mut d_output = DMatrix::<i32>::zeros(positions.len(), transitions.len());
+
+        for conn in self.connections.iter() {
+            if conn.first().is_position() {
+                d_input.row_mut(*pos_indexes.get(conn.first()).unwrap())[*tran_indexes.get(conn.second()).unwrap()] = -1;
+            }
+            else {
+                d_output.column_mut(*tran_indexes.get(conn.first()).unwrap())[*pos_indexes.get(conn.second()).unwrap()] = 1;
+            }
+        }
+
+        (NamedMatrix::new_from(positions.clone(), transitions.clone(), d_input),
+         NamedMatrix::new_from(positions, transitions, d_output))
+
+    }
+
     #[inline]
     pub fn update_transition_index(&self) {
         *(*self.transition_index).borrow_mut() += 1;
@@ -491,7 +730,7 @@ impl PetriNet {
 
     pub fn remove_part(&mut self, part: &Vec<Vertex>) -> Self {
         for loop_element in part.iter() {
-            let mut new_element = match loop_element.is_position() {
+            let new_element = match loop_element.is_position() {
                 true => loop_element.split(self.get_position_index()),
                 false => loop_element.split(self.get_transition_index()),
             };
@@ -598,63 +837,6 @@ impl PetriNet {
     }
 }
 
-pub fn lbf(nets: &Vec<PetriNet>) -> Vec<Vec<Vertex>> {
-    let mut result = vec![];
-
-    for net in nets.iter() {
-        let transitions = net
-            .elements
-            .iter()
-            .filter(|t| t.is_transition())
-            .cloned()
-            .collect::<Vec<_>>();
-        'brk: for transition in transitions.into_iter() {
-            let mut vertexes = vec![
-                Vertex::position(0),
-                Vertex::transition(0),
-                Vertex::position(0),
-            ];
-            let mut from = net.connections.iter().filter(|c| c.first().eq(&transition));
-
-            while let Some(f) = from.next() {
-                if result
-                    .iter()
-                    .flatten()
-                    .find(|v: &&Vertex| (*v).eq(f.second()))
-                    .is_some()
-                {
-                    continue;
-                }
-
-                let mut to = net
-                    .connections
-                    .iter()
-                    .filter(|c| c.first().ne(f.second()) && c.second().eq(&transition));
-
-                while let Some(t) = to.next() {
-                    if result
-                        .iter()
-                        .flatten()
-                        .find(|v: &&Vertex| (*v).eq(t.first()))
-                        .is_some()
-                    {
-                        continue;
-                    }
-
-                    vertexes[0] = t.first().clone();
-                    vertexes[1] = f.first().clone();
-                    vertexes[2] = f.second().clone();
-                    result.push(vertexes);
-                    continue 'brk;
-                }
-            }
-        }
-    }
-
-    println!("LBF: => {:?}", result);
-    result
-}
-
 pub fn transition_synthesis_program(
     t_set: &Vec<usize>,
     d_input: &mut DMatrix<i32>,
@@ -697,141 +879,33 @@ pub fn position_synthesis_program(
     }
 }
 
-pub fn synthesis(mut nets: Vec<PetriNet>) -> SynthesisProgram {
-    nets.sort_by(|net_a, net_b| {
-        net_b
-            .elements
-            .iter()
-            .filter(|e| e.is_position())
-            .count()
-            .cmp(&net_a.elements.iter().filter(|e| e.is_position()).count())
-    });
+pub fn synthesis(mut nets: PetriNetVec) -> SynthesisProgram {
 
-    let lbf_res = lbf(&nets);
+    nets.sort();
 
-    let positions = nets
-        .iter()
-        .map(|net| net.elements.iter().filter(|e| e.is_position()).count())
-        .sum::<usize>();
-    let transitions = nets
-        .iter()
-        .map(|net| net.elements.iter().filter(|e| e.is_transition()).count())
-        .sum::<usize>();
+    let pos_indexes = nets.position_indexes();
+    let tran_indexes = nets.transition_indexes();
+
+    let positions = pos_indexes.len();
+    let transitions = tran_indexes.len();
 
     let mut c_matrix = nalgebra::DMatrix::<i32>::zeros(positions, positions);
-    let mut lbf_matrix = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
+    let primitive_matrix = nets.primitive_matrix();
+    let (equivalent_input, equivalent_output) = nets.equivalent_matrix();
+    let logical_base_fragments = nets.lbf_matrix();
+    
 
-    let mut pos_indexes = HashMap::new();
-    for (index, positions) in nets
-        .iter()
-        .flat_map(|net| net.elements.iter().filter(|e| e.is_position()))
-        .enumerate()
-    {
-        pos_indexes.insert(positions.clone(), index);
-    }
-
-    let mut tran_indexes = HashMap::new();
-    for (index, transition) in nets
-        .iter()
-        .flat_map(|net| net.elements.iter().filter(|e| e.is_transition()))
-        .enumerate()
-    {
-        tran_indexes.insert(transition.clone(), index);
-    }
-
-    for lbf in lbf_res.into_iter() {
-        let index_p1 = *pos_indexes.get(&lbf[0]).unwrap();
-        let index_t1 = *tran_indexes.get(&lbf[1]).unwrap();
-        let index_p2 = *pos_indexes.get(&lbf[2]).unwrap();
-
-        lbf_matrix.column_mut(index_t1)[index_p1] = -1;
-        lbf_matrix.column_mut(index_t1)[index_p2] = 1;
-    }
-
-    fn get_children(el: Vertex, elements: &Vec<Vertex>) -> HashSet<Vertex> {
-        let mut result = vec![el.clone()];
-        for searched in elements.iter() {
-            if let Some(parent) = searched.get_parent() {
-                if parent.eq(&el) {
-                    result.extend(get_children(searched.clone(), elements).into_iter());
-                }
-            }
-        }
-        result.iter().cloned().collect()
-    }
-
-    let all_elements = nets
-        .iter()
-        .flat_map(|n| n.elements.iter().cloned())
-        .collect::<Vec<_>>();
-    let all_connections = nets
-        .iter()
-        .flat_map(|net| net.connections.iter().cloned())
-        .collect::<Vec<_>>();
-    let poss = nets
-        .iter()
-        .flat_map(|net| net.elements.iter().filter(|e| e.is_position()).cloned())
-        .collect::<Vec<_>>();
-    let transs = nets
-        .iter()
-        .flat_map(|net| net.elements.iter().filter(|e| e.is_transition()).cloned())
-        .collect::<Vec<_>>();
-
-    //d_input => p -> t;
-    //d_output => t -> p;
-    let mut d_input = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
-    let mut d_output = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
-
-    for element in all_elements.iter() {
-        let mut general = element.clone();
-        while let Some(el) = general.get_parent() {
-            general = el;
-        }
-
-        let hierarhy = get_children(general, &all_elements);
-        println!("HIERARHY {:?}", hierarhy);
-
-        for conn in all_connections
-            .iter()
-            .filter(|c| hierarhy.contains(c.first()) || hierarhy.contains(c.second()))
-        {
-            if hierarhy.contains(conn.first()) {
-                for el in hierarhy.iter() {
-                    match el.is_transition() {
-                        true => {
-                            d_output.column_mut(*tran_indexes.get(el).unwrap())
-                                [*pos_indexes.get(conn.second()).unwrap()] = 1;
-                        }
-                        false => {
-                            d_input.row_mut(*pos_indexes.get(el).unwrap())
-                                [*tran_indexes.get(conn.second()).unwrap()] = -1;
-                        }
-                    }
-                }
-            } else if hierarhy.contains(conn.second()) {
-                for el in hierarhy.iter() {
-                    match conn.first().is_transition() {
-                        true => {
-                            d_output.column_mut(*tran_indexes.get(conn.first()).unwrap())
-                                [*pos_indexes.get(el).unwrap()] = 1;
-                        }
-                        false => {
-                            d_input.row_mut(*pos_indexes.get(conn.first()).unwrap())
-                                [*tran_indexes.get(el).unwrap()] = -1;
-                        }
-                    }
-                }
-            }
-        }
-    }
+    let poss = nets.positions();
+    let transs = nets.transitions();
+    
 
     let mut d_matrix = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
     for i in 0..d_matrix.nrows() {
         for j in 0..d_matrix.ncols() {
-            if (d_input.row(i)[j] + d_output.row(i)[j]) == 0 && d_input.row(i)[j] != 0 {
+            if (equivalent_input.row(i)[j] + equivalent_output.row(i)[j]) == 0 && equivalent_input.row(i)[j] != 0 {
                 d_matrix.row_mut(i)[j] = 0;
             } else {
-                d_matrix.row_mut(i)[j] = d_input.row(i)[j] + d_output.row(i)[j];
+                d_matrix.row_mut(i)[j] = equivalent_input.row(i)[j] + equivalent_output.row(i)[j];
             }
         }
     }
@@ -840,11 +914,11 @@ pub fn synthesis(mut nets: Vec<PetriNet>) -> SynthesisProgram {
     let mut result_entries = vec![];
 
     for i in 0..c_matrix.nrows() {
-        let mut entry = ndarray::Array2::zeros((lbf_matrix.nrows(), c_matrix.nrows()));
+        let mut entry = ndarray::Array2::zeros((primitive_matrix.nrows(), c_matrix.nrows()));
         let mut result_entry = ndarray::Array1::zeros(c_matrix.nrows());
-        for j in 0..lbf_matrix.ncols() {
-            for d in 0..lbf_matrix.nrows() {
-                entry.row_mut(j)[d] = lbf_matrix.row(d)[j] as f64;
+        for j in 0..primitive_matrix.ncols() {
+            for d in 0..primitive_matrix.nrows() {
+                entry.row_mut(j)[d] = primitive_matrix.row(d)[j] as f64;
             }
             result_entry[j] = d_matrix.row(i)[j] as f64;
         }
@@ -852,8 +926,8 @@ pub fn synthesis(mut nets: Vec<PetriNet>) -> SynthesisProgram {
         for j in 0..entry.nrows() {
             for d in 0..entry.ncols() {
                 if entry.row(j)[d] == -1.0 {
-                    entry.row_mut(j + lbf_matrix.ncols())[d] = 1.0;
-                    result_entry[j + lbf_matrix.ncols()] = 0.0; //(rand::random::<u8>() % 4).into();
+                    entry.row_mut(j + primitive_matrix.ncols())[d] = 1.0;
+                    result_entry[j + primitive_matrix.ncols()] = 0.0; //(rand::random::<u8>() % 4).into();
                                                                 //result_entry[j + lbf_matrix.ncols()] = 1.0;//(rand::random::<u8>() % 4).into();
                 }
             }
@@ -864,9 +938,9 @@ pub fn synthesis(mut nets: Vec<PetriNet>) -> SynthesisProgram {
     }
 
     println!("D: => {}", d_matrix);
-    println!("PRIMITIVE: => {}", MatrixFormat(&lbf_matrix, &transs, &poss));
-    println!("SLAE MATRIX => {:?}", entries);
-    println!("SLAE RESULTS => {:?}", result_entries);
+    println!("D SIN: => {}", MatrixFormat(&equivalent_input, &transs, &poss));
+    println!("D SOUT: => {}", MatrixFormat(&equivalent_output, &transs, &poss));
+    println!("PRIMITIVE: => {}", MatrixFormat(&primitive_matrix, &transs, &poss));
 
     for (index, (a, b)) in entries
         .into_iter()
@@ -889,7 +963,8 @@ pub fn synthesis(mut nets: Vec<PetriNet>) -> SynthesisProgram {
         transitions: transs.clone(),
         programs: vec![],
         c_matrix,
-        lbf_matrix,
+        lbf_matrix: primitive_matrix,
+        logical_base_fragments,
     }
 }
 
@@ -1187,7 +1262,7 @@ pub fn synthesis_program(programs: &SynthesisProgram) -> SynthesisResult {
     SynthesisResult {
         result_net: new_net,
         c_matrix,
-        lbf_matrix: NamedMatrix::new_from(programs.positions.clone(), programs.transitions.clone(), programs.lbf_matrix.clone())
+        lbf_matrix: NamedMatrix::new_from(programs.positions.clone(), programs.transitions.clone(), programs.lbf_matrix.clone()),
     }
 }
 

@@ -48,7 +48,4 @@ void SynthesisView::slotConfirm(bool checked) {
 
     auto common_result = split_finish(m_model->program());
 
-    dynamic_cast<MainWindow*>(m_tab->parent()->parent()->parent())->addTabFromNet(std::move(common_result),
-                                                                                     m_tab);
-
 }

@@ -1,5 +1,5 @@
 QMainWindow {
-    background-color: #24292E;
+    /*background-color: #24292E;*/
 }
 
 QMainWindow::separator {
@@ -13,7 +13,7 @@ QDockWidget {
 
 QDockWidget::title {
     text-align: left;
-    background-color: #24292E;
+    /*background-color: #24292E;*/
     border-bottom: 1px solid white;
     padding-left: 8px;
 }
@@ -23,12 +23,12 @@ QDockWidget::close-button:hover, QDockWidget::float-button:hover {
 }
 
 QGraphicsView {
-    background-color: #24292E;
+    /*background-color: #24292E;*/
 }
 
 QTabWidget::pane {
-    border-top: 2px solid #1E2327;
-    background-color: #24292E;
+    border-top: 2px solid #E6E6E9;
+    /*background-color: #24292E;*/
     border-right: 1px solid black;
 }
 
@@ -39,18 +39,18 @@ QTabWidget::tab-bar {
 QTabBar::tab {
     min-width: 8ex;
     padding: 9px;
-    color: white;
-    background-color: #24292E;
+    /* color: white; */
+    /*background-color: #24292E;*/
 }
 
 QTabBar::tab:selected {
     border-bottom: 2px solid #f9826c; /* same as pane color */
-    background-color: #24292E;
-    color: white;
+    /*background-color: #24292E;*/
+    /* color: white; */
 }
 
 QTabBar::tab:!selected:hover {
-    background-color: #444D56;
+    /*background-color: #444D56;*/
 }
 
 QTabBar::close-button {
@@ -65,8 +65,8 @@ QTabBar::close-button:hover {
 }
 
 QMenuBar, QMenu {
-    background-color: #24292E;
-    color: white;
+    /*background-color: #24292E;*/
+    /* color: white; */
 }
 
 QMenu {

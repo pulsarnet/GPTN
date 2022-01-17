@@ -10,16 +10,22 @@
 #include <QAction>
 #include "view/graphics_view.h"
 #include "split_list_model.h"
+#include "view/graphics_scene.h"
+#include "toolbox/toolbox.h"
 
 class Tab : public QWidget {
 
     Q_OBJECT
 
+    void setFileName(QString filename);
+
 public:
 
     explicit Tab(QWidget* parent = nullptr);
 
-    GraphicsView* scene();
+    GraphicScene* scene() {
+        return qobject_cast<GraphicScene*>(edit_view->scene());
+    }
 
     GraphicsView* primitive() {
         return primitive_view;
@@ -29,8 +35,6 @@ public:
         return lbf_view;
     }
 
-    [[nodiscard]] bool changed() const { return m_changed; }
-
     /*
      * Mark document changed
      *
@@ -38,32 +42,59 @@ public:
      */
     void setChanged(bool changed);
 
-    bool setFile(const QString&);
-
-    QFile& file();
-
-    void closeFile();
-
     void splitAction();
 
-    SplitListModel* splitActions() { return m_split_actions; }
+    void saveToFile();
+    void loadFromFile();
+
+    QMenu* menuOfDockToggle() {
+        return m_actionToggleMenu;
+    }
 
 public slots:
 
-    void slotDocumentChanged();
+    void slotDocumentChanged() {}
 
-    void slotRemoveItem();
+    void positionChecked(bool checked);
+    void transitionChecked(bool checked);
+    void moveChecked(bool checked);
+    void connectChecked(bool checked);
+    void rotateChecked(bool checked);
+    void removeChecked(bool checked);
+    void markerChecked(bool checked);
 
 private:
 
-    GraphicsView* edit_view = nullptr;
+    QVariant toData();
+    void fromData(QVariant data);
+
+
+    QAction* makeAction(const QString &name, const QIcon &icon, bool checkable, QActionGroup *actionGroup);
+
+private:
+
+    QGraphicsView* edit_view = nullptr;
     GraphicsView* primitive_view = nullptr;
     GraphicsView* lbf_view = nullptr;
-
-    bool m_changed = false;
-    QFile m_file;
+    QMenu* m_actionToggleMenu = nullptr;
 
     SplitListModel* m_split_actions;
+
+    PetriNet* m_net;
+
+    QString m_filename;
+
+
+    QAction* position_action = nullptr;
+    QAction* transition_action = nullptr;
+    QAction* move_action = nullptr;
+    QAction* connect_action = nullptr;
+    QAction* rotation_action = nullptr;
+    QAction* remove_action = nullptr;
+    QAction* marker_action = nullptr;
+    QActionGroup* actionGroup = nullptr;
+
+    ToolBox* toolBar = nullptr;
 
 };
 

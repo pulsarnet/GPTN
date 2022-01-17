@@ -20,12 +20,18 @@ void Transition::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
 
     painter->save();
 
-    if (PetriObject::colored()) painter->setPen(Qt::red);
-    painter->setBrush(Qt::black);
-    painter->drawRect(boundingRect());
+    painter->setPen(isSelected() ? QPen(Qt::red) : Qt::NoPen);
+    painter->setBrush(Qt::cyan);
 
-    painter->setPen(Qt::white);
+    auto rect = boundingRect();
+    rect.setSize(QSize(rect.size().width(), rect.size().height()));
+    rect.setX(rect.x());
+    rect.setY(rect.y());
+    painter->drawRect(rect);
+
+    painter->setPen(Qt::black);
     auto name = QString("t%1").arg(this->index());
+    painter->rotate(-rotation());
     painter->drawText(boundingRect(), Qt::AlignCenter, name);
     painter->restore();
 }
@@ -44,18 +50,11 @@ QPointF getIntersection(qreal dx, qreal dy, qreal cx, qreal cy, qreal width, qre
 QPointF Transition::connectionPos(PetriObject* to, bool reverse) {
 
 
-    qreal angle = this->angleBetween(to->pos());
-
-    double x = QGraphicsItem::scenePos().x();
-    double y = QGraphicsItem::scenePos().y();
-
     qreal w = QGraphicsItem::sceneBoundingRect().width() / 2.;
     qreal h = QGraphicsItem::sceneBoundingRect().height() / 2.;
 
-
-    angle = angle - qDegreesToRadians(reverse ? 100 : 80);
-    qreal xPosy = round((x + qCos(angle) * w));
-    qreal yPosy = round((y + qSin(angle) * h));
+    qreal xPosy = to->scenePos().x();
+    qreal yPosy = to->scenePos().y();
 
     qreal dx = xPosy - center().x();
     qreal dy = yPosy - center().y();
@@ -64,10 +63,7 @@ QPointF Transition::connectionPos(PetriObject* to, bool reverse) {
     qreal cy = center().y();
 
 
-    auto intersection = getIntersection(dx, dy,
-                                        cx, cy,
-                                        w, h);
-
+    auto intersection = dx == 0. && dy == 0. ? to->scenePos() : getIntersection(dx, dy, cx, cy,w, h);
 
     return intersection;
 }

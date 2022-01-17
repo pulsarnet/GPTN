@@ -18,7 +18,7 @@ mod net;
 
 mod core;
 
-use net::{synthesis, synthesis_program, PetriNet, Vertex};
+use net::{synthesis, synthesis_program, PetriNet, Vertex, PetriNetVec};
 
 #[repr(C)]
 pub struct FFIConnection {
@@ -182,10 +182,64 @@ impl FFINamedMatrix {
 }
 
 #[repr(C)]
+pub enum FFIVertexType {
+    Position,
+    Transition
+}
+
+#[repr(C)]
+pub struct FFIParent {
+    vertex_type: FFIVertexType,
+    child: usize,
+    parent: usize
+}
+
+#[repr(C)]
+pub struct FFIParentVec {
+    inner: *const FFIParent,
+    len: usize
+}
+
+#[repr(C)]
+pub struct FFILogicalBaseFragmentsVec {
+    inputs: *const FFINamedMatrix,
+    outputs: *const FFINamedMatrix,
+    len: usize
+}
+
+impl FFILogicalBaseFragmentsVec {
+    fn from_vec(input: Vec<(NamedMatrix, NamedMatrix)>) -> Self {
+
+        let mut inputs = vec![];
+        let mut outputs = vec![];
+
+        for fragment in input.into_iter() {
+            inputs.push(FFINamedMatrix::from_matrix(fragment.0));
+            outputs.push(FFINamedMatrix::from_matrix(fragment.1));
+        }
+
+        let result = FFILogicalBaseFragmentsVec {
+            inputs: inputs.as_ptr(),
+            outputs: outputs.as_ptr(),
+            len: inputs.len()
+        };
+
+        std::mem::forget(inputs);
+        std::mem::forget(outputs);
+
+        result
+
+    }
+}
+
+#[repr(C)]
 pub struct CommonResult {
     petri_net: *mut FFIBoxedSlice,
     c_matrix: *mut FFIMatrix,
-    lbf_matrix: *mut FFINamedMatrix
+    lbf_matrix: *mut FFINamedMatrix,
+
+    logical_base_fragments: *mut FFILogicalBaseFragmentsVec,
+    parents: *mut FFIParentVec
 }
 
 #[no_mangle]
@@ -217,7 +271,7 @@ pub unsafe extern "C" fn synthesis_start(v: *mut PetriNet) -> *mut SynthesisProg
     // C * D' => D''
     // D'' убираем эквивалентные позиции и переходы
 
-    Box::into_raw(Box::new(synthesis(parts)))
+    Box::into_raw(Box::new(synthesis(PetriNetVec(parts))))
 }
 
 #[no_mangle]
@@ -225,33 +279,26 @@ pub unsafe extern "C" fn synthesis_end(v: *mut SynthesisProgram) -> *mut CommonR
     let program = &mut *v;
     let result = synthesis_program(program);
 
+    let parents = program.get_parents();
     let petri_net = Box::new(FFIBoxedSlice::from_net(result.result_net));
     let c_matrix = Box::new(FFIMatrix::from_matrix(result.c_matrix));
     let lbf_matrix = Box::new(FFINamedMatrix::from_matrix(result.lbf_matrix));
+    let fragments =
+        Box::new(FFILogicalBaseFragmentsVec::from_vec(program.logical_base_fragments.clone()));
 
     Box::into_raw(Box::new(CommonResult {
         petri_net: Box::into_raw(petri_net),
         c_matrix: Box::into_raw(c_matrix),
-        lbf_matrix: Box::into_raw(lbf_matrix)
+        lbf_matrix: Box::into_raw(lbf_matrix),
+        logical_base_fragments: Box::into_raw(fragments),
+        parents
     }))
 }
-
-// extern "C" unsigned long positions(SynthesisProgram*);
-// extern "C" unsigned long transitions(SynthesisProgram*);
-//
-// extern "C" char* position(SynthesisProgram*, unsigned long);
-// extern "C" char* transition(SynthesisProgram*, unsigned long);
-//
-// extern "C" unsigned long programs(SynthesisProgram*);
-// extern "C" void add_program(SynthesisProgram*);
-//
-// extern "C" void set_program_value(SynthesisProgram*, unsigned long, unsigned long, unsigned long);
-// extern "C" unsigned long get_program_value(SynthesisProgram*, unsigned long, unsigned long);
 
 pub struct SynthesisResult {
     pub result_net: PetriNet,
     pub c_matrix: DMatrix<i32>,
-    pub lbf_matrix: NamedMatrix
+    pub lbf_matrix: NamedMatrix,
 }
 
 pub struct SynthesisProgram {
@@ -260,6 +307,39 @@ pub struct SynthesisProgram {
     pub programs: Vec<Vec<usize>>,
     pub c_matrix: DMatrix<i32>,
     pub lbf_matrix: DMatrix<i32>,
+    pub logical_base_fragments: Vec<(NamedMatrix, NamedMatrix)>
+}
+
+impl SynthesisProgram {
+
+    pub fn get_parents(&self) -> *mut FFIParentVec {
+        let mut parents = vec![];
+
+        for pos in self.positions.iter() {
+            if let Some(p) = pos.get_first_parent() {
+                parents.push(FFIParent {
+                    vertex_type: FFIVertexType::Position,
+                    child: pos.index() as usize,
+                    parent: p.index() as usize,
+                });
+            }
+        }
+
+        for tran in self.transitions.iter() {
+            if let Some(t) = tran.get_first_parent() {
+                parents.push(FFIParent {
+                    vertex_type: FFIVertexType::Transition,
+                    child: tran.index() as usize,
+                    parent: t.index() as usize,
+                });
+            }
+        }
+
+        let ptr = Box::new(FFIParentVec { inner: parents.as_ptr(), len: parents.len() });
+        std::mem::forget(parents);
+        Box::into_raw(ptr)
+    }
+
 }
 
 #[no_mangle]

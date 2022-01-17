@@ -125,6 +125,19 @@ impl Vertex {
         (*self.0.borrow()).p.clone()
     }
 
+    pub fn get_first_parent(&self) -> Option<Self> {
+        let mut result = None;
+
+        if let Some(t) = self.get_parent() {
+            match t.get_first_parent() {
+                Some(v) => result = Some(v),
+                None => result = Some(t)
+            }
+        }
+
+        result
+    }
+
     pub fn set_parent(&self, p: Vertex) {
         (*self.0.borrow_mut()).p = Some(p);
     }
@@ -134,6 +147,8 @@ impl Vertex {
         match split.0.borrow_mut().t {
             VertexType::Position(ref mut index, _) | VertexType::Transition(ref mut index) => *index = new_index
         };
+
+        (*split.0.borrow_mut()).p = Some(self.clone_inner());
         split
     }
 

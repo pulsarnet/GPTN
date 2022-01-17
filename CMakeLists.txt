@@ -34,7 +34,7 @@ set(SRC_FILES
         src/mainwindow.cpp
         src/tab.cpp
         src/matrix_model.cpp
-        src/arrow_line.cpp
+        src/elements/arrow_line.cpp
         src/elements/position.cpp
         src/elements/transition.cpp
         src/elements/petri_object.cpp
@@ -45,13 +45,13 @@ set(SRC_FILES
         src/ffi/rust.cpp
         src/view/graphics_view.cpp
         src/view/graphics_view_zoom.cpp
-        )
+        src/view/graphics_scene.cpp)
 
 set(HEADERS
         include/mainwindow.h
         include/tab.h
         include/matrix_model.h
-        include/arrow_line.h
+        include/elements/arrow_line.h
         include/elements/position.h
         include/elements/transition.h
         include/elements/petri_object.h
@@ -60,7 +60,7 @@ set(HEADERS
         include/ffi/rust.h
         include/view/graphics_view.h
         include/view/graphics_view_zoom.h
-        include/toolbox/toolbox.h include/toolbox/tool.h)
+        include/toolbox/toolbox.h include/toolbox/tool.h include/view/graphics_scene.h include/elements/graphicsitem.h)
 
 
 add_executable(ffi_rust
@@ -70,9 +70,14 @@ add_executable(ffi_rust
         resources/resources.qrc
         )
 
+target_include_directories(ffi_rust PRIVATE "/usr/local/include")
+
+find_package(qtadvanceddocking)
+
 add_dependencies(ffi_rust rust)
 
+
 target_link_libraries(ffi_rust PRIVATE
-        debug "${CMAKE_SOURCE_DIR}/lib/liblapack.lib" "${CMAKE_SOURCE_DIR}/lib/libblas.lib" "${CMAKE_SOURCE_DIR}/lib/liblapacke.lib" "${CMAKE_SOURCE_DIR}/rust/target/debug/hello_world.lib" Qt6::Widgets
-        optimized "${CMAKE_SOURCE_DIR}/lib/liblapack.lib" "${CMAKE_SOURCE_DIR}/lib/libblas.lib" "${CMAKE_SOURCE_DIR}/lib/liblapacke.lib" "${CMAKE_SOURCE_DIR}/rust/target/release/hello_world.lib" Qt6::Widgets
+        debug "${CMAKE_SOURCE_DIR}/rust/target/debug/libhello_world.a" Qt6::Widgets Qt6::Core Qt6::Gui lapack ads::qtadvanceddocking
+        optimized "${CMAKE_SOURCE_DIR}/rust/target/release/libhello_world.a" Qt6::Widgets Qt6::Core Qt6::Gui lapack ads::qtadvanceddocking
         )

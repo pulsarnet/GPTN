@@ -4,8 +4,9 @@
 
 #include "../../include/elements/position.h"
 
+
 PetriObject::PetriObject(QGraphicsItem *parent) : QGraphicsItem(parent) {
-    setFlags(ItemIsMovable | ItemSendsGeometryChanges);
+    setFlags(ItemIsMovable | ItemSendsGeometryChanges | ItemIsSelectable);
 }
 
 void PetriObject::mousePressEvent(QGraphicsSceneMouseEvent *event) {
@@ -43,7 +44,7 @@ qreal PetriObject::angleBetween(const QPointF &to) {
     qreal deltaY = to.y() - y;
 
     qreal rotation = -atan2(deltaX, deltaY);
-    rotation = qDegreesToRadians(qRadiansToDegrees(rotation) + 180);
+    rotation = qDegreesToRadians(qRadiansToDegrees(rotation) + 180.0);
 
     return rotation;
 }

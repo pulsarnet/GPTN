@@ -1,6 +1,7 @@
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "Bcrypt.lib")
 #include <QApplication>
+#include <QFontDatabase>
 #include "include/mainwindow.h"
 
 int main(int argc, char **argv) {
@@ -14,31 +15,15 @@ int main(int argc, char **argv) {
 
     app.setStyleSheet(qss_text);
 
-//    app.setStyleSheet(R"(
-//        QMainWindow {
-//            background-color: #24292E;
-//        }
+    QFile fontRes(":/fonts/JetBrainsMono-Medium.ttf");
+    if (!fontRes.open(QIODevice::ReadOnly)) {
+        qDebug() << fontRes.errorString();
+        return -1;
+    }
 
-//        QMainWindow::separator {
-//            width: 1px;
-//        }
-
-//        QDockWidget {
-//            padding: 0;
-//            border: 1px solid green;
-//        }
-
-//        QDockWidget::title {
-//            text-align: left;
-//            background-color: #1F2428;
-//            border-bottom: 1px solid white;
-//            padding-left: 8px;
-//        }
-
-//        QDockWidget::close-button:hover, QDockWidget::float-button:hover {
-//            background-color: #88544C;
-//        }
-//    )");
+    auto id = QFontDatabase::addApplicationFontFromData(fontRes.readAll());
+    qDebug() << id;
+    QApplication::setFont(QFont("JetBrains Mono", 13, QFont::Medium));
 
     MainWindow window(nullptr);
     window.setWindowState(Qt::WindowMaximized);
