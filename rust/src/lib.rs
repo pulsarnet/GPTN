@@ -201,13 +201,44 @@ pub struct FFIParentVec {
 }
 
 #[repr(C)]
+pub struct FFILogicalBaseFragmentsVec {
+    inputs: *const FFINamedMatrix,
+    outputs: *const FFINamedMatrix,
+    len: usize
+}
+
+impl FFILogicalBaseFragmentsVec {
+    fn from_vec(input: Vec<(NamedMatrix, NamedMatrix)>) -> Self {
+
+        let mut inputs = vec![];
+        let mut outputs = vec![];
+
+        for fragment in input.into_iter() {
+            inputs.push(FFINamedMatrix::from_matrix(fragment.0));
+            outputs.push(FFINamedMatrix::from_matrix(fragment.1));
+        }
+
+        let result = FFILogicalBaseFragmentsVec {
+            inputs: inputs.as_ptr(),
+            outputs: outputs.as_ptr(),
+            len: inputs.len()
+        };
+
+        std::mem::forget(inputs);
+        std::mem::forget(outputs);
+
+        result
+
+    }
+}
+
+#[repr(C)]
 pub struct CommonResult {
     petri_net: *mut FFIBoxedSlice,
     c_matrix: *mut FFIMatrix,
     lbf_matrix: *mut FFINamedMatrix,
 
-    d_input: *mut FFINamedMatrix,
-    d_output: *mut FFINamedMatrix,
+    logical_base_fragments: *mut FFILogicalBaseFragmentsVec,
     parents: *mut FFIParentVec
 }
 
@@ -252,15 +283,14 @@ pub unsafe extern "C" fn synthesis_end(v: *mut SynthesisProgram) -> *mut CommonR
     let petri_net = Box::new(FFIBoxedSlice::from_net(result.result_net));
     let c_matrix = Box::new(FFIMatrix::from_matrix(result.c_matrix));
     let lbf_matrix = Box::new(FFINamedMatrix::from_matrix(result.lbf_matrix));
-    let d_input = Box::new(FFINamedMatrix::from_matrix(result.d_input));
-    let d_output = Box::new(FFINamedMatrix::from_matrix(result.d_output));
+    let fragments =
+        Box::new(FFILogicalBaseFragmentsVec::from_vec(program.logical_base_fragments.clone()));
 
     Box::into_raw(Box::new(CommonResult {
         petri_net: Box::into_raw(petri_net),
         c_matrix: Box::into_raw(c_matrix),
         lbf_matrix: Box::into_raw(lbf_matrix),
-        d_input: Box::into_raw(d_input),
-        d_output: Box::into_raw(d_output),
+        logical_base_fragments: Box::into_raw(fragments),
         parents
     }))
 }
@@ -269,8 +299,6 @@ pub struct SynthesisResult {
     pub result_net: PetriNet,
     pub c_matrix: DMatrix<i32>,
     pub lbf_matrix: NamedMatrix,
-    pub d_input: NamedMatrix,
-    pub d_output: NamedMatrix,
 }
 
 pub struct SynthesisProgram {
@@ -279,8 +307,7 @@ pub struct SynthesisProgram {
     pub programs: Vec<Vec<usize>>,
     pub c_matrix: DMatrix<i32>,
     pub lbf_matrix: DMatrix<i32>,
-    pub d_input: DMatrix<i32>,
-    pub d_output: DMatrix<i32>,
+    pub logical_base_fragments: Vec<(NamedMatrix, NamedMatrix)>
 }
 
 impl SynthesisProgram {

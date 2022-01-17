@@ -120,6 +120,7 @@ impl<T: Default + PartialEq + Clone> Unique for Vec<T> {
     }
 }
 
+#[derive(Clone)]
 pub struct NamedMatrix {
     pub rows: HashMap<Vertex, usize>,
     pub cols: HashMap<Vertex, usize>,

@@ -26,7 +26,7 @@ extern "C" struct FFIBoxedSlice {
 
     [[nodiscard]] InnerPetriNet into() const {
         QList<QString> r_elements;
-        QList<std::tuple<QString, QString>> r_connections;
+        QList<std::pair<QString, QString>> r_connections;
         QList<unsigned long> r_markers;
 
         auto cursor = this->elements;
@@ -40,7 +40,7 @@ extern "C" struct FFIBoxedSlice {
             auto s1 = QString((*connections_cursor)->from);
             auto s2 = QString((*connections_cursor)->to);
 
-            r_connections.push_back(std::make_tuple(s1, s2));
+            r_connections.push_back({s1, s2});
             connections_cursor++;
         }
 
@@ -50,7 +50,7 @@ extern "C" struct FFIBoxedSlice {
             markers_cursor++;
         }
 
-        return InnerPetriNet{ r_elements, r_connections, r_markers};
+        return InnerPetriNet{ std::move(r_elements), std::move(r_connections), std::move(r_markers)};
     }
 };
 
@@ -110,12 +110,55 @@ extern "C" struct FFINamedMatrix {
     }
 };
 
+extern "C" struct FFILogicalBaseFragments {
+    FFINamedMatrix* inputs;
+    FFINamedMatrix* outputs;
+
+    unsigned long long len;
+
+    QList<InnerPetriNet> into() {
+
+        auto input_cursor = inputs;
+        auto output_cursor = outputs;
+
+        QList<InnerPetriNet> result;
+
+        for (int i = 0; i < len; i++) {
+
+            auto net = InnerPetriNet();
+
+            auto in = input_cursor->into();
+            auto out = output_cursor->into();
+
+            net.elements.append(in.rows);
+            net.elements.append(in.cols);
+
+            for (int r = 0; r < in.rows.count(); r++) {
+                for (int c = 0; c < in.cols.count(); c++) {
+                    if (in(r, c) != 0) {
+                        net.connections.push_back({in.rows[r], in.cols[c]});
+                    }
+                    else if (out(r, c) != 0) {
+                        net.connections.push_back({in.cols[c], in.rows[r]});
+                    }
+                }
+            }
+
+            result.push_back(net);
+
+            input_cursor++;
+            output_cursor++;
+        }
+
+        return result;
+    }
+};
+
 extern "C" struct CommonResult {
     FFIBoxedSlice* petri_net;
     FFIMatrix* c_matrix;
     FFINamedMatrix* lbf_matrix;
-    FFINamedMatrix* d_input;
-    FFINamedMatrix* d_output;
+    FFILogicalBaseFragments* logical_base_fragments;
     FFIParentVec* parents;
 };
 

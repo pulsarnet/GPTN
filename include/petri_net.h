@@ -7,7 +7,7 @@
 
 struct InnerPetriNet {
     QList<QString> elements;
-    QList<std::tuple<QString, QString>> connections;
+    QList<std::pair<QString, QString>> connections;
     QList<unsigned long> markers;
 };
 
@@ -45,8 +45,7 @@ struct InnerCommonResult {
     InnerPetriNet net;
     Matrix c_matrix;
     NamedMatrix lbf_matrix;
-    NamedMatrix d_input;
-    NamedMatrix d_output;
+    QList<InnerPetriNet> fragments;
     QList<FFIParent> parents;
 };
 

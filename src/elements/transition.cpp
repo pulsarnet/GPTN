@@ -21,7 +21,7 @@ void Transition::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
     painter->save();
 
     painter->setPen(isSelected() ? QPen(Qt::red) : Qt::NoPen);
-    painter->setBrush(Qt::black);
+    painter->setBrush(Qt::cyan);
 
     auto rect = boundingRect();
     rect.setSize(QSize(rect.size().width(), rect.size().height()));
@@ -29,7 +29,7 @@ void Transition::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
     rect.setY(rect.y());
     painter->drawRect(rect);
 
-    painter->setPen(Qt::white);
+    painter->setPen(Qt::black);
     auto name = QString("t%1").arg(this->index());
     painter->rotate(-rotation());
     painter->drawText(boundingRect(), Qt::AlignCenter, name);

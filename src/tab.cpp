@@ -190,52 +190,79 @@ void Tab::splitAction() {
         start_y += offset_y;
     }
 
-
+    /// РИСУЕМ ЛОГИЧЕСКИЕ БАЗОВЫЕ ФРАГМЕНТЫ
     auto main_scene = dynamic_cast<GraphicScene*>(edit_view->scene());
-    scene = dynamic_cast<GraphicScene*>(lbf_view->scene());
-
-    auto& d_input = result.d_input;
-    auto& d_output = result.d_output;
     auto parents = result.parents.toVector();
+    auto& lbf = result.fragments;
+    QList<QGraphicsItemGroup*> groups;
 
-    auto& transitions = d_input.cols;
-    auto& positions = d_input.rows;
+    scene = dynamic_cast<GraphicScene*>(lbf_view->scene());
+    scene->removeAll();
 
-    for (int ti = 0; ti < transitions.count(); ti++) {
-        auto newTransition = scene->addTransition(d_input.cols[ti], QPoint(0, 0));
+    for (auto& net : lbf) {
+        QRectF fragmentRect(0, 0, 0, 0);
+        QList<QGraphicsItem*> group;
 
-        qDebug() << "SEARCHING " << newTransition->index();
-        auto it = std::find_if(parents.begin(), parents.end(), [&](FFIParent& p) {
-            qDebug() << (p.type == FFIVertexType::Transition ? "t" : "p") << p.child << p.parent;
-            return p.type == FFIVertexType::Transition && p.child == newTransition->index();
-        });
+        for (auto &element: net.elements) {
+            auto index = element.mid(1).toInt();
 
-        if (it == parents.end()) newTransition->setPos(main_scene->getTransitionPos(newTransition->index()));
-        else newTransition->setPos(main_scene->getTransitionPos((*it).parent));
+            PetriObject *newElement;
 
-        for (int pi = 0; pi < positions.count(); pi++) {
-
-            bool inputConnect = d_input(pi, ti) < 0;
-            bool outputConnect = d_output(pi, ti) > 0;
-
-            if (!inputConnect && !outputConnect) continue;
-
-            auto newPosition = scene->getPosition(d_input.rows[pi].mid(1).toInt());
-            if (!newPosition) {
-                newPosition = scene->addPosition(d_input.rows[pi], QPoint(0, 0));
-                auto parentIt = std::find_if(parents.begin(), parents.end(), [&](FFIParent& p) {
-                    return p.type == FFIVertexType::Position && p.child == newPosition->index();
+            if (element.startsWith("p")) {
+                newElement = scene->addPosition(element, QPoint(0, 0));
+                auto it = std::find_if(parents.begin(), parents.end(), [&](FFIParent &p) {
+                    return p.type == FFIVertexType::Position && p.child == index;
                 });
 
-                if (parentIt == parents.end()) newPosition->setPos(main_scene->getPositionPos(newPosition->index()));
-                else newPosition->setPos(main_scene->getPositionPos((*parentIt).parent));
+                if (it == parents.end()) {
+                    newElement->setPos(main_scene->getPositionPos(index));
+
+                    auto childIt = std::find_if(parents.begin(), parents.end(), [&](FFIParent &p) {
+                        return p.type == FFIVertexType::Position && p.parent == index;
+                    });
+
+                    if (childIt != parents.end()) {
+                        newElement->setPos(newElement->scenePos() - QPointF(40., 0));
+                    }
+                }
+                else {
+                    newElement->setPos(main_scene->getPositionPos((*it).parent)  + QPointF(40., 0));
+                }
+            } else {
+                newElement = scene->addTransition(element, QPoint(0, 0));
+                auto it = std::find_if(parents.begin(), parents.end(), [&](FFIParent &p) {
+                    return p.type == FFIVertexType::Transition && p.child == index;
+                });
+
+                auto common = main_scene->getTransition(it == parents.end() ? index : (*it).parent);
+                newElement->setPos(common->scenePos());
+                newElement->setRotation(common->rotation());
             }
 
-            if (inputConnect) scene->connectItems(newPosition, newTransition);
-            if (outputConnect) scene->connectItems(newTransition, newPosition);
+            group.push_back(newElement);
 
+            fragmentRect = fragmentRect.united(newElement->sceneBoundingRect());
+        }
+
+        groups.push_back(scene->createItemGroup(group));
+        groups.last()->setFlags(QGraphicsItem::ItemIsMovable | QGraphicsItem::ItemIsSelectable);
+
+        for (auto connection: net.connections) {
+            PetriObject *from;
+            PetriObject *to;
+            if (connection.first.startsWith("p")) {
+                from = scene->getPosition(connection.first.mid(1).toInt());
+                to = scene->getTransition(connection.second.mid(1).toInt());
+            } else {
+                from = scene->getTransition(connection.first.mid(1).toInt());
+                to = scene->getPosition(connection.second.mid(1).toInt());
+            }
+
+            scene->connectItems(from, to);
         }
     }
+
+    lbf_view->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
 
 }
 
