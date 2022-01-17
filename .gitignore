@@ -3,3 +3,4 @@ rust/target
 cmake-build-*
 .idea
 lib
+3dparty
