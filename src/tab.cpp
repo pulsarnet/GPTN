@@ -45,8 +45,9 @@ Tab::Tab(QWidget *parent) : QWidget(parent) {
     lbf_docker->setWidget(lbf_view);
 
     manager->addDockWidget(DockWidgetArea::OuterDockAreas, edit_docker);
-    manager->addDockWidget(DockWidgetArea::BottomDockWidgetArea, primitive_docker);
-    manager->addDockWidget(DockWidgetArea::RightDockWidgetArea, lbf_docker);
+
+    auto bottomArea = manager->addDockWidget(DockWidgetArea::BottomDockWidgetArea, primitive_docker);
+    manager->addDockWidgetTabToArea(lbf_docker, bottomArea);
 
     this->setLayout(new QGridLayout);
     this->layout()->addWidget(manager);

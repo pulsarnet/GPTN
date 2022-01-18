@@ -23,6 +23,8 @@ void GraphicScene::setMode(Mode mod) {
 
 void GraphicScene::slotSelectionChanged() {
 
+
+
 }
 
 void GraphicScene::setAllowMods(Modes mods) {
@@ -82,12 +84,6 @@ void GraphicScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
 }
 
 void GraphicScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
-
-    switch (m_mod) {
-        default:
-            break;
-    }
-
     QGraphicsScene::mouseReleaseEvent(event);
 }
 

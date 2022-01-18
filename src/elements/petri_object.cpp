@@ -14,22 +14,19 @@ void PetriObject::mousePressEvent(QGraphicsSceneMouseEvent *event) {
         this->setCursor(QCursor(Qt::ClosedHandCursor));
     }
 
-    Q_UNUSED(event)
+    QGraphicsItem::mousePressEvent(event);
 }
 
 void PetriObject::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
-    if (event->buttons() & Qt::LeftButton) {
-        this->setPos(mapToScene(event->pos()));
-    }
-
-    Q_UNUSED(event)
+    QGraphicsItem::mouseMoveEvent(event);
 }
 
 void PetriObject::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
     if (event->button() == Qt::LeftButton) {
         this->setCursor(QCursor(Qt::ArrowCursor));
     }
-    Q_UNUSED(event)
+
+    QGraphicsItem::mouseReleaseEvent(event);
 }
 
 QPointF PetriObject::connectionPos(PetriObject* to, bool reverse) {
