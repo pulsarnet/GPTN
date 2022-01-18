@@ -2,8 +2,8 @@
 // Created by nmuravev on 12/13/2021.
 //
 
-#include "../../include/elements/position.h"
-#include "../../include/elements/transition.h"
+#include "position.h"
+#include "transition.h"
 
 Position::Position(const QPointF& origin, FFIPosition* position, QGraphicsItem *parent) : PetriObject(parent) {
     this->setPos(origin);

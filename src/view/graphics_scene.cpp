@@ -2,7 +2,7 @@
 // Created by Николай Муравьев on 13.01.2022.
 //
 
-#include "../../include/view/graphics_scene.h"
+#include "graphics_scene.h"
 #include <QMenu>
 
 GraphicScene::GraphicScene(QObject *parent) : QGraphicsScene(parent) {

@@ -2,9 +2,10 @@
 #pragma comment(lib, "Bcrypt.lib")
 #include <QApplication>
 #include <QFontDatabase>
-#include "include/mainwindow.h"
+#include "src/mainwindow.h"
 
 int main(int argc, char **argv) {
+    QCoreApplication::addLibraryPath("C:\\Qt\\6.2.2\\msvc2019_64\\plugins");
     QApplication app(argc, argv);
 
     QFile qss(":/styles/style.qss");

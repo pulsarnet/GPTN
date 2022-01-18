@@ -2,14 +2,14 @@
 // Created by Николай Муравьев on 11.12.2021.
 //
 
-#include "../include/mainwindow.h"
+#include "mainwindow.h"
 
 
 #include <QFileDialog>
 #include <QGraphicsDropShadowEffect>
 #include <QDockWidget>
-#include "../include/matrix_model.h"
-#include "../include/synthesis/synthesis_program_item_delegate.h"
+#include "matrix_model.h"
+#include "synthesis/synthesis_program_item_delegate.h"
 #include <QTableView>
 #include <QHeaderView>
 

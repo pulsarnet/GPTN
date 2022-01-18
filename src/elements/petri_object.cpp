@@ -2,7 +2,7 @@
 // Created by Николай Муравьев on 10.01.2022.
 //
 
-#include "../../include/elements/position.h"
+#include "position.h"
 
 
 PetriObject::PetriObject(QGraphicsItem *parent) : QGraphicsItem(parent) {

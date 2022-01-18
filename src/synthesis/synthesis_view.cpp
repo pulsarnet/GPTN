@@ -2,10 +2,10 @@
 // Created by Николай Муравьев on 09.01.2022.
 //
 
-#include "../../include/synthesis/synthesis_view.h"
-#include "../../include/ffi/rust.h"
-#include "../../include/mainwindow.h"
-#include "../../include/synthesis/synthesis_program_item_delegate.h"
+#include "synthesis_view.h"
+#include "../ffi/rust.h"
+#include "../mainwindow.h"
+#include "synthesis_program_item_delegate.h"
 #include <QHeaderView>
 
 SynthesisView::SynthesisView(SynthesisProgram *program, Tab* tab, QWidget *parent) : QWidget(parent), m_tab(tab) {

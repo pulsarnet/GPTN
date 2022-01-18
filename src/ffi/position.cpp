@@ -3,7 +3,7 @@
 //
 
 
-#include "../../include/ffi/methods.h"
+#include "methods.h"
 
 unsigned long FFIPosition::index() {
     return ::position_index(this);

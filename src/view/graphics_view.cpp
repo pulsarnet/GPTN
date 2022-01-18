@@ -4,8 +4,8 @@
 
 #include <QFile>
 #include <QMenu>
-#include "../../include/view/graphics_view.h"
-#include "../../include/tab.h"
+#include "graphics_view.h"
+#include "../tab.h"
 
 GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
 
