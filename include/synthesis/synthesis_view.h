@@ -29,8 +29,8 @@ private:
 
     QTableView* m_tableview = nullptr;
     SynthesisProgramModel* m_model = nullptr;
-    QPushButton* m_add = nullptr;
-    QPushButton* m_confirm = nullptr;
+    QAction* m_add = nullptr;
+    QAction* m_confirm = nullptr;
     Tab* m_tab = nullptr;
 
 };

@@ -33,7 +33,7 @@ Tab::Tab(QWidget *parent) : QWidget(parent) {
     this->lbf_view->setWindowTitle("Logical Base Fragments View");
     this->lbf_view->setScene(lbf_scene);
 
-    auto manager = new CDockManager;
+    m_manager = new CDockManager;
 
     auto edit_docker = new CDockWidget("Main view");
     edit_docker->setWidget(edit_view);
@@ -44,13 +44,13 @@ Tab::Tab(QWidget *parent) : QWidget(parent) {
     auto lbf_docker = new CDockWidget("Lbf view");
     lbf_docker->setWidget(lbf_view);
 
-    manager->addDockWidget(DockWidgetArea::OuterDockAreas, edit_docker);
+    m_manager->addDockWidget(DockWidgetArea::OuterDockAreas, edit_docker);
 
-    auto bottomArea = manager->addDockWidget(DockWidgetArea::BottomDockWidgetArea, primitive_docker);
-    manager->addDockWidgetTabToArea(lbf_docker, bottomArea);
+    auto bottomArea = m_manager->addDockWidget(DockWidgetArea::BottomDockWidgetArea, primitive_docker);
+    m_manager->addDockWidgetTabToArea(lbf_docker, bottomArea);
 
     this->setLayout(new QGridLayout);
-    this->layout()->addWidget(manager);
+    this->layout()->addWidget(m_manager);
     this->layout()->setContentsMargins(QMargins());
 
     connect(main_scene, &QGraphicsScene::changed, this, &Tab::slotDocumentChanged);
@@ -141,6 +141,13 @@ void Tab::splitAction() {
 
     // Добавим пустую программу чтобы не падало
     synthesis_program->add_program();
+
+    // Создадим таблицу
+    auto table = new CDockWidget("Synthesis programs");
+    table->setWidget(new SynthesisView(synthesis_program, this));
+    table->setFeature(ads::CDockWidget::DockWidgetDeleteOnClose, true);
+    m_manager->addDockWidgetTab(ads::BottomDockWidgetArea, table);
+
     auto result = split_finish(synthesis_program);
 
     auto scene = dynamic_cast<GraphicScene*>(primitive_view->scene());

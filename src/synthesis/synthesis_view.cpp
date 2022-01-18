@@ -11,11 +11,15 @@
 SynthesisView::SynthesisView(SynthesisProgram *program, Tab* tab, QWidget *parent) : QWidget(parent), m_tab(tab) {
     this->setWindowModality(Qt::WindowModal);
 
-    m_add = new QPushButton("Add program");
-    connect(m_add, &QPushButton::clicked, this, &SynthesisView::slotAddButton);
+    auto toolBar = new QToolBar;
+    m_add = new QAction("Add program");
+    connect(m_add, &QAction::triggered, this, &SynthesisView::slotAddButton);
 
-    m_confirm = new QPushButton("Confirm");
-    connect(m_confirm, &QPushButton::clicked, this, &SynthesisView::slotConfirm);
+    m_confirm = new QAction("Confirm");
+    connect(m_confirm, &QAction::triggered, this, &SynthesisView::slotConfirm);
+
+    toolBar->addAction(m_add);
+    toolBar->addAction(m_confirm);
 
     m_tableview = new QTableView;
 
@@ -32,9 +36,8 @@ SynthesisView::SynthesisView(SynthesisProgram *program, Tab* tab, QWidget *paren
     m_tableview->setModel(m_model);
 
     QVBoxLayout* layout = new QVBoxLayout(this);
-    layout->addWidget(m_add);
+    layout->addWidget(toolBar);
     layout->addWidget(m_tableview);
-    layout->addWidget(m_confirm);
 }
 
 void SynthesisView::slotAddButton(bool checked) {

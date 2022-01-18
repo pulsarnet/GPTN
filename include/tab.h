@@ -8,6 +8,7 @@
 #include <QWidget>
 #include <QFile>
 #include <QAction>
+#include <DockManager.h>
 #include "view/graphics_view.h"
 #include "split_list_model.h"
 #include "view/graphics_scene.h"
@@ -95,6 +96,8 @@ private:
     QActionGroup* actionGroup = nullptr;
 
     ToolBox* toolBar = nullptr;
+
+    ads::CDockManager* m_manager = nullptr;
 
 };
 
