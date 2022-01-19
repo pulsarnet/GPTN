@@ -16,7 +16,8 @@ GraphVizWrapper::GraphVizWrapper(int argc, char **argv) {
 
     m_graph = agopen((char*)"g", Agdirected, 0);
     agsafeset(m_graph, (char*)"splines", "line", "");
-    //agsafeset(m_graph, (char*)"overlap", "scalexy", "");
+    agsafeset(m_graph, (char*)"overlap", "false", "");
+    agsafeset(m_graph, (char*)"dim", "3", "");
 
     //gvParseArgs(m_context, argc, argv);
 }

@@ -310,8 +310,8 @@ void GraphicScene::fromVariant(const QVariant& data) {
                 return object->objectTypeStr() == to["type"].toString() && object->index() == to["id"].toInt();
             };
 
-            PetriObject* point1 = nullptr;
-            PetriObject* point2 = nullptr;
+            PetriObject* point1;
+            PetriObject* point2;
 
             if (from["type"].toString() == "position") {
                 auto point1_it = std::find_if(m_positions.begin(), m_positions.end(), find_from);
@@ -328,7 +328,6 @@ void GraphicScene::fromVariant(const QVariant& data) {
                 point2 = dynamic_cast<PetriObject*>(*point2_it);
             }
 
-            qDebug() << (int*)point1 << (int*)point2;
             connectItems(point1, point2);
         }
 
