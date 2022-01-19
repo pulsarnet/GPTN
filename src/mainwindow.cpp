@@ -195,54 +195,54 @@ void MainWindow::slotDotVisualization(bool checked) {
     auto current_tab = dynamic_cast<Tab*>(tabWidget->widget(tabWidget->currentIndex()));
     if (!current_tab) return;
 
-    current_tab->dotVizualization((char*)"dot");
+    current_tab->dotVisualization((char *) "dot");
 }
 
 void MainWindow::slotNeatoVisualization(bool checked) {
     auto current_tab = dynamic_cast<Tab*>(tabWidget->widget(tabWidget->currentIndex()));
     if (!current_tab) return;
 
-    current_tab->dotVizualization((char*)"neato");
+    current_tab->dotVisualization((char *) "neato");
 }
 
 void MainWindow::slotTwopiVisualization(bool checked) {
     auto current_tab = dynamic_cast<Tab*>(tabWidget->widget(tabWidget->currentIndex()));
     if (!current_tab) return;
 
-    current_tab->dotVizualization((char*)"twopi");
+    current_tab->dotVisualization((char *) "twopi");
 }
 
 void MainWindow::slotCircoVisualization(bool checked) {
     auto current_tab = dynamic_cast<Tab*>(tabWidget->widget(tabWidget->currentIndex()));
     if (!current_tab) return;
 
-    current_tab->dotVizualization((char*)"circo");
+    current_tab->dotVisualization((char *) "circo");
 }
 
 void MainWindow::slotFDPVisualization(bool checked) {
     auto current_tab = dynamic_cast<Tab*>(tabWidget->widget(tabWidget->currentIndex()));
     if (!current_tab) return;
 
-    current_tab->dotVizualization((char*)"fdp");
+    current_tab->dotVisualization((char *) "fdp");
 }
 
 void MainWindow::slotOsageVisualization(bool checked) {
     auto current_tab = dynamic_cast<Tab*>(tabWidget->widget(tabWidget->currentIndex()));
     if (!current_tab) return;
 
-    current_tab->dotVizualization((char*)"osage");
+    current_tab->dotVisualization((char *) "osage");
 }
 
 void MainWindow::slotPatchworkVisualization(bool checked) {
     auto current_tab = dynamic_cast<Tab*>(tabWidget->widget(tabWidget->currentIndex()));
     if (!current_tab) return;
 
-    current_tab->dotVizualization((char*)"patchwork");
+    current_tab->dotVisualization((char *) "patchwork");
 }
 
 void MainWindow::slotSFDPpVisualization(bool checked) {
     auto current_tab = dynamic_cast<Tab*>(tabWidget->widget(tabWidget->currentIndex()));
     if (!current_tab) return;
 
-    current_tab->dotVizualization((char*)"sfdp");
+    current_tab->dotVisualization((char *) "sfdp");
 }

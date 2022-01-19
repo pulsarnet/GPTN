@@ -201,119 +201,69 @@ void Tab::splitAction() {
         start_y += offset_y;
     }
 
-    /// РИСУЕМ ЛОГИЧЕСКИЕ БАЗОВЫЕ ФРАГМЕНТЫ
-    //auto main_scene = dynamic_cast<GraphicScene*>(edit_view->scene());
+    /// РИСУЕМ ЛИНЕЙНО БАЗОВЫЕ ФРАГМЕНТЫ
+    auto main_scene = dynamic_cast<GraphicScene*>(edit_view->scene());
     auto parents = result.parents.toVector();
     auto& lbf = result.fragments;
-    QList<QGraphicsItemGroup*> groups;
 
     scene = dynamic_cast<GraphicScene*>(lbf_view->scene());
     scene->removeAll();
 
-    char* args[] = {QCoreApplication::applicationDirPath().toLocal8Bit().data(),(char*)"dot", (char*)"-Tjson"};
+    GraphVizWrapper main_graph;
+    int i = 0;
     for (auto& net : lbf) {
-        QList<QGraphicsItem*> group;
+        auto subName = QString("%1").arg(i++);
+        auto graph = main_graph.subGraph(subName.toUtf8().data());
 
-        GraphVizWrapper graph(3, args);
         for (auto& element : net.elements) {
-            if (element.startsWith("p")) graph.addPosition(element.toLocal8Bit().data());
-            else graph.addTransition(element.toLocal8Bit().data());
+            if (element.startsWith("p")) {
+                auto index = element.mid(1).toInt();
+                auto it = std::find_if(parents.begin(), parents.end(), [&](FFIParent &p) {
+                    return p.type == FFIVertexType::Position && p.child == index;
+                });
+
+                QPointF pos = (it != parents.end()) ? main_scene->getPositionPos(it->parent) : QPointF(0, 0);
+
+                graph.addCircle(element.toLocal8Bit().data(), QSizeF(50., 50.), pos);
+                scene->addPosition(element.mid(1).toInt(), QPointF(0, 0));
+            }
+            else {
+                auto index = element.mid(1).toInt();
+                auto it = std::find_if(parents.begin(), parents.end(), [&](FFIParent &p) {
+                    return p.type == FFIVertexType::Transition && p.child == index;
+                });
+
+                QPointF pos = (it != parents.end()) ? main_scene->getTransitionPos(it->parent) : QPointF(0, 0);
+
+                graph.addRectangle(element.toLocal8Bit().data(), QSizeF(30., 90.), pos);
+                scene->addTransition(element.mid(1).toInt(), QPointF(0, 0));
+            }
         }
 
         for (auto& conn : net.connections) {
             graph.addEdge(conn.first, conn.second);
-        }
 
-        auto res = graph.save((char*)"sfdp");
-        for (auto& element : res.elements) {
-            PetriObject* petriObject;
-
-            if (element.first.startsWith("p")) petriObject = scene->addPosition(element.first.mid(1).toInt(), element.second);
-            else petriObject = scene->addTransition(element.first.mid(1).toInt(), element.second);
-
-            group.push_back(petriObject);
-        }
-
-        groups.push_back(scene->createItemGroup(group));
-        groups.last()->setFlags(QGraphicsItem::ItemIsMovable | QGraphicsItem::ItemIsSelectable);
-
-        for (auto connection: net.connections) {
             PetriObject *from;
             PetriObject *to;
-            if (connection.first.startsWith("p")) {
-                from = scene->getPosition(connection.first.mid(1).toInt());
-                to = scene->getTransition(connection.second.mid(1).toInt());
+            if (conn.first.startsWith("p")) {
+                from = scene->getPosition(conn.first.mid(1).toInt());
+                to = scene->getTransition(conn.second.mid(1).toInt());
             } else {
-                from = scene->getTransition(connection.first.mid(1).toInt());
-                to = scene->getPosition(connection.second.mid(1).toInt());
+                from = scene->getTransition(conn.first.mid(1).toInt());
+                to = scene->getPosition(conn.second.mid(1).toInt());
             }
 
-            groups.last()->addToGroup(scene->connectItems(from, to));
+            scene->connectItems(from, to);
         }
+
     }
 
-//    for (auto& net : lbf) {
-//        QRectF fragmentRect(0, 0, 0, 0);
-//        QList<QGraphicsItem*> group;
-//
-//        for (auto &element: net.elements) {
-//            auto index = element.mid(1).toInt();
-//
-//            PetriObject *newElement;
-//
-//            if (element.startsWith("p")) {
-//                newElement = scene->addPosition(element, QPoint(0, 0));
-//                auto it = std::find_if(parents.begin(), parents.end(), [&](FFIParent &p) {
-//                    return p.type == FFIVertexType::Position && p.child == index;
-//                });
-//
-//                if (it == parents.end()) {
-//                    newElement->setPos(main_scene->getPositionPos(index));
-//
-//                    auto childIt = std::find_if(parents.begin(), parents.end(), [&](FFIParent &p) {
-//                        return p.type == FFIVertexType::Position && p.parent == index;
-//                    });
-//
-//                    if (childIt != parents.end()) {
-//                        newElement->setPos(newElement->scenePos() - QPointF(40., 0));
-//                    }
-//                }
-//                else {
-//                    newElement->setPos(main_scene->getPositionPos((*it).parent)  + QPointF(40., 0));
-//                }
-//            } else {
-//                newElement = scene->addTransition(element, QPoint(0, 0));
-//                auto it = std::find_if(parents.begin(), parents.end(), [&](FFIParent &p) {
-//                    return p.type == FFIVertexType::Transition && p.child == index;
-//                });
-//
-//                auto common = main_scene->getTransition(it == parents.end() ? index : (*it).parent);
-//                newElement->setPos(common->scenePos());
-//                newElement->setRotation(common->rotation());
-//            }
-//
-//            group.push_back(newElement);
-//
-//            fragmentRect = fragmentRect.united(newElement->sceneBoundingRect());
-//        }
-//
-//        groups.push_back(scene->createItemGroup(group));
-//        groups.last()->setFlags(QGraphicsItem::ItemIsMovable | QGraphicsItem::ItemIsSelectable);
-//
-//        for (auto connection: net.connections) {
-//            PetriObject *from;
-//            PetriObject *to;
-//            if (connection.first.startsWith("p")) {
-//                from = scene->getPosition(connection.first.mid(1).toInt());
-//                to = scene->getTransition(connection.second.mid(1).toInt());
-//            } else {
-//                from = scene->getTransition(connection.first.mid(1).toInt());
-//                to = scene->getPosition(connection.second.mid(1).toInt());
-//            }
-//
-//            scene->connectItems(from, to);
-//        }
-//    }
+    auto res = main_graph.save((char*)"neato");
+    for (auto& element : res.elements) {
+        if (element.first.startsWith("p")) scene->getPosition(element.first.mid(1).toInt())->setPos(element.second);
+        else scene->getTransition(element.first.mid(1).toInt())->setPos(element.second);
+    }
+
 
     lbf_view->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
 
@@ -417,18 +367,17 @@ void Tab::fromData(QVariant data) {
     this->edit_view->fitInView(this->edit_view->scene()->itemsBoundingRect(), Qt::KeepAspectRatio);
 }
 
-void Tab::dotVizualization(char* algorithm) {
+void Tab::dotVisualization(char* algorithm) {
 
     auto main_scene = dynamic_cast<GraphicScene*>(edit_view->scene());
-    char* args[] = {QCoreApplication::applicationDirPath().toLocal8Bit().data(),(char*)"dot", (char*)"-Tjson"};
 
-    GraphVizWrapper graph(3, args);
+    GraphVizWrapper graph;
     for (auto& element : main_scene->positions()) {
-        graph.addPosition(element->name().toLocal8Bit().data());
+        graph.addCircle(element->name().toLocal8Bit().data(), QSizeF(50., 50.));
     }
 
     for (auto& element : main_scene->transitions()) {
-        graph.addTransition(element->name().toLocal8Bit().data());
+        graph.addRectangle(element->name().toLocal8Bit().data(), QSizeF(30., 90.));
     }
 
     for (auto& conn : main_scene->connections()) {
