@@ -46,12 +46,18 @@ public:
     Transition* addTransition(int index, const QPointF& point);
     void connectItems(PetriObject* from, PetriObject* to);
 
+    [[nodiscard]] const QList<Position*>& positions() const { return m_positions; }
+    [[nodiscard]] const QList<Transition*>& transitions() const { return m_transition; }
+    [[nodiscard]] const QList<ArrowLine*>& connections() const { return m_connections; }
+
     Transition* getTransition(int index);
     Position* getPosition(int index);
     QPointF getTransitionPos(int index);
     QPointF getPositionPos(int index);
 
     PetriNet* net();
+
+    void updateConnections(bool onlySelected = false);
 
 public slots:
 
@@ -79,8 +85,6 @@ protected:
     void removeObject(QGraphicsSceneMouseEvent *event);
 
     void removeConnectionsAssociatedWith(PetriObject*);
-    void updateConnections(bool onlySelected = false);
-
     void connectionStart(QGraphicsSceneMouseEvent *);
     void connectionCommit(QGraphicsSceneMouseEvent *event);
     void connectionRollback(QGraphicsSceneMouseEvent* event);

@@ -45,6 +45,10 @@ public:
         return m_transition;
     }
 
+    virtual QString name() {
+        return QString("t%1").arg(m_transition->index());
+    }
+
 private:
 
     QPointF m_origin;

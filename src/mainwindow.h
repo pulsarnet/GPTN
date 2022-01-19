@@ -45,8 +45,6 @@ public slots:
 
     void closeTab(int index);
 
-
-
     void newFile(bool trigger);
 
     void tabChanged(int index);
@@ -59,6 +57,14 @@ public slots:
 
     void slotSplitAction(bool checked);
 
+    void slotDotVisualization(bool checked);
+    void slotNeatoVisualization(bool checked);
+    void slotTwopiVisualization(bool checked);
+    void slotCircoVisualization(bool checked);
+    void slotFDPVisualization(bool checked);
+    void slotOsageVisualization(bool checked);
+    void slotPatchworkVisualization(bool checked);
+    void slotSFDPpVisualization(bool checked);
 
 private:
 

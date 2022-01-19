@@ -44,6 +44,7 @@ public:
     void setChanged(bool changed);
 
     void splitAction();
+    void dotVizualization(char* algorithm);
 
     void saveToFile();
     void loadFromFile();

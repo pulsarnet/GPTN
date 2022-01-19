@@ -28,7 +28,7 @@ public:
 
     void addEdge(Agnode_s* from, Agnode_s* to);
 
-    Net save();
+    Net save(char* algorithm);
 
     ~GraphVizWrapper();
 

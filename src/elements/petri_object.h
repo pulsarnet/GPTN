@@ -60,6 +60,8 @@ public:
         emit update(boundingRect());
     }
 
+    virtual QString name() = 0;
+
     bool colored() { return m_colored; }
 
 protected:

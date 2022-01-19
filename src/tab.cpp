@@ -222,7 +222,7 @@ void Tab::splitAction() {
             graph.addEdge(conn.first, conn.second);
         }
 
-        auto res = graph.save();
+        auto res = graph.save((char*)"dot");
         for (auto& element : res.elements) {
             PetriObject* petriObject;
 
@@ -381,4 +381,38 @@ void Tab::setFileName(QString filename) {
 void Tab::fromData(QVariant data) {
     qobject_cast<GraphicScene*>(this->edit_view->scene())->fromVariant(data);
     this->edit_view->fitInView(this->edit_view->scene()->itemsBoundingRect(), Qt::KeepAspectRatio);
+}
+
+void Tab::dotVizualization(char* algorithm) {
+
+    auto main_scene = dynamic_cast<GraphicScene*>(edit_view->scene());
+    char* args[] = {QCoreApplication::applicationDirPath().toLocal8Bit().data(),(char*)"dot", (char*)"-Tjson"};
+
+    GraphVizWrapper graph(3, args);
+    for (auto& element : main_scene->positions()) {
+        graph.addPosition(element->name().toLocal8Bit().data());
+    }
+
+    for (auto& element : main_scene->transitions()) {
+        graph.addTransition(element->name().toLocal8Bit().data());
+    }
+
+    for (auto& conn : main_scene->connections()) {
+        graph.addEdge(conn->from()->name(), conn->to()->name());
+    }
+
+    auto res = graph.save(algorithm);
+    for (auto& element : res.elements) {
+        if (element.first.startsWith("p")) {
+            auto position = main_scene->getPosition(element.first.mid(1).toInt());
+            position->setPos(element.second);
+        }
+        else {
+            auto transition = main_scene->getTransition(element.first.mid(1).toInt());
+            transition->setPos(element.second);
+        }
+    }
+
+    main_scene->updateConnections();
+
 }

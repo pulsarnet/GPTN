@@ -62,6 +62,10 @@ public:
         return m_position;
     }
 
+    virtual QString name() {
+        return QString("p%1").arg(m_position->index());
+    }
+
 private:
 
     qreal radius = 25.0;

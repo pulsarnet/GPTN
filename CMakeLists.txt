@@ -5,9 +5,9 @@ include(ExternalProject)
 set(CMAKE_CXX_STANDARD 20)
 
 if(WIN32)
-    set(Qt6_DIR "C:/Qt/6.2.2/msvc2019_64/lib/cmake")
-    set(qtadvanceddocking_DIR "C:/Program Files (x86)/QtADS/lib/cmake/qtadvanceddocking")
-    set(CMAKE_PREFIX_PATH "C:/Qt/6.2.2/msvc2019_64/lib/cmake")
+    #set(Qt6_DIR "C:/Qt/6.2.2/msvc2019_64/lib/cmake")
+    #set(qtadvanceddocking_DIR "C:/Program Files (x86)/QtADS/lib/cmake/qtadvanceddocking")
+    #set(CMAKE_PREFIX_PATH ${qtadvanceddocking_DIR})
     include_directories("C:/Program Files/Graphviz/include")
     link_directories("C:/Program Files/Graphviz/lib")
 
@@ -32,7 +32,11 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+set(CMAKE_PREFIX_PATH "C:/Qt/6.2.2/msvc2019_64/lib/cmake")
 find_package(Qt6 COMPONENTS Widgets REQUIRED)
+
+set(CMAKE_PREFIX_PATH "C:/Program Files (x86)/QtADS/lib/cmake/qtadvanceddocking")
+find_package(qtadvanceddocking)
 
 set(SRC_FILES
         main.cpp
@@ -78,8 +82,6 @@ add_executable(ffi_rust
         )
 
 #target_include_directories(ffi_rust PRIVATE "/usr/local/include")
-
-find_package(qtadvanceddocking)
 
 add_dependencies(ffi_rust rust)
 
