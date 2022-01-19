@@ -222,7 +222,7 @@ void Tab::splitAction() {
             graph.addEdge(conn.first, conn.second);
         }
 
-        auto res = graph.save((char*)"dot");
+        auto res = graph.save((char*)"sfdp");
         for (auto& element : res.elements) {
             PetriObject* petriObject;
 

@@ -467,7 +467,7 @@ impl PetriNet {
             b[*index.1] = index.0.clone();
         }
 
-        let mut a_static = nalgebra::DMatrix::<u8>::zeros(b.len(), b.len());
+        let mut a_static = nalgebra::DMatrix::<u64>::zeros(b.len(), b.len());
         for (element, children) in pre.iter() {
             let Some(element_index) = indexes.get(element) else { continue };
             for child in children.iter() {
