@@ -88,7 +88,7 @@ add_dependencies(ffi_rust rust)
 if(WIN32)
     target_link_directories(ffi_rust PRIVATE ${CMAKE_SOURCE_DIR}/lib )
     target_link_libraries(ffi_rust PRIVATE
-        debug "${CMAKE_SOURCE_DIR}/rust/target/debug/hello_world.lib" Qt6::Widgets Qt6::Core Qt6::Gui ads::qtadvanceddocking liblapack gvc cgraph
+        debug "${CMAKE_SOURCE_DIR}/rust/target/release/hello_world.lib" Qt6::Widgets Qt6::Core Qt6::Gui ads::qtadvanceddocking liblapack gvc cgraph
         optimized "${CMAKE_SOURCE_DIR}/rust/target/release/hello_world.lib" Qt6::Widgets Qt6::Core Qt6::Gui ads::qtadvanceddocking liblapack gvc cgraph
         )
 else()
