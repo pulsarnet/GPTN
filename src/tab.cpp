@@ -134,7 +134,7 @@ void Tab::removeChecked(bool checked) {
 }
 
 void Tab::markerChecked(bool checked) {
-    dynamic_cast<GraphicScene*>(edit_view->scene())->setMode(checked ? GraphicScene::A_Remove : GraphicScene::A_Nothing);
+    dynamic_cast<GraphicScene*>(edit_view->scene())->setMode(checked ? GraphicScene::A_Marker : GraphicScene::A_Nothing);
 }
 
 
@@ -202,7 +202,7 @@ void Tab::splitAction() {
     }
 
     /// РИСУЕМ ЛОГИЧЕСКИЕ БАЗОВЫЕ ФРАГМЕНТЫ
-    auto main_scene = dynamic_cast<GraphicScene*>(edit_view->scene());
+    //auto main_scene = dynamic_cast<GraphicScene*>(edit_view->scene());
     auto parents = result.parents.toVector();
     auto& lbf = result.fragments;
     QList<QGraphicsItemGroup*> groups;
@@ -248,7 +248,7 @@ void Tab::splitAction() {
                 to = scene->getPosition(connection.second.mid(1).toInt());
             }
 
-            scene->connectItems(from, to);
+            groups.last()->addToGroup(scene->connectItems(from, to));
         }
     }
 
@@ -447,11 +447,8 @@ void Tab::dotVizualization(char* algorithm) {
         }
     }
 
-    main_scene->updateConnections();
-
 }
 
 void Tab::slotDocumentChanged() {
-    qDebug() << "Scene changed";
     m_changed = true;
 }

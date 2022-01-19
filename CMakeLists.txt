@@ -5,9 +5,6 @@ include(ExternalProject)
 set(CMAKE_CXX_STANDARD 20)
 
 if(WIN32)
-    #set(Qt6_DIR "C:/Qt/6.2.2/msvc2019_64/lib/cmake")
-    #set(qtadvanceddocking_DIR "C:/Program Files (x86)/QtADS/lib/cmake/qtadvanceddocking")
-    #set(CMAKE_PREFIX_PATH ${qtadvanceddocking_DIR})
     include_directories("C:/Program Files/Graphviz/include")
     link_directories("C:/Program Files/Graphviz/lib")
 
@@ -33,7 +30,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 set(CMAKE_PREFIX_PATH "C:/Qt/6.2.2/msvc2019_64/lib/cmake")
-find_package(Qt6 COMPONENTS Widgets REQUIRED)
+find_package(Qt6 COMPONENTS Widgets Core Gui REQUIRED)
 
 set(CMAKE_PREFIX_PATH "C:/Program Files (x86)/QtADS/lib/cmake/qtadvanceddocking")
 find_package(qtadvanceddocking)
@@ -70,7 +67,10 @@ set(HEADERS
         src/ffi/rust.h
         src/view/graphics_view.h
         src/view/graphics_view_zoom.h
-        src/toolbox/toolbox.h src/toolbox/tool.h src/view/graphics_scene.h src/elements/graphicsitem.h
+        src/toolbox/toolbox.h
+        src/toolbox/tool.h
+        src/view/graphics_scene.h
+        src/elements/graphicsitem.h
         src/graphviz/graphviz_wrapper.h)
 
 

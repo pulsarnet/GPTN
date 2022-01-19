@@ -22,14 +22,7 @@ public:
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
 
-    bool setTo(PetriObject* to) {
-        if (this->m_from->allowConnection(to)) {
-            m_to = to;
-            return true;
-        }
-
-        return false;
-    }
+    bool setTo(PetriObject* to);
 
     PetriObject* from() {
         return m_from;
@@ -39,20 +32,21 @@ public:
         return m_to;
     }
 
-    void disconnect(PetriNet* net) {
-        if (auto pos = dynamic_cast<Position*>(this->from()); pos) {
-            net->remove_connection_p(pos->position(), dynamic_cast<Transition*>(this->to())->transition());
-        }
-        else if (auto transition = dynamic_cast<Transition*>(this->to()); transition) {
-            net->remove_connection_t(transition->transition(), dynamic_cast<Position*>(this->to())->position());
-        }
-    }
+    void disconnect(PetriNet* net);
+
+    void updateConnection();
+
+    void setBendFactor(int bf);
 
 private:
 
     PetriObject* m_from = nullptr;
     PetriObject* m_to = nullptr;
 
+    int m_bendFactor = 0;
+
+    QPainterPath m_shape;
+    QPolygonF m_arrow;
 };
 
 

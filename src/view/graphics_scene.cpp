@@ -47,12 +47,16 @@ void GraphicScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
             case A_Connection:
                 if (m_currentConnection) connectionCommit(event);
                 else connectionStart(event);
+                event->setAccepted(true);
                 break;
             case A_Move:
                 QGraphicsScene::mousePressEvent(event);
                 break;
             case A_Rotation:
                 rotateObject(event);
+                break;
+            case A_Marker:
+                markPosition(event);
                 break;
             default:
                 break;
@@ -70,11 +74,13 @@ void GraphicScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
 
     switch (m_mod) {
         case A_Connection:
-            if (m_currentConnection) m_currentConnection->setLine(QLineF(m_currentConnection->line().p1(), event->scenePos()));
+            if (m_currentConnection) {
+                m_currentConnection->setLine(QLineF(m_currentConnection->line().p1(), event->scenePos()));
+                m_currentConnection->updateConnection();
+            }
             break;
         case A_Move:
             QGraphicsScene::mouseMoveEvent(event);
-            updateConnections();
             break;
         default:
             break;
@@ -144,6 +150,7 @@ void GraphicScene::connectionCommit(QGraphicsSceneMouseEvent *event) {
             m_currentConnection->setLine(
                     QLineF(m_currentConnection->from()->connectionPos(petri, true),
                            petri->connectionPos(m_currentConnection->from(), false)));
+            m_currentConnection->updateConnection();
             m_connections.push_back(m_currentConnection);
 
             if (m_currentConnection->from()->objectType() == PetriObject::Position)
@@ -187,14 +194,6 @@ void GraphicScene::removeConnectionsAssociatedWith(PetriObject *object) {
 
 }
 
-void GraphicScene::updateConnections(bool onlySelected) {
-    for(auto connection: m_connections) {
-        if (onlySelected && !connection->from()->isSelected() && !connection->to()->isSelected()) continue;
-
-        connection->setLine(QLineF(connection->from()->connectionPos(connection->to(), true),
-                                   connection->to()->connectionPos(connection->from(), false)));
-    }
-}
 
 PetriObject *GraphicScene::netItemAt(const QPointF &pos) {
     auto it = std::find_if(m_positions.begin(), m_positions.end(), [&](Position* item) {
@@ -331,7 +330,6 @@ void GraphicScene::fromVariant(const QVariant& data) {
             connectItems(point1, point2);
         }
 
-        updateConnections();
     }
 }
 
@@ -381,7 +379,7 @@ Transition* GraphicScene::addTransition(int index, const QPointF &point) {
     return transition;
 }
 
-void GraphicScene::connectItems(PetriObject *from, PetriObject *to) {
+ArrowLine* GraphicScene::connectItems(PetriObject *from, PetriObject *to) {
 
     auto arrowLine = new ArrowLine(from, QLineF(from->connectionPos(to, false), to->connectionPos(from, true)));
     arrowLine->setTo(to);
@@ -398,6 +396,7 @@ void GraphicScene::connectItems(PetriObject *from, PetriObject *to) {
     m_connections.push_back(arrowLine);
     addItem(arrowLine);
 
+    return arrowLine;
 }
 
 void GraphicScene::slotHorizontalAlignment(bool triggered) {
@@ -420,7 +419,6 @@ void GraphicScene::slotHorizontalAlignment(bool triggered) {
         }
     }
 
-    updateConnections(true);
 }
 
 void GraphicScene::slotVerticalAlignment(bool triggered) {
@@ -443,7 +441,6 @@ void GraphicScene::slotVerticalAlignment(bool triggered) {
         }
     }
 
-    updateConnections(true);
 }
 
 QPointF GraphicScene::getTransitionPos(int index) {
@@ -468,4 +465,17 @@ Position *GraphicScene::getPosition(int index) {
     });
 
     return it == m_positions.end() ? nullptr : *it;
+}
+
+void GraphicScene::markPosition(QGraphicsSceneMouseEvent *event) {
+    auto item = netItemAt(event->scenePos());
+    if (auto position = dynamic_cast<Position*>(item); position) {
+        if (event->button() == Qt::LeftButton) position->add_marker();
+        else if (event->button() == Qt::RightButton) position->remove_marker();
+        position->update();
+    }
+}
+
+void GraphicScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event) {
+    if (m_mod == A_Move) QGraphicsScene::mouseDoubleClickEvent(event);
 }

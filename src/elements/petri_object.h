@@ -12,6 +12,8 @@
 #include <QGraphicsSceneMouseEvent>
 #include "../ffi/methods.h"
 
+class ArrowLine;
+
 class PetriObject : public QObject, public QGraphicsItem {
 
     Q_OBJECT
@@ -64,9 +66,19 @@ public:
 
     bool colored() { return m_colored; }
 
+    void addConnectionLine(ArrowLine* line);
+    void removeConnectionLine(ArrowLine* line);
+    void updateConnections();
+
+    ~PetriObject();
+
 protected:
 
+    QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
+
     bool m_colored = false;
+
+    QList<ArrowLine*> m_connections;
 
 };
 

@@ -24,8 +24,9 @@ public:
         A_Remove = 1 << 4,
         A_Rotation = 1 << 5,
         A_Nothing = 1 << 6,
+        A_Marker = 1 << 7,
 
-        A_Default = A_Position | A_Transition | A_Connection | A_Move | A_Rotation | A_Remove | A_Nothing,
+        A_Default = A_Position | A_Transition | A_Connection | A_Move | A_Rotation | A_Remove | A_Nothing | A_Marker,
     };
 
     Q_DECLARE_FLAGS(Modes, Mode);
@@ -44,7 +45,7 @@ public:
     Position* addPosition(int index, const QPointF& point);
     Transition* addTransition(const QString& name, const QPointF& point);
     Transition* addTransition(int index, const QPointF& point);
-    void connectItems(PetriObject* from, PetriObject* to);
+    ArrowLine* connectItems(PetriObject* from, PetriObject* to);
 
     [[nodiscard]] const QList<Position*>& positions() const { return m_positions; }
     [[nodiscard]] const QList<Transition*>& transitions() const { return m_transition; }
@@ -56,8 +57,6 @@ public:
     QPointF getPositionPos(int index);
 
     PetriNet* net();
-
-    void updateConnections(bool onlySelected = false);
 
 public slots:
 
@@ -77,6 +76,7 @@ protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
+    void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event) override;
 
     void insertPosition(QGraphicsSceneMouseEvent *);
     void insertTransition(QGraphicsSceneMouseEvent *);
@@ -88,6 +88,8 @@ protected:
     void connectionStart(QGraphicsSceneMouseEvent *);
     void connectionCommit(QGraphicsSceneMouseEvent *event);
     void connectionRollback(QGraphicsSceneMouseEvent* event);
+
+    void markPosition(QGraphicsSceneMouseEvent* event);
 
 private:
 
