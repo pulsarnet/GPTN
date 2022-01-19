@@ -43,8 +43,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
 void MainWindow::closeTab(int index) {
     auto tab = dynamic_cast<Tab*>(this->tabWidget->widget(index));
-    tab->saveToFile();
-    this->tabWidget->removeTab(index);
+    if (tab->saveOnExit()) {
+        this->tabWidget->removeTab(index);
+    }
 }
 
 void MainWindow::configureTab() {

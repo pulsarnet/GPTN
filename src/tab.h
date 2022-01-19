@@ -24,27 +24,9 @@ public:
 
     explicit Tab(QWidget* parent = nullptr);
 
-    GraphicScene* scene() {
-        return qobject_cast<GraphicScene*>(edit_view->scene());
-    }
-
-    GraphicsView* primitive() {
-        return primitive_view;
-    }
-
-    GraphicsView* lbf() {
-        return lbf_view;
-    }
-
-    /*
-     * Mark document changed
-     *
-     * @param changed Boolean sign are file changed
-     */
-    void setChanged(bool changed);
-
     void splitAction();
     void dotVizualization(char* algorithm);
+    bool saveOnExit();
 
     void saveToFile();
     void loadFromFile();
@@ -55,7 +37,7 @@ public:
 
 public slots:
 
-    void slotDocumentChanged() {}
+    void slotDocumentChanged();
 
     void positionChecked(bool checked);
     void transitionChecked(bool checked);
@@ -69,7 +51,6 @@ private:
 
     QVariant toData();
     void fromData(QVariant data);
-
 
     QAction* makeAction(const QString &name, const QIcon &icon, bool checkable, QActionGroup *actionGroup);
 
@@ -99,6 +80,8 @@ private:
     ToolBox* toolBar = nullptr;
 
     ads::CDockManager* m_manager = nullptr;
+
+    bool m_changed = false;
 
 };
 

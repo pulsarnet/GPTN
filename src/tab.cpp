@@ -21,6 +21,8 @@ Tab::Tab(QWidget *parent) : QWidget(parent) {
     this->edit_view->setWindowTitle("Main view");
     this->edit_view->setScene(main_scene);
 
+    connect(main_scene, &QGraphicsScene::changed, this, &Tab::slotDocumentChanged);
+
     auto primitive_scene = new GraphicScene;
     primitive_scene->setAllowMods(GraphicScene::A_Nothing);
     this->primitive_view = new GraphicsView(this);
@@ -317,7 +319,33 @@ void Tab::splitAction() {
 
 }
 
+bool Tab::saveOnExit() {
+
+    if (!m_changed)
+        return true;
+
+    const QMessageBox::StandardButton ret = QMessageBox::question(
+            this,
+            m_filename,
+            tr("The document has been changed. \n"
+               "Do you want to save changes?"),
+               QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel
+            );
+
+    switch (ret) {
+        case QMessageBox::Save:
+            saveToFile();
+            return true;
+        case QMessageBox::Cancel:
+            return false;
+    }
+
+    return true;
+
+}
+
 void Tab::saveToFile() {
+
     auto filename = !m_filename.isEmpty() ? m_filename :
             QFileDialog::getSaveFileName(this, tr("Save project file"), tr("Petri network (*.ptn)"));
 
@@ -361,6 +389,10 @@ void Tab::loadFromFile() {
         fromData(data);
 
         setFileName(filename);
+
+        m_changed = false;
+
+        qDebug() << "Loaded";
     }
 
 }
@@ -375,6 +407,8 @@ void Tab::setFileName(QString filename) {
 
     if (m_filename.isEmpty()) this->setWindowTitle("Untitled");
     else this->setWindowTitle(QFileInfo(filename).fileName());
+
+    update();
 
 }
 
@@ -415,4 +449,9 @@ void Tab::dotVizualization(char* algorithm) {
 
     main_scene->updateConnections();
 
+}
+
+void Tab::slotDocumentChanged() {
+    qDebug() << "Scene changed";
+    m_changed = true;
 }
