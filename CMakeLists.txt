@@ -4,11 +4,27 @@ include(ExternalProject)
 
 set(CMAKE_CXX_STANDARD 20)
 
-if(WIN32)
-    include_directories("C:/Program Files/Graphviz/include")
-    link_directories("C:/Program Files/Graphviz/lib")
+set(TARGET_DIR ${CMAKE_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TARGET_DIR})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${TARGET_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${TARGET_DIR}/lib)
 
-else()
+if (NOT GRAPHVIZ_DIR)
+    message(FATAL_ERROR "Graphviz dir not set")
+endif()
+
+if (NOT Qt6_DIR)
+    message(FATAL_ERROR "Qt6_DIR not set")
+endif()
+
+if (NOT Qt_ADVANCED_DOCKING_SYSTEM_DIR)
+    message(FATAL_ERROR "Qt_ADVANCED_DOCKING_SYSTEM_DIR not set")
+endif()
+
+include_directories(${GRAPHVIZ_DIR}/include)
+link_directories(${GRAPHVIZ_DIR}/lib)
+
+if(NOT WIN32)
     set(CMAKE_PREFIX_PATH "/Users/nikolajmuravev/Qt/6.2.1/macos/lib/cmake")
     add_compile_definitions(__cpp_lib_format=201907L)
 endif()
@@ -23,16 +39,10 @@ ExternalProject_Add(
         LOG_BUILD ON
 )
 
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
-
-set(CMAKE_PREFIX_PATH "C:/Qt/6.2.2/msvc2019_64/lib/cmake")
+set(CMAKE_PREFIX_PATH ${Qt6_DIR})
 find_package(Qt6 COMPONENTS Widgets Core Gui REQUIRED)
 
-set(CMAKE_PREFIX_PATH "C:/Program Files (x86)/QtADS/lib/cmake/qtadvanceddocking")
+set(CMAKE_PREFIX_PATH ${Qt_ADVANCED_DOCKING_SYSTEM_DIR})
 find_package(qtadvanceddocking)
 
 set(SRC_FILES
@@ -52,7 +62,10 @@ set(SRC_FILES
         src/view/graphics_view.cpp
         src/view/graphics_view_zoom.cpp
         src/view/graphics_scene.cpp
-        src/graphviz/graphviz_wrapper.cpp)
+        src/graphviz/graphviz_wrapper.cpp
+        src/synthesis/synthesis_program.cpp
+        src/synthesis/synthesis_program_item_delegate.cpp
+        src/synthesis/synthesis_programs_model.cpp)
 
 set(HEADERS
         src/mainwindow.h
@@ -71,8 +84,10 @@ set(HEADERS
         src/toolbox/tool.h
         src/view/graphics_scene.h
         src/elements/graphicsitem.h
-        src/graphviz/graphviz_wrapper.h)
+        src/graphviz/graphviz_wrapper.h
+        src/synthesis/column_delegate_type.h)
 
+link_directories(${CMAKE_SOURCE_DIR}/lib)
 
 add_executable(ffi_rust
         ${SRC_FILES}
@@ -81,27 +96,22 @@ add_executable(ffi_rust
         resources/resources.qrc
         )
 
-#target_include_directories(ffi_rust PRIVATE "/usr/local/include")
-
 add_dependencies(ffi_rust rust)
 
-if(WIN32)
-    target_link_directories(ffi_rust PRIVATE ${CMAKE_SOURCE_DIR}/lib )
-    target_link_libraries(ffi_rust PRIVATE
-        debug "${CMAKE_SOURCE_DIR}/rust/target/release/hello_world.lib" Qt6::Widgets Qt6::Core Qt6::Gui ads::qtadvanceddocking liblapack gvc cgraph
-        optimized "${CMAKE_SOURCE_DIR}/rust/target/release/hello_world.lib" Qt6::Widgets Qt6::Core Qt6::Gui ads::qtadvanceddocking liblapack gvc cgraph
-        )
-else()
-        target_link_libraries(ffi_rust PRIVATE
-            debug "${CMAKE_SOURCE_DIR}/rust/target/debug/libhello_world.a" Qt6::Widgets Qt6::Core Qt6::Gui lapack ads::qtadvanceddocking gvc cgraph cdt
-            optimized "${CMAKE_SOURCE_DIR}/rust/target/release/libhello_world.a" Qt6::Widgets Qt6::Core Qt6::Gui lapack ads::qtadvanceddocking gvc cgraph
-            )
-endif()
+target_link_libraries(ffi_rust PRIVATE "${CMAKE_SOURCE_DIR}/rust/target/release/hello_world.lib"
+        Qt6::Widgets
+        Qt6::Core
+        Qt6::Gui
+        ads::qtadvanceddocking
+        liblapack
+        gvc
+        cgraph)
 
-if (CMAKE_BUILD_TYPE EQUAL Release)
-    set_target_properties(ffi_rust PROPERTIES RUNTIME_OUTPUT_DIRECTORY
-            ${CMAKE_SOURCE_DIR}/build_release)
-else()
-    set_target_properties(ffi_rust PROPERTIES RUNTIME_OUTPUT_DIRECTORY
-            ${CMAKE_SOURCE_DIR}/build_debug)
-endif()
+set_target_properties(ffi_rust PROPERTIES
+        AUTOMOC ON
+        AUTORCC ON
+        AUTOUIC ON
+        CXX_STANDART 20
+        CXX_STANDART_REQUIRED ON
+        CXX_EXTENSIONS OFF
+        )

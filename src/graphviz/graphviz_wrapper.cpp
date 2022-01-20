@@ -4,13 +4,12 @@
 
 
 #include "graphviz_wrapper.h"
-
-
 #include <QObject>
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QWidget>
 #include <QJsonArray>
+
 GraphVizWrapper::GraphVizWrapper() {
     m_context = gvContext();
 
@@ -38,7 +37,7 @@ Agnode_s *GraphVizWrapper::addCircle(char *name, const QSizeF &size, const QPoin
 
     agsafeset(position, (char*)"width", width.toUtf8().data(), "");
     agsafeset(position, (char*)"height", height.toUtf8().data(), "");
-    agsafeset(position, (char*)"pos", pos.toUtf8().data(), "");
+    //agsafeset(position, (char*)"pos", pos.toUtf8().data(), "");
     m_elements.insert(name, position);
     return position;
 }
@@ -53,7 +52,7 @@ Agnode_s *GraphVizWrapper::addRectangle(char *name, const QSizeF &size, const QP
     agsafeset(transition, (char*)"shape", (char*)"rectangle", "");
     agsafeset(transition, (char*)"width", width.toUtf8().data(), "");
     agsafeset(transition, (char*)"height", height.toUtf8().data(), "");
-    agsafeset(transition, (char*)"pos", pos.toUtf8().data(), "");
+    //agsafeset(transition, (char*)"pos", pos.toUtf8().data(), "");
     m_elements.insert(name, transition);
     return transition;
 }

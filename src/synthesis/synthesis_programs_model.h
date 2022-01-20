@@ -8,6 +8,8 @@
 #include <QAbstractTableModel>
 #include "../named_matrix.h"
 #include "synthesis_program.h"
+#include "synthesis_program_item_delegate.h"
+
 
 class SynthesisProgramModel : public QAbstractTableModel {
 
@@ -19,43 +21,21 @@ public:
 
     }
 
-    bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) override {
-        return false;
-    }
+    bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) override;
 
-    Qt::ItemFlags flags(const QModelIndex &index) const override {
-        return Qt::ItemFlag::ItemIsEnabled | Qt::ItemFlag::ItemIsEditable;
-    }
+    Qt::ItemFlags flags(const QModelIndex &index) const override;
 
-    int rowCount(const QModelIndex &parent) const override {
-        return m_program->programs();
-    }
+    int rowCount(const QModelIndex &parent) const override;
 
-    int columnCount(const QModelIndex &parent) const override {
-        return m_program->transitions() + m_program->positions();
-    }
+    int columnCount(const QModelIndex &parent) const override;
 
-    QVariant data(const QModelIndex &index, int role) const override {
-        if (role == Qt::DisplayRole) {
-            return QString("%1").arg(m_program->get_program_value(index.row(), index.column()));
-        }
+    QVariant data(const QModelIndex &index, int role) const override;
 
-        return QVariant();
-    }
-
-    QVariant headerData(int section, Qt::Orientation orientation, int role) const override {
-        if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
-            if (section <= (m_program->transitions() - 1)) {
-                return m_program->transition(section);
-            }
-            return m_program->position(section - m_program->transitions());
-        }
-
-        return QVariant();
-    }
+    QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
     bool setData(const QModelIndex &index, const QVariant &value, int role) override {
         if (role == Qt::EditRole) {
+            if (index.column() == (columnCount(QModelIndex()) - 1)) return true;
             m_program->set_program_value(index.row(), index.column(), value.toInt());
             return true;
         }

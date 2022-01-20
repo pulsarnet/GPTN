@@ -151,12 +151,12 @@ void Tab::splitAction() {
     table->setFeature(ads::CDockWidget::DockWidgetDeleteOnClose, true);
     m_manager->addDockWidgetTab(ads::BottomDockWidgetArea, table);
 
-    auto result = split_finish(synthesis_program);
+    auto result = synthesis_program->eval(0);
 
     auto scene = dynamic_cast<GraphicScene*>(primitive_view->scene());
     scene->removeAll();
 
-    auto primitive_matrix = result.lbf_matrix;
+    auto primitive_matrix = result->lbf_matrix;
     auto transitions_count = primitive_matrix.cols.count();
     int tran_rows = qMax(1., round((double)transitions_count / 3.));
     int tran_cols = 3;
@@ -203,8 +203,8 @@ void Tab::splitAction() {
 
     /// РИСУЕМ ЛИНЕЙНО БАЗОВЫЕ ФРАГМЕНТЫ
     auto main_scene = dynamic_cast<GraphicScene*>(edit_view->scene());
-    auto parents = result.parents.toVector();
-    auto& lbf = result.fragments;
+    auto parents = result->parents.toVector();
+    auto& lbf = result->fragments;
 
     scene = dynamic_cast<GraphicScene*>(lbf_view->scene());
     scene->removeAll();

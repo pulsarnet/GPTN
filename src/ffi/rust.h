@@ -167,6 +167,5 @@ extern "C" CommonResult* synthesis_end(SynthesisProgram*);
 
 SynthesisProgram* split_net(PetriNet* net);
 
-InnerCommonResult split_finish(SynthesisProgram* program);
 
 #endif //FFI_RUST_RUST_H

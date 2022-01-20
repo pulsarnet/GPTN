@@ -7,18 +7,21 @@
 
 #include <QItemDelegate>
 #include <QSpinBox>
+#include <QApplication>
+#include <QDialog>
+#include <QMouseEvent>
 
 class ProgramItemDelegate : public QItemDelegate {
 
 public:
 
-    QWidget *
-    createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override {
-        auto data = index.data(Qt::EditRole);
-        auto w = new QSpinBox(parent);
-        connect(w, &QSpinBox::editingFinished, this, &ProgramItemDelegate::commitAndClose);
-        return w;
-    }
+    enum {EvalProgramRole = Qt::UserRole + 1};
+
+    QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+
+    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+
+    bool editorEvent(QEvent *event, QAbstractItemModel *model, const QStyleOptionViewItem &option, const QModelIndex &index) override;
 
 public slots:
 
@@ -26,7 +29,7 @@ public slots:
         QSpinBox *editor = qobject_cast<QSpinBox *>(sender());
         emit commitData(editor);
         emit closeEditor(editor);
-    };
+    }
 
 
 };

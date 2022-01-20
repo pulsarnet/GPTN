@@ -9,8 +9,10 @@
 #include <QTableView>
 #include <QPushButton>
 #include <QVBoxLayout>
-#include "synthesis_programs_model.h"
-#include "../tab.h"
+
+class Tab;
+class SynthesisProgramModel;
+struct SynthesisProgram;
 
 class SynthesisView : public QWidget {
 

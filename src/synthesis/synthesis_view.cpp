@@ -3,14 +3,13 @@
 //
 
 #include "synthesis_view.h"
-#include "../ffi/rust.h"
+#include "synthesis_programs_model.h"
+#include "../tab.h"
 #include "../mainwindow.h"
 #include "synthesis_program_item_delegate.h"
 #include <QHeaderView>
 
 SynthesisView::SynthesisView(SynthesisProgram *program, Tab* tab, QWidget *parent) : QWidget(parent), m_tab(tab) {
-    this->setWindowModality(Qt::WindowModal);
-
     auto toolBar = new QToolBar;
     m_add = new QAction("Add program");
     connect(m_add, &QAction::triggered, this, &SynthesisView::slotAddButton);
@@ -24,6 +23,7 @@ SynthesisView::SynthesisView(SynthesisProgram *program, Tab* tab, QWidget *paren
     m_tableview = new QTableView;
 
     m_tableview->setItemDelegate(new ProgramItemDelegate);
+
     QHeaderView* vert = m_tableview->verticalHeader();
     vert->setSectionResizeMode(QHeaderView::Fixed);
     vert->setDefaultSectionSize(30);
@@ -48,7 +48,4 @@ void SynthesisView::slotAddButton(bool checked) {
 
 void SynthesisView::slotConfirm(bool checked) {
     Q_UNUSED(checked);
-
-    auto common_result = split_finish(m_model->program());
-
 }

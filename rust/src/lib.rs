@@ -277,7 +277,28 @@ pub unsafe extern "C" fn synthesis_start(v: *mut PetriNet) -> *mut SynthesisProg
 #[no_mangle]
 pub unsafe extern "C" fn synthesis_end(v: *mut SynthesisProgram) -> *mut CommonResult {
     let program = &mut *v;
-    let result = synthesis_program(program);
+    let result = synthesis_program(program, 0);
+
+    let parents = program.get_parents();
+    let petri_net = Box::new(FFIBoxedSlice::from_net(result.result_net));
+    let c_matrix = Box::new(FFIMatrix::from_matrix(result.c_matrix));
+    let lbf_matrix = Box::new(FFINamedMatrix::from_matrix(result.lbf_matrix));
+    let fragments =
+        Box::new(FFILogicalBaseFragmentsVec::from_vec(program.logical_base_fragments.clone()));
+
+    Box::into_raw(Box::new(CommonResult {
+        petri_net: Box::into_raw(petri_net),
+        c_matrix: Box::into_raw(c_matrix),
+        lbf_matrix: Box::into_raw(lbf_matrix),
+        logical_base_fragments: Box::into_raw(fragments),
+        parents
+    }))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn eval_program(v: *mut SynthesisProgram, index: usize) -> *mut CommonResult {
+    let program = &mut *v;
+    let result = synthesis_program(program, index);
 
     let parents = program.get_parents();
     let petri_net = Box::new(FFIBoxedSlice::from_net(result.result_net));

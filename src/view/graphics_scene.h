@@ -6,10 +6,12 @@
 #define FFI_RUST_GRAPHICS_SCENE_H
 
 #include <QGraphicsScene>
-#include "../elements/petri_object.h"
-#include "../elements/position.h"
-#include "../elements/transition.h"
-#include "../elements/arrow_line.h"
+
+struct Position;
+struct Transition;
+struct ArrowLine;
+struct PetriObject;
+struct PetriNet;
 
 class GraphicScene : public QGraphicsScene {
 
@@ -26,7 +28,7 @@ public:
         A_Nothing = 1 << 6,
         A_Marker = 1 << 7,
 
-        A_Default = A_Position | A_Transition | A_Connection | A_Move | A_Rotation | A_Remove | A_Nothing | A_Marker,
+        A_Default = A_Position | A_Transition | A_Connection | A_Move | A_Rotation | A_Remove | A_Nothing | A_Marker
     };
 
     Q_DECLARE_FLAGS(Modes, Mode);
@@ -107,6 +109,6 @@ private:
 
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(GraphicScene::Modes)
+Q_DECLARE_OPERATORS_FOR_FLAGS(GraphicScene::Modes);
 
 #endif //FFI_RUST_GRAPHICS_SCENE_H

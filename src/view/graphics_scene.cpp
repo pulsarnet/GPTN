@@ -2,8 +2,13 @@
 // Created by Николай Муравьев on 13.01.2022.
 //
 
-#include "graphics_scene.h"
+
 #include <QMenu>
+#include "graphics_scene.h"
+#include "../elements/petri_object.h"
+#include "../elements/position.h"
+#include "../elements/transition.h"
+#include "../elements/arrow_line.h"
 
 GraphicScene::GraphicScene(QObject *parent) : QGraphicsScene(parent) {
     m_mod = Mode::A_Nothing;

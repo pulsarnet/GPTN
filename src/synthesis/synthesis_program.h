@@ -7,52 +7,28 @@
 
 #include <QList>
 
+struct InnerCommonResult;
+
 extern "C" struct SynthesisProgram;
 
-extern "C" unsigned long positions(SynthesisProgram*);
-extern "C" unsigned long transitions(SynthesisProgram*);
-
-extern "C" char* position(SynthesisProgram*, unsigned long);
-extern "C" char* transition(SynthesisProgram*, unsigned long);
-
-extern "C" unsigned long programs(SynthesisProgram*);
-extern "C" void add_program(SynthesisProgram*);
-
-extern "C" void set_program_value(SynthesisProgram*, unsigned long, unsigned long, unsigned long);
-extern "C" unsigned long get_program_value(SynthesisProgram*, unsigned long, unsigned long);
-
 struct SynthesisProgram {
-    unsigned long positions() {
-        return ::positions(this);
-    }
+    unsigned long positions();
 
-    unsigned long transitions() {
-        return ::transitions(this);
-    }
+    unsigned long transitions();
 
-    unsigned long programs() {
-        return ::programs(this);
-    }
+    unsigned long programs();
 
-    void add_program() {
-        ::add_program(this);
-    }
+    void add_program();
 
-    char* position(unsigned long index) {
-        return ::position(this, index);
-    }
+    char* position(unsigned long index);
 
-    char* transition(unsigned long index) {
-        return ::transition(this, index);
-    }
+    char* transition(unsigned long index);
 
-    void set_program_value(unsigned long program, unsigned long element, unsigned long value) {
-        ::set_program_value(this, program, element, value);
-    }
+    void set_program_value(unsigned long program, unsigned long element, unsigned long value);
 
-    unsigned long get_program_value(unsigned long program, unsigned long element) {
-        return ::get_program_value(this, program, element);
-    }
+    unsigned long get_program_value(unsigned long program, unsigned long element);
+
+    InnerCommonResult* eval(unsigned long program);
 };
 
 #endif //FFI_RUST_SYNTHESIS_PROGRAM_H

@@ -965,7 +965,7 @@ pub fn synthesis(mut nets: PetriNetVec) -> SynthesisProgram {
     }
 }
 
-pub fn synthesis_program(programs: &SynthesisProgram) -> SynthesisResult {
+pub fn synthesis_program(programs: &SynthesisProgram, index: usize) -> SynthesisResult {
     let positions = programs.positions.len();
     let transitions = programs.transitions.len();
 
@@ -986,7 +986,7 @@ pub fn synthesis_program(programs: &SynthesisProgram) -> SynthesisResult {
     let mut result = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
     let mut save_vec = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
 
-    let current_program = &programs.programs[0];
+    let current_program = &programs.programs[index];
     let mut t_sets = vec![];
     let mut p_sets = vec![];
 
