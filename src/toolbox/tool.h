@@ -6,6 +6,7 @@
 #define FFI_RUST_TOOL_H
 
 #include <QToolButton>
+#include <QPainterPath>
 
 class Tool : public QToolButton {
 

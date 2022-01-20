@@ -10,9 +10,10 @@
 #include <QStyleOptionGraphicsItem>
 #include <QtMath>
 #include <QGraphicsSceneMouseEvent>
-#include "../ffi/net.h"
 #include "petri_object.h"
 
+struct PetriNet;
+struct FFIPosition;
 
 class Position : public PetriObject {
 
@@ -36,35 +37,23 @@ public:
         return other->objectType() == PetriObject::Transition;
     }
 
-    virtual uint64_t index() const override {
-        return m_position->index();
-    }
+    uint64_t index() const override;
 
     void connectTo(PetriNet* net, PetriObject* other) override;
 
-    void add_marker() {
-        m_position->add_marker();
-    }
+    void add_marker();
 
-    void remove_marker() {
-        m_position->remove_marker();
-    }
+    void remove_marker();
 
-    unsigned long markers() {
-        return m_position->markers();
-    }
+    unsigned long markers();
 
-    void setMarkers(unsigned long count) {
-        m_position->set_markers(count);
-    }
+    void setMarkers(unsigned long count);
 
     FFIPosition* position() {
         return m_position;
     }
 
-    virtual QString name() {
-        return QString("p%1").arg(m_position->index());
-    }
+    virtual QString name();
 
 private:
 

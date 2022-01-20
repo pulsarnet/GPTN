@@ -2,6 +2,7 @@
 #pragma comment(lib, "Bcrypt.lib")
 #include <QApplication>
 #include <QFontDatabase>
+#include <QFile>
 #include "src/mainwindow.h"
 
 int main(int argc, char **argv) {

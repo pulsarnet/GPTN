@@ -6,15 +6,12 @@
 #define FFI_RUST_GRAPHICS_VIEW_H
 
 #include <QGraphicsView>
-#include <QGraphicsScene>
 #include <QMouseEvent>
 #include <QTimer>
 #include <QScrollBar>
 #include <QTransform>
-#include "graphics_view_zoom.h"
-#include "../elements/position.h"
-#include "../elements/arrow_line.h"
-#include "../elements/petri_object.h"
+
+class GraphicsViewZoom;
 
 class GraphicsView : public QGraphicsView {
 

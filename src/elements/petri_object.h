@@ -10,9 +10,9 @@
 #include <QStyleOptionGraphicsItem>
 #include <QtMath>
 #include <QGraphicsSceneMouseEvent>
-#include "../ffi/methods.h"
 
 class ArrowLine;
+struct PetriNet;
 
 class PetriObject : public QObject, public QGraphicsItem {
 

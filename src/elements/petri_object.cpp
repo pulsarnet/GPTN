@@ -2,7 +2,7 @@
 // Created by Николай Муравьев on 10.01.2022.
 //
 
-#include "position.h"
+#include "../ffi/methods.h"
 #include "petri_object.h"
 #include "arrow_line.h"
 

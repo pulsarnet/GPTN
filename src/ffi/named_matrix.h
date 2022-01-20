@@ -7,11 +7,16 @@
 
 #include <QList>
 
+struct FFINamedMatrix;
+
 struct NamedMatrix {
     QList<QString> rows;
     QList<QString> cols;
 
     QList<long> matrix;
+
+    NamedMatrix() = default;
+    explicit NamedMatrix(FFINamedMatrix* named);
 
     long operator()(int i, int j) const {
         return matrix[cols.length() * i + j];

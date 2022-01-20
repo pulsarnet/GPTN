@@ -4,6 +4,8 @@
 
 #include "synthesis_program.h"
 #include "../ffi/rust.h"
+#include "../ffi/ffi_parent.h"
+#include "../ffi/petri_net.h"
 
 extern "C" unsigned long positions(SynthesisProgram*);
 extern "C" unsigned long transitions(SynthesisProgram*);
@@ -18,16 +20,17 @@ extern "C" void set_program_value(SynthesisProgram*, unsigned long, unsigned lon
 extern "C" unsigned long get_program_value(SynthesisProgram*, unsigned long, unsigned long);
 
 extern "C" CommonResult* eval_program(SynthesisProgram*, unsigned long);
+extern "C" FFILogicalBaseFragments* linear_base_fragments(SynthesisProgram*);
+extern "C" FFIParentVec* parents_vec(SynthesisProgram*);
+
+extern "C" SynthesisProgram* synthesis_start(PetriNet*);
+extern "C" CommonResult* synthesis_end(SynthesisProgram*);
+
+SynthesisProgram* split_net(PetriNet* net);
 
 InnerCommonResult* SynthesisProgram::eval(unsigned long program) {
     auto eval_res = ::eval_program(this, program);
-    return new InnerCommonResult {
-            eval_res->petri_net->into(),
-            eval_res->c_matrix->into(),
-            eval_res->lbf_matrix->into(),
-            eval_res->logical_base_fragments->into(),
-            eval_res->parents->into()
-    };
+    return new InnerCommonResult(eval_res);
 }
 
 unsigned long SynthesisProgram::positions() {
@@ -60,4 +63,20 @@ char *SynthesisProgram::position(unsigned long index) {
 
 unsigned long SynthesisProgram::programs() {
     return ::programs(this);
+}
+
+QList<InnerPetriNet*> SynthesisProgram::linear_base_fragments() {
+    return std::move(InnerPetriNet::from_ffi_linear_base_fragments(::linear_base_fragments(this)));
+}
+
+QList<FFIParent*> SynthesisProgram::parents_vec() {
+    return std::move(FFIParent::from_ffi_parent_vec(::parents_vec(this)));
+}
+
+SynthesisProgram *SynthesisProgram::synthesis_start(PetriNet *net) {
+    return ::synthesis_start(net);
+}
+
+CommonResult *SynthesisProgram::synthesis_end(SynthesisProgram *self) {
+    return ::synthesis_end(self);
 }

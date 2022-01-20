@@ -6,7 +6,7 @@
 #define FFI_RUST_SYNTHESIS_PROGRAM_MODEL_H
 
 #include <QAbstractTableModel>
-#include "../named_matrix.h"
+#include "../ffi/named_matrix.h"
 #include "synthesis_program.h"
 #include "synthesis_program_item_delegate.h"
 

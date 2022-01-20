@@ -3,6 +3,10 @@
 //
 
 #include "arrow_line.h"
+#include "position.h"
+#include "petri_object.h"
+#include "transition.h"
+#include "../ffi/net.h"
 
 QRectF ArrowLine::boundingRect() const {
 

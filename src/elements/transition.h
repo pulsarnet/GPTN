@@ -10,8 +10,9 @@
 #include <QStyleOptionGraphicsItem>
 #include <QtMath>
 #include <QGraphicsSceneMouseEvent>
-#include "../ffi/net.h"
 #include "petri_object.h"
+
+struct FFITransition;
 
 class Transition : public PetriObject {
 
@@ -35,9 +36,7 @@ public:
         return other->objectType() == Position;
     }
 
-    virtual uint64_t index() const override {
-        return m_transition->index();
-    }
+    virtual uint64_t index() const override;
 
     void connectTo(PetriNet* net, PetriObject* other) override;
 
@@ -45,9 +44,7 @@ public:
         return m_transition;
     }
 
-    virtual QString name() {
-        return QString("t%1").arg(m_transition->index());
-    }
+    virtual QString name();
 
 private:
 

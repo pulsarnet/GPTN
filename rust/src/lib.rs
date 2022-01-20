@@ -284,7 +284,7 @@ pub unsafe extern "C" fn synthesis_end(v: *mut SynthesisProgram) -> *mut CommonR
     let c_matrix = Box::new(FFIMatrix::from_matrix(result.c_matrix));
     let lbf_matrix = Box::new(FFINamedMatrix::from_matrix(result.lbf_matrix));
     let fragments =
-        Box::new(FFILogicalBaseFragmentsVec::from_vec(program.logical_base_fragments.clone()));
+        Box::new(FFILogicalBaseFragmentsVec::from_vec(program.linear_base_fragments.clone()));
 
     Box::into_raw(Box::new(CommonResult {
         petri_net: Box::into_raw(petri_net),
@@ -305,7 +305,7 @@ pub unsafe extern "C" fn eval_program(v: *mut SynthesisProgram, index: usize) ->
     let c_matrix = Box::new(FFIMatrix::from_matrix(result.c_matrix));
     let lbf_matrix = Box::new(FFINamedMatrix::from_matrix(result.lbf_matrix));
     let fragments =
-        Box::new(FFILogicalBaseFragmentsVec::from_vec(program.logical_base_fragments.clone()));
+        Box::new(FFILogicalBaseFragmentsVec::from_vec(program.linear_base_fragments.clone()));
 
     Box::into_raw(Box::new(CommonResult {
         petri_net: Box::into_raw(petri_net),
@@ -328,7 +328,7 @@ pub struct SynthesisProgram {
     pub programs: Vec<Vec<usize>>,
     pub c_matrix: DMatrix<i32>,
     pub lbf_matrix: DMatrix<i32>,
-    pub logical_base_fragments: Vec<(NamedMatrix, NamedMatrix)>
+    pub linear_base_fragments: Vec<(NamedMatrix, NamedMatrix)>
 }
 
 impl SynthesisProgram {
@@ -361,6 +361,19 @@ impl SynthesisProgram {
         Box::into_raw(ptr)
     }
 
+}
+
+#[no_mangle]
+extern "C" fn parents_vec(p: *mut SynthesisProgram) -> *mut FFIParentVec {
+    let program = unsafe { &mut *p };
+    return program.get_parents()
+}
+
+#[no_mangle]
+extern "C" fn linear_base_fragments(p: *mut SynthesisProgram) -> *mut FFILogicalBaseFragmentsVec {
+    let program = unsafe { &mut *p };
+
+    return Box::into_raw(Box::new(FFILogicalBaseFragmentsVec::from_vec(program.linear_base_fragments.clone())));
 }
 
 #[no_mangle]

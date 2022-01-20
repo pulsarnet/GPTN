@@ -9,9 +9,9 @@
 
 #include <QGraphicsItem>
 #include <QPainter>
-#include "position.h"
-#include "petri_object.h"
-#include "transition.h"
+
+class PetriObject;
+struct PetriNet;
 
 class ArrowLine : public QGraphicsLineItem {
 

@@ -18,17 +18,12 @@
 #include <QPushButton>
 #include <QToolButton>
 #include <QLabel>
-#include "view/graphics_view.h"
-#include "tab.h"
-#include "petri_net.h"
-#include "toolbox/toolbox.h"
-#include "view/graphics_scene.h"
-
 #include <DockAreaWidget.h>
 #include <DockManager.h>
 
 using namespace ads;
 
+class Tab;
 
 class MainWindow : public QMainWindow {
 
@@ -76,12 +71,7 @@ private:
 
     void createStatusBar();
 
-    void updateTabViewMenu() {
-        if (auto tab = tabWidget->currentWidget(); tab) {
-            auto menu = dynamic_cast<Tab*>(tab)->menuOfDockToggle();
-            dynamic_cast<QToolButton*>(tabWidget->cornerWidget())->setMenu(menu);
-        }
-    }
+    void updateTabViewMenu();
 
 private:
 

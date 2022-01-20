@@ -8,10 +8,9 @@
 #include <QFileDialog>
 #include <QGraphicsDropShadowEffect>
 #include <QDockWidget>
-#include "matrix_model.h"
-#include "synthesis/synthesis_program_item_delegate.h"
 #include <QTableView>
 #include <QHeaderView>
+#include "tab.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
@@ -245,4 +244,11 @@ void MainWindow::slotSFDPpVisualization(bool checked) {
     if (!current_tab) return;
 
     current_tab->dotVisualization((char *) "sfdp");
+}
+
+void MainWindow::updateTabViewMenu() {
+    if (auto tab = tabWidget->currentWidget(); tab) {
+        auto menu = dynamic_cast<Tab*>(tab)->menuOfDockToggle();
+        dynamic_cast<QToolButton*>(tabWidget->cornerWidget())->setMenu(menu);
+    }
 }

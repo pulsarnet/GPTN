@@ -5,68 +5,38 @@
 #ifndef FFI_RUST_NET_H
 #define FFI_RUST_NET_H
 
-#include "methods.h"
-#include "../elements/petri_object.h"
+struct FFIPosition;
+struct FFITransition;
 
 struct PetriNet {
 
-    static PetriNet* make() {
-        return ::make();
-    }
+    static PetriNet* make();
 
-    void connect_p(FFIPosition* p, FFITransition* t) {
-        ::connect_p(this, p, t);
-    }
+    void connect_p(FFIPosition* p, FFITransition* t);
 
-    void connect_t(FFITransition* t, FFIPosition* p) {
-        ::connect_t(this, t, p);
-    }
+    void connect_t(FFITransition* t, FFIPosition* p);
 
-    void remove_connection_p(FFIPosition* p, FFITransition* t) {
-        ::remove_connection_p(this, p, t);
-    }
+    void remove_connection_p(FFIPosition* p, FFITransition* t);
 
-    void remove_connection_t(FFITransition* t, FFIPosition* p) {
-        ::remove_connection_t(this, t, p);
-    }
+    void remove_connection_t(FFITransition* t, FFIPosition* p);
 
-    FFIPosition* add_position() {
-        return ::add_position(this);
-    }
+    FFIPosition* add_position();
 
-    FFIPosition* add_position_with(unsigned long index) {
-        return ::add_position_with(this, index);
-    }
+    FFIPosition* add_position_with(unsigned long index);
 
-    FFIPosition* get_position(unsigned long index) {
-        return ::get_position(this, index);
-    }
+    FFIPosition* get_position(unsigned long index);
 
-    void remove_position(FFIPosition* self) {
-        return ::remove_position(this, self);
-    }
+    void remove_position(FFIPosition* self);
 
-    FFITransition* add_transition() {
-        return ::add_transition(this);
-    }
+    FFITransition* add_transition();
 
-    FFITransition* add_transition_with(unsigned long index) {
-        return ::add_transition_with(this, index);
-    }
+    FFITransition* add_transition_with(unsigned long index);
 
-    FFITransition* get_transition(unsigned long index) {
-        return ::get_transition(this, index);
-    }
+    FFITransition* get_transition(unsigned long index);
 
-    void remove_transition(FFITransition* self) {
-        return ::remove_transition(this, self);
-    }
+    void remove_transition(FFITransition* self);
 
-    void remove_object(PetriObject* object);
-
-    ~PetriNet() {
-        ::del(this);
-    }
+    ~PetriNet();
 };
 
 #endif //FFI_RUST_NET_H

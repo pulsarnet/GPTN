@@ -10,9 +10,10 @@
 #include <QAction>
 #include <DockManager.h>
 #include "view/graphics_view.h"
-#include "split_list_model.h"
-#include "view/graphics_scene.h"
-#include "toolbox/toolbox.h"
+#include "view/graphic_scene.h"
+
+class ToolBox;
+struct PetriNet;
 
 class Tab : public QWidget {
 
@@ -56,17 +57,14 @@ private:
 
 private:
 
-    QGraphicsView* edit_view = nullptr;
-    GraphicsView* primitive_view = nullptr;
-    GraphicsView* lbf_view = nullptr;
+    GraphicsView* edit_view;
+    GraphicsView* primitive_view;
+    GraphicsView* lbf_view;
     QMenu* m_actionToggleMenu = nullptr;
-
-    SplitListModel* m_split_actions;
 
     PetriNet* m_net;
 
     QString m_filename;
-
 
     QAction* position_action = nullptr;
     QAction* transition_action = nullptr;

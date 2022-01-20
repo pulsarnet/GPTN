@@ -4,8 +4,12 @@
 
 #include <QFile>
 #include <QMenu>
+
+#include "../elements/position.h"
+#include "../elements/arrow_line.h"
 #include "graphics_view.h"
-#include "../tab.h"
+#include "graphics_view_zoom.h"
+#include "graphic_scene.h"
 
 GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
 

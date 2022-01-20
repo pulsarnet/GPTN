@@ -7,7 +7,11 @@
 
 #include <QList>
 
+struct PetriNet;
+struct FFIParent;
+struct InnerPetriNet;
 struct InnerCommonResult;
+struct CommonResult;
 
 extern "C" struct SynthesisProgram;
 
@@ -28,7 +32,15 @@ struct SynthesisProgram {
 
     unsigned long get_program_value(unsigned long program, unsigned long element);
 
+    QList<InnerPetriNet*> linear_base_fragments();
+
+    QList<FFIParent*> parents_vec();
+
     InnerCommonResult* eval(unsigned long program);
+
+    static SynthesisProgram* synthesis_start(PetriNet*);
+
+    static CommonResult* synthesis_end(SynthesisProgram*);
 };
 
 #endif //FFI_RUST_SYNTHESIS_PROGRAM_H

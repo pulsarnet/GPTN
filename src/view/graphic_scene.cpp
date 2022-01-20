@@ -4,16 +4,18 @@
 
 
 #include <QMenu>
-#include "graphics_scene.h"
+#include "graphic_scene.h"
 #include "../elements/petri_object.h"
 #include "../elements/position.h"
 #include "../elements/transition.h"
 #include "../elements/arrow_line.h"
+#include "../ffi/net.h"
+
 
 GraphicScene::GraphicScene(QObject *parent) : QGraphicsScene(parent) {
     m_mod = Mode::A_Nothing;
     m_allowMods = Mode::A_Nothing;
-    m_net = make();
+    m_net = PetriNet::make();
 
     setSceneRect(-12500, -12500, 25000, 25000);
 
@@ -342,7 +344,7 @@ void GraphicScene::removeAll() {
     QGraphicsScene::clear();
 
     // TODO: Удаление сети
-    m_net = make();
+    m_net = PetriNet::make();
     m_transition.clear();
     m_positions.clear();
     m_connections.clear();

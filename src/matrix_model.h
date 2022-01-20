@@ -6,7 +6,7 @@
 #define FFI_RUST_MATRIX_MODEL_H
 
 #include <QAbstractTableModel>
-#include "matrix.h"
+#include "ffi/matrix.h"
 
 class MatrixModel : public QAbstractTableModel {
 

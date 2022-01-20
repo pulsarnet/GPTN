@@ -6,7 +6,7 @@
 #define FFI_RUST_NAMED_MATRIX_MODEL_H
 
 #include <QAbstractTableModel>
-#include "named_matrix.h"
+#include "ffi/named_matrix.h"
 
 class NamedMatrixModel : public QAbstractTableModel {
 

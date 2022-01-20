@@ -9,11 +9,26 @@
 
 #include "tab.h"
 #include "mainwindow.h"
-#include "synthesis/synthesis_view.h"
 #include "ffi/rust.h"
+#include "ffi/ffi_parent.h"
+#include "ffi/petri_net.h"
+
+#include "elements/position.h"
+#include "elements/transition.h"
+#include "elements/arrow_line.h"
+
 #include "graphviz/graphviz_wrapper.h"
+#include "synthesis/synthesis_program.h"
+#include "synthesis/synthesis_view.h"
+#include "toolbox/toolbox.h"
+
+
 
 Tab::Tab(QWidget *parent) : QWidget(parent) {
+
+    this->edit_view = nullptr;
+    this->lbf_view = nullptr;
+    this->primitive_view = nullptr;
 
     auto main_scene = new GraphicScene;
     main_scene->setAllowMods(GraphicScene::A_Default);
@@ -140,7 +155,7 @@ void Tab::markerChecked(bool checked) {
 
 void Tab::splitAction() {
 
-    auto synthesis_program = split_net(qobject_cast<GraphicScene*>(this->edit_view->scene())->net());
+    auto synthesis_program = SynthesisProgram::synthesis_start(qobject_cast<GraphicScene*>(this->edit_view->scene())->net());
 
     // Добавим пустую программу чтобы не падало
     synthesis_program->add_program();
@@ -203,7 +218,7 @@ void Tab::splitAction() {
 
     /// РИСУЕМ ЛИНЕЙНО БАЗОВЫЕ ФРАГМЕНТЫ
     auto main_scene = dynamic_cast<GraphicScene*>(edit_view->scene());
-    auto parents = result->parents.toVector();
+    auto& parents = result->parents;
     auto& lbf = result->fragments;
 
     scene = dynamic_cast<GraphicScene*>(lbf_view->scene());
@@ -211,36 +226,36 @@ void Tab::splitAction() {
 
     GraphVizWrapper main_graph;
     int i = 0;
-    for (auto& net : lbf) {
+    for (auto net : lbf) {
         auto subName = QString("%1").arg(i++);
         auto graph = main_graph.subGraph(subName.toUtf8().data());
 
-        for (auto& element : net.elements) {
+        for (auto& element : net->elements) {
             if (element.startsWith("p")) {
                 auto index = element.mid(1).toInt();
-                auto it = std::find_if(parents.begin(), parents.end(), [&](FFIParent &p) {
-                    return p.type == FFIVertexType::Position && p.child == index;
+                auto it = std::find_if(parents.begin(), parents.end(), [&](FFIParent *p) {
+                    return p->type == FFIVertexType::Position && p->child == index;
                 });
 
-                QPointF pos = (it != parents.end()) ? main_scene->getPositionPos(it->parent) : QPointF(0, 0);
+                QPointF pos = (it != parents.end()) ? main_scene->getPositionPos((*it)->parent) : QPointF(0, 0);
 
                 graph.addCircle(element.toLocal8Bit().data(), QSizeF(50., 50.), pos);
                 scene->addPosition(element.mid(1).toInt(), QPointF(0, 0));
             }
             else {
                 auto index = element.mid(1).toInt();
-                auto it = std::find_if(parents.begin(), parents.end(), [&](FFIParent &p) {
-                    return p.type == FFIVertexType::Transition && p.child == index;
+                auto it = std::find_if(parents.begin(), parents.end(), [&](FFIParent *p) {
+                    return p->type == FFIVertexType::Transition && p->child == index;
                 });
 
-                QPointF pos = (it != parents.end()) ? main_scene->getTransitionPos(it->parent) : QPointF(0, 0);
+                QPointF pos = (it != parents.end()) ? main_scene->getTransitionPos((*it)->parent) : QPointF(0, 0);
 
                 graph.addRectangle(element.toLocal8Bit().data(), QSizeF(30., 90.), pos);
                 scene->addTransition(element.mid(1).toInt(), QPointF(0, 0));
             }
         }
 
-        for (auto& conn : net.connections) {
+        for (auto& conn : net->connections) {
             graph.addEdge(conn.first, conn.second);
 
             PetriObject *from;

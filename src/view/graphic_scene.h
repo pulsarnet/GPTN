@@ -1,17 +1,14 @@
-//
-// Created by Николай Муравьев on 13.01.2022.
-//
 
-#ifndef FFI_RUST_GRAPHICS_SCENE_H
-#define FFI_RUST_GRAPHICS_SCENE_H
+#ifndef FFI_RUST_GRAPHIC_SCENE_H
+#define FFI_RUST_GRAPHIC_SCENE_H
 
 #include <QGraphicsScene>
 
-struct Position;
-struct Transition;
-struct ArrowLine;
-struct PetriObject;
 struct PetriNet;
+class PetriObject;
+class Position;
+class Transition;
+class ArrowLine;
 
 class GraphicScene : public QGraphicsScene {
 
@@ -111,4 +108,4 @@ private:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(GraphicScene::Modes);
 
-#endif //FFI_RUST_GRAPHICS_SCENE_H
+#endif //FFI_RUST_GRAPHIC_SCENE_H

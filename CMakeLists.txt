@@ -58,14 +58,16 @@ set(SRC_FILES
         src/ffi/net.cpp
         src/ffi/position.cpp
         src/ffi/transition.cpp
-        src/ffi/rust.cpp
         src/view/graphics_view.cpp
         src/view/graphics_view_zoom.cpp
-        src/view/graphics_scene.cpp
+        src/view/graphic_scene.cpp
         src/graphviz/graphviz_wrapper.cpp
         src/synthesis/synthesis_program.cpp
         src/synthesis/synthesis_program_item_delegate.cpp
-        src/synthesis/synthesis_programs_model.cpp)
+        src/synthesis/synthesis_programs_model.cpp
+        src/ffi/named_matrix.cpp
+        src/ffi/petri_net.cpp
+        src/ffi/matrix.cpp)
 
 set(HEADERS
         src/mainwindow.h
@@ -82,10 +84,9 @@ set(HEADERS
         src/view/graphics_view_zoom.h
         src/toolbox/toolbox.h
         src/toolbox/tool.h
-        src/view/graphics_scene.h
-        src/elements/graphicsitem.h
+        src/view/graphic_scene.h
         src/graphviz/graphviz_wrapper.h
-        src/synthesis/column_delegate_type.h)
+        src/synthesis/column_delegate_type.h src/ffi/ffi_parent.h src/ffi/ffi_parent.cpp)
 
 link_directories(${CMAKE_SOURCE_DIR}/lib)
 

@@ -961,7 +961,7 @@ pub fn synthesis(mut nets: PetriNetVec) -> SynthesisProgram {
         programs: vec![],
         c_matrix,
         lbf_matrix: primitive_matrix,
-        logical_base_fragments,
+        linear_base_fragments: logical_base_fragments,
     }
 }
 
