@@ -4,10 +4,8 @@
 
 #include "position.h"
 #include "transition.h"
-#include "../ffi/net.h"
-#include "../ffi/methods.h"
 
-Position::Position(const QPointF& origin, FFIPosition* position, QGraphicsItem *parent) : PetriObject(parent) {
+Position::Position(const QPointF& origin, ffi::Position* position, QGraphicsItem *parent) : PetriObject(parent) {
     this->setPos(origin);
     this->m_position = position;
 }
@@ -53,7 +51,7 @@ QPointF Position::connectionPos(PetriObject* to, bool reverse) {
     return {xPosy, yPosy};
 }
 
-void Position::connectTo(PetriNet *net, PetriObject *other) {
+void Position::connectTo(ffi::PetriNet *net, PetriObject *other) {
     auto transition = dynamic_cast<class Transition*>(other)->transition();
     net->connect_p(this->position(), transition);
 }
@@ -75,7 +73,7 @@ unsigned long Position::markers() {
 }
 
 void Position::setMarkers(unsigned long count) {
-    m_position->set_markers(count);
+    //TODO: m_position->set_markers(count);
 }
 
 QString Position::name() {

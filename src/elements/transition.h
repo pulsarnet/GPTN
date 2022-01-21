@@ -10,15 +10,13 @@
 #include <QStyleOptionGraphicsItem>
 #include <QtMath>
 #include <QGraphicsSceneMouseEvent>
-#include "petri_object.h"
-
-struct FFITransition;
+#include "../ffi/rust.h"
 
 class Transition : public PetriObject {
 
 public:
 
-    explicit Transition(const QPointF& origin, FFITransition* transition, QGraphicsItem* parent = nullptr);
+    explicit Transition(const QPointF& origin, ffi::Transition* transition, QGraphicsItem* parent = nullptr);
 
     [[nodiscard]] QRectF boundingRect() const override;
 
@@ -38,9 +36,9 @@ public:
 
     virtual uint64_t index() const override;
 
-    void connectTo(PetriNet* net, PetriObject* other) override;
+    void connectTo(ffi::PetriNet* net, PetriObject* other) override;
 
-    FFITransition* transition() {
+    ffi::Transition* transition() {
         return m_transition;
     }
 
@@ -49,7 +47,7 @@ public:
 private:
 
     QPointF m_origin;
-    FFITransition* m_transition = nullptr;
+    ffi::Transition* m_transition = nullptr;
 
 };
 

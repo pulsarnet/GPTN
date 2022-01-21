@@ -1,49 +1,98 @@
 #ifndef FFI_RUST_RUST_H
 #define FFI_RUST_RUST_H
 
-struct FFIParentVec;
+namespace ffi {
+    extern "C" struct PetriNet;
+    extern "C" struct Position;
+    extern "C" struct Transition;
+    extern "C" struct SynthesisContext;
+    extern "C" struct CMatrix;
 
-extern "C" struct FFIConnection {
-    char* from;
-    char* to;
-};
+    typedef unsigned __int64 usize;
+    typedef int i32;
 
-extern "C" struct FFIBoxedSlice {
-    char** elements;
-    unsigned long len_elements;
-    FFIConnection** connections;
-    unsigned long len_connections;
-    unsigned long* markers;
-};
+    extern "C" {
+        // PetriNet
+        PetriNet* create_net();
+        Position* add_position(PetriNet&);
+        Position* add_position_with(PetriNet&, usize);
+        Position* get_position(PetriNet&, usize);
+        void remove_position(PetriNet&, Position&);
+        Transition* add_transition(PetriNet&);
+        Transition* add_transition_with(PetriNet&, usize);
+        Transition* get_transition(PetriNet&, usize);
+        void remove_transition(PetriNet&, Transition&);
+        void connect_p(PetriNet&, Position&, Transition&);
+        void connect_t(PetriNet&, Transition&, Position&);
+        void remove_connection_p(PetriNet&, Position&, Transition&);
+        void remove_connection_t(PetriNet&, Transition&, Position&);
 
-extern "C" struct FFIMatrix {
-    unsigned long rows_len;
-    unsigned long cols_len;
-    long* matrix;
-};
+        // Position
+        usize position_index(Position&);
+        usize position_markers(Position&);
+        void position_add_marker(Position&);
+        void position_remove_marker(Position&);
 
-extern "C" struct FFINamedMatrix {
-    char** rows;
-    unsigned long rows_len;
+        // Transition
+        usize transition_index(Transition&);
 
-    char** cols;
-    unsigned long cols_len;
-    long* matrix;
-};
+        // SynthesisContext
+        usize synthesis_positions(SynthesisContext&);
+        usize synthesis_transitions(SynthesisContext&);
+        usize synthesis_programs(SynthesisContext&);
+        CMatrix* synthesis_c_matrix(SynthesisContext&);
+        CMatrix* synthesis_primitive_matrix(SynthesisContext&);
 
-extern "C" struct FFILogicalBaseFragments {
-    FFINamedMatrix* inputs;
-    FFINamedMatrix* outputs;
-    unsigned long long len;
-};
+        // CMatrix
+        i32 matrix_index(CMatrix&, usize, usize);
+        usize matrix_rows(CMatrix&);
+        usize matrix_columns(CMatrix&);
+    };
 
-extern "C" struct CommonResult {
-    FFIBoxedSlice* petri_net;
-    FFIMatrix* c_matrix;
-    FFINamedMatrix* lbf_matrix;
-    FFILogicalBaseFragments* logical_base_fragments;
-    FFIParentVec* parents;
-};
+    struct PetriNet {
+        static PetriNet* create();
+        Position* add_position();
+        Position* add_position_with(usize);
+        Position* get_position(usize);
+        void remove_position(Position*);
+        Transition* add_transition();
+        Transition* add_transition_with(usize);
+        Transition* get_transition(usize);
+        void remove_transition(Transition*);
+        void connect_p(Position*, Transition*);
+        void connect_t(Transition*, Position*);
+        void remove_connection_p(Position*, Transition*);
+        void remove_connection_t(Transition*, Position*);
+    };
+
+    struct Position {
+        usize index();
+        usize markers();
+        void add_marker();
+        void remove_marker();
+    };
+
+    struct Transition {
+        usize index();
+    };
+
+    struct SynthesisContext {
+
+        usize positions();
+        usize transitions();
+        usize programs();
+        CMatrix* c_matrix();
+        CMatrix* primitive_matrix();
+
+    };
+
+    struct CMatrix {
+        i32 index(usize, usize);
+        usize rows();
+        usize columns();
+    };
+
+}
 
 
 #endif //FFI_RUST_RUST_H

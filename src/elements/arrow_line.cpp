@@ -6,7 +6,6 @@
 #include "position.h"
 #include "petri_object.h"
 #include "transition.h"
-#include "../ffi/net.h"
 
 QRectF ArrowLine::boundingRect() const {
 
@@ -58,7 +57,7 @@ bool ArrowLine::setTo(PetriObject *to) {
     return false;
 }
 
-void ArrowLine::disconnect(PetriNet *net) {
+void ArrowLine::disconnect(ffi::PetriNet *net) {
     if (auto pos = dynamic_cast<Position*>(this->from()); pos) {
         net->remove_connection_p(pos->position(), dynamic_cast<Transition*>(this->to())->transition());
     }

@@ -9,9 +9,10 @@
 
 #include <QGraphicsItem>
 #include <QPainter>
+#include "../ffi/rust.h"
 
 class PetriObject;
-struct PetriNet;
+
 
 class ArrowLine : public QGraphicsLineItem {
 
@@ -32,7 +33,7 @@ public:
         return m_to;
     }
 
-    void disconnect(PetriNet* net);
+    void disconnect(ffi::PetriNet* net);
 
     void updateConnection();
 

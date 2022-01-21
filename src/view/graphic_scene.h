@@ -3,8 +3,8 @@
 #define FFI_RUST_GRAPHIC_SCENE_H
 
 #include <QGraphicsScene>
+#include "../ffi/rust.h"
 
-struct PetriNet;
 class PetriObject;
 class Position;
 class Transition;
@@ -55,7 +55,7 @@ public:
     QPointF getTransitionPos(int index);
     QPointF getPositionPos(int index);
 
-    PetriNet* net();
+    ffi::PetriNet* net();
 
 public slots:
 
@@ -102,7 +102,7 @@ private:
 
     Modes m_allowMods;
 
-    PetriNet* m_net;
+    ffi::PetriNet* m_net;
 
 };
 

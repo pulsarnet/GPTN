@@ -10,9 +10,10 @@
 #include <QStyleOptionGraphicsItem>
 #include <QtMath>
 #include <QGraphicsSceneMouseEvent>
+#include "../ffi/rust.h"
 
 class ArrowLine;
-struct PetriNet;
+
 
 class PetriObject : public QObject, public QGraphicsItem {
 
@@ -55,7 +56,7 @@ public:
 
     virtual bool allowConnection(PetriObject* other) = 0;
 
-    virtual void connectTo(PetriNet* net, PetriObject* other) = 0;
+    virtual void connectTo(ffi::PetriNet* net, PetriObject* other) = 0;
 
     void setColored(bool colored) {
         m_colored = colored;
