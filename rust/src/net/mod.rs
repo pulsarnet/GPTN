@@ -950,10 +950,6 @@ pub fn synthesis(mut nets: PetriNetVec) -> SynthesisContext {
             .for_each(|v| c_matrix.row_mut(index)[v.0] = v.1 as i32);
     }
 
-    ////// КОНЕЦ РАСЧЕТА ТЕНЗОРА
-    ////// СДЕЛАТЬ ЗАПРОС СИНТЕЗА -> RETURN (открыть окно ввода данных)
-    ////// ТЕПЕРЬ СИНТЕЗ
-
     SynthesisContext {
         positions: poss.clone(),
         transitions: transs.clone(),

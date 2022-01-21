@@ -149,6 +149,50 @@ void Tab::markerChecked(bool checked) {
 
 void Tab::splitAction() {
 
+    auto synthesisContext = ffi::SynthesisContext::init(dynamic_cast<GraphicScene*>(edit_view->scene())->net());
+    auto primitive_matrix = synthesisContext->primitive_matrix();
+
+    auto scene = dynamic_cast<GraphicScene*>(primitive_view->scene());
+    scene->removeAll();
+
+    auto transitionsCount = primitive_matrix->columns();
+    auto positionsCount = primitive_matrix->rows();
+
+    int rows = qMax(1., round((double)transitionsCount / 3.));
+    int columns = 3;
+
+    qDebug() << rows << columns;
+
+    QPoint current(0, 0);
+    const int offset_x = 120, offset_y = 120;
+
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < columns; j++) {
+            auto transitionIndex = i * columns + j;
+            if (transitionIndex >= transitionsCount) break;
+
+            PetriObject *first, *second;
+            for (int positionIndex = 0; positionIndex < positionsCount; positionIndex++) {
+                auto value = primitive_matrix->index(positionIndex, transitionIndex);
+                if (value < 0) first = scene->addPosition(synthesisContext->position_index(positionIndex), current);
+                else if (value > 0) second = scene->addPosition(synthesisContext->position_index(positionIndex), current + QPoint(offset_x * 2, 0));
+            }
+
+            auto center =
+                    scene->addTransition(synthesisContext->transition_index(transitionIndex), current + QPoint(offset_x, 0));
+
+            scene->connectItems(first, center);
+            scene->connectItems(center, second);
+
+            current += QPoint(offset_x * 3 + 20, 0);
+        }
+
+        current.setX(0);
+        current += QPoint(0, offset_y);
+    }
+
+    primitive_view->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
+
 //    auto synthesis_program = SynthesisProgram::synthesis_start(qobject_cast<GraphicScene*>(this->edit_view->scene())->net());
 //
 //    // Добавим пустую программу чтобы не падало

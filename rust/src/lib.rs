@@ -57,6 +57,23 @@ impl SynthesisContext {
         &self.primitive_matrix
     }
 
+    pub fn init(net: &PetriNet) -> Self {
+        let mut net = net.clone();
+        let mut parts = vec![];
+
+        while let Some(l) = net.get_loop() {
+            parts.push(net.remove_part(&l));
+        }
+
+        while let Some(p) = net.get_part() {
+            parts.push(net.remove_part(&p));
+        }
+
+        parts.iter_mut().for_each(|net| net.normalize());
+
+        synthesis(PetriNetVec(parts))
+    }
+
     // pub fn linear_base_fragments(&self) -> &Vec<(crate::CMatrix, crate::CMatrix)> {
     //     &self.linear_base_fragments
     // }
@@ -89,6 +106,23 @@ extern "C" fn synthesis_primitive_matrix(ctx: &SynthesisContext) -> *const CMatr
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn synthesis_init(net: &PetriNet) -> *mut SynthesisContext {
+    Box::into_raw(Box::new(SynthesisContext::init(net)))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn synthesis_position_index(ctx: &SynthesisContext, index: usize) -> usize {
+    ctx.positions[index].index() as usize
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn synthesis_transition_index(ctx: &SynthesisContext, index: usize) -> usize {
+    ctx.transitions[index].index() as usize
+}
+
+
+
+#[no_mangle]
 extern "C" fn matrix_index(matrix: &CMatrix, row: usize, column: usize) -> i32 {
     matrix.inner.row(row)[column]
 }
@@ -101,38 +135,6 @@ extern "C" fn matrix_rows(matrix: &CMatrix) -> usize {
 #[no_mangle]
 extern "C" fn matrix_columns(matrix: &CMatrix) -> usize {
     matrix.inner.ncols()
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn synthesis_start(v: *mut PetriNet) -> *mut SynthesisContext {
-    let v = &mut *v;
-    let mut v = v.clone();
-
-    println!("V: {:?}", v);
-
-    let mut parts = vec![];
-
-    while let Some(l) = v.get_loop() {
-        println!("LOOOOP:::::::::: {:?}", l);
-        parts.push(v.remove_part(&l));
-    }
-
-    while let Some(p) = v.get_part() {
-        println!("PART::::::::::: {:?}", p);
-        parts.push(v.remove_part(&p));
-    }
-
-    // Добавим в каждую часть нормальную позицию
-    parts.iter_mut().for_each(|net| net.normalize());
-    parts.iter_mut().for_each(|net| println!("PART: {:?}", net));
-
-    // VT => max(zt)
-    // VP => max(zp)
-    // D' => VP(N) * VT(N)
-    // C * D' => D''
-    // D'' убираем эквивалентные позиции и переходы
-
-    Box::into_raw(Box::new(synthesis(PetriNetVec(parts))))
 }
 
 // #[no_mangle]

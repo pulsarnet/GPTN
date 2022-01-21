@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 3.21)
 project(ffi_rust)
 include(ExternalProject)
 
-set(CMAKE_CXX_STANDARD 20)
+message(STATUS ${CMAKE_CXX_FLAGS})
+unset(CMAKE_CXX_FLAGS)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a ")
 
 set(TARGET_DIR ${CMAKE_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TARGET_DIR})
@@ -88,7 +90,7 @@ add_executable(ffi_rust
 
 add_dependencies(ffi_rust rust)
 
-target_link_libraries(ffi_rust PRIVATE "${CMAKE_SOURCE_DIR}/rust/target/release/hello_world.lib"
+target_link_libraries(ffi_rust PRIVATE "${CMAKE_SOURCE_DIR}/rust/target/debug/hello_world.lib"
         Qt6::Widgets
         Qt6::Core
         Qt6::Gui

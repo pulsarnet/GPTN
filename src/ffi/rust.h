@@ -37,11 +37,14 @@ namespace ffi {
         usize transition_index(Transition&);
 
         // SynthesisContext
+        SynthesisContext* synthesis_init(PetriNet&);
         usize synthesis_positions(SynthesisContext&);
         usize synthesis_transitions(SynthesisContext&);
         usize synthesis_programs(SynthesisContext&);
         CMatrix* synthesis_c_matrix(SynthesisContext&);
         CMatrix* synthesis_primitive_matrix(SynthesisContext&);
+        usize synthesis_position_index(SynthesisContext&, usize);
+        usize synthesis_transition_index(SynthesisContext&, usize);
 
         // CMatrix
         i32 matrix_index(CMatrix&, usize, usize);
@@ -78,11 +81,14 @@ namespace ffi {
 
     struct SynthesisContext {
 
+        static SynthesisContext* init(PetriNet*);
         usize positions();
         usize transitions();
         usize programs();
         CMatrix* c_matrix();
         CMatrix* primitive_matrix();
+        usize position_index(usize);
+        usize transition_index(usize);
 
     };
 

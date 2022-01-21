@@ -11,9 +11,9 @@
 #include <DockManager.h>
 #include "view/graphics_view.h"
 #include "view/graphic_scene.h"
+#include "ffi/rust.h"
 
 class ToolBox;
-struct PetriNet;
 
 class Tab : public QWidget {
 
@@ -62,7 +62,7 @@ private:
     GraphicsView* lbf_view;
     QMenu* m_actionToggleMenu = nullptr;
 
-    PetriNet* m_net;
+    ffi::PetriNet* m_net;
 
     QString m_filename;
 

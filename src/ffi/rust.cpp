@@ -78,6 +78,10 @@ usize Transition::index() {
     return ::transition_index(*this);
 }
 
+SynthesisContext *SynthesisContext::init(PetriNet *net) {
+    return ::synthesis_init(*net);
+}
+
 usize SynthesisContext::positions() {
     return ::synthesis_positions(*this);
 }
@@ -96,6 +100,14 @@ CMatrix *SynthesisContext::c_matrix() {
 
 CMatrix *SynthesisContext::primitive_matrix() {
     return ::synthesis_primitive_matrix(*this);
+}
+
+usize SynthesisContext::position_index(usize i) {
+    return ::synthesis_position_index(*this, i);
+}
+
+usize SynthesisContext::transition_index(usize i) {
+    return ::synthesis_transition_index(*this, i);
 }
 
 i32 CMatrix::index(usize row, usize col) {
