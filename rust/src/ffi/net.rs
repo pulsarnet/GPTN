@@ -3,10 +3,9 @@
 // extern "C" unsigned long position_index(FFIPosition*);
 // extern "C" void remove_position(FFIPosition*);
 
-use ffi::position::Position;
-use ffi::transition::Transition;
 use ffi::vec::CVec;
-use PetriNet;
+use ::{PetriNet, Vertex};
+use net::Connection;
 
 #[no_mangle]
 pub extern "C" fn create_net() -> *mut PetriNet {
@@ -14,25 +13,29 @@ pub extern "C" fn create_net() -> *mut PetriNet {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn net_positions(net: &mut PetriNet, ret: &mut CVec<Position>) {
+pub unsafe extern "C" fn net_positions(net: &mut PetriNet, ret: &mut CVec<*const Vertex>) {
     let result = net.elements
         .iter()
         .filter(|p| p.is_position())
-        .map(|p| Position(p.clone())).collect::<Vec<_>>();
+        .map(|p| p as *const Vertex).collect::<Vec<_>>();
 
     core::ptr::write_unaligned(ret, CVec::from(result));
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn net_transitions(net: &mut PetriNet, ret: &mut CVec<Transition>) {
+pub unsafe extern "C" fn net_transitions(net: &mut PetriNet, ret: &mut CVec<*const Vertex>) {
     let result = net.elements
         .iter()
         .filter(|p| p.is_transition())
-        .map(|p| Transition(p.clone())).collect::<Vec<_>>();
+        .map(|p| p as *const Vertex).collect::<Vec<_>>();
 
     core::ptr::write_unaligned(ret, CVec::from(result));
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn net_connections(net: &mut PetriNet, ret: &mut CVec<*const Connection>) {
+    core::ptr::write_unaligned(ret, CVec::from(net.connections.iter().map(|c| c as *const Connection).collect::<Vec<_>>()));
+}
 
 #[no_mangle]
 pub unsafe extern "C" fn del(v: *mut PetriNet) {
@@ -40,92 +43,72 @@ pub unsafe extern "C" fn del(v: *mut PetriNet) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn add_position(net: &mut PetriNet) -> *mut Position {
+pub unsafe extern "C" fn add_position(net: &mut PetriNet) -> *const Vertex {
     let added = net.add_position(net.next_position_index());
-    Box::into_raw(Box::new(Position(added)))
+    Box::into_raw(Box::new(added))
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn add_position_with(net: &mut PetriNet, index: usize) -> *mut Position {
+pub unsafe extern "C" fn add_position_with(net: &mut PetriNet, index: usize) -> *const Vertex {
     let added = net.add_position(index as u64);
-    Box::into_raw(Box::new(Position(added)))
+    Box::into_raw(Box::new(added))
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn get_position(net: &mut PetriNet, index: usize) -> *mut Position {
-    let position = net.get_position(index as u64).cloned().unwrap();
-    Box::into_raw(Box::new(Position(position)))
+pub unsafe extern "C" fn get_position(net: &mut PetriNet, index: usize) -> *const Vertex {
+    let position = net.get_position(index as u64).unwrap();
+    position as *const Vertex
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn remove_position(net: &mut PetriNet, position: &mut Position) {
-    net.remove_position(position.0.index());
-
+pub unsafe extern "C" fn remove_position(net: &mut PetriNet, position: *mut Vertex) {
+    net.remove_position((&*position).index());
     Box::from_raw(position);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn add_transition(net: &mut PetriNet) -> *mut Transition {
+pub unsafe extern "C" fn add_transition(net: &mut PetriNet) -> *const Vertex {
     let added = net.add_transition(net.next_transition_index());
-    Box::into_raw(Box::new(Transition(added)))
+    Box::into_raw(Box::new(added))
 }
 
 #[no_mangle]
-pub extern "C" fn add_transition_with(net: &mut PetriNet, index: u64) -> *mut Transition {
+pub extern "C" fn add_transition_with(net: &mut PetriNet, index: u64) -> *const Vertex {
     let added = net.add_transition(index);
-    Box::into_raw(Box::new(Transition(added)))
+    Box::into_raw(Box::new(added))
 }
 
 #[no_mangle]
-pub extern "C" fn get_transition(net: &mut PetriNet, index: usize) -> *mut Transition {
-    let transition = net.get_transition(index as u64).cloned().unwrap();
-    Box::into_raw(Box::new(Transition(transition)))
+pub extern "C" fn get_transition(net: &mut PetriNet, index: usize) -> *const Vertex {
+    let transition = net.get_transition(index as u64).unwrap();
+    transition as *const Vertex
 }
 
 #[no_mangle]
-pub extern "C" fn remove_transition(net: &mut PetriNet, transition: &mut Transition) {
-    net.remove_transition(transition.0.index());
+pub extern "C" fn remove_transition(net: &mut PetriNet, transition: *mut Vertex) {
+    net.remove_transition(unsafe { &*transition }.index());
     unsafe { Box::from_raw(transition); }
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn connect_p(
+pub unsafe extern "C" fn connect_vertexes(
     net: &mut PetriNet,
-    position: &Position,
-    transition: &Transition,
+    from: *const Vertex,
+    to: *const Vertex,
 )
 {
-    net.connect(position.0.clone(), transition.0.clone());
+    net.connect((&*from).clone(), (&*to).clone());
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn connect_t(
+pub unsafe extern "C" fn remove_connection(
     net: &mut PetriNet,
-    transition: &Transition,
-    position: &Position,
+    from: *const Vertex,
+    to: *const Vertex,
 )
 {
-    net.connect(transition.0.clone(), position.0.clone());
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn remove_connection_p(
-    net: &mut PetriNet,
-    position: &mut Position,
-    transition: &mut Transition,
-)
-{
+    let from = &*from;
+    let to = &*to;
     net.connections
-        .drain_filter(|c| c.first().eq(&position.0) && c.second().eq(&transition.0));
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn remove_connection_t(
-    net: &mut PetriNet,
-    transition: &Position,
-    position: &Transition,
-)
-{
-    net.connections
-        .drain_filter(|c| c.first().eq(&transition.0) && c.second().eq(&position.0));
+        .drain_filter(|c| c.first().eq(from) && c.second().eq(to));
 }

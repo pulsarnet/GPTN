@@ -10,29 +10,30 @@ using namespace ffi;
 extern "C" {
     // PetriNet
     PetriNet* create_net();
-    void net_positions(PetriNet& self, CVec<Position>* return$);
-    void net_transitions(PetriNet& self, CVec<Transition>* return$);
-    Position* add_position(PetriNet&);
-    Position* add_position_with(PetriNet&, usize);
-    Position* get_position(PetriNet&, usize);
-    void remove_position(PetriNet&, Position&);
-    Transition* add_transition(PetriNet&);
-    Transition* add_transition_with(PetriNet&, usize);
-    Transition* get_transition(PetriNet&, usize);
-    void remove_transition(PetriNet&, Transition&);
-    void connect_p(PetriNet&, Position&, Transition&);
-    void connect_t(PetriNet&, Transition&, Position&);
-    void remove_connection_p(PetriNet&, Position&, Transition&);
-    void remove_connection_t(PetriNet&, Transition&, Position&);
+    void net_positions(PetriNet& self, CVec<Vertex*>* return$);
+    void net_transitions(PetriNet& self, CVec<Vertex*>* return$);
+    void net_connections(PetriNet& self, CVec<Connection*>* return$);
+    Vertex* add_position(PetriNet&);
+    Vertex* add_position_with(PetriNet&, usize);
+    Vertex* get_position(PetriNet&, usize);
+    void remove_position(PetriNet&, Vertex*);
+    Vertex* add_transition(PetriNet&);
+    Vertex* add_transition_with(PetriNet&, usize);
+    Vertex* get_transition(PetriNet&, usize);
+    void remove_transition(PetriNet&, Vertex*);
+    void connect_vertexes(PetriNet&, Vertex*, Vertex*);
+    void remove_connection(PetriNet&, Vertex*, Vertex*);
 
-    // Position
-    usize position_index(Position&);
-    usize position_markers(Position&);
-    void position_add_marker(Position&);
-    void position_remove_marker(Position&);
+    // Vertex
+    usize vertex_index(Vertex&);
+    usize vertex_markers(Vertex&);
+    void vertex_add_marker(Vertex&);
+    void vertex_remove_marker(Vertex&);
+    VertexType vertex_type(Vertex&);
 
-    // Transition
-    usize transition_index(Transition&);
+    // Connection
+    Vertex* connection_from(Connection& self);
+    Vertex* connection_to(Connection& self);
 
     // SynthesisContext
     SynthesisContext* synthesis_init(PetriNet&);
@@ -54,101 +55,103 @@ extern "C" {
     usize vec_len_u64(const CVec<usize>* self);
     const usize* vec_data_u64(const CVec<usize>* self);
 
-    // CVec<Position>
-    usize vec_len_position(const CVec<Position>* self);
-    const Position* vec_data_position(const CVec<Position>* self);
+    // CVec<Vertex>
+    usize vec_len_vertex(const CVec<Vertex*>* self);
+    Vertex* const* vec_data_vertex(const CVec<Vertex*>* self);
 
-    // CVec<Transition>
-    usize vec_len_transition(const CVec<Transition>* self);
-    const Transition* vec_data_transition(const CVec<Transition>* self);
-
-    // size_of
-    usize size_of_position();
-    usize size_of_transition();
+    // CVec<Connection>
+    usize vec_len_connection(const CVec<Connection*>* self);
+    Connection* const* vec_data_connection(const CVec<Connection*>* self);
 };
 
 PetriNet *PetriNet::create() {
     return ::create_net();
 }
 
-CVec<Position> PetriNet::positions() {
-    CVec<Position> result$;
+CVec<Vertex*> PetriNet::positions() {
+    CVec<Vertex*> result$;
     ::net_positions(*this, &result$);
     return result$;
 }
 
-CVec<Transition> PetriNet::transitions() {
-    CVec<Transition> result$;
+CVec<Vertex*> PetriNet::transitions() {
+    CVec<Vertex*> result$;
     ::net_transitions(*this, &result$);
     return result$;
 }
 
-Position *PetriNet::add_position() {
+CVec<Connection *> PetriNet::connections() {
+    CVec<Connection*> result$;
+    ::net_connections(*this, &result$);
+    return result$;
+}
+
+Vertex *PetriNet::add_position() {
     return ::add_position(*this);
 }
 
-Position *PetriNet::add_position_with(usize index) {
+Vertex *PetriNet::add_position_with(usize index) {
     return ::add_position_with(*this, index);
 }
 
-Position *PetriNet::get_position(usize index) {
+Vertex *PetriNet::get_position(usize index) {
     return ::get_position(*this, index);
 }
 
-void PetriNet::remove_position(Position *position) {
-    return ::remove_position(*this, *position);
+void PetriNet::remove_position(Vertex *position) {
+    return ::remove_position(*this, position);
 }
 
-Transition *PetriNet::add_transition() {
+Vertex *PetriNet::add_transition() {
     return ::add_transition(*this);
 }
 
-Transition *PetriNet::add_transition_with(usize index) {
+Vertex *PetriNet::add_transition_with(usize index) {
     return ::add_transition_with(*this, index);
 }
 
-Transition *PetriNet::get_transition(usize index) {
+Vertex *PetriNet::get_transition(usize index) {
     return ::get_transition(*this, index);
 }
 
-void PetriNet::remove_transition(Transition *transition) {
-    return ::remove_transition(*this, *transition);
+void PetriNet::remove_transition(Vertex *transition) {
+    return ::remove_transition(*this, transition);
 }
 
-void PetriNet::connect_p(Position *position, Transition *transition) {
-    return ::connect_p(*this, *position, *transition);
+void PetriNet::connect(Vertex *from, Vertex *to) {
+    return ::connect_vertexes(*this, from, to);
 }
 
-void PetriNet::connect_t(Transition *transition, Position *position) {
-    return ::connect_t(*this, *transition, *position);
+void PetriNet::remove_connection(Vertex *from, Vertex *to) {
+    return ::remove_connection(*this, from, to);
 }
 
-void PetriNet::remove_connection_p(Position *position, Transition *transition) {
-    return ::remove_connection_p(*this, *position, *transition);
+usize Vertex::index() {
+    return ::vertex_index(*this);
 }
 
-void PetriNet::remove_connection_t(Transition *transition, Position *position) {
-    return ::remove_connection_t(*this, *transition, *position);
+usize Vertex::markers() {
+    return ::vertex_markers(*this);
 }
 
-usize Position::index() {
-    return ::position_index(*this);
+void Vertex::add_marker() {
+    ::vertex_add_marker(*this);
 }
 
-usize Position::markers() {
-    return ::position_markers(*this);
+void Vertex::remove_marker() {
+    ::vertex_remove_marker(*this);
 }
 
-void Position::add_marker() {
-    ::position_add_marker(*this);
+VertexType Vertex::type() {
+    return ::vertex_type(*this);
 }
 
-void Position::remove_marker() {
-    ::position_remove_marker(*this);
+Vertex *Connection::from() {
+    return ::connection_from(*this);
 }
 
-usize Transition::index() {
-    return ::transition_index(*this);
+Vertex *Connection::to() {
+    return ::connection_to(*this);
 }
 
 SynthesisContext *SynthesisContext::init(PetriNet *net) {
@@ -205,37 +208,36 @@ usize CVec<usize>::size() const noexcept {
 }
 
 template<>
-const usize *CVec<usize>::data() const noexcept {
+const usize* CVec<usize>::data() const noexcept {
     return ::vec_data_u64(this);
 }
 
 template<>
-usize CVec<Position>::size() const noexcept {
-    return ::vec_len_position(this);
+usize CVec<Vertex*>::size() const noexcept {
+    return ::vec_len_vertex(this);
 }
 
 template<>
-const Position *CVec<Position>::data() const noexcept {
-    return ::vec_data_position(this);
+Vertex* const* CVec<Vertex*>::data() const noexcept {
+    return ::vec_data_vertex(this);
 }
 
 template<>
-const std::size_t CVec<Position>::size_of() const noexcept {
-    return ::size_of_position();
+const std::size_t CVec<Vertex *>::size_of() const noexcept {
+    return sizeof(Vertex*);
 }
 
 template<>
-usize CVec<Transition>::size() const noexcept {
-    return ::vec_len_transition(this);
+usize CVec<Connection*>::size() const noexcept {
+    return ::vec_len_connection(this);
 }
 
 template<>
-const Transition *CVec<Transition>::data() const noexcept {
-    return ::vec_data_transition(this);
+Connection* const* CVec<Connection*>::data() const noexcept {
+    return ::vec_data_connection(this);
 }
 
 template<>
-const std::size_t CVec<Transition>::size_of() const noexcept {
-    return ::size_of_transition();
+const std::size_t CVec<Connection *>::size_of() const noexcept {
+    return sizeof(Connection*);
 }
-

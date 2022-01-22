@@ -5,9 +5,8 @@
 #include "position.h"
 #include "transition.h"
 
-Position::Position(const QPointF& origin, ffi::Position* position, QGraphicsItem *parent) : PetriObject(parent) {
+Position::Position(const QPointF& origin, ffi::Vertex* position, QGraphicsItem *parent) : PetriObject(position, parent) {
     this->setPos(origin);
-    this->m_position = position;
 }
 
 QRectF Position::boundingRect() const {
@@ -51,32 +50,23 @@ QPointF Position::connectionPos(PetriObject* to, bool reverse) {
     return {xPosy, yPosy};
 }
 
-void Position::connectTo(ffi::PetriNet *net, PetriObject *other) {
-    auto transition = dynamic_cast<class Transition*>(other)->transition();
-    net->connect_p(this->position(), transition);
-}
-
-uint64_t Position::index() const {
-    return m_position->index();
-}
-
 void Position::add_marker() {
-    m_position->add_marker();
+    vertex()->add_marker();
 }
 
 void Position::remove_marker() {
-    m_position->remove_marker();
+    vertex()->remove_marker();
 }
 
 unsigned long Position::markers() {
-    return m_position->markers();
+    return vertex()->markers();
 }
 
 void Position::setMarkers(unsigned long count) {
     //TODO: m_position->set_markers(count);
 }
 
-QString Position::name() {
-    return QString("p%1").arg(m_position->index());
+QString Position::name() const {
+    return QString("p%1").arg(index());
 }
 

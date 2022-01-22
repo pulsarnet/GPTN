@@ -5,9 +5,8 @@
 #include "position.h"
 #include "transition.h"
 
-Transition::Transition(const QPointF& origin, ffi::Transition* transition, QGraphicsItem *parent) : PetriObject(parent), m_origin(origin) {
+Transition::Transition(const QPointF& origin, ffi::Vertex* transition, QGraphicsItem *parent) : PetriObject(transition, parent), m_origin(origin) {
     this->setPos(m_origin);
-    this->m_transition = transition;
 }
 
 QRectF Transition::boundingRect() const {
@@ -68,15 +67,6 @@ QPointF Transition::connectionPos(PetriObject* to, bool reverse) {
     return intersection;
 }
 
-void Transition::connectTo(ffi::PetriNet *net, PetriObject *other) {
-    auto position = dynamic_cast<class Position*>(other)->position();
-    net->connect_t(this->transition(), position);
-}
-
-uint64_t Transition::index() const {
-    return m_transition->index();
-}
-
-QString Transition::name() {
-    return QString("t%1").arg(m_transition->index());
+QString Transition::name() const {
+    return QString("t%1").arg(index());
 }

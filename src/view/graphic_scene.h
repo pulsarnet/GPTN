@@ -50,6 +50,7 @@ public:
     [[nodiscard]] const QList<Transition*>& transitions() const { return m_transition; }
     [[nodiscard]] const QList<ArrowLine*>& connections() const { return m_connections; }
 
+    PetriObject* getVertex(const QString& name);
     Transition* getTransition(int index);
     Position* getPosition(int index);
     QPointF getTransitionPos(int index);

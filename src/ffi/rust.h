@@ -4,11 +4,17 @@
 #include <array>
 
 namespace ffi {
+
+    extern "C" enum VertexType {
+        Position = 0x0,
+        Transition = 0x1
+    };
+
     extern "C" struct PetriNet;
-    extern "C" struct Position;
-    extern "C" struct Transition;
+    extern "C" struct Vertex;
     extern "C" struct SynthesisContext;
     extern "C" struct CMatrix;
+    extern "C" struct Connection;
 
     typedef uint64_t usize;
     typedef int i32;
@@ -16,11 +22,14 @@ namespace ffi {
     template<typename T>
     class CVec final {
 
+        typedef T value_type;
+        typedef T* pointer_type;
+
     public:
 
         [[nodiscard]] usize size() const noexcept;
-        const T* data() const noexcept;
-        T* data() noexcept;
+        value_type const* data() const noexcept;
+        pointer_type data() noexcept;
 
         const T &index(std::size_t n) const noexcept;
         const T &operator[](std::size_t n) const noexcept;
@@ -37,31 +46,32 @@ namespace ffi {
 
     struct PetriNet {
         static PetriNet* create();
-        CVec<Position> positions();
-        CVec<Transition> transitions();
-        Position* add_position();
-        Position* add_position_with(usize);
-        Position* get_position(usize);
-        void remove_position(Position*);
-        Transition* add_transition();
-        Transition* add_transition_with(usize);
-        Transition* get_transition(usize);
-        void remove_transition(Transition*);
-        void connect_p(Position*, Transition*);
-        void connect_t(Transition*, Position*);
-        void remove_connection_p(Position*, Transition*);
-        void remove_connection_t(Transition*, Position*);
+        CVec<Vertex*> positions();
+        CVec<Vertex*> transitions();
+        CVec<Connection*> connections();
+        Vertex* add_position();
+        Vertex* add_position_with(usize);
+        Vertex* get_position(usize);
+        void remove_position(Vertex*);
+        Vertex* add_transition();
+        Vertex* add_transition_with(usize);
+        Vertex* get_transition(usize);
+        void remove_transition(Vertex*);
+        void connect(Vertex*, Vertex*);
+        void remove_connection(Vertex*, Vertex*);
     };
 
-    struct Position {
+    struct Vertex {
         usize index();
         usize markers();
         void add_marker();
         void remove_marker();
+        VertexType type();
     };
 
-    struct Transition {
-        usize index();
+    struct Connection {
+        Vertex* from();
+        Vertex* to();
     };
 
     struct SynthesisContext {

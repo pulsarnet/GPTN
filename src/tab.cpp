@@ -158,7 +158,7 @@ void Tab::splitAction() {
     auto transitionsCount = primitive_matrix->columns();
     auto positionsCount = primitive_matrix->rows();
 
-    int rows = qMax(1., round((double)transitionsCount / 3.));
+    int rows = round((double)transitionsCount / 3.) + 1;
     int columns = 3;
 
     qDebug() << rows << columns;

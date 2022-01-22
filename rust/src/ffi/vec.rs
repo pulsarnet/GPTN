@@ -4,8 +4,8 @@ use std::mem;
 use std::mem::MaybeUninit;
 use std::ops::Deref;
 use libc::{c_char, c_void};
-use ffi::position::Position;
-use ffi::transition::Transition;
+use net::Connection;
+use Vertex;
 
 #[repr(C)]
 pub struct CVec<T> {
@@ -48,21 +48,21 @@ pub unsafe extern "C" fn vec_data_u64(vec: *mut CVec<u64>) -> *const u64 {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn vec_len_position(vec: *mut CVec<Position>) -> usize {
+pub unsafe extern "C" fn vec_len_vertex(vec: *mut CVec<*const Vertex>) -> usize {
     (&mut *vec).len()
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn vec_data_position(vec: *mut CVec<Position>) -> *const Position {
+pub unsafe extern "C" fn vec_data_vertex(vec: *mut CVec<*const Vertex>) -> *const *const Vertex {
     (&mut *vec).raw()
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn vec_len_transition(vec: *mut CVec<Transition>) -> usize {
+pub unsafe extern "C" fn vec_len_connection(vec: *mut CVec<*const Connection>) -> usize {
     (&mut *vec).len()
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn vec_data_transition(vec: *mut CVec<Transition>) -> *const Transition {
+pub unsafe extern "C" fn vec_data_connection(vec: *mut CVec<*const Connection>) -> *const *const Connection {
     (&mut *vec).raw()
 }

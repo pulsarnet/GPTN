@@ -9,6 +9,7 @@
 #include "../elements/position.h"
 #include "../elements/transition.h"
 #include "../elements/arrow_line.h"
+#include "../graphviz/graphviz_wrapper.h"
 
 
 GraphicScene::GraphicScene(QObject *parent) : QGraphicsScene(parent) {
@@ -115,14 +116,14 @@ void GraphicScene::removeObject(QGraphicsSceneMouseEvent *event) {
         auto index = m_positions.indexOf(position);
         m_positions.removeAt(index);
         removeConnectionsAssociatedWith(position);
-        m_net->remove_position(position->position());
+        m_net->remove_position(position->vertex());
         delete position;
     }
     else if (auto transition = dynamic_cast<Transition*>(item); transition) {
         auto index = m_transition.indexOf(transition);
         m_transition.removeAt(index);
         removeConnectionsAssociatedWith(transition);
-        m_net->remove_transition(transition->transition());
+        m_net->remove_transition(transition->vertex());
         delete transition;
     }
     else if (auto connection_line = dynamic_cast<ArrowLine*>(item); connection_line) {
@@ -151,20 +152,14 @@ void GraphicScene::connectionCommit(QGraphicsSceneMouseEvent *event) {
 
     auto item = netItemAt(event->scenePos());
     if (auto petri = dynamic_cast<PetriObject*>(item); petri) {
-        if (m_currentConnection->from()->allowConnection(petri)) {
-            m_currentConnection->setTo(petri);
+        if (m_currentConnection->setTo(petri)) {
             m_currentConnection->setLine(
                     QLineF(m_currentConnection->from()->connectionPos(petri, true),
                            petri->connectionPos(m_currentConnection->from(), false)));
             m_currentConnection->updateConnection();
             m_connections.push_back(m_currentConnection);
 
-            if (m_currentConnection->from()->objectType() == PetriObject::Position)
-                m_net->connect_p(dynamic_cast<Position*>(m_currentConnection->from())->position(),
-                                 dynamic_cast<Transition*>(m_currentConnection->to())->transition());
-            else
-                m_net->connect_t(dynamic_cast<Transition*>(m_currentConnection->from())->transition(),
-                                 dynamic_cast<Position*>(m_currentConnection->to())->position());
+            m_net->connect(m_currentConnection->from()->vertex(), m_currentConnection->to()->vertex());
 
             m_currentConnection = nullptr;
         }
@@ -336,7 +331,7 @@ void GraphicScene::removeAll() {
     QGraphicsScene::clear();
 
     // TODO: Удаление сети
-    m_net = nullptr; // TODO: Надо удалить
+    m_net = ffi::PetriNet::create(); // TODO: Надо удалить
     m_transition.clear();
     m_positions.clear();
     m_connections.clear();
@@ -383,14 +378,7 @@ ArrowLine* GraphicScene::connectItems(PetriObject *from, PetriObject *to) {
     auto arrowLine = new ArrowLine(from, QLineF(from->connectionPos(to, false), to->connectionPos(from, true)));
     arrowLine->setTo(to);
 
-    if (from->objectType() == PetriObject::Position) {
-        m_net->connect_p(dynamic_cast<Position*>(from)->position(),
-                         dynamic_cast<Transition*>(to)->transition());
-    }
-    else {
-        m_net->connect_t(dynamic_cast<Transition*>(from)->transition(),
-                         dynamic_cast<Position*>(to)->position());
-    }
+    m_net->connect(from->vertex(), to->vertex());
 
     m_connections.push_back(arrowLine);
     addItem(arrowLine);
@@ -455,18 +443,53 @@ void GraphicScene::loadFromNet(ffi::PetriNet *net) {
     removeAll();
     m_net = net;
 
+    GraphVizWrapper graph;
+
     auto positions = m_net->positions();
     auto transitions = m_net->transitions();
+    auto connections = m_net->connections();
+
     for (int i = 0; i < positions.size(); i++) {
-        m_positions.push_back(new Position(QPointF(0, 0), m_net->get_position(positions[i].index())));
+        graph.addCircle(QString("p%1").arg(positions[i]->index()).toLocal8Bit().data(), QSizeF(80, 80));
+        m_positions.push_back(new Position(QPointF(0, 0), positions[i]));
         addItem(m_positions.last());
     }
 
     for (int i = 0; i < transitions.size(); i++) {
-        m_transition.push_back(new Transition(QPointF(0, 0), m_net->get_transition(transitions[i].index())));
+        graph.addRectangle(QString("t%1").arg(transitions[i]->index()).toLocal8Bit().data(), QSizeF(120, 60));
+        m_transition.push_back(new Transition(QPointF(0, 0), transitions[i]));
         addItem(m_transition.last());
     }
 
+    for (int i = 0; i < connections.size(); i++) {
+        auto from = connections[i]->from();
+        auto to = connections[i]->to();
+
+        if (from->type() == ffi::VertexType::Position) {
+            auto position = getPosition(from->index());
+            auto transition = getTransition(to->index());
+            graph.addEdge(position->name(), transition->name());
+            connectItems(position, transition);
+        }
+        else {
+            auto transition = getTransition(from->index());
+            auto position = getPosition(to->index());
+            graph.addEdge(position->name(), transition->name());
+            connectItems(transition, position);
+        }
+    }
+
+    auto result = graph.save((char*)"sfdp");
+    for (auto& element : result.elements) {
+        auto vertex = getVertex(element.first);
+        vertex->setPos(element.second);
+    }
+
+}
+
+PetriObject *GraphicScene::getVertex(const QString &name) {
+    if (name.startsWith("p")) return getPosition(name.mid(1).toInt());
+    return getTransition(name.mid(1).toInt());
 }
 
 Transition *GraphicScene::getTransition(int index) {

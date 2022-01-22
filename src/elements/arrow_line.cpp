@@ -51,6 +51,8 @@ bool ArrowLine::setTo(PetriObject *to) {
 
         m_from->addConnectionLine(this);
         m_to->addConnectionLine(this);
+
+        m_from->updateConnections();
         return true;
     }
 
@@ -58,13 +60,7 @@ bool ArrowLine::setTo(PetriObject *to) {
 }
 
 void ArrowLine::disconnect(ffi::PetriNet *net) {
-    if (auto pos = dynamic_cast<Position*>(this->from()); pos) {
-        net->remove_connection_p(pos->position(), dynamic_cast<Transition*>(this->to())->transition());
-    }
-    else if (auto transition = dynamic_cast<Transition*>(this->to()); transition) {
-        net->remove_connection_t(transition->transition(), dynamic_cast<Position*>(this->to())->position());
-    }
-
+    net->remove_connection(this->from()->vertex(), this->to()->vertex());
     this->from()->removeConnectionLine(this);
     this->to()->removeConnectionLine(this);
 }

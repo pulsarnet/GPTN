@@ -6,7 +6,7 @@
 #include "arrow_line.h"
 
 
-PetriObject::PetriObject(QGraphicsItem *parent) : QGraphicsItem(parent) {
+PetriObject::PetriObject(ffi::Vertex* vertex, QGraphicsItem *parent) : QGraphicsItem(parent), m_vertex(vertex) {
     setFlags(ItemIsMovable | ItemSendsGeometryChanges | ItemIsSelectable);
     setAcceptDrops(true);
 }
@@ -50,13 +50,11 @@ qreal PetriObject::angleBetween(const QPointF &to) {
 
 void PetriObject::removeConnectionLine(ArrowLine* line) {
     m_connections.remove(m_connections.indexOf(line));
-    updateConnections();
 }
 
 void PetriObject::addConnectionLine(ArrowLine* line) {
     if (m_connections.indexOf(line) == -1) {
         m_connections.push_back(line);
-        updateConnections();
     }
 }
 
@@ -108,4 +106,16 @@ QVariant PetriObject::itemChange(QGraphicsItem::GraphicsItemChange change, const
     }
 
     return QGraphicsItem::itemChange(change, value);
+}
+
+uint64_t PetriObject::index() const {
+    return m_vertex->index();
+}
+
+void PetriObject::connectTo(ffi::PetriNet *net, PetriObject *other) {
+    net->connect(vertex(), other->vertex());
+}
+
+ffi::Vertex *PetriObject::vertex() {
+    return m_vertex;
 }

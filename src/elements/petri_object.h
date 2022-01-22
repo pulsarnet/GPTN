@@ -27,7 +27,7 @@ public:
         Transition
     };
 
-    explicit PetriObject(QGraphicsItem* parent = nullptr);
+    explicit PetriObject(ffi::Vertex* vertex, QGraphicsItem* parent = nullptr);
 
 protected:
 
@@ -45,7 +45,7 @@ public:
 
     virtual qreal angleBetween(const QPointF& to);
 
-    virtual uint64_t index() const = 0;
+    [[nodiscard]] uint64_t index() const;
 
     template<typename T, typename U>
     static T* castTo(U* item) { return dynamic_cast<T*>(item); }
@@ -56,14 +56,16 @@ public:
 
     virtual bool allowConnection(PetriObject* other) = 0;
 
-    virtual void connectTo(ffi::PetriNet* net, PetriObject* other) = 0;
+    void connectTo(ffi::PetriNet* net, PetriObject* other);
+
+    ffi::Vertex* vertex();
 
     void setColored(bool colored) {
         m_colored = colored;
         emit update(boundingRect());
     }
 
-    virtual QString name() = 0;
+    virtual QString name() const = 0;
 
     bool colored() { return m_colored; }
 
@@ -78,8 +80,8 @@ protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
 
     bool m_colored = false;
-
     QList<ArrowLine*> m_connections;
+    ffi::Vertex* m_vertex;
 
 };
 

@@ -8,6 +8,7 @@ pub use net::connection::Connection;
 pub use net::vertex::Vertex;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
+use std::ops::Index;
 use std::rc::Rc;
 use {SynthesisContext};
 use ::{CMatrix, NamedMatrix};
@@ -311,39 +312,29 @@ impl PetriNet {
     }
 
     pub fn add_position(&mut self, index: u64) -> Vertex {
-        if let Some(p) = self
-            .elements
-            .iter()
-            .filter(|el| el.is_position())
-            .find(|el| el.index() == index)
-            .cloned()
-        {
-            return p;
+        if let Some(i) = (0..self.elements.len()).find(|&i| self.elements[i].is_position() && self.elements[i].index() == index) {
+            self.elements[i].clone()
         }
-
-        self.elements.push(Vertex::position(index));
-        if index >= self.get_position_index() {
-            *(*self.position_index).borrow_mut() = index + 1;
+        else {
+            self.elements.push(Vertex::position(index));
+            if index >= self.get_position_index() {
+                *(*self.position_index).borrow_mut() = index + 1;
+            }
+            self.elements.last().cloned().unwrap()
         }
-        self.elements.last().cloned().unwrap()
     }
 
     pub fn add_transition(&mut self, index: u64) -> Vertex {
-        if let Some(p) = self
-            .elements
-            .iter()
-            .filter(|el| el.is_transition())
-            .find(|el| el.index() == index)
-            .cloned()
-        {
-            return p;
+        if let Some(i) = (0..self.elements.len()).find(|&i| self.elements[i].is_transition() && self.elements[i].index() == index) {
+            self.elements[i].clone()
         }
-
-        self.elements.push(Vertex::transition(index));
-        if index >= self.get_transition_index() {
-            *(*self.transition_index).borrow_mut() = index + 1;
+        else {
+            self.elements.push(Vertex::transition(index));
+            if index >= self.get_transition_index() {
+                *(*self.transition_index).borrow_mut() = index + 1;
+            }
+            self.elements.last().cloned().unwrap()
         }
-        self.elements.last().cloned().unwrap()
     }
 
     pub fn insert_position(&mut self, element: Vertex, insert: bool) -> Vertex {

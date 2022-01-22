@@ -16,6 +16,7 @@ GraphVizWrapper::GraphVizWrapper() {
     m_graph = agopen((char*)"g", Agdirected, 0);
     agsafeset(m_graph, (char*)"splines", "line", "");
     agsafeset(m_graph, (char*)"overlap", "scalexy", "");
+    agsafeset(m_graph, (char*)"rankdir", "LR", "");
 
 }
 

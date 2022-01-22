@@ -16,7 +16,7 @@ class Transition : public PetriObject {
 
 public:
 
-    explicit Transition(const QPointF& origin, ffi::Transition* transition, QGraphicsItem* parent = nullptr);
+    explicit Transition(const QPointF& origin, ffi::Vertex* transition, QGraphicsItem* parent = nullptr);
 
     [[nodiscard]] QRectF boundingRect() const override;
 
@@ -34,20 +34,11 @@ public:
         return other->objectType() == Position;
     }
 
-    virtual uint64_t index() const override;
-
-    void connectTo(ffi::PetriNet* net, PetriObject* other) override;
-
-    ffi::Transition* transition() {
-        return m_transition;
-    }
-
-    virtual QString name();
+    virtual QString name() const override;
 
 private:
 
     QPointF m_origin;
-    ffi::Transition* m_transition = nullptr;
 
 };
 
