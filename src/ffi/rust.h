@@ -20,6 +20,7 @@ namespace ffi {
 
         [[nodiscard]] usize size() const noexcept;
         const T* data() const noexcept;
+        T* data() noexcept;
 
         const T &index(std::size_t n) const noexcept;
         const T &operator[](std::size_t n) const noexcept;
@@ -34,7 +35,8 @@ namespace ffi {
 
     struct PetriNet {
         static PetriNet* create();
-        CVec<usize> positions();
+        CVec<Position> positions();
+        CVec<Position> transitions();
         Position* add_position();
         Position* add_position_with(usize);
         Position* get_position(usize);
@@ -81,6 +83,11 @@ namespace ffi {
     };
 
     template<typename T>
+    T *CVec<T>::data() noexcept {
+        return const_cast<T*>(const_cast<const CVec<T>*>(this)->data());
+    }
+
+    template<typename T>
     const T &CVec<T>::index(std::size_t n) const noexcept {
         auto data = reinterpret_cast<const char*>(this->data());
         return *reinterpret_cast<const T*>(data + n * sizeof(T));
@@ -88,8 +95,8 @@ namespace ffi {
 
     template<typename T>
     T& CVec<T>::operator[](std::size_t n) noexcept  {
-        auto data = reinterpret_cast<const char*>(this->data());
-        return *reinterpret_cast<const T*>(data + n * sizeof(T));
+        auto data = reinterpret_cast<char*>(this->data());
+        return *reinterpret_cast<T*>(data + n * sizeof(T));
     }
 
     template<typename T>

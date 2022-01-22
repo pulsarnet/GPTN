@@ -10,7 +10,8 @@ using namespace ffi;
 extern "C" {
     // PetriNet
     PetriNet* create_net();
-    void net_positions(PetriNet& self, CVec<usize>* return$);
+    void net_positions(PetriNet& self, CVec<Position>* return$);
+    void net_transitions(PetriNet& self, CVec<Position>* return$);
     Position* add_position(PetriNet&);
     Position* add_position_with(PetriNet&, usize);
     Position* get_position(PetriNet&, usize);
@@ -51,16 +52,26 @@ extern "C" {
 
     // CVec<u64>
     usize vec_len_u64(const CVec<usize>* self);
-    usize* vec_u64_data(const CVec<usize>* self);
+    const usize* vec_data_u64(const CVec<usize>* self);
+
+    // CVec<Position>
+    usize vec_len_position(const CVec<Position>* self);
+    const Position* vec_data_position(const CVec<Position>* self);
 };
 
 PetriNet *PetriNet::create() {
     return ::create_net();
 }
 
-CVec<usize> PetriNet::positions() {
-    CVec<usize> result$;
+CVec<Position> PetriNet::positions() {
+    CVec<Position> result$;
     ::net_positions(*this, &result$);
+    return result$;
+}
+
+CVec<Position> PetriNet::transitions() {
+    CVec<Position> result$;
+    ::net_transitions(*this, &result$);
     return result$;
 }
 
@@ -187,5 +198,15 @@ usize CVec<usize>::size() const noexcept {
 
 template<>
 const usize *CVec<usize>::data() const noexcept {
-    return ::vec_u64_data(this);
+    return ::vec_data_u64(this);
+}
+
+template<>
+usize CVec<Position>::size() const noexcept {
+    return ::vec_len_position(this);
+}
+
+template<>
+const Position *CVec<Position>::data() const noexcept {
+    return ::vec_data_position(this);
 }

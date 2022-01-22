@@ -14,10 +14,24 @@ pub extern "C" fn create_net() -> *mut PetriNet {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn net_positions(net: &mut PetriNet, ret: &mut CVec<u64>) {
-    let result = net.elements.iter().filter(|p| p.is_position()).map(|p| p.index()).collect::<Vec<_>>();
+pub unsafe extern "C" fn net_positions(net: &mut PetriNet, ret: &mut CVec<Position>) {
+    let result = net.elements
+        .iter()
+        .filter(|p| p.is_position())
+        .map(|p| Position(p.clone())).collect::<Vec<_>>();
     core::ptr::write_unaligned(ret, CVec::from(result));
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn net_transitions(net: &mut PetriNet, ret: &mut CVec<Transition>) {
+    let result = net.elements
+        .iter()
+        .filter(|p| p.is_transition())
+        .map(|p| Transition(p.clone())).collect::<Vec<_>>();
+
+    core::ptr::write_unaligned(ret, CVec::from(result));
+}
+
 
 #[no_mangle]
 pub unsafe extern "C" fn del(v: *mut PetriNet) {
