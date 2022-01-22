@@ -300,18 +300,11 @@ void GraphicScene::fromVariant(const QVariant& data) {
             QVariantHash from = hash["from"].toHash();
             QVariantHash to = hash["to"].toHash();
 
-            qDebug() << "FROM" << from;
-            qDebug() << "TO" << to;
-
             auto find_from = [=](PetriObject* object) {
-                qDebug() << "FIND FROM TYPE => " << from["type"].toString() << "ID => " << from["id"].toInt() << " OBJECT INDEX => " << object->index()
-                << " OBJECT TYPE => " << object->objectTypeStr();
                 return object->objectTypeStr() == from["type"].toString() && object->index() == from["id"].toInt();
             };
 
             auto find_to = [=](PetriObject* object) {
-                qDebug() << "FIND TO TYPE => " << to["type"].toString() << "ID => " << to["id"].toInt() << " OBJECT INDEX => " << object->index()
-                         << " OBJECT TYPE => " << object->objectTypeStr();
                 return object->objectTypeStr() == to["type"].toString() && object->index() == to["id"].toInt();
             };
 
@@ -343,7 +336,7 @@ void GraphicScene::removeAll() {
     QGraphicsScene::clear();
 
     // TODO: Удаление сети
-    m_net = ffi::PetriNet::create();
+    m_net = nullptr; // TODO: Надо удалить
     m_transition.clear();
     m_positions.clear();
     m_connections.clear();
@@ -458,15 +451,22 @@ QPointF GraphicScene::getPositionPos(int index) {
 }
 
 void GraphicScene::loadFromNet(ffi::PetriNet *net) {
-    this->removeAll();
+
+    removeAll();
     m_net = net;
 
     auto positions = m_net->positions();
     auto transitions = m_net->transitions();
     for (int i = 0; i < positions.size(); i++) {
-        auto ffi_position = operator new(memcpy())
-        m_positions.push_back(new Position(origin))
+        m_positions.push_back(new Position(QPointF(0, 0), m_net->get_position(positions[i].index())));
+        addItem(m_positions.last());
     }
+
+    for (int i = 0; i < transitions.size(); i++) {
+        m_transition.push_back(new Transition(QPointF(0, 0), m_net->get_transition(transitions[i].index())));
+        addItem(m_transition.last());
+    }
+
 }
 
 Transition *GraphicScene::getTransition(int index) {
