@@ -55,6 +55,8 @@ public:
     QPointF getTransitionPos(int index);
     QPointF getPositionPos(int index);
 
+    void loadFromNet(ffi::PetriNet*);
+
     ffi::PetriNet* net();
 
 public slots:

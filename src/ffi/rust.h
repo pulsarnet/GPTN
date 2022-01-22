@@ -1,6 +1,8 @@
 #ifndef FFI_RUST_RUST_H
 #define FFI_RUST_RUST_H
 
+#include <array>
+
 namespace ffi {
     extern "C" struct PetriNet;
     extern "C" struct Position;
@@ -11,49 +13,28 @@ namespace ffi {
     typedef unsigned __int64 usize;
     typedef int i32;
 
-    extern "C" {
-        // PetriNet
-        PetriNet* create_net();
-        Position* add_position(PetriNet&);
-        Position* add_position_with(PetriNet&, usize);
-        Position* get_position(PetriNet&, usize);
-        void remove_position(PetriNet&, Position&);
-        Transition* add_transition(PetriNet&);
-        Transition* add_transition_with(PetriNet&, usize);
-        Transition* get_transition(PetriNet&, usize);
-        void remove_transition(PetriNet&, Transition&);
-        void connect_p(PetriNet&, Position&, Transition&);
-        void connect_t(PetriNet&, Transition&, Position&);
-        void remove_connection_p(PetriNet&, Position&, Transition&);
-        void remove_connection_t(PetriNet&, Transition&, Position&);
+    template<typename T>
+    class CVec final {
 
-        // Position
-        usize position_index(Position&);
-        usize position_markers(Position&);
-        void position_add_marker(Position&);
-        void position_remove_marker(Position&);
+    public:
 
-        // Transition
-        usize transition_index(Transition&);
+        [[nodiscard]] usize size() const noexcept;
+        const T* data() const noexcept;
 
-        // SynthesisContext
-        SynthesisContext* synthesis_init(PetriNet&);
-        usize synthesis_positions(SynthesisContext&);
-        usize synthesis_transitions(SynthesisContext&);
-        usize synthesis_programs(SynthesisContext&);
-        CMatrix* synthesis_c_matrix(SynthesisContext&);
-        CMatrix* synthesis_primitive_matrix(SynthesisContext&);
-        usize synthesis_position_index(SynthesisContext&, usize);
-        usize synthesis_transition_index(SynthesisContext&, usize);
+        const T &index(std::size_t n) const noexcept;
+        const T &operator[](std::size_t n) const noexcept;
+        T &operator[](std::size_t n) noexcept;
 
-        // CMatrix
-        i32 matrix_index(CMatrix&, usize, usize);
-        usize matrix_rows(CMatrix&);
-        usize matrix_columns(CMatrix&);
+    private:
+
+        std::array<std::uintptr_t, 3> repr;
+
     };
+
 
     struct PetriNet {
         static PetriNet* create();
+        CVec<usize> positions();
         Position* add_position();
         Position* add_position_with(usize);
         Position* get_position(usize);
@@ -89,6 +70,7 @@ namespace ffi {
         CMatrix* primitive_matrix();
         usize position_index(usize);
         usize transition_index(usize);
+        PetriNet* linear_base_fragments();
 
     };
 
@@ -98,6 +80,23 @@ namespace ffi {
         usize columns();
     };
 
+    template<typename T>
+    const T &CVec<T>::index(std::size_t n) const noexcept {
+        auto data = reinterpret_cast<const char*>(this->data());
+        return *reinterpret_cast<const T*>(data + n * sizeof(T));
+    }
+
+    template<typename T>
+    T& CVec<T>::operator[](std::size_t n) noexcept  {
+        auto data = reinterpret_cast<const char*>(this->data());
+        return *reinterpret_cast<const T*>(data + n * sizeof(T));
+    }
+
+    template<typename T>
+    const T& CVec<T>::operator[](std::size_t n) const noexcept  {
+        auto data = reinterpret_cast<const char*>(this->data());
+        return *reinterpret_cast<const T*>(data + n * sizeof(T));
+    }
 }
 
 

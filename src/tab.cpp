@@ -193,6 +193,8 @@ void Tab::splitAction() {
 
     primitive_view->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
 
+    auto lbf_scene = dynamic_cast<GraphicScene*>(lbf_view->scene());
+    lbf_scene->loadFromNet(synthesisContext->linear_base_fragments());
 //    auto synthesis_program = SynthesisProgram::synthesis_start(qobject_cast<GraphicScene*>(this->edit_view->scene())->net());
 //
 //    // Добавим пустую программу чтобы не падало

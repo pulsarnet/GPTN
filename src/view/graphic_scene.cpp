@@ -457,6 +457,16 @@ QPointF GraphicScene::getPositionPos(int index) {
     return getPosition(index)->scenePos();
 }
 
+void GraphicScene::loadFromNet(ffi::PetriNet *net) {
+    this->removeAll();
+    m_net = net;
+
+    auto positions = m_net->positions();
+    for (int i = 0; i < positions.size(); i++) {
+        qDebug() << "p" << positions.index(i);
+    }
+}
+
 Transition *GraphicScene::getTransition(int index) {
     auto it = std::find_if(m_transition.begin(), m_transition.end(), [=](Transition* t) {
         return t->index() == index;

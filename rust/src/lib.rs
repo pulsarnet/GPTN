@@ -32,7 +32,7 @@ pub struct SynthesisContext {
     pub programs: Vec<Vec<usize>>,
     pub c_matrix: crate::CMatrix,
     pub primitive_matrix: crate::CMatrix,
-    //pub linear_base_fragments: Vec<(crate::CMatrix, crate::CMatrix)>
+    pub linear_base_fragments: Vec<(NamedMatrix, NamedMatrix)>
 }
 
 impl SynthesisContext {
@@ -74,9 +74,41 @@ impl SynthesisContext {
         synthesis(PetriNetVec(parts))
     }
 
-    // pub fn linear_base_fragments(&self) -> &Vec<(crate::CMatrix, crate::CMatrix)> {
-    //     &self.linear_base_fragments
-    // }
+    pub fn linear_base_fragments(&self) -> PetriNet {
+
+        // TODO: Установить максимальный индекс у позиции и перехода
+        // TODO: Получение позиции по индексу
+        // TODO: Получение перехода по индексу
+
+        let mut result = PetriNet::new();
+
+        for (d_input, d_output) in self.linear_base_fragments.iter() {
+            result.elements.extend(d_input.rows.iter().map(|row| row.0.clone()).collect::<Vec<_>>());
+            result.elements.extend(d_input.cols.iter().map(|column| column.0.clone()).collect::<Vec<_>>());
+
+            for row in 0..d_input.rows.len() {
+                for column in 0..d_input.cols.len() {
+
+                    if d_input.matrix.row(row)[column] < 0 {
+                        result.connect(
+                            d_input.rows.iter().find(|(_, v)| **v == row).map(|(k, _)| k.clone()).unwrap(),
+                            d_input.cols.iter().find(|(_, v)| **v == column).map(|(k, _)| k.clone()).unwrap(),
+                        )
+                    }
+
+                    if d_output.matrix.column(column)[row] > 0 {
+                        result.connect(
+                            d_input.cols.iter().find(|(_, v)| **v == column).map(|(k, _)| k.clone()).unwrap(),
+                            d_input.rows.iter().find(|(_, v)| **v == row).map(|(k, _)| k.clone()).unwrap(),
+                        )
+                    }
+
+                }
+            }
+        }
+
+        result
+    }
 
 }
 
@@ -120,7 +152,10 @@ pub unsafe extern "C" fn synthesis_transition_index(ctx: &SynthesisContext, inde
     ctx.transitions[index].index() as usize
 }
 
-
+#[no_mangle]
+extern "C" fn synthesis_linear_base_fragments(ctx: &SynthesisContext) -> *mut PetriNet {
+    Box::into_raw(Box::new(ctx.linear_base_fragments()))
+}
 
 #[no_mangle]
 extern "C" fn matrix_index(matrix: &CMatrix, row: usize, column: usize) -> i32 {

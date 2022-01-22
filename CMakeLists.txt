@@ -3,8 +3,7 @@ project(ffi_rust)
 include(ExternalProject)
 
 message(STATUS ${CMAKE_CXX_FLAGS})
-unset(CMAKE_CXX_FLAGS)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a ")
+set(CMAKE_CXX_STANDARD 17)
 
 set(TARGET_DIR ${CMAKE_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TARGET_DIR})

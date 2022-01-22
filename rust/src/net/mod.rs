@@ -956,7 +956,7 @@ pub fn synthesis(mut nets: PetriNetVec) -> SynthesisContext {
         programs: vec![],
         c_matrix: CMatrix::from(c_matrix),
         primitive_matrix: CMatrix::from(primitive_matrix),
-        //linear_base_fragments: logical_base_fragments,
+        linear_base_fragments: logical_base_fragments,
     }
 }
 //

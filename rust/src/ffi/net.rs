@@ -5,11 +5,18 @@
 
 use ffi::position::Position;
 use ffi::transition::Transition;
+use ffi::vec::CVec;
 use PetriNet;
 
 #[no_mangle]
 pub extern "C" fn create_net() -> *mut PetriNet {
     Box::into_raw(Box::new(PetriNet::new()))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn net_positions(net: &mut PetriNet, ret: &mut CVec<u64>) {
+    let result = net.elements.iter().filter(|p| p.is_position()).map(|p| p.index()).collect::<Vec<_>>();
+    core::ptr::write_unaligned(ret, CVec::from(result));
 }
 
 #[no_mangle]
