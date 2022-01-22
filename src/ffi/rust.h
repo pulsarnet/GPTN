@@ -10,7 +10,7 @@ namespace ffi {
     extern "C" struct SynthesisContext;
     extern "C" struct CMatrix;
 
-    typedef unsigned __int64 usize;
+    typedef uint64_t usize;
     typedef int i32;
 
     template<typename T>
@@ -26,6 +26,8 @@ namespace ffi {
         const T &operator[](std::size_t n) const noexcept;
         T &operator[](std::size_t n) noexcept;
 
+        const std::size_t size_of() const noexcept;
+
     private:
 
         std::array<std::uintptr_t, 3> repr;
@@ -36,7 +38,7 @@ namespace ffi {
     struct PetriNet {
         static PetriNet* create();
         CVec<Position> positions();
-        CVec<Position> transitions();
+        CVec<Transition> transitions();
         Position* add_position();
         Position* add_position_with(usize);
         Position* get_position(usize);
@@ -90,19 +92,19 @@ namespace ffi {
     template<typename T>
     const T &CVec<T>::index(std::size_t n) const noexcept {
         auto data = reinterpret_cast<const char*>(this->data());
-        return *reinterpret_cast<const T*>(data + n * sizeof(T));
+        return *reinterpret_cast<const T*>(data + n * size_of());
     }
 
     template<typename T>
     T& CVec<T>::operator[](std::size_t n) noexcept  {
         auto data = reinterpret_cast<char*>(this->data());
-        return *reinterpret_cast<T*>(data + n * sizeof(T));
+        return *reinterpret_cast<T*>(data + n * size_of());
     }
 
     template<typename T>
     const T& CVec<T>::operator[](std::size_t n) const noexcept  {
         auto data = reinterpret_cast<const char*>(this->data());
-        return *reinterpret_cast<const T*>(data + n * sizeof(T));
+        return *reinterpret_cast<const T*>(data + n * size_of());
     }
 }
 

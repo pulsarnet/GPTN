@@ -19,6 +19,7 @@ pub unsafe extern "C" fn net_positions(net: &mut PetriNet, ret: &mut CVec<Positi
         .iter()
         .filter(|p| p.is_position())
         .map(|p| Position(p.clone())).collect::<Vec<_>>();
+
     core::ptr::write_unaligned(ret, CVec::from(result));
 }
 

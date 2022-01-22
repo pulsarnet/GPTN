@@ -464,7 +464,8 @@ void GraphicScene::loadFromNet(ffi::PetriNet *net) {
     auto positions = m_net->positions();
     auto transitions = m_net->transitions();
     for (int i = 0; i < positions.size(); i++) {
-        qDebug() << "p" << positions[i].index();
+        auto ffi_position = operator new(memcpy())
+        m_positions.push_back(new Position(origin))
     }
 }
 

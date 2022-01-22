@@ -5,6 +5,7 @@ use std::mem::MaybeUninit;
 use std::ops::Deref;
 use libc::{c_char, c_void};
 use ffi::position::Position;
+use ffi::transition::Transition;
 
 #[repr(C)]
 pub struct CVec<T> {
@@ -53,5 +54,15 @@ pub unsafe extern "C" fn vec_len_position(vec: *mut CVec<Position>) -> usize {
 
 #[no_mangle]
 pub unsafe extern "C" fn vec_data_position(vec: *mut CVec<Position>) -> *const Position {
+    (&mut *vec).raw()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn vec_len_transition(vec: *mut CVec<Transition>) -> usize {
+    (&mut *vec).len()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn vec_data_transition(vec: *mut CVec<Transition>) -> *const Transition {
     (&mut *vec).raw()
 }

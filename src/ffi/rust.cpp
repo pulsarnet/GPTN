@@ -11,7 +11,7 @@ extern "C" {
     // PetriNet
     PetriNet* create_net();
     void net_positions(PetriNet& self, CVec<Position>* return$);
-    void net_transitions(PetriNet& self, CVec<Position>* return$);
+    void net_transitions(PetriNet& self, CVec<Transition>* return$);
     Position* add_position(PetriNet&);
     Position* add_position_with(PetriNet&, usize);
     Position* get_position(PetriNet&, usize);
@@ -57,6 +57,14 @@ extern "C" {
     // CVec<Position>
     usize vec_len_position(const CVec<Position>* self);
     const Position* vec_data_position(const CVec<Position>* self);
+
+    // CVec<Transition>
+    usize vec_len_transition(const CVec<Transition>* self);
+    const Transition* vec_data_transition(const CVec<Transition>* self);
+
+    // size_of
+    usize size_of_position();
+    usize size_of_transition();
 };
 
 PetriNet *PetriNet::create() {
@@ -69,8 +77,8 @@ CVec<Position> PetriNet::positions() {
     return result$;
 }
 
-CVec<Position> PetriNet::transitions() {
-    CVec<Position> result$;
+CVec<Transition> PetriNet::transitions() {
+    CVec<Transition> result$;
     ::net_transitions(*this, &result$);
     return result$;
 }
@@ -210,3 +218,24 @@ template<>
 const Position *CVec<Position>::data() const noexcept {
     return ::vec_data_position(this);
 }
+
+template<>
+const std::size_t CVec<Position>::size_of() const noexcept {
+    return ::size_of_position();
+}
+
+template<>
+usize CVec<Transition>::size() const noexcept {
+    return ::vec_len_transition(this);
+}
+
+template<>
+const Transition *CVec<Transition>::data() const noexcept {
+    return ::vec_data_transition(this);
+}
+
+template<>
+const std::size_t CVec<Transition>::size_of() const noexcept {
+    return ::size_of_transition();
+}
+
