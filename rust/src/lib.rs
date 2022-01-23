@@ -14,7 +14,7 @@ mod net;
 
 mod core;
 
-use net::{synthesis, PetriNet, Vertex, PetriNetVec};
+use net::{synthesis, PetriNet, Vertex, PetriNetVec, synthesis_program};
 
 pub struct CMatrix {
     inner: DMatrix<i32>
@@ -47,6 +47,22 @@ impl SynthesisContext {
 
     pub fn programs(&self) -> &Vec<Vec<usize>> {
         &self.programs
+    }
+
+    pub fn add_program(&mut self) {
+        self.programs.push(vec![0; self.positions.len() + self.transitions.len()])
+    }
+
+    pub fn remove_program(&mut self, index: usize) {
+        self.programs.remove(index);
+    }
+
+    pub fn program_value(&self, program: usize, index: usize) -> usize {
+        self.programs()[program][index]
+    }
+
+    pub fn set_program_value(&mut self, program: usize, index: usize, value: usize) {
+        self.programs[program][index] = value;
     }
 
     pub fn c_matrix(&self) -> &crate::CMatrix {
@@ -145,9 +161,30 @@ extern "C" fn synthesis_transitions(ctx: &SynthesisContext) -> usize {
 }
 
 #[no_mangle]
+extern "C" fn synthesis_add_program(ctx: &mut SynthesisContext) {
+    ctx.add_program();
+}
+
+#[no_mangle]
+extern "C" fn synthesis_remove_program(ctx: &mut SynthesisContext, index: usize) {
+    ctx.remove_program(index);
+}
+
+#[no_mangle]
+extern "C" fn synthesis_program_value(ctx: &SynthesisContext, program: usize, index: usize) -> usize {
+    ctx.program_value(program, index)
+}
+
+#[no_mangle]
+extern "C" fn synthesis_set_program_value(ctx: &mut SynthesisContext, program: usize, index: usize, value: usize) {
+    ctx.set_program_value(program, index, value);
+}
+
+#[no_mangle]
 extern "C" fn synthesis_programs(ctx: &SynthesisContext) -> usize {
     ctx.programs().len()
 }
+
 
 #[no_mangle]
 extern "C" fn synthesis_c_matrix(ctx: &SynthesisContext) -> *const CMatrix {
@@ -199,6 +236,12 @@ extern "C" fn matrix_columns(matrix: &CMatrix) -> usize {
     matrix.inner.ncols()
 }
 
+// Вычисление программ синтеза
+#[no_mangle]
+extern "C" fn synthesis_eval_program(ctx: &mut SynthesisContext, index: usize) -> *mut PetriNet {
+    let result = synthesis_program(ctx, index);
+    Box::into_raw(Box::new(result))
+}
 // #[no_mangle]
 // pub unsafe extern "C" fn eval_program(ctx: &mut SynthesisContext, index: usize) -> *mut CommonResult {
 //     let result = synthesis_program(ctx, index);

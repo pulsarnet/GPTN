@@ -1,9 +1,7 @@
-use std::ffi::CString;
 use std::marker::PhantomData;
 use std::mem;
 use std::mem::MaybeUninit;
-use std::ops::Deref;
-use libc::{c_char, c_void};
+use libc::c_void;
 use net::Connection;
 use Vertex;
 

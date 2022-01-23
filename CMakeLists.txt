@@ -10,17 +10,17 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TARGET_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${TARGET_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${TARGET_DIR}/lib)
 
-#if (NOT GRAPHVIZ_DIR)
-#    message(FATAL_ERROR "Graphviz dir not set")
-#endif()
+if (NOT GRAPHVIZ_DIR)
+    message(FATAL_ERROR "Graphviz dir not set")
+endif()
 #
 if (NOT Qt6_DIR)
     message(FATAL_ERROR "Qt6_DIR not set")
 endif()
 
-#if (NOT Qt_ADVANCED_DOCKING_SYSTEM_DIR)
-#    message(FATAL_ERROR "Qt_ADVANCED_DOCKING_SYSTEM_DIR not set")
-#endif()
+if (NOT Qt_ADVANCED_DOCKING_SYSTEM_DIR)
+    message(FATAL_ERROR "Qt_ADVANCED_DOCKING_SYSTEM_DIR not set")
+endif()
 
 include_directories(${GRAPHVIZ_DIR}/include)
 link_directories(${GRAPHVIZ_DIR}/lib)
@@ -78,7 +78,7 @@ set(HEADERS
         src/graphviz/graphviz_wrapper.h
         )
 
-link_directories("/usr/local/lib")
+link_directories("${CMAKE_SOURCE_DIR}/lib")
 
 add_executable(ffi_rust
         ${SRC_FILES}
@@ -89,12 +89,12 @@ add_executable(ffi_rust
 
 add_dependencies(ffi_rust rust)
 
-target_link_libraries(ffi_rust PRIVATE "${CMAKE_SOURCE_DIR}/rust/target/debug/libhello_world.a"
+target_link_libraries(ffi_rust PRIVATE "${CMAKE_SOURCE_DIR}/rust/target/debug/hello_world.lib"
         Qt6::Widgets
         Qt6::Core
         Qt6::Gui
         ads::qtadvanceddocking
-        lapack
+        liblapack
         gvc
         cgraph)
 

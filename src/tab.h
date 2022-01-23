@@ -60,6 +60,7 @@ private:
     GraphicsView* edit_view;
     GraphicsView* primitive_view;
     GraphicsView* lbf_view;
+    GraphicsView* synthesis_result;
     QMenu* m_actionToggleMenu = nullptr;
 
     ffi::PetriNet* m_net;

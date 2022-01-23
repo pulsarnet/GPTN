@@ -23,6 +23,7 @@ Tab::Tab(QWidget *parent) : QWidget(parent) {
     this->edit_view = nullptr;
     this->lbf_view = nullptr;
     this->primitive_view = nullptr;
+    this->synthesis_result = nullptr;
 
     auto main_scene = new GraphicScene;
     main_scene->setAllowMods(GraphicScene::A_Default);
@@ -45,6 +46,13 @@ Tab::Tab(QWidget *parent) : QWidget(parent) {
     this->lbf_view->setWindowTitle("Logical Base Fragments View");
     this->lbf_view->setScene(lbf_scene);
 
+    // TODO: Удалить
+    auto synthesis_scene = new GraphicScene;
+    synthesis_scene->setAllowMods(GraphicScene::A_Nothing);
+    this->synthesis_result = new GraphicsView(this);
+    this->synthesis_result->setWindowTitle("Synthesis view");
+    this->synthesis_result->setScene(synthesis_scene);
+
     m_manager = new CDockManager;
 
     auto edit_docker = new CDockWidget("Main view");
@@ -56,10 +64,17 @@ Tab::Tab(QWidget *parent) : QWidget(parent) {
     auto lbf_docker = new CDockWidget("Lbf view");
     lbf_docker->setWidget(lbf_view);
 
+    // TODO: Удалить
+    auto synthesis_docker = new CDockWidget("Synthesis view");
+    synthesis_docker->setWidget(synthesis_result);
+
     m_manager->addDockWidget(DockWidgetArea::OuterDockAreas, edit_docker);
 
     auto bottomArea = m_manager->addDockWidget(DockWidgetArea::BottomDockWidgetArea, primitive_docker);
     m_manager->addDockWidgetTabToArea(lbf_docker, bottomArea);
+
+    // TODO: Удалить
+    m_manager->addDockWidgetTabToArea(synthesis_docker, bottomArea);
 
     this->setLayout(new QGridLayout);
     this->layout()->addWidget(m_manager);
@@ -150,13 +165,17 @@ void Tab::markerChecked(bool checked) {
 void Tab::splitAction() {
 
     auto synthesisContext = ffi::SynthesisContext::init(dynamic_cast<GraphicScene*>(edit_view->scene())->net());
-    //auto primitive_matrix = synthesisContext->primitive_matrix();
     dynamic_cast<GraphicScene*>(primitive_view->scene())->loadFromNet(synthesisContext->primitive_net(), "neato");
 
     auto lbf_scene = dynamic_cast<GraphicScene*>(lbf_view->scene());
     lbf_scene->loadFromNet(synthesisContext->linear_base_fragments());
     lbf_view->fitInView(lbf_scene->itemsBoundingRect(), Qt::KeepAspectRatio);
 
+    synthesisContext->add_program();
+    synthesisContext->set_program_value(0, 0, 1);
+    synthesisContext->set_program_value(0, 1, 1);
+    auto result = synthesisContext->eval_program(0);
+    dynamic_cast<GraphicScene*>(synthesis_result->scene())->loadFromNet(result, "neato");
 }
 
 bool Tab::saveOnExit() {

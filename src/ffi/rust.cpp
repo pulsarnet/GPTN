@@ -40,12 +40,17 @@ extern "C" {
     usize synthesis_positions(SynthesisContext&);
     usize synthesis_transitions(SynthesisContext&);
     usize synthesis_programs(SynthesisContext&);
+    void synthesis_add_program(SynthesisContext&);
+    void synthesis_remove_program(SynthesisContext&, usize);
+    usize synthesis_program_value(SynthesisContext&, usize, usize);
+    void synthesis_set_program_value(SynthesisContext&, usize, usize, usize);
     CMatrix* synthesis_c_matrix(SynthesisContext&);
     CMatrix* synthesis_primitive_matrix(SynthesisContext&);
     PetriNet* synthesis_primitive_net(SynthesisContext&);
     usize synthesis_position_index(SynthesisContext&, usize);
     usize synthesis_transition_index(SynthesisContext&, usize);
     PetriNet* synthesis_linear_base_fragments(SynthesisContext&);
+    PetriNet* synthesis_eval_program(SynthesisContext&, usize);
 
     // CMatrix
     i32 matrix_index(CMatrix&, usize, usize);
@@ -171,6 +176,22 @@ usize SynthesisContext::programs() {
     return ::synthesis_programs(*this);
 }
 
+void SynthesisContext::add_program() {
+    ::synthesis_add_program(*this);
+}
+
+void SynthesisContext::remove_program(usize index) {
+    ::synthesis_remove_program(*this, index);
+}
+
+usize SynthesisContext::program_value(usize program, usize index) {
+    return ::synthesis_program_value(*this, program, index);
+}
+
+void SynthesisContext::set_program_value(usize program, usize index, usize value) {
+    ::synthesis_set_program_value(*this, program, index, value);
+}
+
 CMatrix *SynthesisContext::c_matrix() {
     return ::synthesis_c_matrix(*this);
 }
@@ -193,6 +214,10 @@ usize SynthesisContext::transition_index(usize i) {
 
 PetriNet *SynthesisContext::linear_base_fragments() {
     return ::synthesis_linear_base_fragments(*this);
+}
+
+PetriNet *SynthesisContext::eval_program(usize index) {
+    return ::synthesis_eval_program(*this, index);
 }
 
 i32 CMatrix::index(usize row, usize col) {

@@ -34,7 +34,7 @@ pub unsafe extern "C" fn net_transitions(net: &mut PetriNet, ret: &mut CVec<*con
 
 #[no_mangle]
 pub unsafe extern "C" fn net_connections(net: &mut PetriNet, ret: &mut CVec<*const Connection>) {
-    core::ptr::write_unaligned(ret, CVec::from(net.connections.iter().map(|c| c as *const Connection).collect::<Vec<_>>()));
+    core::ptr::write_unaligned(ret, CVec::from(net.connections.iter().cloned().map(|c| Box::into_raw(Box::new(c)) as *const Connection).collect::<Vec<_>>()));
 }
 
 #[no_mangle]
