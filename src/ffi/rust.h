@@ -35,7 +35,7 @@ namespace ffi {
         const T &operator[](std::size_t n) const noexcept;
         T &operator[](std::size_t n) noexcept;
 
-        const std::size_t size_of() const noexcept;
+        [[nodiscard]] const std::size_t size_of() const noexcept;
 
     private:
 
@@ -82,6 +82,7 @@ namespace ffi {
         usize programs();
         CMatrix* c_matrix();
         CMatrix* primitive_matrix();
+        PetriNet* primitive_net();
         usize position_index(usize);
         usize transition_index(usize);
         PetriNet* linear_base_fragments();

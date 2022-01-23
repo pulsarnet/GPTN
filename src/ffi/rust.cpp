@@ -42,6 +42,7 @@ extern "C" {
     usize synthesis_programs(SynthesisContext&);
     CMatrix* synthesis_c_matrix(SynthesisContext&);
     CMatrix* synthesis_primitive_matrix(SynthesisContext&);
+    PetriNet* synthesis_primitive_net(SynthesisContext&);
     usize synthesis_position_index(SynthesisContext&, usize);
     usize synthesis_transition_index(SynthesisContext&, usize);
     PetriNet* synthesis_linear_base_fragments(SynthesisContext&);
@@ -69,19 +70,19 @@ PetriNet *PetriNet::create() {
 }
 
 CVec<Vertex*> PetriNet::positions() {
-    CVec<Vertex*> result$;
+    CVec<Vertex*> result${};
     ::net_positions(*this, &result$);
     return result$;
 }
 
 CVec<Vertex*> PetriNet::transitions() {
-    CVec<Vertex*> result$;
+    CVec<Vertex*> result${};
     ::net_transitions(*this, &result$);
     return result$;
 }
 
 CVec<Connection *> PetriNet::connections() {
-    CVec<Connection*> result$;
+    CVec<Connection*> result${};
     ::net_connections(*this, &result$);
     return result$;
 }
@@ -176,6 +177,10 @@ CMatrix *SynthesisContext::c_matrix() {
 
 CMatrix *SynthesisContext::primitive_matrix() {
     return ::synthesis_primitive_matrix(*this);
+}
+
+PetriNet *SynthesisContext::primitive_net() {
+    return ::synthesis_primitive_net(*this);
 }
 
 usize SynthesisContext::position_index(usize i) {

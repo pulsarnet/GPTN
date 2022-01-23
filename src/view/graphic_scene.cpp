@@ -438,7 +438,7 @@ QPointF GraphicScene::getPositionPos(int index) {
     return getPosition(index)->scenePos();
 }
 
-void GraphicScene::loadFromNet(ffi::PetriNet *net) {
+void GraphicScene::loadFromNet(ffi::PetriNet *net, const QString& algorithm) {
 
     removeAll();
     m_net = net;
@@ -479,7 +479,7 @@ void GraphicScene::loadFromNet(ffi::PetriNet *net) {
         }
     }
 
-    auto result = graph.save((char*)"sfdp");
+    auto result = graph.save(algorithm.isEmpty() ? (char*)"sfdp" : algorithm.toLocal8Bit().data());
     for (auto& element : result.elements) {
         auto vertex = getVertex(element.first);
         vertex->setPos(element.second);

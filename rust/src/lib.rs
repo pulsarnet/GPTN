@@ -74,6 +74,28 @@ impl SynthesisContext {
         synthesis(PetriNetVec(parts))
     }
 
+    pub fn primitive_net(&self) -> PetriNet {
+
+        let mut result = PetriNet::new();
+
+        result.elements.extend(self.positions.iter().cloned());
+        result.elements.extend(self.transitions.iter().cloned());
+
+        for column in 0..self.primitive_matrix.inner.ncols() {
+            for row in 0..self.primitive_matrix.inner.nrows() {
+                if self.primitive_matrix.inner.row(row)[column] > 0 {
+                    result.connect(self.transitions[column].clone(), self.positions[row].clone());
+                }
+                else if self.primitive_matrix.inner.row(row)[column] < 0 {
+                    result.connect(self.positions[row].clone(), self.transitions[column].clone())
+                }
+            }
+        }
+
+        result
+
+    }
+
     pub fn linear_base_fragments(&self) -> PetriNet {
 
         // TODO: Установить максимальный индекс у позиции и перехода
@@ -135,6 +157,11 @@ extern "C" fn synthesis_c_matrix(ctx: &SynthesisContext) -> *const CMatrix {
 #[no_mangle]
 extern "C" fn synthesis_primitive_matrix(ctx: &SynthesisContext) -> *const CMatrix {
     ctx.primitive_matrix() as *const CMatrix
+}
+
+#[no_mangle]
+extern "C" fn synthesis_primitive_net(ctx: &SynthesisContext) -> *const PetriNet {
+    Box::into_raw(Box::new(ctx.primitive_net()))
 }
 
 #[no_mangle]

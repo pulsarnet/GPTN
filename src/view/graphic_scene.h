@@ -56,7 +56,7 @@ public:
     QPointF getTransitionPos(int index);
     QPointF getPositionPos(int index);
 
-    void loadFromNet(ffi::PetriNet*);
+    void loadFromNet(ffi::PetriNet*, const QString& algorithm = QString());
 
     ffi::PetriNet* net();
 
