@@ -44,6 +44,7 @@ extern "C" {
     void synthesis_remove_program(SynthesisContext&, usize);
     usize synthesis_program_value(SynthesisContext&, usize, usize);
     void synthesis_set_program_value(SynthesisContext&, usize, usize, usize);
+    char* synthesis_program_header_name(SynthesisContext&, usize);
     CMatrix* synthesis_c_matrix(SynthesisContext&);
     CMatrix* synthesis_primitive_matrix(SynthesisContext&);
     PetriNet* synthesis_primitive_net(SynthesisContext&);
@@ -190,6 +191,10 @@ usize SynthesisContext::program_value(usize program, usize index) {
 
 void SynthesisContext::set_program_value(usize program, usize index, usize value) {
     ::synthesis_set_program_value(*this, program, index, value);
+}
+
+char *SynthesisContext::program_header_name(usize index) {
+    return ::synthesis_program_header_name(*this, index);
 }
 
 CMatrix *SynthesisContext::c_matrix() {

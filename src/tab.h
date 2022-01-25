@@ -48,6 +48,8 @@ public slots:
     void removeChecked(bool checked);
     void markerChecked(bool checked);
 
+    void drawSynthesisedNet(ffi::PetriNet*);
+
 private:
 
     QVariant toData();

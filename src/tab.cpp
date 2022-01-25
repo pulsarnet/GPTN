@@ -17,6 +17,7 @@
 
 #include "graphviz/graphviz_wrapper.h"
 #include "toolbox/toolbox.h"
+#include "synthesis/synthesis_table.h"
 
 Tab::Tab(QWidget *parent) : QWidget(parent) {
 
@@ -161,9 +162,11 @@ void Tab::markerChecked(bool checked) {
     dynamic_cast<GraphicScene*>(edit_view->scene())->setMode(checked ? GraphicScene::A_Marker : GraphicScene::A_Nothing);
 }
 
+void Tab::drawSynthesisedNet(ffi::PetriNet *net) {
+    dynamic_cast<GraphicScene*>(synthesis_result->scene())->loadFromNet(net, "neato");
+}
 
 void Tab::splitAction() {
-
     auto synthesisContext = ffi::SynthesisContext::init(dynamic_cast<GraphicScene*>(edit_view->scene())->net());
     dynamic_cast<GraphicScene*>(primitive_view->scene())->loadFromNet(synthesisContext->primitive_net(), "neato");
 
@@ -174,8 +177,13 @@ void Tab::splitAction() {
     synthesisContext->add_program();
     synthesisContext->set_program_value(0, 0, 1);
     synthesisContext->set_program_value(0, 1, 1);
-    auto result = synthesisContext->eval_program(0);
-    dynamic_cast<GraphicScene*>(synthesis_result->scene())->loadFromNet(result, "neato");
+
+    auto synthesis_view = new SynthesisTable(synthesisContext, this);
+    auto dock_synthesis_view = new CDockWidget("Synthesis program table");
+    dock_synthesis_view->setWidget(synthesis_view);
+    m_manager->addDockWidgetTab(DockWidgetArea::BottomDockWidgetArea, dock_synthesis_view);
+
+    connect(synthesis_view, &SynthesisTable::signalSynthesisedProgram, this, &Tab::drawSynthesisedNet);
 }
 
 bool Tab::saveOnExit() {

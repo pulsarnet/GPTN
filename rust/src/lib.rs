@@ -6,6 +6,8 @@ extern crate libc;
 extern crate nalgebra;
 extern crate ndarray_linalg;
 
+use std::ffi::CString;
+use libc::c_char;
 use core::NamedMatrix;
 use nalgebra::DMatrix;
 
@@ -63,6 +65,15 @@ impl SynthesisContext {
 
     pub fn set_program_value(&mut self, program: usize, index: usize, value: usize) {
         self.programs[program][index] = value;
+    }
+
+    pub fn program_header_name(&self, index: usize) -> String {
+        if index < self.transitions.len() {
+            self.transitions[index].name()
+        }
+        else {
+            self.positions[index - self.transitions.len()].name()
+        }
     }
 
     pub fn c_matrix(&self) -> &crate::CMatrix {
@@ -178,6 +189,15 @@ extern "C" fn synthesis_program_value(ctx: &SynthesisContext, program: usize, in
 #[no_mangle]
 extern "C" fn synthesis_set_program_value(ctx: &mut SynthesisContext, program: usize, index: usize, value: usize) {
     ctx.set_program_value(program, index, value);
+}
+
+#[no_mangle]
+extern "C" fn synthesis_program_header_name(ctx: &mut SynthesisContext, index: usize) -> *const c_char {
+    // TODO: Исправить постоянное выделение памяти
+    let c_str = CString::new(ctx.program_header_name(index)).unwrap();
+    let pointer = c_str.as_ptr();
+    std::mem::forget(c_str);
+    pointer
 }
 
 #[no_mangle]

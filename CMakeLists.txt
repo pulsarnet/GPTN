@@ -59,7 +59,7 @@ set(SRC_FILES
         src/view/graphics_view.cpp
         src/view/graphics_view_zoom.cpp
         src/view/graphic_scene.cpp
-        src/graphviz/graphviz_wrapper.cpp)
+        src/graphviz/graphviz_wrapper.cpp src/synthesis/synthesis_model.cpp src/synthesis/synthesis_model.h)
 
 set(HEADERS
         src/mainwindow.h
@@ -76,7 +76,7 @@ set(HEADERS
         src/ffi/rust.h
         src/view/graphic_scene.h
         src/graphviz/graphviz_wrapper.h
-        )
+        src/synthesis/synthesis_table.h src/synthesis/synthesis_table.cpp src/synthesis/synthesis_model.cpp src/synthesis/synthesis_model.h)
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 

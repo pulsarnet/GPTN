@@ -7,6 +7,7 @@
 
 #include <QToolButton>
 #include <QPainterPath>
+#include <QPainter>
 
 class Tool : public QToolButton {
 

@@ -187,11 +187,11 @@ impl PetriNetVec {
         
         for element in all_elements.iter() {
             let mut general = element.clone();
-            while let Some(el) = general.get_first_parent() {
-                general = el;
-            }
+            //while let Some(el) = general.get_first_parent() {
+            //    general = el;
+            //}
 
-            let hierarhy = Self::get_children(general, &all_elements);
+            let hierarhy = vec![general];//Self::get_children(general, &all_elements);
 
             for conn in all_connections
                 .iter()
@@ -914,8 +914,7 @@ pub fn synthesis(mut nets: PetriNetVec) -> SynthesisContext {
             for d in 0..entry.ncols() {
                 if entry.row(j)[d] == -1.0 {
                     entry.row_mut(j + primitive_matrix.ncols())[d] = 1.0;
-                    result_entry[j + primitive_matrix.ncols()] = 0.0; //(rand::random::<u8>() % 4).into();
-                                                                //result_entry[j + lbf_matrix.ncols()] = 1.0;//(rand::random::<u8>() % 4).into();
+                    result_entry[j + primitive_matrix.ncols()] = 0.0;
                 }
             }
         }
@@ -1064,6 +1063,9 @@ pub fn synthesis_program(programs: &SynthesisContext, index: usize) -> PetriNet 
     );
     result = c_matrix.clone() * d_matrix;
     markers = c_matrix.clone() * markers;
+
+    //result = d_matrix;
+
     println!(
         "SAVE => {}",
         MatrixFormat(&save_vec, &tran_indexes_vec, &pos_indexes_vec)
