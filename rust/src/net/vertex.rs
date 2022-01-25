@@ -75,16 +75,9 @@ impl Vertex {
 
     pub fn full_name(&self) -> String {
         let mut res = format!("{:?}", self);
-        let mut parent = self.clone();
-        loop {
-            if let Some(p) = parent.get_parent() {
-                res = format!("{}.{:?}", res, p);
-                parent = p;
-                continue;
-            }
-            break;
+        if let Some(parent) = self.get_first_parent() {
+            res = format!("{}.{}", res, parent.index());
         }
-
         res
     }
 

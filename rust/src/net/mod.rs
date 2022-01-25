@@ -824,47 +824,6 @@ impl PetriNet {
     }
 }
 
-pub fn transition_synthesis_program(
-    t_set: &Vec<usize>,
-    d_input: &mut DMatrix<i32>,
-    d_output: &mut DMatrix<i32>,
-) {
-    for t in t_set.iter().skip(1) {
-        let res = d_input.column(t_set[0]) + d_input.column(*t);
-        d_input.set_column(t_set[0], &res);
-
-        let res = d_output.column(t_set[0]) + d_output.column(*t);
-        d_output.set_column(t_set[0], &res);
-    }
-    for t in t_set.iter().skip(1) {
-        let col = d_input.column(t_set[0]).into_owned();
-        d_input.set_column(*t, &col);
-
-        let col = d_output.column(t_set[0]).into_owned();
-        d_output.set_column(*t, &col);
-    }
-}
-
-pub fn position_synthesis_program(
-    p_set: &Vec<usize>,
-    d_input: &mut DMatrix<i32>,
-    d_output: &mut DMatrix<i32>,
-) {
-    for p in p_set.iter().skip(1) {
-        let res = d_input.row(p_set[0]) + d_input.row(*p);
-        d_input.set_row(p_set[0], &res);
-
-        let res = d_output.row(p_set[0]) + d_output.row(*p);
-        d_output.set_row(p_set[0], &res);
-    }
-    for p in p_set.iter().skip(1) {
-        let row = d_input.row(p_set[0]).into_owned();
-        d_input.set_row(*p, &row);
-
-        let row = d_output.row(p_set[0]).into_owned();
-        d_output.set_row(*p, &row);
-    }
-}
 
 pub fn synthesis(mut nets: PetriNetVec) -> SynthesisContext {
 
@@ -943,6 +902,15 @@ pub fn synthesis(mut nets: PetriNetVec) -> SynthesisContext {
     SynthesisContext {
         positions: poss.clone(),
         transitions: transs.clone(),
+        vertex_children: {
+            let all_elements = poss.iter().chain(transs.iter()).cloned().collect();
+            poss.iter().chain(transs.iter())
+                .filter(|v| v.get_parent().is_none())
+                .fold(HashMap::new(), |mut acc, v| {
+                    acc.insert(v.clone(), PetriNetVec::get_children(v.clone(), &all_elements).into_iter().collect());
+                    acc
+                })
+        },
         programs: vec![],
         c_matrix: CMatrix::from(c_matrix),
         primitive_matrix: CMatrix::from(primitive_matrix),
@@ -970,6 +938,7 @@ pub fn synthesis_program(programs: &SynthesisContext, index: usize) -> PetriNet 
     let mut t_sets = vec![];
     let mut p_sets = vec![];
     let mut searched = vec![0].into_iter().collect::<HashSet<usize>>();
+
     for index_a in 0..tran_indexes_vec.len() {
         let search_number = current_program[index_a];
         if searched.contains(&search_number) {
@@ -989,6 +958,7 @@ pub fn synthesis_program(programs: &SynthesisContext, index: usize) -> PetriNet 
         }
         searched.insert(search_number);
     }
+
     let offset = tran_indexes_vec.len();
     let mut searched = vec![0].into_iter().collect::<HashSet<usize>>();
     for index_a in offset..(offset + pos_indexes_vec.len()) {
@@ -1011,8 +981,10 @@ pub fn synthesis_program(programs: &SynthesisContext, index: usize) -> PetriNet 
         }
         searched.insert(search_number);
     }
+
     println!("PSET => {:?}", p_sets);
     println!("TSET => {:?}", t_sets);
+
     let mut d_input = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
     let mut d_output = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
     for i in 0..d_input.nrows() {
@@ -1033,10 +1005,10 @@ pub fn synthesis_program(programs: &SynthesisContext, index: usize) -> PetriNet 
         MatrixFormat(&d_output, &tran_indexes_vec, &pos_indexes_vec)
     );
     for t_set in t_sets.into_iter() {
-        transition_synthesis_program(&t_set, &mut d_input, &mut d_output);
+        programs.transition_synthesis_program(&t_set, &mut d_input, &mut d_output);
     }
     for p_set in p_sets.into_iter() {
-        position_synthesis_program(&p_set, &mut d_input, &mut d_output);
+        programs.position_synthesis_program(&p_set, &mut d_input, &mut d_output);
     }
     println!(
         "D_INPUT => {}",
@@ -1061,6 +1033,7 @@ pub fn synthesis_program(programs: &SynthesisContext, index: usize) -> PetriNet 
         "D MATRIX => {}",
         MatrixFormat(&d_matrix, &tran_indexes_vec, &pos_indexes_vec)
     );
+
     result = c_matrix.clone() * d_matrix;
     markers = c_matrix.clone() * markers;
 

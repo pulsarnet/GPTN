@@ -6,6 +6,7 @@ extern crate libc;
 extern crate nalgebra;
 extern crate ndarray_linalg;
 
+use std::collections::HashMap;
 use std::ffi::CString;
 use libc::c_char;
 use core::NamedMatrix;
@@ -31,6 +32,7 @@ impl From<DMatrix<i32>> for CMatrix {
 pub struct SynthesisContext {
     pub positions: Vec<Vertex>,
     pub transitions: Vec<Vertex>,
+    pub vertex_children: HashMap<Vertex, Vec<Vertex>>,
     pub programs: Vec<Vec<usize>>,
     pub c_matrix: crate::CMatrix,
     pub primitive_matrix: crate::CMatrix,
@@ -69,10 +71,10 @@ impl SynthesisContext {
 
     pub fn program_header_name(&self, index: usize) -> String {
         if index < self.transitions.len() {
-            self.transitions[index].name()
+            self.transitions[index].full_name()
         }
         else {
-            self.positions[index - self.transitions.len()].name()
+            self.positions[index - self.transitions.len()].full_name()
         }
     }
 
@@ -157,6 +159,56 @@ impl SynthesisContext {
         }
 
         result
+    }
+
+    pub fn transition_synthesis_program(
+        &self,
+        t_set: &Vec<usize>,
+        d_input: &mut DMatrix<i32>,
+        d_output: &mut DMatrix<i32>,
+    ) {
+
+        for t in t_set.iter().skip(1) {
+            let res = d_input.column(t_set[0]) + d_input.column(*t);
+            d_input.set_column(t_set[0], &res);
+
+            let res = d_output.column(t_set[0]) + d_output.column(*t);
+            d_output.set_column(t_set[0], &res);
+        }
+
+        for t in t_set.iter().skip(1) {
+            let col = d_input.column(t_set[0]).into_owned();
+            d_input.set_column(*t, &col);
+
+            let col = d_output.column(t_set[0]).into_owned();
+            d_output.set_column(*t, &col);
+        }
+
+    }
+
+    pub fn position_synthesis_program(
+        &self,
+        p_set: &Vec<usize>,
+        d_input: &mut DMatrix<i32>,
+        d_output: &mut DMatrix<i32>,
+    ) {
+
+        for p in p_set.iter().skip(1) {
+            let res = d_input.row(p_set[0]) + d_input.row(*p);
+            d_input.set_row(p_set[0], &res);
+
+            let res = d_output.row(p_set[0]) + d_output.row(*p);
+            d_output.set_row(p_set[0], &res);
+        }
+
+        for p in p_set.iter().skip(1) {
+            let row = d_input.row(p_set[0]).into_owned();
+            d_input.set_row(*p, &row);
+
+            let row = d_output.row(p_set[0]).into_owned();
+            d_output.set_row(*p, &row);
+        }
+
     }
 
 }
