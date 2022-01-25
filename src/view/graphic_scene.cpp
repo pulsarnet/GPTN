@@ -520,3 +520,33 @@ void GraphicScene::markPosition(QGraphicsSceneMouseEvent *event) {
 void GraphicScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event) {
     if (m_mod == A_Move) QGraphicsScene::mouseDoubleClickEvent(event);
 }
+
+
+void GraphicScene::dotVisualization(char* algorithm) {
+
+    GraphVizWrapper graph;
+    for (auto& element : this->positions()) {
+        graph.addCircle(element->name().toLocal8Bit().data(), QSizeF(50., 50.));
+    }
+
+    for (auto& element : this->transitions()) {
+        graph.addRectangle(element->name().toLocal8Bit().data(), QSizeF(30., 90.));
+    }
+
+    for (auto& conn : this->connections()) {
+        graph.addEdge(conn->from()->name(), conn->to()->name());
+    }
+
+    auto res = graph.save(algorithm);
+    for (auto& element : res.elements) {
+        if (element.first.startsWith("p")) {
+            auto position = this->getPosition(element.first.mid(1).toInt());
+            position->setPos(element.second);
+        }
+        else {
+            auto transition = this->getTransition(element.first.mid(1).toInt());
+            transition->setPos(element.second);
+        }
+    }
+
+}

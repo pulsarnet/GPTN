@@ -26,7 +26,6 @@ public:
     explicit Tab(QWidget* parent = nullptr);
 
     void splitAction();
-    void dotVisualization(char* algorithm);
     bool saveOnExit();
 
     void saveToFile();

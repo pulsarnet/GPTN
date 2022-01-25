@@ -108,38 +108,6 @@ void MainWindow::createMenuBar() {
 
         action_menu->addAction(split);
 
-        auto graphViz = new QMenu("GraphViz visualization");
-        action_menu->addMenu(graphViz);
-
-        auto dot = new QAction("dot algorithm");
-        auto neato = new QAction("neato algorithm");
-        auto twopi = new QAction("twopi algorithm");
-        auto circo = new QAction("circo algorithm");
-        auto fdp = new QAction("fdp algorithm");
-        auto osage = new QAction("osage algorithm");
-        auto patchwork = new QAction("patchwork algorithm");
-        auto sfdp = new QAction("sfdp algorithm");
-
-
-        connect(dot, &QAction::triggered, this, &MainWindow::slotDotVisualization);
-        connect(neato, &QAction::triggered, this, &MainWindow::slotNeatoVisualization);
-        connect(twopi, &QAction::triggered, this, &MainWindow::slotTwopiVisualization);
-        connect(circo, &QAction::triggered, this, &MainWindow::slotCircoVisualization);
-        connect(fdp, &QAction::triggered, this, &MainWindow::slotFDPVisualization);
-        connect(osage, &QAction::triggered, this, &MainWindow::slotOsageVisualization);
-        connect(patchwork, &QAction::triggered, this, &MainWindow::slotPatchworkVisualization);
-        connect(sfdp, &QAction::triggered, this, &MainWindow::slotSFDPpVisualization);
-
-
-        graphViz->addAction(dot);
-        graphViz->addAction(neato);
-        graphViz->addAction(twopi);
-        graphViz->addAction(circo);
-        graphViz->addAction(fdp);
-        graphViz->addAction(osage);
-        graphViz->addAction(patchwork);
-        graphViz->addAction(sfdp);
-
         menuBar->addMenu(action_menu);
     }
 
@@ -188,62 +156,6 @@ void MainWindow::slotSplitAction(bool checked) {
     if (!current_tab) return;
 
     current_tab->splitAction();
-}
-
-void MainWindow::slotDotVisualization(bool checked) {
-    auto current_tab = dynamic_cast<Tab*>(tabWidget->widget(tabWidget->currentIndex()));
-    if (!current_tab) return;
-
-    current_tab->dotVisualization((char *) "dot");
-}
-
-void MainWindow::slotNeatoVisualization(bool checked) {
-    auto current_tab = dynamic_cast<Tab*>(tabWidget->widget(tabWidget->currentIndex()));
-    if (!current_tab) return;
-
-    current_tab->dotVisualization((char *) "neato");
-}
-
-void MainWindow::slotTwopiVisualization(bool checked) {
-    auto current_tab = dynamic_cast<Tab*>(tabWidget->widget(tabWidget->currentIndex()));
-    if (!current_tab) return;
-
-    current_tab->dotVisualization((char *) "twopi");
-}
-
-void MainWindow::slotCircoVisualization(bool checked) {
-    auto current_tab = dynamic_cast<Tab*>(tabWidget->widget(tabWidget->currentIndex()));
-    if (!current_tab) return;
-
-    current_tab->dotVisualization((char *) "circo");
-}
-
-void MainWindow::slotFDPVisualization(bool checked) {
-    auto current_tab = dynamic_cast<Tab*>(tabWidget->widget(tabWidget->currentIndex()));
-    if (!current_tab) return;
-
-    current_tab->dotVisualization((char *) "fdp");
-}
-
-void MainWindow::slotOsageVisualization(bool checked) {
-    auto current_tab = dynamic_cast<Tab*>(tabWidget->widget(tabWidget->currentIndex()));
-    if (!current_tab) return;
-
-    current_tab->dotVisualization((char *) "osage");
-}
-
-void MainWindow::slotPatchworkVisualization(bool checked) {
-    auto current_tab = dynamic_cast<Tab*>(tabWidget->widget(tabWidget->currentIndex()));
-    if (!current_tab) return;
-
-    current_tab->dotVisualization((char *) "patchwork");
-}
-
-void MainWindow::slotSFDPpVisualization(bool checked) {
-    auto current_tab = dynamic_cast<Tab*>(tabWidget->widget(tabWidget->currentIndex()));
-    if (!current_tab) return;
-
-    current_tab->dotVisualization((char *) "sfdp");
 }
 
 void MainWindow::updateTabViewMenu() {

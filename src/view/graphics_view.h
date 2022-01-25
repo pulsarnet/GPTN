@@ -11,6 +11,7 @@
 #include <QScrollBar>
 #include <QTransform>
 
+class ToolBox;
 class GraphicsViewZoom;
 
 class GraphicsView : public QGraphicsView {
@@ -33,12 +34,22 @@ protected:
 
 protected slots:
 
+    void slotDotVisualization(bool checked);
+    void slotNeatoVisualization(bool checked);
+    void slotTwopiVisualization(bool checked);
+    void slotCircoVisualization(bool checked);
+    void slotFDPVisualization(bool checked);
+    void slotOsageVisualization(bool checked);
+    void slotPatchworkVisualization(bool checked);
+    void slotSFDPpVisualization(bool checked);
+
 signals:
 
 private:
 
     GraphicsViewZoom* zoom = nullptr;
     QPointF m_origin;
+    ToolBox* m_toolBar = nullptr;
 
 };
 

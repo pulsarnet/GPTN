@@ -14,10 +14,18 @@ class ToolBox : public QWidget {
 
 public:
 
+    enum ToolArea {
+        TopLeft,
+        TopRight,
+        BottomLeft,
+        BottomRight
+    };
+
     explicit ToolBox(QWidget* parent = nullptr) : QWidget(parent) {
         setWindowFlags(Qt::FramelessWindowHint | Qt::Tool | Qt::WindowStaysOnTopHint);
 
         setAttribute(Qt::WA_MacAlwaysShowToolWindow, true);
+        setAttribute(Qt::WA_Resized, true);
         setAttribute(Qt::WA_NoSystemBackground, true);
         setAttribute(Qt::WA_TranslucentBackground, true);
 
@@ -31,6 +39,10 @@ public:
         m_buttonSize = size;
     }
 
+    void setToolArea(ToolArea area) {
+        m_toolArea = area;
+    }
+
     void addTool(QAction* tool) {
         auto button = new Tool;
         dynamic_cast<QVBoxLayout*>(this->layout())->addWidget(button);
@@ -38,15 +50,55 @@ public:
         button->setSize(m_buttonSize);
         m_buttons.push_back(button);
 
-        this->setGeometry(
-                20,
-                60,
-                m_buttonSize.width(),
-                (m_buttonSize.height() + 6) * m_buttons.count()
+        resizeEvent(nullptr);
+    }
+
+    void addTool(QMenu* menu) {
+        auto button = new Tool;
+        dynamic_cast<QVBoxLayout*>(this->layout())->addWidget(button);
+        button->setDefaultAction(new QAction);
+        button->setMenu(menu);
+        button->setSize(m_buttonSize);
+        button->setPopupMode(QToolButton::InstantPopup);
+        m_buttons.push_back(button);
+
+        resizeEvent(nullptr);
+    }
+
+    QPointF areaPoint() {
+        switch (m_toolArea) {
+            case TopLeft:
+                return QPointF(
+                        (parentWidget() ? parentWidget()->geometry().topLeft().x() : 0) + 20,
+                        (parentWidget() ? parentWidget()->geometry().topLeft().y() : 0) + 60
+                        );
+            case TopRight:
+                return QPointF(
+                        (parentWidget() ? parentWidget()->geometry().topRight().x() : 0) - 20 - m_buttonSize.width(),
+                        (parentWidget() ? parentWidget()->geometry().topRight().y() : 0) + 20
                 );
+            case BottomLeft:
+                return QPointF(
+                        (parentWidget() ? parentWidget()->geometry().bottomLeft().x() : 0) + 20,
+                        (parentWidget() ? parentWidget()->geometry().bottomLeft().y() : 0) + 60
+                );
+            case BottomRight:
+                return QPointF(
+                        (parentWidget() ? parentWidget()->geometry().bottomRight().x() : 0) + 20,
+                        (parentWidget() ? parentWidget()->geometry().bottomRight().y() : 0) + 60
+                );
+        }
     }
 
     void resizeEvent(QResizeEvent *event) override {
+        auto point = areaPoint();
+        this->setGeometry(
+                point.x(),
+                point.y(),
+                m_buttonSize.width(),
+                (m_buttonSize.height() + 6) * m_buttons.count()
+        );
+
         QWidget::resizeEvent(event);
     }
 
@@ -54,6 +106,7 @@ private:
 
     QList<Tool*> m_buttons;
     QSize m_buttonSize;
+    ToolArea m_toolArea = TopLeft;
 
 };
 

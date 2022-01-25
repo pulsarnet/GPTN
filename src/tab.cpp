@@ -284,37 +284,6 @@ void Tab::fromData(QVariant data) {
     this->edit_view->fitInView(this->edit_view->scene()->itemsBoundingRect(), Qt::KeepAspectRatio);
 }
 
-void Tab::dotVisualization(char* algorithm) {
-
-    auto main_scene = dynamic_cast<GraphicScene*>(edit_view->scene());
-
-    GraphVizWrapper graph;
-    for (auto& element : main_scene->positions()) {
-        graph.addCircle(element->name().toLocal8Bit().data(), QSizeF(50., 50.));
-    }
-
-    for (auto& element : main_scene->transitions()) {
-        graph.addRectangle(element->name().toLocal8Bit().data(), QSizeF(30., 90.));
-    }
-
-    for (auto& conn : main_scene->connections()) {
-        graph.addEdge(conn->from()->name(), conn->to()->name());
-    }
-
-    auto res = graph.save(algorithm);
-    for (auto& element : res.elements) {
-        if (element.first.startsWith("p")) {
-            auto position = main_scene->getPosition(element.first.mid(1).toInt());
-            position->setPos(element.second);
-        }
-        else {
-            auto transition = main_scene->getTransition(element.first.mid(1).toInt());
-            transition->setPos(element.second);
-        }
-    }
-
-}
-
 void Tab::slotDocumentChanged() {
     m_changed = true;
 }

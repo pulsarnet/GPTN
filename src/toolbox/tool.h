@@ -35,7 +35,7 @@ public:
         QColor back(94, 94, 94); // E6E6E9
         QColor hover(135, 134, 134);
 
-        if (defaultAction()->isChecked()) painter.setBackground(QBrush(highlightedBack));
+        if (defaultAction() && defaultAction()->isChecked()) painter.setBackground(QBrush(highlightedBack));
         else if (opts.state & QStyle::StateFlag::State_MouseOver) painter.setBackground(QBrush(hover));
         else painter.setBackground(QBrush(back));
 
@@ -48,7 +48,7 @@ public:
         painter.setOpacity(1.);
 
         QRect iconRect = rect().adjusted(5, 5, -5, -5);
-        defaultAction()->icon().paint(&painter, iconRect);
+        if (defaultAction()) defaultAction()->icon().paint(&painter, iconRect);
 
     }
 

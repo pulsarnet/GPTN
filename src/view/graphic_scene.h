@@ -58,6 +58,8 @@ public:
 
     void loadFromNet(ffi::PetriNet*, const QString& algorithm = QString());
 
+    void dotVisualization(char* algorithm);
+
     ffi::PetriNet* net();
 
 public slots:
