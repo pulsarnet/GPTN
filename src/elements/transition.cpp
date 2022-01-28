@@ -29,7 +29,7 @@ void Transition::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
     painter->drawRect(rect);
 
     painter->setPen(Qt::white);
-    auto name = QString("t%1").arg(this->index());
+    auto name = QString("%1").arg(this->index());
     painter->rotate(-rotation());
     painter->drawText(boundingRect(), Qt::AlignCenter, name);
     painter->restore();

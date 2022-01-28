@@ -1080,6 +1080,8 @@ pub fn synthesis_program(programs: &SynthesisContext, index: usize) -> PetriNet 
         .filter(|i| !remove_rows.contains(&i.0))
         .map(|i| i.1)
         .collect();
+
+
     let mut remove_cols = vec![];
     for (index_a, column_a) in result.column_iter().enumerate() {
         if result.column(index_a).iter().all(|e| *e == 0)

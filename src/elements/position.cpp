@@ -25,7 +25,7 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     painter->setPen(QPen(isSelected() ? Qt::red : painter->pen().color(), penWidth));
     painter->drawEllipse(boundingRect().center(), radius - penWidth / 2., radius - penWidth / 2.);
 
-    auto name = QString("p%1%2").arg(this->index()).arg(this->markers() == 0 ? "" : QString("(%1)").arg(
+    auto name = QString("%1%2").arg(this->index()).arg(this->markers() == 0 ? "" : QString("(%1)").arg(
                                                                 this->markers()));
 
     painter->drawText(boundingRect(), Qt::AlignCenter, name);
