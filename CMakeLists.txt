@@ -94,7 +94,7 @@ target_link_libraries(ffi_rust PRIVATE "${CMAKE_SOURCE_DIR}/rust/target/debug/he
         Qt6::Core
         Qt6::Gui
         ads::qtadvanceddocking
-        liblapack
+        libopenblas
         gvc
         cgraph)
 

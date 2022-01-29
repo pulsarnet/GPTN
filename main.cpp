@@ -6,7 +6,7 @@
 #include "src/mainwindow.h"
 
 int main(int argc, char **argv) {
-    QCoreApplication::addLibraryPath("C:\\Qt\\6.2.2\\msvc2019_64\\plugins");
+    QCoreApplication::addLibraryPath("C:\\Qt\\6.2.3\\msvc2019_64\\plugins");
     QApplication app(argc, argv);
 
     QFile qss(":/styles/style.qss");
@@ -15,16 +15,7 @@ int main(int argc, char **argv) {
     QTextStream stream(&qss);
     auto qss_text = stream.readAll();
 
-    app.setStyleSheet(qss_text);
-
-    QFile fontRes(":/fonts/JetBrainsMono-Medium.ttf");
-    if (!fontRes.open(QIODevice::ReadOnly)) {
-        qDebug() << fontRes.errorString();
-        return -1;
-    }
-
-    auto id = QFontDatabase::addApplicationFontFromData(fontRes.readAll());
-    qDebug() << id;
+    //app.setStyleSheet(qss_text);
     QApplication::setFont(QFont("JetBrains Mono", 13, QFont::Medium));
 
     MainWindow window(nullptr);

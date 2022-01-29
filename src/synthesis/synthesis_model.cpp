@@ -46,3 +46,11 @@ bool SynthesisModel::setData(const QModelIndex &index, const QVariant &value, in
 
     return QAbstractItemModel::setData(index, value, role);
 }
+
+bool SynthesisModel::insertRows(int row, int count, const QModelIndex &parent) {
+    beginInsertRows(parent, row, row + count - 1);
+    m_ctx->add_program();
+    endInsertRows();
+
+    return true;
+}

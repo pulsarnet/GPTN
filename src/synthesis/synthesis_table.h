@@ -6,8 +6,11 @@
 #define FFI_RUST_SYNTHESIS_TABLE_H
 
 #include <QWidget>
-#include <QTableView>
 #include "../ffi/rust.h"
+
+class QToolBar;
+class QAction;
+class QTableView;
 
 class SynthesisTable : public QWidget {
 
@@ -21,6 +24,7 @@ public:
 public slots:
 
     void slotEvalProgram(bool);
+    void slotAddProgram(bool);
 
 signals:
 
@@ -30,6 +34,10 @@ private:
 
     QTableView* m_table = nullptr;
     ffi::SynthesisContext* m_context = nullptr;
+
+    QToolBar* m_toolBar = nullptr;
+    QAction* m_evalProgram = nullptr;
+    QAction* m_addProgram = nullptr;
 };
 
 #endif //FFI_RUST_SYNTHESIS_TABLE_H
