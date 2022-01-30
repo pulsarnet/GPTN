@@ -103,7 +103,6 @@ void GraphicsView::mouseReleaseEvent(QMouseEvent *event) {
     QGraphicsView::mouseReleaseEvent(event);
 }
 
-
 void GraphicsView::resizeEvent(QResizeEvent *event) {
     m_toolBar->resizeEvent(event);
     QGraphicsView::resizeEvent(event);
