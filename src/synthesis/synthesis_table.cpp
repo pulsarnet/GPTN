@@ -9,6 +9,7 @@
 #include <QTableView>
 #include "synthesis_model.h"
 #include "synthesis_table.h"
+#include "synthesis_item_delegate.h"
 
 SynthesisTable::SynthesisTable(ffi::SynthesisContext *ctx, QWidget *parent): QWidget(parent), m_context(ctx) {
     setLayout(new QVBoxLayout(this));
@@ -26,8 +27,10 @@ SynthesisTable::SynthesisTable(ffi::SynthesisContext *ctx, QWidget *parent): QWi
     m_table = new QTableView(this);
     m_table->setModel(new SynthesisModel(ctx));
     m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_table->setSelectionMode(QAbstractItemView::SingleSelection);
     m_table->verticalHeader()->hide();
     m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    m_table->setItemDelegate(new SynthesisItemDelegate);
 
     layout()->addWidget(m_toolBar);
     layout()->addWidget(m_table);

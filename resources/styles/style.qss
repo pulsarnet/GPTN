@@ -5,6 +5,37 @@
     selection-color: #272727;
 }
 
-QPushButton {
+QPushButton, QToolButton {
+    border: none;
     background-color: #F6D7B0;
+}
+
+QPushButton:hover, QToolButton:hover {
+    border: none;
+    background-color: #E7C496;
+}
+
+QMenu {
+    padding: 0;
+}
+
+QMenuBar {
+    padding: 0;
+}
+
+QMenuBar::item {
+    padding: 8px 12px;
+    background: transparent;
+}
+
+QMenuBar::item:selected, QMenu::item:selected {
+    background: #E7C496;
+}
+
+QMenu::item {
+    padding: 8px;
+}
+
+QTableView {
+    selection-background-color: #2FCF69;
 }
