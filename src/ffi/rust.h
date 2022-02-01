@@ -5,6 +5,8 @@
 
 namespace ffi {
 
+    extern "C" void init();
+
     extern "C" enum VertexType {
         Position = 0x0,
         Transition = 0x1

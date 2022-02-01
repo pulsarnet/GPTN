@@ -16,4 +16,6 @@ sparse21 = "0.2.1"
 ndarray-linalg = "0.14.1"
 ndarray = "0.15.4"
 rand = "0.8.4"
+log4rs = "1.0.0"
+log = "0.4.14"
 

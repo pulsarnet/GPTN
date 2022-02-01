@@ -4,9 +4,13 @@
 #include <QFontDatabase>
 #include <QFile>
 #include "src/mainwindow.h"
+#include "src/ffi/rust.h"
 
 int main(int argc, char **argv) {
-    QCoreApplication::addLibraryPath("C:\\Qt\\6.2.3\\msvc2019_64\\plugins");
+
+    ffi::init();
+
+    QCoreApplication::addLibraryPath(R"(C:\Qt\6.2.2\msvc2019_64\plugins)");
     QApplication app(argc, argv);
 
     QFile qss(":/styles/style.qss");

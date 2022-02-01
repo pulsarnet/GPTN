@@ -5,12 +5,20 @@
 extern crate libc;
 extern crate nalgebra;
 extern crate ndarray_linalg;
+extern crate log4rs;
+extern crate log;
 
 use std::collections::HashMap;
 use std::ffi::CString;
 use libc::c_char;
+use log4rs::append::file::FileAppender;
+use log4rs::{Config, config::Logger};
+use log4rs::config::{Appender, Root};
+use log4rs::encode::pattern::PatternEncoder;
+use log::{info, LevelFilter};
 use core::NamedMatrix;
 use nalgebra::DMatrix;
+
 
 pub mod ffi;
 mod net;
@@ -18,6 +26,27 @@ mod net;
 mod core;
 
 use net::{synthesis, PetriNet, Vertex, PetriNetVec, synthesis_program};
+
+#[no_mangle]
+extern "C" fn init() {
+    let requests = FileAppender::builder()
+        .encoder(Box::new(PatternEncoder::new("{m}{n}")))
+        .build("log/requests.log")
+        .unwrap();
+
+    let config = Config::builder()
+        .appender(Appender::builder().build("requests", Box::new(requests)))
+        .logger(Logger::builder()
+            .appender("requests")
+            .build("app::requests", LevelFilter::Info))
+        .build(Root::builder().appender("requests").build(LevelFilter::Debug))
+        .unwrap();
+
+    log4rs::init_config(config).unwrap();
+
+    info!("GOOD");
+
+}
 
 pub struct CMatrix {
     inner: DMatrix<i32>

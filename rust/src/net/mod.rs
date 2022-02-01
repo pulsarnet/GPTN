@@ -345,7 +345,7 @@ impl PetriNet {
             .find(|el| el.index() == element.index())
             .cloned()
         {
-            println!("Element already exists {:?}", p);
+            log::info!("Element already exists {:?}", p);
             return p;
         }
 
@@ -368,7 +368,7 @@ impl PetriNet {
         element
     }
 
-    pub fn insert_transition(&mut self, element: Vertex) -> Vertex {
+    pub fn insert_transition(&mut self, element: Vertex, insert: bool) -> Vertex {
         if let Some(p) = self
             .elements
             .iter()
@@ -376,21 +376,33 @@ impl PetriNet {
             .find(|el| el.index() == element.index())
             .cloned()
         {
-            println!("Element already exists {:?}", p);
+            log::info!("Element already exists {:?}", p);
             return p;
         }
 
-        self.elements.push(element.clone());
+        if let (Some(found), true) = (
+            self.elements
+                .iter()
+                .enumerate()
+                .find(|e| element.get_parent().contains(e.1))
+                .map(|e| e.0),
+            insert,
+        ) {
+            self.elements.insert(found + 1, element.clone());
+        } else {
+            self.elements.push(element.clone());
+        }
+
         if element.index() >= self.get_transition_index() {
             *(*self.transition_index).borrow_mut() = element.index() + 1;
         }
-        self.elements.last().cloned().unwrap()
+        element
     }
 
     pub fn insert(&mut self, element: Vertex) -> Vertex {
         match element.is_position() {
             true => self.insert_position(element, false),
-            false => self.insert_transition(element),
+            false => self.insert_transition(element, false),
         }
     }
 
@@ -533,7 +545,7 @@ impl PetriNet {
                 }
 
                 let d = &z[0];
-                println!("D -> {:?}", d);
+                log::info!("D -> {:?}", d);
                 let mut v = vec![d.iter().next().unwrap().clone()];
                 let mut d = v[0].clone();
 
@@ -560,7 +572,7 @@ impl PetriNet {
                     d = v.last().unwrap().clone();
                 }
 
-                println!("V -> {:?}", v);
+                log::info!("V -> {:?}", v);
                 loops.push(v.clone());
                 for part in 2..(i / 2) {
                     let wind = i / part;
@@ -569,7 +581,7 @@ impl PetriNet {
                     let s2 = v.iter().skip(wind).take(wind).cloned().collect::<Vec<_>>();
 
                     if s1.iter().zip(s2.iter()).filter(|(a, b)| **a == **b).count() == s1.len() {
-                        println!("EQ {:?} == {:?}", s1, s2);
+                        log::info!("EQ {:?} == {:?}", s1, s2);
                         *loops.last_mut().unwrap() = s1.to_vec();
                         break;
                     }
@@ -770,7 +782,7 @@ impl PetriNet {
                         self.update_position_index();
                     },
                     false => {
-                        self.insert_transition(new_element.clone());
+                        self.insert_transition(new_element.clone(), true);
                         self.update_transition_index();
                     },
                 };
@@ -818,8 +830,8 @@ impl PetriNet {
 
         }
 
-        println!("PART RESULT => {result:?}");
-        println!("SELF => {self:?}");
+        log::info!("PART RESULT => {result:?}");
+        log::info!("SELF => {self:?}");
         result
     }
 }
@@ -882,10 +894,10 @@ pub fn synthesis(mut nets: PetriNetVec) -> SynthesisContext {
         result_entries.push(result_entry);
     }
 
-    println!("D: => {}", d_matrix);
-    println!("D SIN: => {}", MatrixFormat(&equivalent_input, &transs, &poss));
-    println!("D SOUT: => {}", MatrixFormat(&equivalent_output, &transs, &poss));
-    println!("PRIMITIVE: => {}", MatrixFormat(&primitive_matrix, &transs, &poss));
+    log::info!("D: => {}", d_matrix);
+    log::info!("D SIN: => {}", MatrixFormat(&equivalent_input, &transs, &poss));
+    log::info!("D SOUT: => {}", MatrixFormat(&equivalent_output, &transs, &poss));
+    log::info!("PRIMITIVE: => {}", MatrixFormat(&primitive_matrix, &transs, &poss));
 
     for (index, (a, b)) in entries
         .into_iter()
@@ -982,8 +994,8 @@ pub fn synthesis_program(programs: &SynthesisContext, index: usize) -> PetriNet 
         searched.insert(search_number);
     }
 
-    println!("PSET => {:?}", p_sets);
-    println!("TSET => {:?}", t_sets);
+    log::info!("PSET => {:?}", p_sets);
+    log::info!("TSET => {:?}", t_sets);
 
     let mut d_input = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
     let mut d_output = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
@@ -996,11 +1008,11 @@ pub fn synthesis_program(programs: &SynthesisContext, index: usize) -> PetriNet 
             }
         }
     }
-    println!(
+    log::info!(
         "D INPUT START => {}",
         MatrixFormat(&d_input, &tran_indexes_vec, &pos_indexes_vec)
     );
-    println!(
+    log::info!(
         "D OUTPUT START => {}",
         MatrixFormat(&d_output, &tran_indexes_vec, &pos_indexes_vec)
     );
@@ -1010,11 +1022,11 @@ pub fn synthesis_program(programs: &SynthesisContext, index: usize) -> PetriNet 
     for p_set in p_sets.into_iter() {
         programs.position_synthesis_program(&p_set, &mut d_input, &mut d_output);
     }
-    println!(
+    log::info!(
         "D_INPUT => {}",
         MatrixFormat(&d_input, &tran_indexes_vec, &pos_indexes_vec)
     );
-    println!(
+    log::info!(
         "D_OUTPUT => {}",
         MatrixFormat(&d_output, &tran_indexes_vec, &pos_indexes_vec)
     );
@@ -1029,21 +1041,22 @@ pub fn synthesis_program(programs: &SynthesisContext, index: usize) -> PetriNet 
             }
         }
     }
-    println!(
+    log::info!(
         "D MATRIX => {}",
         MatrixFormat(&d_matrix, &tran_indexes_vec, &pos_indexes_vec)
     );
 
-    result = c_matrix.clone() * d_matrix;
+    //result = c_matrix.clone() * d_matrix;
     markers = c_matrix.clone() * markers;
+    //save_vec = c_matrix.clone() * save_vec;
 
-    //result = d_matrix;
+    result = d_matrix;
 
-    println!(
+    log::info!(
         "SAVE => {}",
         MatrixFormat(&save_vec, &tran_indexes_vec, &pos_indexes_vec)
     );
-    println!(
+    log::info!(
         "RESULT => {}",
         MatrixFormat(&result, &tran_indexes_vec, &pos_indexes_vec)
     );
@@ -1109,19 +1122,19 @@ pub fn synthesis_program(programs: &SynthesisContext, index: usize) -> PetriNet 
         .filter(|i| !remove_cols.contains(&i.0))
         .map(|i| i.1)
         .collect();
-    println!(
+    log::info!(
         "D_INPUT 2 => {}",
         MatrixFormat(&d_input, &tran_indexes_vec, &pos_indexes_vec)
     );
-    println!(
+    log::info!(
         "D_OUTPUT 2 => {}",
         MatrixFormat(&d_output, &tran_indexes_vec, &pos_indexes_vec)
     );
-    println!(
+    log::info!(
         "SAVE 2 => {}",
         MatrixFormat(&save_vec, &tran_indexes_vec, &pos_indexes_vec)
     );
-    println!(
+    log::info!(
         "RESULT 2 => {}",
         MatrixFormat(&result, &tran_indexes_vec, &pos_indexes_vec)
     );
@@ -1138,7 +1151,7 @@ pub fn synthesis_program(programs: &SynthesisContext, index: usize) -> PetriNet 
         .filter(|e| e.is_position())
         .enumerate()
     {
-        println!("SET MARKERS: {} <= {}", index, markers.row(index)[0]);
+        log::info!("SET MARKERS: {} <= {}", index, markers.row(index)[0]);
         position.set_markers(markers.row(index)[0] as u64);
         pos_new_indexes.insert(position.clone(), index);
     }
@@ -1164,7 +1177,7 @@ pub fn synthesis_program(programs: &SynthesisContext, index: usize) -> PetriNet 
     }
     for i in 0..save_vec.nrows() {
         for j in 0..save_vec.ncols() {
-            if save_vec.row(i)[j] != 1 {
+            if save_vec.row(i)[j] == 0 {
                 continue;
             }
             let pos = pos_indexes_vec[i].clone();
