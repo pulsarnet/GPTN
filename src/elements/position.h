@@ -22,6 +22,8 @@ public:
 
     [[nodiscard]] QRectF boundingRect() const override;
 
+    QPainterPath shape() const override;
+
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
 
     QPointF center() override;
@@ -49,7 +51,6 @@ public:
 private:
 
     qreal radius = 25.0;
-
 };
 
 

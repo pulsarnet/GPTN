@@ -1,3 +1,5 @@
+use std::ffi::CString;
+use libc::c_char;
 use Vertex;
 
 #[repr(C)]
@@ -24,6 +26,21 @@ pub extern "C" fn vertex_add_marker(vertex: *mut Vertex) {
 #[no_mangle]
 pub extern "C" fn vertex_remove_marker(vertex: *const Vertex) {
     unsafe { &*vertex }.remove_marker();
+}
+
+#[no_mangle]
+pub extern "C" fn vertex_get_name(vertex: *const Vertex) -> *const c_char {
+    let name = unsafe { &*vertex }.get_name();
+    let result = CString::new(name).unwrap();
+    let ptr = result.as_ptr();
+    std::mem::forget(result);
+    ptr
+}
+
+#[no_mangle]
+pub extern "C" fn vertex_set_name(vertex: *const Vertex, name: *mut c_char) {
+    println!("{:?}", unsafe { CString::from_raw(name) });
+    unsafe { &*vertex }.set_name(unsafe { CString::from_raw(name) }.into_string().unwrap());
 }
 
 #[no_mangle]

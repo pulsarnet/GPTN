@@ -28,11 +28,9 @@ Tab::Tab(QWidget *parent) : QWidget(parent) {
 
     auto main_scene = new GraphicScene;
     main_scene->setAllowMods(GraphicScene::A_Default);
-    this->edit_view = new GraphicsView(this);
+    this->edit_view = new GraphicsView();
     this->edit_view->setWindowTitle("Main view");
     this->edit_view->setScene(main_scene);
-
-    connect(main_scene, &QGraphicsScene::changed, this, &Tab::slotDocumentChanged);
 
     auto primitive_scene = new GraphicScene;
     primitive_scene->setAllowMods(GraphicScene::A_Nothing);
@@ -81,8 +79,6 @@ Tab::Tab(QWidget *parent) : QWidget(parent) {
     this->layout()->addWidget(m_manager);
     this->layout()->setContentsMargins(QMargins());
 
-    connect(main_scene, &QGraphicsScene::changed, this, &Tab::slotDocumentChanged);
-
     m_actionToggleMenu = new QMenu("View");
     m_actionToggleMenu->addAction(edit_docker->toggleViewAction());
     m_actionToggleMenu->addAction(primitive_docker->toggleViewAction());
@@ -121,7 +117,6 @@ Tab::Tab(QWidget *parent) : QWidget(parent) {
 
     toolBar->addTool(move_action);
     toolBar->addTool(rotation_action);
-
 }
 
 QAction* Tab::makeAction(const QString &name, const QIcon &icon, bool checkable, QActionGroup *actionGroup) {

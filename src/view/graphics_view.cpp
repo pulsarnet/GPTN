@@ -3,6 +3,7 @@
 //
 
 #include <QMenu>
+#include <QOpenGLWidget>
 
 #include "../elements/position.h"
 #include "../elements/arrow_line.h"
@@ -10,7 +11,6 @@
 #include "graphics_view_zoom.h"
 #include "graphic_scene.h"
 #include "../toolbox/toolbox.h"
-#include "../graphviz/graphviz_wrapper.h"
 
 GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
 
@@ -21,6 +21,7 @@ GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
     this->setWindowFlag(Qt::BypassGraphicsProxyWidget);
     this->setRubberBandSelectionMode(Qt::ContainsItemBoundingRect);
     this->setDragMode(QGraphicsView::RubberBandDrag);
+    this->setOptimizationFlags(DontAdjustForAntialiasing);
 
     this->setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
 
@@ -66,7 +67,6 @@ GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
     graphViz->addAction(osage);
     graphViz->addAction(patchwork);
     graphViz->addAction(sfdp);
-
 
 }
 

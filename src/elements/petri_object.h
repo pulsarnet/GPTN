@@ -72,8 +72,13 @@ public:
     void addConnectionLine(ArrowLine* line);
     void removeConnectionLine(ArrowLine* line);
     void updateConnections();
+    void updateLabelPosition();
 
     ~PetriObject();
+
+public slots:
+
+    void labelChanged();
 
 protected:
 
@@ -82,6 +87,8 @@ protected:
     bool m_colored = false;
     QList<ArrowLine*> m_connections;
     ffi::Vertex* m_vertex;
+
+    QGraphicsTextItem* m_labelItem;
 
 };
 

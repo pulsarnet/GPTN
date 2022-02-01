@@ -1,7 +1,3 @@
-//
-// Created by nmuravev on 12/13/2021.
-//
-
 #include "position.h"
 #include "transition.h"
 
@@ -10,16 +6,14 @@ Position::Position(const QPointF& origin, ffi::Vertex* position, QGraphicsItem *
 }
 
 QRectF Position::boundingRect() const {
-    qreal diameter = 2. * radius;
-    return {-radius, -radius,
-            diameter, diameter};
+    return shape().boundingRect().adjusted(-2, -2, 2, 2);
 }
 
 void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
-    Q_UNUSED(option)
-    Q_UNUSED(widget)
 
     qreal penWidth = 2;
+
+    painter->setClipRect(boundingRect());
 
     painter->save();
     painter->setPen(QPen(isSelected() ? Qt::red : painter->pen().color(), penWidth));
@@ -68,5 +62,11 @@ void Position::setMarkers(unsigned long count) {
 
 QString Position::name() const {
     return QString("p%1").arg(index());
+}
+
+QPainterPath Position::shape() const {
+    QPainterPath path;
+    path.addEllipse({0, 0}, radius, radius);
+    return path;
 }
 

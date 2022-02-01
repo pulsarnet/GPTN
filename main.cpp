@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
     QTextStream stream(&qss);
     auto qss_text = stream.readAll();
 
-    app.setStyleSheet(qss_text);
+    //app.setStyleSheet(qss_text);
     QApplication::setFont(QFont("JetBrains Mono", 13, QFont::Medium));
 
     MainWindow window(nullptr);

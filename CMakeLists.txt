@@ -41,7 +41,7 @@ ExternalProject_Add(
 )
 
 set(CMAKE_PREFIX_PATH ${Qt6_DIR})
-find_package(Qt6 COMPONENTS Widgets Core Gui REQUIRED)
+find_package(Qt6 COMPONENTS Widgets Core Gui OpenGLWidgets REQUIRED)
 
 set(CMAKE_PREFIX_PATH ${Qt_ADVANCED_DOCKING_SYSTEM_DIR})
 find_package(qtadvanceddocking)
@@ -93,6 +93,7 @@ target_link_libraries(ffi_rust PRIVATE "${CMAKE_SOURCE_DIR}/rust/target/debug/he
         Qt6::Widgets
         Qt6::Core
         Qt6::Gui
+        Qt6::OpenGLWidgets
         ads::qtadvanceddocking
         libopenblas
         gvc

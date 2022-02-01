@@ -29,6 +29,8 @@ extern "C" {
     usize vertex_markers(Vertex&);
     void vertex_add_marker(Vertex&);
     void vertex_remove_marker(Vertex&);
+    char* vertex_get_name(Vertex&);
+    void vertex_set_name(Vertex&, char*);
     VertexType vertex_type(Vertex&);
 
     // Connection
@@ -147,6 +149,14 @@ void Vertex::add_marker() {
 
 void Vertex::remove_marker() {
     ::vertex_remove_marker(*this);
+}
+
+char *Vertex::get_name() {
+    return ::vertex_get_name(*this);
+}
+
+void Vertex::set_name(char *name) {
+    ::vertex_set_name(*this, name);
 }
 
 VertexType Vertex::type() {

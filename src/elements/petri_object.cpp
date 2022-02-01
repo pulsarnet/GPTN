@@ -2,12 +2,22 @@
 // Created by Николай Муравьев on 10.01.2022.
 //
 
+#include <QTextDocument>
 #include "petri_object.h"
 #include "arrow_line.h"
 
 
 PetriObject::PetriObject(ffi::Vertex* vertex, QGraphicsItem *parent) : QGraphicsItem(parent), m_vertex(vertex) {
-    setFlags(ItemIsMovable | ItemSendsGeometryChanges | ItemIsSelectable);
+    setFlags(ItemIsMovable | ItemSendsGeometryChanges | ItemIsSelectable | ItemUsesExtendedStyleOption);
+
+    m_labelItem = new QGraphicsTextItem("Hello", this);
+    m_labelItem->setFlags(m_labelItem->flags() & 0);
+    m_labelItem->setCacheMode(DeviceCoordinateCache);
+    m_labelItem->setTextInteractionFlags(Qt::TextInteractionFlag::TextEditable);
+    m_labelItem->setAcceptHoverEvents(false);
+
+    connect(m_labelItem->document(), &QTextDocument::contentsChanged, this, &PetriObject::labelChanged);
+
     setAcceptDrops(true);
 }
 
@@ -101,8 +111,11 @@ QVariant PetriObject::itemChange(QGraphicsItem::GraphicsItemChange change, const
         for (auto connection : m_connections) {
             connection->updateConnection();
         }
-
         return value;
+    }
+
+    if (change == ItemSceneHasChanged) {
+        updateLabelPosition();
     }
 
     return QGraphicsItem::itemChange(change, value);
@@ -118,4 +131,17 @@ void PetriObject::connectTo(ffi::PetriNet *net, PetriObject *other) {
 
 ffi::Vertex *PetriObject::vertex() {
     return m_vertex;
+}
+
+void PetriObject::updateLabelPosition() {
+    int w = m_labelItem->boundingRect().width();
+    int h = m_labelItem->boundingRect().height();
+
+    QRectF rect = boundingRect();
+    m_labelItem->setPos(-w - rect.width() / 2 - 8, -h);
+}
+
+void PetriObject::labelChanged() {
+    this->m_vertex->set_name(m_labelItem->document()->toRawText().toLocal8Bit().data());
+    updateLabelPosition();
 }

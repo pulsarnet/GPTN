@@ -17,6 +17,8 @@ void Transition::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
     Q_UNUSED(option)
     Q_UNUSED(widget)
 
+    painter->setClipRect(boundingRect());
+
     painter->save();
 
     painter->setPen(isSelected() ? QPen(Qt::red) : Qt::NoPen);

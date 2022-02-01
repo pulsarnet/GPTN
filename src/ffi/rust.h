@@ -66,6 +66,8 @@ namespace ffi {
         usize markers();
         void add_marker();
         void remove_marker();
+        char* get_name();
+        void set_name(char* name);
         VertexType type();
     };
 

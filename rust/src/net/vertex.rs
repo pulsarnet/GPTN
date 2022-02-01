@@ -12,7 +12,8 @@ pub enum VertexType {
 #[derive(Clone, Default)]
 pub struct Inner {
     t: VertexType,
-    p: Option<Vertex>
+    p: Option<Vertex>,
+    name: Rc<RefCell<String>>
 }
 
 impl Default for VertexType {
@@ -131,6 +132,14 @@ impl Vertex {
         result
     }
 
+    pub fn set_name(&self, name: String) {
+        (*(*self.0.borrow()).name.borrow_mut()) = name;
+    }
+
+    pub fn get_name(&self) -> String {
+        (*(*self.0.borrow()).name.borrow()).clone()
+    }
+
     pub fn set_parent(&self, p: Vertex) {
         (*self.0.borrow_mut()).p = Some(p);
     }
@@ -149,7 +158,8 @@ impl Vertex {
         Vertex(Rc::new(RefCell::new(
             Inner {
                 t: VertexType::Position(index, 0),
-                p: None
+                p: None,
+                name: Rc::new(RefCell::new(String::new()))
             }
         )))
     }
@@ -158,7 +168,8 @@ impl Vertex {
         Vertex(Rc::new(RefCell::new(
             Inner {
                 t: VertexType::Transition(index),
-                p: None
+                p: None,
+                name: Rc::new(RefCell::new(String::new()))
             }
         )))
     }
