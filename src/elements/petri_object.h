@@ -37,6 +37,8 @@ protected:
 
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
 
+    void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event) override;
+
 public:
 
     virtual QPointF connectionPos(PetriObject*, bool reverse);
@@ -65,6 +67,8 @@ public:
         emit update(boundingRect());
     }
 
+    void setLabel(const QString& label);
+    QString label() const;
     virtual QString name() const = 0;
 
     bool colored() { return m_colored; }

@@ -231,6 +231,7 @@ QVariant GraphicScene::toVariant() {
     for (auto position : m_positions) {
         QVariantHash data;
         data["pos"] = QVariant(position->scenePos());
+        data["name"] = QVariant(position->label());
         data["rotation"] = QVariant(position->rotation());
         data["type"] = QVariant(tr("position"));
         data["id"] = QVariant(position->index());
@@ -240,6 +241,7 @@ QVariant GraphicScene::toVariant() {
     for (auto transition : m_transition) {
         QVariantHash data;
         data["pos"] = QVariant(transition->scenePos());
+        data["name"] = QVariant(transition->label());
         data["rotation"] = QVariant(transition->rotation());
         data["type"] = QVariant(tr("transition"));
         data["id"] = QVariant(transition->index());
@@ -276,10 +278,12 @@ void GraphicScene::fromVariant(const QVariant& data) {
         foreach(QVariant data, common_data.value("items").toList()) {
             QVariantHash hash = data.toHash();
             if (hash["type"] == "position") {
-                addPosition(hash["id"].toInt(), hash["pos"].toPointF());
+                auto object = addPosition(hash["id"].toInt(), hash["pos"].toPointF());
+                object->setLabel(hash["name"].toString());
             }
             else if (hash["type"] == "transition") {
                 auto object = addTransition(hash["id"].toInt(), hash["pos"].toPointF());
+                object->setLabel(hash["name"].toString());
                 object->setRotation(hash["rotation"].toDouble());
             }
         }

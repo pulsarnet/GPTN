@@ -1,4 +1,4 @@
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 use libc::c_char;
 use Vertex;
 
@@ -39,8 +39,7 @@ pub extern "C" fn vertex_get_name(vertex: *const Vertex) -> *const c_char {
 
 #[no_mangle]
 pub extern "C" fn vertex_set_name(vertex: *const Vertex, name: *mut c_char) {
-    println!("{:?}", unsafe { CString::from_raw(name) });
-    unsafe { &*vertex }.set_name(unsafe { CString::from_raw(name) }.into_string().unwrap());
+    unsafe { &*vertex }.set_name(unsafe { CStr::from_ptr(name) }.to_string_lossy().to_string());
 }
 
 #[no_mangle]

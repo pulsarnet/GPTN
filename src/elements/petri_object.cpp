@@ -10,7 +10,7 @@
 PetriObject::PetriObject(ffi::Vertex* vertex, QGraphicsItem *parent) : QGraphicsItem(parent), m_vertex(vertex) {
     setFlags(ItemIsMovable | ItemSendsGeometryChanges | ItemIsSelectable | ItemUsesExtendedStyleOption);
 
-    m_labelItem = new QGraphicsTextItem("Hello", this);
+    m_labelItem = new QGraphicsTextItem(vertex->get_name(), this);
     m_labelItem->setFlags(m_labelItem->flags() & 0);
     m_labelItem->setCacheMode(DeviceCoordinateCache);
     m_labelItem->setTextInteractionFlags(Qt::TextInteractionFlag::TextEditable);
@@ -143,5 +143,20 @@ void PetriObject::updateLabelPosition() {
 
 void PetriObject::labelChanged() {
     this->m_vertex->set_name(m_labelItem->document()->toRawText().toLocal8Bit().data());
+    updateLabelPosition();
+}
+
+void PetriObject::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event) {
+    this->m_labelItem->setFocus(Qt::MouseFocusReason);
+    QGraphicsItem::mouseDoubleClickEvent(event);
+}
+
+QString PetriObject::label() const {
+    return m_labelItem->document()->toRawText();
+}
+
+void PetriObject::setLabel(const QString& label) {
+    m_vertex->set_name(label.toLocal8Bit().data());
+    m_labelItem->document()->setPlainText(label);
     updateLabelPosition();
 }
