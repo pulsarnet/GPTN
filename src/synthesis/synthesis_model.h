@@ -32,9 +32,14 @@ public:
         return m_ctx;
     }
 
+public slots:
+
+    void slotEnableLabels(bool checked);
+
 private:
 
     ffi::SynthesisContext* m_ctx = nullptr;
+    bool m_enableLabels = false;
 
 };
 

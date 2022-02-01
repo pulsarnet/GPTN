@@ -69,12 +69,18 @@ impl SynthesisContext {
         self.programs[program][index] = value;
     }
 
-    pub fn program_header_name(&self, index: usize) -> String {
+    pub fn program_header_name(&self, index: usize, label: bool) -> String {
         if index < self.transitions.len() {
-            self.transitions[index].full_name()
+            match label {
+                true => self.transitions[index].get_name(),
+                false => self.transitions[index].full_name()
+            }
         }
         else {
-            self.positions[index - self.transitions.len()].full_name()
+            match label {
+                true => self.positions[index - self.transitions.len()].get_name(),
+                false => self.positions[index - self.transitions.len()].full_name()
+            }
         }
     }
 
@@ -244,9 +250,9 @@ extern "C" fn synthesis_set_program_value(ctx: &mut SynthesisContext, program: u
 }
 
 #[no_mangle]
-extern "C" fn synthesis_program_header_name(ctx: &mut SynthesisContext, index: usize) -> *const c_char {
+extern "C" fn synthesis_program_header_name(ctx: &mut SynthesisContext, index: usize, label: bool) -> *const c_char {
     // TODO: Исправить постоянное выделение памяти
-    let c_str = CString::new(ctx.program_header_name(index)).unwrap();
+    let c_str = CString::new(ctx.program_header_name(index, label)).unwrap();
     let pointer = c_str.as_ptr();
     std::mem::forget(c_str);
     pointer

@@ -28,7 +28,7 @@ QVariant SynthesisModel::data(const QModelIndex &index, int role) const {
 QVariant SynthesisModel::headerData(int section, Qt::Orientation orientation, int role) const {
 
     if (role == Qt::DisplayRole && orientation == Qt::Horizontal) {
-        return m_ctx->program_header_name(section);
+        return m_ctx->program_header_name(section, m_enableLabels);
     }
 
     return QAbstractItemModel::headerData(section, orientation, role);
@@ -53,4 +53,9 @@ bool SynthesisModel::insertRows(int row, int count, const QModelIndex &parent) {
     endInsertRows();
 
     return true;
+}
+
+void SynthesisModel::slotEnableLabels(bool checked) {
+    m_enableLabels = checked;
+    emit headerDataChanged(Qt::Horizontal, 0, columnCount(QModelIndex()));
 }

@@ -86,7 +86,7 @@ namespace ffi {
         void remove_program(usize index);
         usize program_value(usize program, usize index);
         void set_program_value(usize program, usize index, usize value);
-        char* program_header_name(usize index);
+        char* program_header_name(usize index, bool label);
         CMatrix* c_matrix();
         CMatrix* primitive_matrix();
         PetriNet* primitive_net();

@@ -11,6 +11,7 @@
 class QToolBar;
 class QAction;
 class QTableView;
+class Switch;
 
 class SynthesisTable : public QWidget {
 
@@ -38,6 +39,7 @@ private:
     QToolBar* m_toolBar = nullptr;
     QAction* m_evalProgram = nullptr;
     QAction* m_addProgram = nullptr;
+    Switch* m_enableLabel = nullptr;
 };
 
 #endif //FFI_RUST_SYNTHESIS_TABLE_H
