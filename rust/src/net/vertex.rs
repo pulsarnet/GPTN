@@ -53,8 +53,8 @@ impl Debug for Vertex {
 impl Display for Vertex {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let name = match (*self.0.borrow()).t {
-            VertexType::Position(..) => self.full_name(),
-            VertexType::Transition(..) => self.full_name(),
+            VertexType::Position(..) => self.get_name(),
+            VertexType::Transition(..) => self.get_name(),
         };
 
         f.pad(name.as_str())
@@ -97,7 +97,7 @@ impl Vertex {
 
     pub fn set_markers(&self, count: u64) {
         if let VertexType::Position(.., ref mut v) = (*self.0.borrow_mut()).t {
-            *v += count;
+            *v = count;
         }
     }
 

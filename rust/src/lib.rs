@@ -7,17 +7,19 @@ extern crate nalgebra;
 extern crate ndarray_linalg;
 extern crate log4rs;
 extern crate log;
+extern crate chrono;
 
+use std::cmp::{max_by, min_by};
 use std::collections::HashMap;
 use std::ffi::CString;
-use libc::c_char;
+use libc::{c_char, labs};
 use log4rs::append::file::FileAppender;
 use log4rs::{Config, config::Logger};
 use log4rs::config::{Appender, Root};
 use log4rs::encode::pattern::PatternEncoder;
 use log::{info, LevelFilter};
 use core::NamedMatrix;
-use nalgebra::DMatrix;
+use nalgebra::{abs, DMatrix, MatrixSum, Vector};
 
 
 pub mod ffi;
@@ -29,9 +31,10 @@ use net::{synthesis, PetriNet, Vertex, PetriNetVec, synthesis_program};
 
 #[no_mangle]
 extern "C" fn init() {
+    let f = format!("log/{}.log", chrono::Local::now().format("%d-%m-%YT%H_%M_%S"));
     let requests = FileAppender::builder()
         .encoder(Box::new(PatternEncoder::new("{m}{n}")))
-        .build("log/requests.log")
+        .build(f)
         .unwrap();
 
     let config = Config::builder()
@@ -203,20 +206,23 @@ impl SynthesisContext {
         d_output: &mut DMatrix<i32>,
     ) {
 
-        for t in t_set.iter().skip(1) {
-            let res = d_input.column(t_set[0]) + d_input.column(*t);
-            d_input.set_column(t_set[0], &res);
+        let mut input = DMatrix::<i32>::zeros(d_input.nrows(), 1);
+        let mut output = DMatrix::<i32>::zeros(d_input.nrows(), 1);
+        for t in t_set.iter() {
+            d_input.column(*t).iter().enumerate().for_each(|(index, &b)| {
+                let a = input.row(index)[0];
+                input.row_mut(index)[0] = min_by(a, b, |&ra, &rb| ra.cmp(&rb));
+            });
 
-            let res = d_output.column(t_set[0]) + d_output.column(*t);
-            d_output.set_column(t_set[0], &res);
+            d_output.column(*t).iter().enumerate().for_each(|(index, &b)| {
+                let a = output.row(index)[0];
+                output.row_mut(index)[0] = max_by(a, b, |&ra, &rb| ra.cmp(&rb));
+            });
         }
 
-        for t in t_set.iter().skip(1) {
-            let col = d_input.column(t_set[0]).into_owned();
-            d_input.set_column(*t, &col);
-
-            let col = d_output.column(t_set[0]).into_owned();
-            d_output.set_column(*t, &col);
+        for t in t_set.iter() {
+            d_input.set_column(*t, &input.column(0));
+            d_output.set_column(*t, &output.column(0));
         }
 
     }
@@ -228,20 +234,23 @@ impl SynthesisContext {
         d_output: &mut DMatrix<i32>,
     ) {
 
-        for p in p_set.iter().skip(1) {
-            let res = d_input.row(p_set[0]) + d_input.row(*p);
-            d_input.set_row(p_set[0], &res);
+        let mut input = DMatrix::<i32>::zeros(1, d_input.ncols());
+        let mut output = DMatrix::<i32>::zeros(1, d_input.ncols());
+        for p in p_set.iter() {
+            d_input.row(*p).iter().enumerate().for_each(|(index, &b)| {
+                let a = input.column(index)[0];
+                input.column_mut(index)[0] = min_by(a, b, |&ra, &rb| ra.cmp(&rb));
+            });
 
-            let res = d_output.row(p_set[0]) + d_output.row(*p);
-            d_output.set_row(p_set[0], &res);
+            d_output.row(*p).iter().enumerate().for_each(|(index, &b)| {
+                let a = output.column(index)[0];
+                output.column_mut(index)[0] = max_by(a, b, |&ra, &rb| ra.cmp(&rb));
+            });
         }
 
-        for p in p_set.iter().skip(1) {
-            let row = d_input.row(p_set[0]).into_owned();
-            d_input.set_row(*p, &row);
-
-            let row = d_output.row(p_set[0]).into_owned();
-            d_output.set_row(*p, &row);
+        for p in p_set.iter() {
+            d_input.set_row(*p, &input.row(0));
+            d_output.set_row(*p, &output.row(0));
         }
 
     }
