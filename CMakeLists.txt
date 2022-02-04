@@ -60,6 +60,8 @@ set(SRC_FILES
         src/view/graphics_view_zoom.cpp
         src/view/graphic_scene.cpp
         src/overrides/switch.cpp
+        src/main_tree/treeitem.cpp
+        src/main_tree/treemodel.cpp
         src/graphviz/graphviz_wrapper.cpp src/synthesis/synthesis_model.cpp src/synthesis/synthesis_model.h src/synthesis/synthesis_item_delegate.cpp src/synthesis/synthesis_item_delegate.h)
 
 set(HEADERS
@@ -78,7 +80,7 @@ set(HEADERS
         src/view/graphic_scene.h
         src/graphviz/graphviz_wrapper.h
         src/overrides/switch.h
-        src/synthesis/synthesis_table.h src/synthesis/synthesis_table.cpp src/synthesis/synthesis_model.cpp src/synthesis/synthesis_model.h src/synthesis/synthesis_item_delegate.cpp src/synthesis/synthesis_item_delegate.h)
+        src/synthesis/synthesis_table.h src/synthesis/synthesis_table.cpp src/synthesis/synthesis_model.cpp src/synthesis/synthesis_model.h src/synthesis/synthesis_item_delegate.cpp src/synthesis/synthesis_item_delegate.h src/main_tree/treeview.cpp src/main_tree/treeview.h)
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 

@@ -137,7 +137,11 @@ impl Vertex {
     }
 
     pub fn get_name(&self) -> String {
-        (*self.0.borrow()).name.clone()
+        let mut name = (*self.0.borrow()).name.clone();
+        if self.0.borrow().p.is_some() {
+            name = format!("{name}'");
+        }
+        name
     }
 
     pub fn set_parent(&self, p: Vertex) {

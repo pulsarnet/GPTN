@@ -15,9 +15,11 @@
 #include "elements/transition.h"
 #include "elements/arrow_line.h"
 
-#include "graphviz/graphviz_wrapper.h"
 #include "toolbox/toolbox.h"
 #include "synthesis/synthesis_table.h"
+#include "main_tree/treeitem.h"
+#include "main_tree/treemodel.h"
+#include "main_tree/treeview.h"
 
 Tab::Tab(QWidget *parent) : QWidget(parent) {
 
@@ -62,6 +64,13 @@ Tab::Tab(QWidget *parent) : QWidget(parent) {
 
     auto lbf_docker = new CDockWidget("Lbf view");
     lbf_docker->setWidget(lbf_view);
+
+
+    treeView = new TreeView;
+    treeView->setModel(new TreeModel(m_manager));
+    auto treeDocker = new CDockWidget("Tree");
+    treeDocker->setWidget(treeView);
+    m_manager->addDockWidgetTab(DockWidgetArea::LeftDockWidgetArea, treeDocker);
 
     // TODO: Удалить
     auto synthesis_docker = new CDockWidget("Synthesis view");

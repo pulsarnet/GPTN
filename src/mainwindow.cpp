@@ -32,10 +32,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     centralDockWidget->setWidget(this->tabWidget);
     manager->setCentralWidget(centralDockWidget);
 
-    auto right = new CDockWidget("Whos");
-    right->setWidget(new QTableView);
-    manager->addDockWidget(DockWidgetArea::RightDockWidgetArea, right);
-
     tabChanged(-1);
 
 }

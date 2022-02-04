@@ -14,6 +14,7 @@
 #include "ffi/rust.h"
 
 class ToolBox;
+class TreeView;
 
 class Tab : public QWidget {
 
@@ -80,6 +81,8 @@ private:
     ToolBox* toolBar = nullptr;
 
     ads::CDockManager* m_manager = nullptr;
+
+    TreeView* treeView;
 
     bool m_changed = false;
 
