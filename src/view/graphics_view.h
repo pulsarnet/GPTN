@@ -43,13 +43,33 @@ protected slots:
     void slotPatchworkVisualization(bool checked);
     void slotSFDPpVisualization(bool checked);
 
+    void positionChecked(bool checked);
+    void transitionChecked(bool checked);
+    void moveChecked(bool checked);
+    void connectChecked(bool checked);
+    void rotateChecked(bool checked);
+    void removeChecked(bool checked);
+    void markerChecked(bool checked);
+
 signals:
 
 private:
 
+    QAction* makeAction(const QString &name, const QIcon &icon, bool checkable, QActionGroup *actionGroup);
+
     GraphicsViewZoom* zoom = nullptr;
     QPointF m_origin;
     ToolBox* m_toolBar = nullptr;
+    ToolBox* m_mainToolBar = nullptr;
+
+    QAction* position_action = nullptr;
+    QAction* transition_action = nullptr;
+    QAction* move_action = nullptr;
+    QAction* connect_action = nullptr;
+    QAction* rotation_action = nullptr;
+    QAction* remove_action = nullptr;
+    QAction* marker_action = nullptr;
+    QActionGroup* actionGroup = nullptr;
 
 };
 

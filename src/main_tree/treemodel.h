@@ -17,6 +17,7 @@ public:
     QModelIndex index(int row, int column,
                           const QModelIndex &parent = QModelIndex()) const override;
     QModelIndex parent(const QModelIndex &index) const override;
+    TreeItem* getItem(const QModelIndex &index) const;
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
@@ -24,11 +25,26 @@ public:
         return rootItem;
     }
 
+    QModelIndex indexForTreeItem(TreeItem* item);
+
+    void emitBeginInsertRows(const QModelIndex& index, int first, int last) {
+        beginInsertRows(index, first, last);
+    }
+
+    void emitEndInsertRows() {
+        endInsertRows();
+    }
+
     ~TreeModel();
+
+    ads::CDockManager* dockManager() const {
+        return m_dockManager;
+    }
 
 private:
 
     TreeItem *rootItem;
+    ads::CDockManager* m_dockManager;
 };
 
 #endif // TREEMODEL_H

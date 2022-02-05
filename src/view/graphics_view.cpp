@@ -4,6 +4,7 @@
 
 #include <QMenu>
 #include <QOpenGLWidget>
+#include <QActionGroup>
 
 #include "../elements/position.h"
 #include "../elements/arrow_line.h"
@@ -68,7 +69,80 @@ GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
     graphViz->addAction(patchwork);
     graphViz->addAction(sfdp);
 
+    m_mainToolBar = new ToolBox;
+    m_mainToolBar->setParent(this);
+    m_mainToolBar->setVisible(true);
+    m_mainToolBar->setButtonSize(QSize(40, 40));
+
+    actionGroup = new QActionGroup(m_mainToolBar);
+
+    position_action = makeAction("Position", QIcon(":/images/circle.png"), true, actionGroup);
+    transition_action = makeAction("Transition", QIcon(":/images/rectangle.png"), true, actionGroup);
+    move_action = makeAction("Move", QIcon(":/images/move.png"), true, actionGroup);
+    connect_action = makeAction("Connect", QIcon(":/images/connect.png"), true, actionGroup);
+    rotation_action = makeAction("Rotate", QIcon(":/images/rotation.png"), true, actionGroup);
+    remove_action = makeAction("Remove", QIcon(":/images/remove.png"), true, actionGroup);
+    marker_action = makeAction("Marker", QIcon(":/images/marker.png"), true, actionGroup);
+
+
+    connect(position_action, &QAction::toggled, this, &GraphicsView::positionChecked);
+    connect(transition_action, &QAction::toggled, this, &GraphicsView::transitionChecked);
+    connect(move_action, &QAction::toggled, this, &GraphicsView::moveChecked);
+    connect(connect_action, &QAction::toggled, this, &GraphicsView::connectChecked);
+    connect(rotation_action, &QAction::toggled, this, &GraphicsView::rotateChecked);
+    connect(remove_action, &QAction::toggled, this, &GraphicsView::removeChecked);
+    connect(marker_action, &QAction::toggled, this, &GraphicsView::markerChecked);
+
+
+    m_mainToolBar->addTool(position_action);
+    m_mainToolBar->addTool(marker_action);
+    m_mainToolBar->addTool(transition_action);
+    m_mainToolBar->addTool(connect_action);
+    m_mainToolBar->addTool(remove_action);
+
+    m_mainToolBar->addTool(move_action);
+    m_mainToolBar->addTool(rotation_action);
+
 }
+
+QAction* GraphicsView::makeAction(const QString &name, const QIcon &icon, bool checkable, QActionGroup *actionGroup) {
+    auto action = new QAction(name);
+    action->setIcon(icon);
+    action->setCheckable(checkable);
+
+    if (actionGroup) actionGroup->addAction(action);
+
+    return action;
+}
+
+void GraphicsView::positionChecked(bool checked) {
+    dynamic_cast<GraphicScene*>(scene())->setMode(checked ? GraphicScene::A_Position : GraphicScene::A_Nothing);
+}
+
+void GraphicsView::transitionChecked(bool checked) {
+    dynamic_cast<GraphicScene*>(scene())->setMode(checked ? GraphicScene::A_Transition : GraphicScene::A_Nothing);
+}
+
+void GraphicsView::moveChecked(bool checked) {
+    dynamic_cast<GraphicScene*>(scene())->setMode(checked ? GraphicScene::A_Move : GraphicScene::A_Nothing);
+}
+
+void GraphicsView::connectChecked(bool checked) {
+    dynamic_cast<GraphicScene*>(scene())->setMode(checked ? GraphicScene::A_Connection : GraphicScene::A_Nothing);
+}
+
+void GraphicsView::rotateChecked(bool checked) {
+    dynamic_cast<GraphicScene*>(scene())->setMode(checked ? GraphicScene::A_Rotation : GraphicScene::A_Nothing);
+}
+
+void GraphicsView::removeChecked(bool checked) {
+    dynamic_cast<GraphicScene*>(scene())->setMode(checked ? GraphicScene::A_Remove : GraphicScene::A_Nothing);
+}
+
+void GraphicsView::markerChecked(bool checked) {
+    dynamic_cast<GraphicScene*>(scene())->setMode(checked ? GraphicScene::A_Marker : GraphicScene::A_Nothing);
+}
+
 
 void GraphicsView::mousePressEvent(QMouseEvent *event) {
 

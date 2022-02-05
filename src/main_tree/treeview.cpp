@@ -6,6 +6,7 @@
 TreeView::TreeView(QWidget* parent) : QTreeView(parent)
 {
     setContextMenuPolicy(Qt::CustomContextMenu);
+    setUpdatesEnabled(true);
     connect(this, &QTreeView::customContextMenuRequested, this, &TreeView::onCustomMenu);
     connect(this, &QTreeView::doubleClicked, this, &TreeView::onDoubleClick);
 
@@ -30,7 +31,7 @@ void TreeView::onCustomMenu(const QPoint &point)
 
 void TreeView::onDoubleClick(const QModelIndex &index) {
     auto dock = static_cast<TreeItem*>(index.internalPointer())->dockWidget();
-    if (dock && !dock->isVisible()) {
-        dock->toggleViewAction()->toggle();
+    if (dock) {
+        dock->toggleView();
     }
 }

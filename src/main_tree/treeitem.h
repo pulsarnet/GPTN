@@ -7,16 +7,17 @@
 #include "../ffi/rust.h"
 
 class GraphicScene;
+class TreeModel;
 
 class TreeItem : public QObject
 {
 public:
 
-    explicit TreeItem(ads::CDockManager* manager, TreeItem* parent = nullptr);
+    explicit TreeItem(TreeModel* model, TreeItem* parent = nullptr);
 
     int row() const;
     int childCount() const {
-        return m_childItems.count();
+        return m_childItems.length();
     }
     QString data(int column) const;
 
@@ -35,6 +36,9 @@ public:
         return nullptr;
     }
 
+    void beginInsertRows();
+    void endInsertRows();
+
     void setName(const QString& name);
     const QString& name() const;
 
@@ -42,15 +46,14 @@ public:
 
 protected:
 
-    ads::CDockManager* dockManager() const {
-        return m_manager;
-    }
+    ads::CDockManager* dockManager() const;
+    TreeModel* model() const;
 
 private:
 
     QVector<TreeItem*> m_childItems;
     ads::CDockWidget* m_widget;
-    ads::CDockManager* m_manager;
+    TreeModel* m_model;
     TreeItem* m_parentItem;
     QString m_name;
 };
@@ -58,7 +61,7 @@ private:
 class RootTreeItem : public TreeItem
 {
 public:
-    explicit RootTreeItem(ads::CDockManager* manager, TreeItem* parent = nullptr);
+    explicit RootTreeItem(TreeModel* model, TreeItem* parent = nullptr);
 
     QMenu* contextMenu() override;
 
@@ -74,7 +77,7 @@ private:
 class NetTreeItem : public TreeItem
 {
 public:
-    explicit NetTreeItem(ads::CDockManager* manager, TreeItem* parent = nullptr);
+    explicit NetTreeItem(TreeModel* model, TreeItem* parent = nullptr);
 
     QMenu *contextMenu() override;
 
@@ -91,7 +94,7 @@ private:
 
 class DecomposeItem : public TreeItem {
 public:
-    explicit DecomposeItem(ffi::SynthesisContext* ctx, ads::CDockManager* manager, TreeItem* parent = nullptr);
+    explicit DecomposeItem(ffi::SynthesisContext* ctx, TreeModel* model, TreeItem* parent = nullptr);
 
     QMenu *contextMenu() override;
 
@@ -108,10 +111,7 @@ private:
 
 class PrimitiveSystemItem : public TreeItem {
 public:
-    explicit PrimitiveSystemItem(ffi::PetriNet* net, ads::CDockManager* manager, TreeItem* parent = nullptr);
-
-    QMenu *contextMenu() override;
-
+    explicit PrimitiveSystemItem(ffi::PetriNet* net, TreeModel* model, TreeItem* parent = nullptr);
 private:
     ffi::PetriNet* m_net;
     GraphicScene* m_scene;
@@ -119,9 +119,7 @@ private:
 
 class LinearBaseFragmentsItem : public TreeItem {
 public:
-    explicit LinearBaseFragmentsItem(ffi::PetriNet* net, ads::CDockManager* manager, TreeItem* parent = nullptr);
-
-    QMenu *contextMenu() override;
+    explicit LinearBaseFragmentsItem(ffi::PetriNet* net, TreeModel* model, TreeItem* parent = nullptr);
 private:
     ffi::PetriNet* m_net;
     GraphicScene* m_scene;
@@ -129,17 +127,34 @@ private:
 
 class SynthesisItem : public TreeItem {
 public:
-    explicit SynthesisItem(ads::CDockManager* manager, TreeItem* parent = nullptr);
+    explicit SynthesisItem(ffi::SynthesisContext* ctx, TreeModel* model, TreeItem* parent = nullptr);
+
+private:
+    ffi::SynthesisContext* m_ctx = nullptr;
 };
 
 class MatrixItem : public TreeItem {
 public:
-    explicit MatrixItem(ads::CDockManager* manager, TreeItem* parent = nullptr);
+    explicit MatrixItem(ffi::CMatrix* matrix, TreeModel* model, TreeItem* parent = nullptr);
 };
 
 class SynthesisProgramsItem : public TreeItem {
 public:
-    explicit SynthesisProgramsItem(ads::CDockManager* manager, TreeItem* parent = nullptr);
+    explicit SynthesisProgramsItem(ffi::SynthesisContext* ctx, TreeModel* model, TreeItem* parent = nullptr);
+
+public slots:
+
+    void onProgramSynthesed(ffi::PetriNet* net);
+};
+
+class SynthesisProgramItem : public TreeItem {
+public:
+    explicit SynthesisProgramItem(ffi::PetriNet* net, TreeModel* model, TreeItem* parent = nullptr);
+
+private:
+
+    GraphicScene* m_scene;
+    ffi::PetriNet* m_net;
 };
 
 #endif // TREEITEM_H

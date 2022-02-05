@@ -38,11 +38,7 @@ public:
 
 public slots:
 
-    void closeTab(int index);
-
     void newFile(bool trigger);
-
-    void tabChanged(int index);
 
     void slotSaveFile(bool checked);
 
@@ -54,15 +50,9 @@ public slots:
 
 private:
 
-    void configureTab();
-
-    Tab* newTab();
-
     void createMenuBar();
 
     void createStatusBar();
-
-    void updateTabViewMenu();
 
 private:
 
@@ -70,8 +60,6 @@ private:
 
     QStatusBar* statusBar = nullptr;
     QMenuBar* menuBar = nullptr;
-
-    QTabWidget* tabWidget = nullptr;
 
     CDockManager* manager = nullptr;
 };

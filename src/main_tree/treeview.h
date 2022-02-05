@@ -12,6 +12,10 @@ public slots:
 
     void onCustomMenu(const QPoint &point);
     void onDoubleClick(const QModelIndex& index);
+
+private:
+
+
 };
 
 #endif // TREEVIEW_H

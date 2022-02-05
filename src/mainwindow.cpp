@@ -11,15 +11,13 @@
 #include <QTableView>
 #include <QHeaderView>
 #include "tab.h"
+#include "main_tree/treeview.h"
+#include "main_tree/treemodel.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
     createMenuBar();
     createStatusBar();
-    configureTab();
-
-    connect(this->tabWidget, &QTabWidget::tabCloseRequested, this, &MainWindow::closeTab);
-    connect(this->tabWidget, &QTabWidget::currentChanged, this, &MainWindow::tabChanged);
 
     CDockManager::setConfigFlag(CDockManager::DragPreviewShowsContentPixmap, false);
     CDockManager::setConfigFlag(CDockManager::OpaqueSplitterResize, true);
@@ -28,38 +26,17 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     manager = new CDockManager(this);
     this->setCentralWidget(manager);
 
-    auto centralDockWidget = new CDockWidget("Central");
-    centralDockWidget->setWidget(this->tabWidget);
-    manager->setCentralWidget(centralDockWidget);
 
-    tabChanged(-1);
+    auto internalDockManager = new CDockManager;
+    auto centralWidget = new CDockWidget("Central");
+    centralWidget->setWidget(internalDockManager);
+    manager->setCentralWidget(centralWidget);
 
-}
-
-void MainWindow::closeTab(int index) {
-    auto tab = dynamic_cast<Tab*>(this->tabWidget->widget(index));
-    if (tab->saveOnExit()) {
-        this->tabWidget->removeTab(index);
-    }
-}
-
-void MainWindow::configureTab() {
-    this->tabWidget = new QTabWidget;
-    this->tabWidget->setDocumentMode(false);
-    this->tabWidget->setTabsClosable(true);
-
-    auto tool = new QToolButton(tabWidget);
-    tool->setPopupMode(QToolButton::InstantPopup);
-    tool->setText("View");
-    this->tabWidget->setCornerWidget(tool);
-}
-
-Tab* MainWindow::newTab() {
-    auto tab = new Tab(this);
-    auto index = tabWidget->addTab(tab, "New Tab");
-    this->tabWidget->setCurrentIndex(index);
-    updateTabViewMenu();
-    return tab;
+    auto treeView = new TreeView;
+    treeView->setModel(new TreeModel(internalDockManager));
+    auto treeDocker = new CDockWidget("Tree");
+    treeDocker->setWidget(treeView);
+    manager->addDockWidgetTab(DockWidgetArea::LeftDockWidgetArea, treeDocker);
 }
 
 void MainWindow::createMenuBar() {
@@ -117,46 +94,21 @@ void MainWindow::createStatusBar() {
 
 void MainWindow::newFile(bool trigger) {
     Q_UNUSED(trigger);
-    this->newTab();
+    //this->newTab();
 }
 
-void MainWindow::tabChanged(int index) {
-    Q_UNUSED(index);
-    updateTabViewMenu();
-}
 
 void MainWindow::slotSaveFile(bool checked) {
-    auto tab = dynamic_cast<Tab*>(tabWidget->widget(tabWidget->currentIndex()));
-    if (!tab) return;
 
-    tab->saveToFile();
 }
 
 void MainWindow::slotSaveAsFile(bool checked) {
-    auto tab = dynamic_cast<Tab*>(tabWidget->widget(tabWidget->currentIndex()));
-    if (!tab) return;
 
-    qDebug() << "Unimplemented";
 }
 
 void MainWindow::slotOpenFile(bool checked) {
-    Q_UNUSED(checked)
-
-    auto tab = newTab();
-    tab->loadFromFile();
 }
 
 void MainWindow::slotSplitAction(bool checked) {
 
-    auto current_tab = dynamic_cast<Tab*>(tabWidget->widget(tabWidget->currentIndex()));
-    if (!current_tab) return;
-
-    current_tab->splitAction();
-}
-
-void MainWindow::updateTabViewMenu() {
-    if (auto tab = tabWidget->currentWidget(); tab) {
-        auto menu = dynamic_cast<Tab*>(tab)->menuOfDockToggle();
-        dynamic_cast<QToolButton*>(tabWidget->cornerWidget())->setMenu(menu);
-    }
 }

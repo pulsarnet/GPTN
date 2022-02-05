@@ -2,11 +2,15 @@
 
 #include "../view/graphic_scene.h"
 #include "../view/graphics_view.h"
+#include "../synthesis/synthesis_table.h"
+#include "treemodel.h"
+#include "../matrix_model.h"
+#include <QTableView>
 
 #include <QMenu>
 
-TreeItem::TreeItem(ads::CDockManager* manager, TreeItem* parent)
-    : QObject(), m_widget(nullptr), m_manager(manager), m_parentItem(parent)
+TreeItem::TreeItem(TreeModel* model, TreeItem* parent)
+    : QObject(), m_widget(nullptr), m_model(model), m_parentItem(parent)
 {
     m_parentItem = parent;
 
@@ -37,7 +41,9 @@ void TreeItem::addChild(TreeItem *child)
     });
 
     if (it == m_childItems.end()) {
+        beginInsertRows();
         m_childItems.push_back(child);
+        endInsertRows();
     }
 }
 
@@ -73,11 +79,28 @@ void TreeItem::setName(const QString &name)
     m_name = name;
 }
 
+void TreeItem::beginInsertRows() {
+    auto parent = parentItem();
+    auto count = childCount();
+    model()->emitBeginInsertRows(parent ? model()->indexForTreeItem(this) : QModelIndex(), count, count);
+}
+
+void TreeItem::endInsertRows() {
+    model()->emitEndInsertRows();
+}
+
 const QString &TreeItem::name() const
 {
     return m_name;
 }
 
+ads::CDockManager *TreeItem::dockManager() const {
+    return m_model->dockManager();
+}
+
+TreeModel *TreeItem::model() const {
+    return m_model;
+}
 
 TreeItem::~TreeItem()
 {
@@ -86,7 +109,7 @@ TreeItem::~TreeItem()
     }
 }
 
-RootTreeItem::RootTreeItem(ads::CDockManager* manager, TreeItem* parent) : TreeItem(manager, parent)
+RootTreeItem::RootTreeItem(TreeModel* model, TreeItem* parent) : TreeItem(model, parent)
 {
     setName("Root");
     m_netCreate = new QAction("Create net");
@@ -103,12 +126,11 @@ QMenu *RootTreeItem::contextMenu()
 void RootTreeItem::onNetCreate(bool checked)
 {
     Q_UNUSED(checked)
-
-    addChild(new NetTreeItem(dockManager(), this));
+    addChild(new NetTreeItem(model(), this));
 }
 
 
-NetTreeItem::NetTreeItem(ads::CDockManager* manager, TreeItem* parent): TreeItem(manager, parent)
+NetTreeItem::NetTreeItem(TreeModel* model, TreeItem* parent): TreeItem(model, parent)
 {
     setName("Net tree");
     m_decompose = new QAction("Decompose", this);
@@ -137,18 +159,20 @@ void NetTreeItem::onDecompose(bool checked)
 
     auto synthesisContext = ffi::SynthesisContext::init(m_scene->net());
 
-    addChild(new DecomposeItem(synthesisContext, dockManager(), this));
+    addChild(new DecomposeItem(synthesisContext, model(), this));
 }
 
 
-DecomposeItem::DecomposeItem(ffi::SynthesisContext* ctx, ads::CDockManager* manager, TreeItem *parent) : TreeItem(manager, parent), m_ctx(ctx)
+DecomposeItem::DecomposeItem(ffi::SynthesisContext* ctx, TreeModel* _model, TreeItem *parent) : TreeItem(_model, parent), m_ctx(ctx)
 {
     setName("Decompose");
     m_synthesis = new QAction("Synthesis");
     connect(m_synthesis, &QAction::triggered, this, &DecomposeItem::onSynthesis);
 
-    addChild(new PrimitiveSystemItem(m_ctx->primitive_net(), dockManager(), this));
-    addChild(new LinearBaseFragmentsItem(m_ctx->linear_base_fragments(), dockManager(), this));
+    addChild(new PrimitiveSystemItem(m_ctx->primitive_net(), model(), this));
+    addChild(new LinearBaseFragmentsItem(m_ctx->linear_base_fragments(), model(), this));
+
+
 }
 
 QMenu *DecomposeItem::contextMenu()
@@ -162,10 +186,10 @@ void DecomposeItem::onSynthesis(bool checked)
 {
     Q_UNUSED(checked)
 
-    addChild(new SynthesisItem(dockManager(), this));
+    addChild(new SynthesisItem(m_ctx, model(), this));
 }
 
-PrimitiveSystemItem::PrimitiveSystemItem(ffi::PetriNet* net, ads::CDockManager* manager, TreeItem *parent): TreeItem(manager, parent), m_net(net)
+PrimitiveSystemItem::PrimitiveSystemItem(ffi::PetriNet* net, TreeModel* _model, TreeItem *parent): TreeItem(_model, parent), m_net(net)
 {
     setName("Primitive system");
     auto view = new GraphicsView;
@@ -179,12 +203,7 @@ PrimitiveSystemItem::PrimitiveSystemItem(ffi::PetriNet* net, ads::CDockManager* 
     dockManager()->addDockWidgetTab(ads::DockWidgetArea::CenterDockWidgetArea, dockWidget());
 }
 
-QMenu *PrimitiveSystemItem::contextMenu()
-{
-    return nullptr;
-}
-
-LinearBaseFragmentsItem::LinearBaseFragmentsItem(ffi::PetriNet* net, ads::CDockManager* manager, TreeItem *parent): TreeItem(manager, parent), m_net(net)
+LinearBaseFragmentsItem::LinearBaseFragmentsItem(ffi::PetriNet* net, TreeModel* model, TreeItem *parent): TreeItem(model, parent), m_net(net)
 {
     setName("Linear base fragments");
     auto view = new GraphicsView;
@@ -198,24 +217,50 @@ LinearBaseFragmentsItem::LinearBaseFragmentsItem(ffi::PetriNet* net, ads::CDockM
     dockManager()->addDockWidgetTab(ads::DockWidgetArea::CenterDockWidgetArea, dockWidget());
 }
 
-QMenu *LinearBaseFragmentsItem::contextMenu()
-{
-    return nullptr;
-}
-
-SynthesisItem::SynthesisItem(ads::CDockManager* manager, TreeItem *parent): TreeItem(manager, parent)
+SynthesisItem::SynthesisItem(ffi::SynthesisContext* ctx, TreeModel* _model, TreeItem *parent): TreeItem(_model, parent), m_ctx(ctx)
 {
     setName("Synthesis");
-    addChild(new MatrixItem(dockManager(), this));
-    addChild(new SynthesisProgramsItem(dockManager(), this));
+    addChild(new MatrixItem(ctx->c_matrix(), model(), this));
+    addChild(new SynthesisProgramsItem(m_ctx, model(), this));
 }
 
-MatrixItem::MatrixItem(ads::CDockManager* manager, TreeItem *parent): TreeItem(manager, parent)
+MatrixItem::MatrixItem(ffi::CMatrix* matrix, TreeModel* model, TreeItem *parent): TreeItem(model, parent)
 {
     setName("Matrix");
+    auto view = new QTableView;
+    view->setModel(MatrixModel::loadFromMatrix(matrix));
+
+    setDockWidget(new ads::CDockWidget(name()));
+    dockWidget()->setWidget(view);
+    dockManager()->addDockWidgetTab(ads::DockWidgetArea::CenterDockWidgetArea, dockWidget());
 }
 
-SynthesisProgramsItem::SynthesisProgramsItem(ads::CDockManager* manager, TreeItem *parent): TreeItem(manager, parent)
+SynthesisProgramsItem::SynthesisProgramsItem(ffi::SynthesisContext* ctx, TreeModel* model, TreeItem *parent): TreeItem(model, parent)
 {
     setName("Programs");
+    auto view = new SynthesisTable(ctx);
+    connect(view, &SynthesisTable::signalSynthesisedProgram, this, &SynthesisProgramsItem::onProgramSynthesed);
+
+    setDockWidget(new ads::CDockWidget(name()));
+    dockWidget()->setWidget(view);
+    dockManager()->addDockWidgetTab(ads::DockWidgetArea::CenterDockWidgetArea, dockWidget());
+}
+
+void SynthesisProgramsItem::onProgramSynthesed(ffi::PetriNet *net) {
+    addChild(new SynthesisProgramItem(net, model(), this));
+}
+
+
+SynthesisProgramItem::SynthesisProgramItem(ffi::PetriNet *net, TreeModel *model, TreeItem *parent): TreeItem(model, parent), m_net(net) {
+    setName("Program result");
+
+    auto view = new GraphicsView;
+    m_scene = new GraphicScene;
+    m_scene->loadFromNet(m_net);
+    m_scene->setAllowMods(GraphicScene::A_Nothing);
+    view->setScene(m_scene);
+
+    setDockWidget(new ads::CDockWidget("Program result"));
+    dockWidget()->setWidget(view);
+    dockManager()->addDockWidgetTab(ads::DockWidgetArea::CenterDockWidgetArea, dockWidget());
 }
