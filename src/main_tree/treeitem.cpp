@@ -3,6 +3,7 @@
 #include "../view/graphic_scene.h"
 #include "../view/graphics_view.h"
 #include "../synthesis/synthesis_table.h"
+#include "../ffi/rust.h"
 #include "treemodel.h"
 #include "../matrix_model.h"
 #include <QTableView>
@@ -157,13 +158,13 @@ void NetTreeItem::onDecompose(bool checked)
 {
     Q_UNUSED(checked)
 
-    auto synthesisContext = ffi::SynthesisContext::init(m_scene->net());
+    auto decomposeContext = ffi::DecomposeContext::init(m_scene->net());
 
-    addChild(new DecomposeItem(synthesisContext, model(), this));
+    addChild(new DecomposeItem(decomposeContext, model(), this));
 }
 
 
-DecomposeItem::DecomposeItem(ffi::SynthesisContext* ctx, TreeModel* _model, TreeItem *parent) : TreeItem(_model, parent), m_ctx(ctx)
+DecomposeItem::DecomposeItem(ffi::DecomposeContext* ctx, TreeModel* _model, TreeItem *parent) : TreeItem(_model, parent), m_ctx(ctx)
 {
     setName("Decompose");
     m_synthesis = new QAction("Synthesis");
@@ -186,7 +187,7 @@ void DecomposeItem::onSynthesis(bool checked)
 {
     Q_UNUSED(checked)
 
-    addChild(new SynthesisItem(m_ctx, model(), this));
+    addChild(new SynthesisItem(ffi::SynthesisContext::init(m_ctx), model(), this));
 }
 
 PrimitiveSystemItem::PrimitiveSystemItem(ffi::PetriNet* net, TreeModel* _model, TreeItem *parent): TreeItem(_model, parent), m_net(net)

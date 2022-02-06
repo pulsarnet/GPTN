@@ -6,7 +6,10 @@
 #define FFI_RUST_SYNTHESIS_MODEL_H
 
 #include <QAbstractTableModel>
-#include "../ffi/rust.h"
+
+namespace ffi {
+    struct SynthesisContext;
+}
 
 class SynthesisModel : public QAbstractTableModel {
 

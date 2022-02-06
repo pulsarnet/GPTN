@@ -10,7 +10,6 @@
 #include <QStyleOptionGraphicsItem>
 #include <QtMath>
 #include <QGraphicsSceneMouseEvent>
-#include "../ffi/rust.h"
 
 class Transition : public PetriObject {
 

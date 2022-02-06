@@ -1,5 +1,6 @@
 #include "position.h"
 #include "transition.h"
+#include "../ffi/rust.h"
 
 Position::Position(const QPointF& origin, ffi::Vertex* position, QGraphicsItem *parent) : PetriObject(position, parent) {
     this->setPos(origin);

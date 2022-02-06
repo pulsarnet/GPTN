@@ -37,10 +37,18 @@ extern "C" {
     Vertex* connection_from(Connection& self);
     Vertex* connection_to(Connection& self);
 
+    // DecomposeContext
+    DecomposeContext* decompose_context_init(PetriNet&);
+    usize decompose_context_positions(DecomposeContext&);
+    usize decompose_context_transitions(DecomposeContext&);
+    CMatrix* decompose_context_primitive_matrix(DecomposeContext&);
+    PetriNet* decompose_context_primitive_net(DecomposeContext&);
+    usize decompose_context_position_index(DecomposeContext&, usize);
+    usize decompose_context_transition_index(DecomposeContext&, usize);
+    PetriNet* decompose_context_linear_base_fragments(DecomposeContext&);
+
     // SynthesisContext
-    SynthesisContext* synthesis_init(PetriNet&);
-    usize synthesis_positions(SynthesisContext&);
-    usize synthesis_transitions(SynthesisContext&);
+    SynthesisContext* synthesis_init(DecomposeContext&);
     usize synthesis_programs(SynthesisContext&);
     void synthesis_add_program(SynthesisContext&);
     void synthesis_remove_program(SynthesisContext&, usize);
@@ -48,12 +56,8 @@ extern "C" {
     void synthesis_set_program_value(SynthesisContext&, usize, usize, usize);
     char* synthesis_program_header_name(SynthesisContext&, usize, bool);
     CMatrix* synthesis_c_matrix(SynthesisContext&);
-    CMatrix* synthesis_primitive_matrix(SynthesisContext&);
-    PetriNet* synthesis_primitive_net(SynthesisContext&);
-    usize synthesis_position_index(SynthesisContext&, usize);
-    usize synthesis_transition_index(SynthesisContext&, usize);
-    PetriNet* synthesis_linear_base_fragments(SynthesisContext&);
     PetriNet* synthesis_eval_program(SynthesisContext&, usize);
+    DecomposeContext* synthesis_decompose_ctx(SynthesisContext&);
 
     // CMatrix
     i32 matrix_index(CMatrix&, usize, usize);
@@ -171,16 +175,40 @@ Vertex *Connection::to() {
     return ::connection_to(*this);
 }
 
-SynthesisContext *SynthesisContext::init(PetriNet *net) {
-    return ::synthesis_init(*net);
+DecomposeContext *DecomposeContext::init(PetriNet *net) {
+    return ::decompose_context_init(*net);
 }
 
-usize SynthesisContext::positions() {
-    return ::synthesis_positions(*this);
+usize DecomposeContext::positions() {
+    return ::decompose_context_positions(*this);
 }
 
-usize SynthesisContext::transitions() {
-    return ::synthesis_transitions(*this);
+usize DecomposeContext::transitions() {
+    return ::decompose_context_transitions(*this);
+}
+
+CMatrix *DecomposeContext::primitive_matrix() {
+    return ::decompose_context_primitive_matrix(*this);
+}
+
+PetriNet *DecomposeContext::primitive_net() {
+    return ::decompose_context_primitive_net(*this);
+}
+
+usize DecomposeContext::position_index(usize i) {
+    return ::decompose_context_position_index(*this, i);
+}
+
+usize DecomposeContext::transition_index(usize i) {
+    return ::decompose_context_transition_index(*this, i);
+}
+
+PetriNet *DecomposeContext::linear_base_fragments() {
+    return ::decompose_context_linear_base_fragments(*this);
+}
+
+SynthesisContext *SynthesisContext::init(DecomposeContext *ctx) {
+    return ::synthesis_init(*ctx);
 }
 
 usize SynthesisContext::programs() {
@@ -211,28 +239,12 @@ CMatrix *SynthesisContext::c_matrix() {
     return ::synthesis_c_matrix(*this);
 }
 
-CMatrix *SynthesisContext::primitive_matrix() {
-    return ::synthesis_primitive_matrix(*this);
-}
-
-PetriNet *SynthesisContext::primitive_net() {
-    return ::synthesis_primitive_net(*this);
-}
-
-usize SynthesisContext::position_index(usize i) {
-    return ::synthesis_position_index(*this, i);
-}
-
-usize SynthesisContext::transition_index(usize i) {
-    return ::synthesis_transition_index(*this, i);
-}
-
-PetriNet *SynthesisContext::linear_base_fragments() {
-    return ::synthesis_linear_base_fragments(*this);
-}
-
 PetriNet *SynthesisContext::eval_program(usize index) {
     return ::synthesis_eval_program(*this, index);
+}
+
+DecomposeContext *SynthesisContext::decompose_ctx() {
+    return ::synthesis_decompose_ctx(*this);
 }
 
 i32 CMatrix::index(usize row, usize col) {

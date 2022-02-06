@@ -6,7 +6,11 @@
 #define FFI_RUST_SYNTHESIS_TABLE_H
 
 #include <QWidget>
-#include "../ffi/rust.h"
+
+namespace ffi {
+    struct PetriNet;
+    struct SynthesisContext;
+}
 
 class QToolBar;
 class QAction;

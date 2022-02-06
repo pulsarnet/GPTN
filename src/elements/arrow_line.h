@@ -9,7 +9,10 @@
 
 #include <QGraphicsItem>
 #include <QPainter>
-#include "../ffi/rust.h"
+
+namespace ffi {
+    struct PetriNet;
+}
 
 class PetriObject;
 

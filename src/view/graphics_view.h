@@ -10,6 +10,7 @@
 #include <QTimer>
 #include <QScrollBar>
 #include <QTransform>
+#include <QAction>
 
 class ToolBox;
 class GraphicsViewZoom;
@@ -50,8 +51,6 @@ protected slots:
     void rotateChecked(bool checked);
     void removeChecked(bool checked);
     void markerChecked(bool checked);
-
-signals:
 
 private:
 

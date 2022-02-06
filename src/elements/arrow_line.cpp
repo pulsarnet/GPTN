@@ -6,6 +6,7 @@
 #include "position.h"
 #include "petri_object.h"
 #include "transition.h"
+#include "../ffi/rust.h"
 
 QRectF ArrowLine::boundingRect() const {
 

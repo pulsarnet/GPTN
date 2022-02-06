@@ -3,7 +3,6 @@
 #define FFI_RUST_GRAPHIC_SCENE_H
 
 #include <QGraphicsScene>
-#include "../ffi/rust.h"
 
 class PetriObject;
 class Position;

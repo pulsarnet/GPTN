@@ -23,8 +23,6 @@
 
 using namespace ads;
 
-class Tab;
-
 class MainWindow : public QMainWindow {
 
     enum SaveFileAnswer {

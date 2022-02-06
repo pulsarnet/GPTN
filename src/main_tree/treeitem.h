@@ -4,10 +4,16 @@
 #include <QVector>
 #include <QAction>
 #include <DockManager.h>
-#include "../ffi/rust.h"
 
 class GraphicScene;
 class TreeModel;
+
+namespace ffi {
+    struct SynthesisContext;
+    struct DecomposeContext;
+    struct PetriNet;
+    struct CMatrix;
+}
 
 class TreeItem : public QObject
 {
@@ -94,7 +100,7 @@ private:
 
 class DecomposeItem : public TreeItem {
 public:
-    explicit DecomposeItem(ffi::SynthesisContext* ctx, TreeModel* model, TreeItem* parent = nullptr);
+    explicit DecomposeItem(ffi::DecomposeContext* ctx, TreeModel* model, TreeItem* parent = nullptr);
 
     QMenu *contextMenu() override;
 
@@ -106,7 +112,7 @@ private:
 
     QAction* m_synthesis = nullptr;
 
-    ffi::SynthesisContext* m_ctx = nullptr;
+    ffi::DecomposeContext* m_ctx = nullptr;
 };
 
 class PrimitiveSystemItem : public TreeItem {

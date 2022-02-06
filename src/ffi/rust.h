@@ -78,11 +78,22 @@ namespace ffi {
         Vertex* to();
     };
 
-    struct SynthesisContext {
+    struct DecomposeContext {
 
-        static SynthesisContext* init(PetriNet*);
+        static DecomposeContext* init(PetriNet*);
         usize positions();
         usize transitions();
+        CMatrix* primitive_matrix();
+        PetriNet* primitive_net();
+        usize position_index(usize);
+        usize transition_index(usize);
+        PetriNet* linear_base_fragments();
+    };
+
+    struct SynthesisContext {
+
+        static SynthesisContext* init(DecomposeContext*);
+
         usize programs();
         void add_program();
         void remove_program(usize index);
@@ -90,12 +101,8 @@ namespace ffi {
         void set_program_value(usize program, usize index, usize value);
         char* program_header_name(usize index, bool label);
         CMatrix* c_matrix();
-        CMatrix* primitive_matrix();
-        PetriNet* primitive_net();
-        usize position_index(usize);
-        usize transition_index(usize);
-        PetriNet* linear_base_fragments();
         PetriNet* eval_program(usize index);
+        DecomposeContext* decompose_ctx();
     };
 
     struct CMatrix {

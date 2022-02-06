@@ -12,6 +12,7 @@
 #include "synthesis_table.h"
 #include "synthesis_item_delegate.h"
 #include "../overrides/switch.h"
+#include "../ffi/rust.h"
 
 SynthesisTable::SynthesisTable(ffi::SynthesisContext *ctx, QWidget *parent): QWidget(parent), m_context(ctx) {
     setLayout(new QVBoxLayout(this));

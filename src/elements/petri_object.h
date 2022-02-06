@@ -10,7 +10,11 @@
 #include <QStyleOptionGraphicsItem>
 #include <QtMath>
 #include <QGraphicsSceneMouseEvent>
-#include "../ffi/rust.h"
+
+namespace ffi {
+    struct Vertex;
+    struct PetriNet;
+}
 
 class ArrowLine;
 

@@ -11,7 +11,6 @@
 #include <QtMath>
 #include <QGraphicsSceneMouseEvent>
 #include "petri_object.h"
-#include "../ffi/rust.h"
 
 
 class Position : public PetriObject {

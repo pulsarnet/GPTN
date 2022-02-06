@@ -74,8 +74,8 @@ impl PetriNetVec {
             .collect()
     }
 
-    pub fn primitive_net(&self) -> Vec<Vec<Vertex>> {
-        let mut result = vec![];
+    pub fn primitive_net(&self) -> PetriNet {
+        let mut result = PetriNet::new();
 
         for net in self.0.iter() {
             let transitions = net
@@ -93,12 +93,7 @@ impl PetriNetVec {
                 let mut from = net.connections.iter().filter(|c| c.first().eq(&transition));
 
                 while let Some(f) = from.next() {
-                    if result
-                        .iter()
-                        .flatten()
-                        .find(|v: &&Vertex| (*v).eq(f.second()))
-                        .is_some()
-                    {
+                    if result.elements.iter().find(|v: &&Vertex| (*v).eq(f.second())).is_some() {
                         continue;
                     }
 
@@ -108,19 +103,16 @@ impl PetriNetVec {
                         .filter(|c| c.first().ne(f.second()) && c.second().eq(&transition));
 
                     while let Some(t) = to.next() {
-                        if result
-                            .iter()
-                            .flatten()
-                            .find(|v: &&Vertex| (*v).eq(t.first()))
-                            .is_some()
-                        {
+                        if result.elements.iter().find(|v: &&Vertex| (*v).eq(t.first())).is_some() {
                             continue;
                         }
 
-                        vertexes[0] = t.first().clone();
-                        vertexes[1] = f.first().clone();
-                        vertexes[2] = f.second().clone();
-                        result.push(vertexes);
+                        result.insert(t.first().clone());
+                        result.insert(f.first().clone());
+                        result.insert(f.second().clone());
+
+                        result.connect(t.first().clone(), f.first().clone());
+                        result.connect(f.first().clone(), f.second().clone());
                         continue 'brk;
                     }
                 }
@@ -131,18 +123,22 @@ impl PetriNetVec {
     }
 
 
-    pub fn primitive_matrix(&self) -> DMatrix<i32> {
+    pub fn primitive(&self) -> (PetriNet, DMatrix<i32>) {
         let positions = self.position_indexes();
         let transitions = self.transition_indexes();
         let mut result = DMatrix::<i32>::zeros(positions.len(), transitions.len());
 
         let primitive_net = self.primitive_net();
-        for primitive in primitive_net.into_iter() {
-            result.column_mut(*transitions.get(&primitive[1]).unwrap())[*positions.get(&primitive[2]).unwrap()] = 1;
-            result.row_mut(*positions.get(&primitive[0]).unwrap())[*transitions.get(&primitive[1]).unwrap()] = -1;
+        for connection in primitive_net.connections.iter() {
+            if connection.first().is_position() {
+                result.row_mut(*positions.get(connection.first()).unwrap())[*transitions.get(connection.second()).unwrap()] = -1;
+            }
+            else {
+                result.column_mut(*transitions.get(connection.first()).unwrap())[*positions.get(connection.second()).unwrap()] = 1;
+            }
         }
 
-        result
+        (primitive_net, result)
     }
     
     pub fn elements(&self) -> Vec<Vertex> {
@@ -164,7 +160,7 @@ impl PetriNetVec {
 
     }
 
-    fn get_children(el: Vertex, elements: &Vec<Vertex>) -> HashSet<Vertex> {
+    pub(crate) fn get_children(el: Vertex, elements: &Vec<Vertex>) -> HashSet<Vertex> {
         let mut result = vec![el.clone()];
         for searched in elements.iter() {
             if let Some(parent) = searched.get_parent() {
@@ -177,7 +173,7 @@ impl PetriNetVec {
     }
 
 
-    pub fn equivalent_matrix(&self) -> (DMatrix<i32>, DMatrix<i32>) {
+    pub fn equivalent_matrix(&self) -> (CMatrix, CMatrix) {
         
         let pos_indexes = self.position_indexes();
         let tran_indexes = self.transition_indexes();
@@ -200,7 +196,7 @@ impl PetriNetVec {
             }
         }
 
-        (d_input, d_output)
+        (CMatrix::from(d_input), CMatrix::from(d_output))
     }
 
     pub fn lbf_matrix(&self) -> Vec<(NamedMatrix, NamedMatrix)> {
@@ -809,427 +805,313 @@ impl PetriNet {
     }
 }
 
-
-pub fn synthesis(mut nets: PetriNetVec) -> SynthesisContext {
-
-    nets.sort();
-
-    let pos_indexes = nets.position_indexes();
-    let tran_indexes = nets.transition_indexes();
-
-    let positions = pos_indexes.len();
-    let transitions = tran_indexes.len();
-
-    let mut c_matrix = nalgebra::DMatrix::<i32>::zeros(positions, positions);
-    let primitive_matrix = nets.primitive_matrix();
-    let (equivalent_input, equivalent_output) = nets.equivalent_matrix();
-    let logical_base_fragments = nets.lbf_matrix();
-    
-
-    let poss = nets.positions();
-    let transs = nets.transitions();
-
-
-    let mut d_matrix = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
-    for i in 0..d_matrix.nrows() {
-        for j in 0..d_matrix.ncols() {
-            d_matrix.row_mut(i)[j] = equivalent_input.row(i)[j] + equivalent_output.row(i)[j];
-        }
-    }
-
-    let mut offset = 0;
-    for net in nets.0.iter() {
-        let net_positions = net.elements.iter().filter(|p| p.is_position()).count();
-
-        for i in 0..net_positions {
-            for j in 0..net_positions {
-                if i == j {
-                    c_matrix.row_mut(i + offset)[j + offset] = 1;
-                }
-                else if i > 0 || i < (net_positions - 1) {
-                    if i == (j + 1) && i % 2 == 0 {
-                        c_matrix.row_mut(i + offset)[j + offset] = 1;
-                    }
-                    else if j == (i + 1) && j % 2 == 0 {
-                        c_matrix.row_mut(i + offset)[j + offset] = 1;
-                    }
-                }
-            }
-        }
-
-        offset += net_positions;
-    }
-
-    // let mut entries = vec![];
-    // let mut result_entries = vec![];
-
-    // for i in 0..c_matrix.nrows() {
-    //     let mut entry = ndarray::Array2::zeros((c_matrix.nrows(), c_matrix.nrows()));
-    //     let mut result_entry = ndarray::Array1::zeros(c_matrix.nrows());
-    //     for j in 0..primitive_matrix.ncols() {
-    //         for d in 0..primitive_matrix.nrows() {
-    //             entry.row_mut(j)[d] = primitive_matrix.row(d)[j] as f64;
-    //         }
-    //         result_entry[j] = d_matrix.row(i)[j] as f64;
-    //     }
-
-        // for j in 0..entry.nrows() {
-        //     for d in 0..entry.ncols() {
-        //         if entry.row(j)[d] == -1.0 {
-        //             entry.row_mut(j + primitive_matrix.ncols())[d] = 1.0;
-        //             result_entry[j + primitive_matrix.ncols()] = 0.0;
-        //         }
-        //     }
-        // }
-
-    //     entries.push(entry);
-    //     result_entries.push(result_entry);
-    // }
-
-    // log::info!("D: => {}", d_matrix);
-    // // log::info!("D SIN: => {}", MatrixFormat(&equivalent_input, &transs, &poss));
-    // // log::info!("D SOUT: => {}", MatrixFormat(&equivalent_output, &transs, &poss));
-    // log::info!("PRIMITIVE: => {}", MatrixFormat(&primitive_matrix, &transs, &poss));
-
-    // for (index, (a, b)) in entries
-    //     .into_iter()
-    //     .zip(result_entries.into_iter())
-    //     .enumerate()
-    // {
-    //     let solve = a.solve(&b).unwrap();
-    //     solve
-    //         .into_iter()
-    //         .enumerate()
-    //         .for_each(|v| c_matrix.row_mut(index)[v.0] = v.1 as i32);
-    // }
-
-    log::info!("C: => {}", c_matrix);
-
-    SynthesisContext {
-        positions: poss.clone(),
-        transitions: transs.clone(),
-        vertex_children: {
-            let all_elements = poss.iter().chain(transs.iter()).cloned().collect();
-            poss.iter().chain(transs.iter())
-                .filter(|v| v.get_parent().is_none())
-                .fold(HashMap::new(), |mut acc, v| {
-                    acc.insert(v.clone(), PetriNetVec::get_children(v.clone(), &all_elements).into_iter().collect());
-                    acc
-                })
-        },
-        programs: vec![],
-        c_matrix: CMatrix::from(c_matrix),
-        primitive_matrix: CMatrix::from(primitive_matrix),
-        linear_base_fragments: logical_base_fragments,
-    }
-}
-//
 pub fn synthesis_program(programs: &SynthesisContext, index: usize) -> PetriNet {
-    let positions = programs.positions.len();
-    let transitions = programs.transitions.len();
-    let mut pos_indexes_vec = programs.positions.iter().map(|p| p.clone_inner()).collect::<Vec<_>>();
-    let mut tran_indexes_vec = programs.transitions.iter().map(|t| t.clone_inner()).collect::<Vec<_>>();
-    let c_matrix = programs.c_matrix.inner.clone();
-    let lbf_matrix = programs.primitive_matrix.inner.clone();
-    let mut markers = nalgebra::DMatrix::<i32>::zeros(positions, 1);
-    programs
-        .positions
-        .iter()
-        .map(Vertex::markers)
-        .enumerate()
-        .for_each(|e| markers.row_mut(e.0)[0] = e.1 as i32);
-    let mut result = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
-    let mut save_vec = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
-    let current_program = &programs.programs[index];
-    let mut t_sets = vec![];
-    let mut p_sets = vec![];
-    let mut searched = vec![0].into_iter().collect::<HashSet<usize>>();
 
-    for index_a in 0..tran_indexes_vec.len() {
-        let search_number = current_program[index_a];
-        if searched.contains(&search_number) {
-            continue;
-        }
-        let mut indexes = vec![];
-        for index_b in (0..tran_indexes_vec.len()).filter(|e| current_program[*e] == search_number)
-        {
-            if index_a == index_b {
-                continue;
-            }
-            indexes.push(index_b);
-        }
-        if indexes.len() > 0 {
-            indexes.push(index_a);
-            t_sets.push(indexes);
-        }
-        searched.insert(search_number);
-    }
+     let positions = programs.positions().len();
+     let transitions = programs.transitions().len();
+     let mut pos_indexes_vec = programs.positions().iter().map(|p| p.clone_inner()).collect::<Vec<_>>();
+     let mut tran_indexes_vec = programs.transitions().iter().map(|t| t.clone_inner()).collect::<Vec<_>>();
+     let c_matrix = programs.c_matrix.inner.clone();
+     let lbf_matrix = programs.decompose_context.primitive_matrix.inner.clone();
+     let mut markers = nalgebra::DMatrix::<i32>::zeros(positions, 1);
+     programs
+         .positions()
+         .iter()
+         .map(Vertex::markers)
+         .enumerate()
+         .for_each(|e| markers.row_mut(e.0)[0] = e.1 as i32);
+     let mut result = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
+     let mut save_vec = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
+     let current_program = &programs.programs[index];
+     let mut t_sets = vec![];
+     let mut p_sets = vec![];
+     let mut searched = vec![0].into_iter().collect::<HashSet<usize>>();
 
-    let offset = tran_indexes_vec.len();
-    let mut searched = vec![0].into_iter().collect::<HashSet<usize>>();
-    for index_a in offset..(offset + pos_indexes_vec.len()) {
-        let search_number = current_program[index_a];
-        if searched.contains(&search_number) {
-            continue;
-        }
-        let mut indexes = vec![];
-        for index_b in (offset..(offset + pos_indexes_vec.len()))
-            .filter(|e| current_program[*e] == search_number)
-        {
-            if index_a == index_b {
-                continue;
-            }
-            indexes.push(index_b - offset);
-        }
-        if indexes.len() > 0 {
-            indexes.push(index_a - offset);
-            p_sets.push(indexes);
-        }
-        searched.insert(search_number);
-    }
+     for index_a in 0..tran_indexes_vec.len() {
+         let search_number = current_program[index_a];
+         if searched.contains(&search_number) {
+             continue;
+         }
+         let mut indexes = vec![];
+         for index_b in (0..tran_indexes_vec.len()).filter(|e| current_program[*e] == search_number)
+         {
+             if index_a == index_b {
+                 continue;
+             }
+             indexes.push(index_b);
+         }
+         if indexes.len() > 0 {
+             indexes.push(index_a);
+             t_sets.push(indexes);
+         }
+         searched.insert(search_number);
+     }
 
-    log::info!("PSET => {:?}", p_sets);
-    log::info!("TSET => {:?}", t_sets);
-    log::info!("PRIMITIVE => {}", MatrixFormat(&lbf_matrix, &tran_indexes_vec, &pos_indexes_vec));
+     let offset = tran_indexes_vec.len();
+     let mut searched = vec![0].into_iter().collect::<HashSet<usize>>();
+     for index_a in offset..(offset + pos_indexes_vec.len()) {
+         let search_number = current_program[index_a];
+         if searched.contains(&search_number) {
+             continue;
+         }
+         let mut indexes = vec![];
+         for index_b in (offset..(offset + pos_indexes_vec.len()))
+             .filter(|e| current_program[*e] == search_number)
+         {
+             if index_a == index_b {
+                 continue;
+             }
+             indexes.push(index_b - offset);
+         }
+         if indexes.len() > 0 {
+             indexes.push(index_a - offset);
+             p_sets.push(indexes);
+         }
+         searched.insert(search_number);
+     }
 
-    let mut d_input = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
-    let mut d_output = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
-    for i in 0..d_input.nrows() {
-        for j in 0..d_input.ncols() {
-            match lbf_matrix.row(i)[j] {
-                v if v < 0 => d_input.row_mut(i)[j] = v,
-                v if v > 0 => d_output.row_mut(i)[j] = v,
-                _ => {}
-            }
-        }
-    }
-    log::info!(
-        "D INPUT START => {}",
-        MatrixFormat(&d_input, &tran_indexes_vec, &pos_indexes_vec)
-    );
-    log::info!(
-        "D OUTPUT START => {}",
-        MatrixFormat(&d_output, &tran_indexes_vec, &pos_indexes_vec)
-    );
+     log::info!("PSET => {:?}", p_sets);
+     log::info!("TSET => {:?}", t_sets);
+     log::info!("PRIMITIVE => {}", MatrixFormat(&lbf_matrix, &tran_indexes_vec, &pos_indexes_vec));
 
-    for t_set in t_sets.into_iter() {
-        programs.transition_synthesis_program(&t_set, &mut d_input, &mut d_output);
-        log::info!(
-            "D INPUT AFTER T => {:?}{}",
-            t_set,
-            MatrixFormat(&d_input, &tran_indexes_vec, &pos_indexes_vec)
-        );
-    }
+     let mut d_input = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
+     let mut d_output = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
+     for i in 0..d_input.nrows() {
+         for j in 0..d_input.ncols() {
+             match lbf_matrix.row(i)[j] {
+                 v if v < 0 => d_input.row_mut(i)[j] = v,
+                 v if v > 0 => d_output.row_mut(i)[j] = v,
+                 _ => {}
+             }
+         }
+     }
+     log::info!(
+         "D INPUT START => {}",
+         MatrixFormat(&d_input, &tran_indexes_vec, &pos_indexes_vec)
+     );
+     log::info!(
+         "D OUTPUT START => {}",
+         MatrixFormat(&d_output, &tran_indexes_vec, &pos_indexes_vec)
+     );
 
-    for p_set in p_sets.into_iter() {
-        programs.position_synthesis_program(&p_set, &mut d_input, &mut d_output);
-        log::info!(
-            "D INPUT AFTER P => {:?}{}",
-            p_set,
-            MatrixFormat(&d_input, &tran_indexes_vec, &pos_indexes_vec)
-        );
-    }
+     for t_set in t_sets.into_iter() {
+         programs.transition_synthesis_program(&t_set, &mut d_input, &mut d_output);
+         log::info!(
+             "D INPUT AFTER T => {:?}{}",
+             t_set,
+             MatrixFormat(&d_input, &tran_indexes_vec, &pos_indexes_vec)
+         );
+     }
 
-    log::info!(
-        "D_INPUT => {}",
-        MatrixFormat(&d_input, &tran_indexes_vec, &pos_indexes_vec)
-    );
-    log::info!(
-        "D_OUTPUT => {}",
-        MatrixFormat(&d_output, &tran_indexes_vec, &pos_indexes_vec)
-    );
+     for p_set in p_sets.into_iter() {
+         programs.position_synthesis_program(&p_set, &mut d_input, &mut d_output);
+         log::info!(
+             "D INPUT AFTER P => {:?}{}",
+             p_set,
+             MatrixFormat(&d_input, &tran_indexes_vec, &pos_indexes_vec)
+         );
+     }
 
-    let mut d_matrix = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
-    for i in 0..d_matrix.nrows() {
-        for j in 0..d_matrix.ncols() {
-            if (d_input.row(i)[j] + d_output.row(i)[j]) == 0 && d_input.row(i)[j] != 0 {
-                d_matrix.row_mut(i)[j] = 0;
-                save_vec.row_mut(i)[j] = 1;
-            } else {
-                d_matrix.row_mut(i)[j] = d_input.row(i)[j] + d_output.row(i)[j];
-            }
-        }
-    }
+     log::info!(
+         "D_INPUT => {}",
+         MatrixFormat(&d_input, &tran_indexes_vec, &pos_indexes_vec)
+     );
+     log::info!(
+         "D_OUTPUT => {}",
+         MatrixFormat(&d_output, &tran_indexes_vec, &pos_indexes_vec)
+     );
 
-    log::info!(
-        "D_MATRIX BEFORE => {}",
-        MatrixFormat(&d_matrix, &tran_indexes_vec, &pos_indexes_vec)
-    );
+     let mut d_matrix = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
+     for i in 0..d_matrix.nrows() {
+         for j in 0..d_matrix.ncols() {
+             if (d_input.row(i)[j] + d_output.row(i)[j]) == 0 && d_input.row(i)[j] != 0 {
+                 d_matrix.row_mut(i)[j] = 0;
+                 save_vec.row_mut(i)[j] = 1;
+             } else {
+                 d_matrix.row_mut(i)[j] = d_input.row(i)[j] + d_output.row(i)[j];
+             }
+         }
+     }
 
-    d_matrix = c_matrix.clone() * d_matrix;
-    markers = c_matrix.clone() * markers;
+     log::info!(
+         "D_MATRIX BEFORE => {}",
+         MatrixFormat(&d_matrix, &tran_indexes_vec, &pos_indexes_vec)
+     );
 
-    log::info!(
-        "D_MATRIX CMAT => {}",
-        MatrixFormat(&d_matrix, &tran_indexes_vec, &pos_indexes_vec)
-    );
+     d_matrix = c_matrix.clone() * d_matrix;
+     markers = c_matrix.clone() * markers;
 
-    //save_vec = c_matrix.clone() * save_vec;
+     log::info!(
+         "D_MATRIX CMAT => {}",
+         MatrixFormat(&d_matrix, &tran_indexes_vec, &pos_indexes_vec)
+     );
 
-    for i in 0..d_matrix.nrows() {
-        for j in 0..d_matrix.ncols() {
-            if save_vec.row(i)[j] == 1 {
-                d_matrix.row_mut(i)[j] = 0;
-            }
-        }
-    }
+     //save_vec = c_matrix.clone() * save_vec;
 
-    log::info!(
-        "D MATRIX => {}",
-        MatrixFormat(&d_matrix, &tran_indexes_vec, &pos_indexes_vec)
-    );
+     for i in 0..d_matrix.nrows() {
+         for j in 0..d_matrix.ncols() {
+             if save_vec.row(i)[j] == 1 {
+                 d_matrix.row_mut(i)[j] = 0;
+             }
+         }
+     }
 
-    log::info!(
-        "SAVE => {}",
-        MatrixFormat(&save_vec, &tran_indexes_vec, &pos_indexes_vec)
-    );
+     log::info!(
+         "D MATRIX => {}",
+         MatrixFormat(&d_matrix, &tran_indexes_vec, &pos_indexes_vec)
+     );
 
-
-    let mut remove_rows = vec![];
-    for (index_a, row_a) in d_matrix.row_iter().enumerate() {
-        if row_a.iter().all(|e| *e == 0)
-            && save_vec.row(index_a).iter().all(|&e| e == 0)
-        {
-            remove_rows.push(index_a);
-            continue;
-        }
-        for (index_b, row_b) in d_matrix.row_iter().enumerate().skip(index_a) {
-            if index_a == index_b {
-                continue;
-            }
-            if row_a == row_b && save_vec.row(index_a) == save_vec.row(index_b) {
-                remove_rows.push(index_b);
-                // При объединении эквивалентных позиций выбирается максимальное количество маркеров
-                markers.row_mut(index_a)[0] = max(
-                    pos_indexes_vec[index_a].markers(),
-                    pos_indexes_vec[index_b].markers(),
-                ) as i32;
-            }
-        }
-    }
-
-    d_matrix = d_matrix.remove_rows_at(&remove_rows);
-    save_vec = save_vec.remove_rows_at(&remove_rows);
-    markers = markers.remove_rows_at(&remove_rows);
-    pos_indexes_vec = pos_indexes_vec
-        .into_iter()
-        .enumerate()
-        .filter(|i| !remove_rows.contains(&i.0))
-        .map(|i| i.1)
-        .collect();
+     log::info!(
+         "SAVE => {}",
+         MatrixFormat(&save_vec, &tran_indexes_vec, &pos_indexes_vec)
+     );
 
 
-    let mut remove_cols = vec![];
-    for (index_a, column_a) in d_matrix.column_iter().enumerate() {
-        if column_a.iter().all(|e| *e == 0)
-            && save_vec.column(index_a).iter().all(|&e| e == 0)
-        {
-            remove_cols.push(index_a);
-            continue;
-        }
-        for (index_b, column_b) in d_matrix.column_iter().enumerate().skip(index_a) {
-            if index_a == index_b {
-                continue;
-            }
-            if column_a == column_b && save_vec.column(index_a) == save_vec.column(index_b) {
-                remove_cols.push(index_b);
-            }
-        }
-    }
-    d_matrix = d_matrix.remove_columns_at(&remove_cols);
-    save_vec = save_vec.remove_columns_at(&remove_cols);
-    tran_indexes_vec = tran_indexes_vec
-        .into_iter()
-        .enumerate()
-        .filter(|i| !remove_cols.contains(&i.0))
-        .map(|i| i.1)
-        .collect();
+     let mut remove_rows = vec![];
+     for (index_a, row_a) in d_matrix.row_iter().enumerate() {
+         if row_a.iter().all(|e| *e == 0)
+             && save_vec.row(index_a).iter().all(|&e| e == 0)
+         {
+             remove_rows.push(index_a);
+             continue;
+         }
+         for (index_b, row_b) in d_matrix.row_iter().enumerate().skip(index_a) {
+             if index_a == index_b {
+                 continue;
+             }
+             if row_a == row_b && save_vec.row(index_a) == save_vec.row(index_b) {
+                 remove_rows.push(index_b);
+                 // При объединении эквивалентных позиций выбирается максимальное количество маркеров
+                 markers.row_mut(index_a)[0] = max(
+                     pos_indexes_vec[index_a].markers(),
+                     pos_indexes_vec[index_b].markers(),
+                 ) as i32;
+             }
+         }
+     }
 
-    log::info!(
-        "SAVE 2 => {}",
-        MatrixFormat(&save_vec, &tran_indexes_vec, &pos_indexes_vec)
-    );
-    log::info!(
-        "RESULT 2 => {}",
-        MatrixFormat(&d_matrix, &tran_indexes_vec, &pos_indexes_vec)
-    );
+     d_matrix = d_matrix.remove_rows_at(&remove_rows);
+     save_vec = save_vec.remove_rows_at(&remove_rows);
+     markers = markers.remove_rows_at(&remove_rows);
+     pos_indexes_vec = pos_indexes_vec
+         .into_iter()
+         .enumerate()
+         .filter(|i| !remove_rows.contains(&i.0))
+         .map(|i| i.1)
+         .collect();
 
 
-    let mut new_net = PetriNet::new();
-    new_net.elements = pos_indexes_vec
-        .iter()
-        .chain(tran_indexes_vec.iter())
-        .cloned()
-        .collect();
+     let mut remove_cols = vec![];
+     for (index_a, column_a) in d_matrix.column_iter().enumerate() {
+         if column_a.iter().all(|e| *e == 0)
+             && save_vec.column(index_a).iter().all(|&e| e == 0)
+         {
+             remove_cols.push(index_a);
+             continue;
+         }
+         for (index_b, column_b) in d_matrix.column_iter().enumerate().skip(index_a) {
+             if index_a == index_b {
+                 continue;
+             }
+             if column_a == column_b && save_vec.column(index_a) == save_vec.column(index_b) {
+                 remove_cols.push(index_b);
+             }
+         }
+     }
+     d_matrix = d_matrix.remove_columns_at(&remove_cols);
+     save_vec = save_vec.remove_columns_at(&remove_cols);
+     tran_indexes_vec = tran_indexes_vec
+         .into_iter()
+         .enumerate()
+         .filter(|i| !remove_cols.contains(&i.0))
+         .map(|i| i.1)
+         .collect();
 
-    let mut pos_new_indexes = HashMap::new();
-    for (index, position) in new_net
-        .elements
-        .iter()
-        .filter(|e| e.is_position())
-        .enumerate()
-    {
-        log::info!("SET MARKERS: {} <= {}", index, markers.row(index)[0]);
-        position.set_markers(markers.row(index)[0] as u64);
-        pos_new_indexes.insert(position.clone(), index);
-    }
+     log::info!(
+         "SAVE 2 => {}",
+         MatrixFormat(&save_vec, &tran_indexes_vec, &pos_indexes_vec)
+     );
+     log::info!(
+         "RESULT 2 => {}",
+         MatrixFormat(&d_matrix, &tran_indexes_vec, &pos_indexes_vec)
+     );
 
-    let mut trans_new_indexes = HashMap::new();
-    for (index, transition) in new_net
-        .elements
-        .iter()
-        .filter(|e| e.is_transition())
-        .enumerate()
-    {
-        trans_new_indexes.insert(transition.clone(), index);
-    }
 
-    let mut connections = vec![];
-    for transition in new_net.elements.iter().filter(|e| e.is_transition()) {
-        let col = d_matrix.column(*trans_new_indexes.get(transition).unwrap());
-        for (index, el) in col.iter().enumerate().filter(|e| e.1.ne(&0)) {
-            let pos = pos_indexes_vec[index].clone();
-            match *el > 0 {
-                false => (0..el.abs()).into_iter().for_each(|_| connections.push(Connection::new(pos.clone(), transition.clone()))),
-                true => (0..el.abs()).into_iter().for_each(|_| connections.push(Connection::new(transition.clone(), pos.clone()))),
-            }
-        }
-    }
-    for i in 0..save_vec.nrows() {
-        for j in 0..save_vec.ncols() {
-            if save_vec.row(i)[j] == 0 {
-                continue;
-            }
-            let pos = pos_indexes_vec[i].clone();
-            let tran = tran_indexes_vec[j].clone();
-            connections.push(Connection::new(tran.clone(), pos.clone()));
-            connections.push(Connection::new(pos, tran));
-        }
-    }
-    new_net.connections = connections;
-    new_net
-}
+     let mut new_net = PetriNet::new();
+     new_net.elements = pos_indexes_vec
+         .iter()
+         .chain(tran_indexes_vec.iter())
+         .cloned()
+         .collect();
 
-impl From<Vec<Vertex>> for PetriNet {
-    fn from(vertexes: Vec<Vertex>) -> Self {
-        let mut result = PetriNet::new();
-        for group in vertexes.windows(2) {
-            let a = result.insert(group[0].clone());
-            let b = result.insert(group[1].clone());
+     let mut pos_new_indexes = HashMap::new();
+     for (index, position) in new_net
+         .elements
+         .iter()
+         .filter(|e| e.is_position())
+         .enumerate()
+     {
+         log::info!("SET MARKERS: {} <= {}", index, markers.row(index)[0]);
+         position.set_markers(markers.row(index)[0] as u64);
+         pos_new_indexes.insert(position.clone(), index);
+     }
 
-            result.connect(a, b);
-        }
+     let mut trans_new_indexes = HashMap::new();
+     for (index, transition) in new_net
+         .elements
+         .iter()
+         .filter(|e| e.is_transition())
+         .enumerate()
+     {
+         trans_new_indexes.insert(transition.clone(), index);
+     }
 
-        if (vertexes.first().unwrap().is_position() && vertexes.last().unwrap().is_transition())
-            || (vertexes.first().unwrap().is_transition() && vertexes.last().unwrap().is_position())
-        {
-            result.connect(
-                vertexes.last().cloned().unwrap(),
-                vertexes.first().cloned().unwrap(),
-            );
-            result.is_loop = true;
-        }
+     let mut connections = vec![];
+     for transition in new_net.elements.iter().filter(|e| e.is_transition()) {
+         let col = d_matrix.column(*trans_new_indexes.get(transition).unwrap());
+         for (index, el) in col.iter().enumerate().filter(|e| e.1.ne(&0)) {
+             let pos = pos_indexes_vec[index].clone();
+             match *el > 0 {
+                 false => (0..el.abs()).into_iter().for_each(|_| connections.push(Connection::new(pos.clone(), transition.clone()))),
+                 true => (0..el.abs()).into_iter().for_each(|_| connections.push(Connection::new(transition.clone(), pos.clone()))),
+             }
+         }
+     }
+     for i in 0..save_vec.nrows() {
+         for j in 0..save_vec.ncols() {
+             if save_vec.row(i)[j] == 0 {
+                 continue;
+             }
+             let pos = pos_indexes_vec[i].clone();
+             let tran = tran_indexes_vec[j].clone();
+             connections.push(Connection::new(tran.clone(), pos.clone()));
+             connections.push(Connection::new(pos, tran));
+         }
+     }
+     new_net.connections = connections;
+     new_net
+ }
 
-        result
-    }
+ impl From<Vec<Vertex>> for PetriNet {
+     fn from(vertexes: Vec<Vertex>) -> Self {
+         let mut result = PetriNet::new();
+         for group in vertexes.windows(2) {
+             let a = result.insert(group[0].clone());
+             let b = result.insert(group[1].clone());
+
+             result.connect(a, b);
+         }
+
+         if (vertexes.first().unwrap().is_position() && vertexes.last().unwrap().is_transition())
+             || (vertexes.first().unwrap().is_transition() && vertexes.last().unwrap().is_position())
+         {
+             result.connect(
+                 vertexes.last().cloned().unwrap(),
+                 vertexes.first().cloned().unwrap(),
+             );
+             result.is_loop = true;
+         }
+
+         result
+     }
 }

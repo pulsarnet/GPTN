@@ -12,6 +12,7 @@ extern crate chrono;
 use std::cmp::{max_by, min_by};
 use std::collections::HashMap;
 use std::ffi::CString;
+use std::ops::Deref;
 use libc::{c_char, labs};
 use log4rs::append::file::FileAppender;
 use log4rs::{Config, config::Logger};
@@ -20,6 +21,7 @@ use log4rs::encode::pattern::PatternEncoder;
 use log::{info, LevelFilter};
 use core::NamedMatrix;
 use nalgebra::{abs, DMatrix, MatrixSum, Vector};
+use ffi::vec::CVec;
 
 
 pub mod ffi;
@@ -27,7 +29,7 @@ mod net;
 
 mod core;
 
-use net::{synthesis, PetriNet, Vertex, PetriNetVec, synthesis_program};
+use net::{PetriNet, Vertex, PetriNetVec, synthesis_program};
 
 #[no_mangle]
 extern "C" fn init() {
@@ -55,74 +57,80 @@ pub struct CMatrix {
     inner: DMatrix<i32>
 }
 
+impl Deref for CMatrix {
+    type Target = DMatrix<i32>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+
 impl From<DMatrix<i32>> for CMatrix {
     fn from(inner: DMatrix<i32>) -> Self {
         Self { inner }
     }
 }
 
-pub struct SynthesisContext {
-    pub positions: Vec<Vertex>,
-    pub transitions: Vec<Vertex>,
-    pub vertex_children: HashMap<Vertex, Vec<Vertex>>,
-    pub programs: Vec<Vec<usize>>,
-    pub c_matrix: crate::CMatrix,
-    pub primitive_matrix: crate::CMatrix,
-    pub linear_base_fragments: Vec<(NamedMatrix, NamedMatrix)>
+/// Контекст декомпозиции
+///
+/// Содержит информацию о разделении сети Петри на состовляющие компоненты
+/// и сеть Петри в примитивной системе координат
+
+pub struct DecomposeContextBuilder {
+    pub parts: PetriNetVec,
 }
 
-impl SynthesisContext {
+impl DecomposeContextBuilder {
 
-    pub fn positions(&self) -> &Vec<Vertex> {
-        &self.positions
-    }
-
-    pub fn transitions(&self) -> &Vec<Vertex> {
-        &self.transitions
-    }
-
-    pub fn programs(&self) -> &Vec<Vec<usize>> {
-        &self.programs
-    }
-
-    pub fn add_program(&mut self) {
-        self.programs.push(vec![0; self.positions.len() + self.transitions.len()])
-    }
-
-    pub fn remove_program(&mut self, index: usize) {
-        self.programs.remove(index);
-    }
-
-    pub fn program_value(&self, program: usize, index: usize) -> usize {
-        self.programs()[program][index]
-    }
-
-    pub fn set_program_value(&mut self, program: usize, index: usize, value: usize) {
-        self.programs[program][index] = value;
-    }
-
-    pub fn program_header_name(&self, index: usize, label: bool) -> String {
-        if index < self.transitions.len() {
-            match label {
-                true => self.transitions[index].get_name(),
-                false => self.transitions[index].full_name()
-            }
-        }
-        else {
-            match label {
-                true => self.positions[index - self.transitions.len()].get_name(),
-                false => self.positions[index - self.transitions.len()].full_name()
-            }
+    pub fn new(parts: PetriNetVec) -> Self {
+        DecomposeContextBuilder {
+            parts
         }
     }
 
-    pub fn c_matrix(&self) -> &crate::CMatrix {
-        &self.c_matrix
+    pub fn build(mut self) -> DecomposeContext {
+        self.parts.sort();
+
+        let parts = self.parts;
+        let positions = parts.0.iter().flat_map(|net| net.elements.iter().filter(|element| element.is_position())).cloned().collect::<Vec<_>>();
+        let transitions = parts.0.iter().flat_map(|net| net.elements.iter().filter(|element| element.is_transition())).cloned().collect::<Vec<_>>();
+        let (primitive_net, primitive_matrix) = parts.primitive();
+        let linear_base_fragments_matrix = parts.equivalent_matrix();
+
+        let vertex_children = {
+            let all_elements = positions.iter().chain(transitions.iter()).cloned().collect();
+            positions.iter().chain(transitions.iter())
+                .filter(|v| v.get_parent().is_none())
+                .fold(HashMap::new(), |mut acc, v| {
+                    acc.insert(v.clone(), PetriNetVec::get_children(v.clone(), &all_elements).into_iter().collect());
+                    acc
+                })
+        };
+
+        DecomposeContext {
+            parts,
+            positions,
+            transitions,
+            primitive_net,
+            primitive_matrix: CMatrix::from(primitive_matrix),
+            linear_base_fragments_matrix,
+            vertex_children
+        }
     }
 
-    pub fn primitive_matrix(&self) -> &crate::CMatrix {
-        &self.primitive_matrix
-    }
+}
+
+pub struct DecomposeContext {
+    pub parts: PetriNetVec,
+    pub positions: Vec<Vertex>,
+    pub transitions: Vec<Vertex>,
+    pub primitive_net: PetriNet,
+    pub primitive_matrix: CMatrix,
+    pub linear_base_fragments_matrix: (CMatrix, CMatrix),
+    pub vertex_children: HashMap<Vertex, Vec<Vertex>>,
+}
+
+impl DecomposeContext {
 
     pub fn init(net: &PetriNet) -> Self {
         let mut net = net.clone();
@@ -138,29 +146,9 @@ impl SynthesisContext {
 
         parts.iter_mut().for_each(|net| net.normalize());
 
-        synthesis(PetriNetVec(parts))
-    }
+        let parts = PetriNetVec(parts);
 
-    pub fn primitive_net(&self) -> PetriNet {
-
-        let mut result = PetriNet::new();
-
-        result.elements.extend(self.positions.iter().cloned());
-        result.elements.extend(self.transitions.iter().cloned());
-
-        for column in 0..self.primitive_matrix.inner.ncols() {
-            for row in 0..self.primitive_matrix.inner.nrows() {
-                if self.primitive_matrix.inner.row(row)[column] > 0 {
-                    result.connect(self.transitions[column].clone(), self.positions[row].clone());
-                }
-                else if self.primitive_matrix.inner.row(row)[column] < 0 {
-                    result.connect(self.positions[row].clone(), self.transitions[column].clone())
-                }
-            }
-        }
-
-        result
-
+        DecomposeContextBuilder::new(parts).build()
     }
 
     pub fn linear_base_fragments(&self) -> PetriNet {
@@ -170,33 +158,176 @@ impl SynthesisContext {
         // TODO: Получение перехода по индексу
 
         let mut result = PetriNet::new();
+        let (d_input, d_output) = &self.linear_base_fragments_matrix;
 
-        for (d_input, d_output) in self.linear_base_fragments.iter() {
-            result.elements.extend(d_input.rows.iter().map(|row| row.0.clone()).collect::<Vec<_>>());
-            result.elements.extend(d_input.cols.iter().map(|column| column.0.clone()).collect::<Vec<_>>());
+        result.elements.extend(self.positions.iter().cloned());
+        result.elements.extend(self.transitions.iter().cloned());
 
-            for row in 0..d_input.rows.len() {
-                for column in 0..d_input.cols.len() {
+        for row in 0..d_input.nrows() {
+            for column in 0..d_input.ncols() {
 
-                    if d_input.matrix.row(row)[column] < 0 {
-                        result.connect(
-                            d_input.rows.iter().find(|(_, v)| **v == row).map(|(k, _)| k.clone()).unwrap(),
-                            d_input.cols.iter().find(|(_, v)| **v == column).map(|(k, _)| k.clone()).unwrap(),
-                        )
-                    }
-
-                    if d_output.matrix.column(column)[row] > 0 {
-                        result.connect(
-                            d_input.cols.iter().find(|(_, v)| **v == column).map(|(k, _)| k.clone()).unwrap(),
-                            d_input.rows.iter().find(|(_, v)| **v == row).map(|(k, _)| k.clone()).unwrap(),
-                        )
-                    }
-
+                if d_input.row(row)[column] < 0 {
+                    result.connect(
+                        self.positions.iter().enumerate().find(|(k, _)| *k == row).map(|(_, k)| k.clone()).unwrap(),
+                        self.transitions.iter().enumerate().find(|(k, _)| *k == column).map(|(_, k)| k.clone()).unwrap(),
+                    )
                 }
+
+                if d_output.column(column)[row] > 0 {
+                    result.connect(
+                        self.transitions.iter().enumerate().find(|(k, _)| *k == column).map(|(_, k)| k.clone()).unwrap(),
+                        self.positions.iter().enumerate().find(|(k, _)| *k == row).map(|(_, k)| k.clone()).unwrap(),
+                    )
+                }
+
             }
         }
 
         result
+    }
+
+}
+
+#[no_mangle]
+pub extern "C" fn decompose_context_init(net: &PetriNet) -> *mut DecomposeContext {
+    Box::into_raw(Box::new(DecomposeContext::init(net)))
+}
+
+#[no_mangle]
+pub extern "C" fn decompose_context_positions(ctx: &DecomposeContext) -> usize {
+    ctx.positions.len()
+}
+
+#[no_mangle]
+pub extern "C" fn decompose_context_transitions(ctx: &DecomposeContext) -> usize {
+    ctx.transitions.len()
+}
+
+#[no_mangle]
+pub extern "C" fn decompose_context_primitive_matrix(ctx: &DecomposeContext) -> *const CMatrix {
+    &ctx.primitive_matrix as *const CMatrix
+}
+
+#[no_mangle]
+extern "C" fn decompose_context_primitive_net(ctx: &DecomposeContext) -> *const PetriNet {
+    &ctx.primitive_net as *const PetriNet
+}
+
+#[no_mangle]
+extern "C" fn decompose_context_linear_base_fragments(ctx: &DecomposeContext) -> *mut PetriNet {
+    Box::into_raw(Box::new(ctx.linear_base_fragments()))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn decompose_context_position_index(ctx: &DecomposeContext, index: usize) -> usize {
+    ctx.positions[index].index() as usize
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn decompose_context_transition_index(ctx: &DecomposeContext, index: usize) -> usize {
+    ctx.transitions[index].index() as usize
+}
+
+pub struct SynthesisContext<'a> {
+    pub programs: Vec<Vec<usize>>,
+    pub c_matrix: crate::CMatrix,
+    pub decompose_context: &'a DecomposeContext
+}
+
+impl<'a> SynthesisContext<'a> {
+
+    pub fn init_syn(decompose_ctx: &'a DecomposeContext) -> Self {
+
+        let positions = decompose_ctx.positions.len();
+        let transitions = decompose_ctx.transitions.len();
+        let (equivalent_input, equivalent_output) = &decompose_ctx.linear_base_fragments_matrix;
+        let primitive_matrix = &decompose_ctx.primitive_matrix;
+
+        let mut c_matrix = nalgebra::DMatrix::<i32>::zeros(positions, positions);
+
+        let mut d_matrix = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
+        for i in 0..d_matrix.nrows() {
+            for j in 0..d_matrix.ncols() {
+                d_matrix.row_mut(i)[j] = equivalent_input.row(i)[j] + equivalent_output.row(i)[j];
+            }
+        }
+
+        for i in 0..positions {
+            for j in 0..positions {
+                if i == j {
+                    c_matrix.row_mut(i)[j] = 1;
+                }
+                else if i > 0 || i < (positions - 1) {
+                    if i == (j + 1) && i % 2 == 0 {
+                        c_matrix.row_mut(i)[j] = 1;
+                    }
+                    else if j == (i + 1) && j % 2 == 0 {
+                        c_matrix.row_mut(i)[j] = 1;
+                    }
+                }
+            }
+        }
+
+        SynthesisContext {
+            programs: vec![],
+            c_matrix: CMatrix::from(c_matrix),
+            decompose_context: decompose_ctx,
+        }
+    }
+
+    pub fn positions(&self) -> &Vec<Vertex> {
+        &self.decompose_context.positions
+    }
+
+    pub fn transitions(&self) -> &Vec<Vertex> {
+        &self.decompose_context.transitions
+    }
+
+    pub fn programs(&self) -> &Vec<Vec<usize>> {
+        &self.programs
+    }
+
+    pub fn add_program(&mut self) {
+        self.programs.push(vec![0; self.positions().len() + self.transitions().len()])
+    }
+
+    pub fn remove_program(&mut self, index: usize) {
+        self.programs.remove(index);
+    }
+
+    pub fn program_value(&self, program: usize, index: usize) -> usize {
+        self.programs()[program][index]
+    }
+
+    pub fn set_program_value(&mut self, program: usize, index: usize, value: usize) {
+        self.programs[program][index] = value;
+    }
+
+    pub fn program_header_name(&self, index: usize, label: bool) -> String {
+        if index < self.transitions().len() {
+            match label {
+                true => self.transitions()[index].get_name(),
+                false => self.transitions()[index].full_name()
+            }
+        }
+        else {
+            match label {
+                true => self.positions()[index - self.transitions().len()].get_name(),
+                false => self.positions()[index - self.transitions().len()].full_name()
+            }
+        }
+    }
+
+    pub fn c_matrix(&self) -> &crate::CMatrix {
+        &self.c_matrix
+    }
+
+    pub fn primitive_matrix(&self) -> &crate::CMatrix {
+        &self.decompose_context.primitive_matrix
+    }
+
+    pub fn primitive_net(&self) -> &PetriNet {
+        &self.decompose_context.primitive_net
     }
 
     pub fn transition_synthesis_program(
@@ -258,6 +389,11 @@ impl SynthesisContext {
 }
 
 #[no_mangle]
+pub extern "C" fn synthesis_decompose_ctx(ctx: &SynthesisContext) -> *const DecomposeContext {
+    ctx.decompose_context as *const DecomposeContext
+}
+
+#[no_mangle]
 pub extern "C" fn synthesis_positions(ctx: &SynthesisContext) -> usize {
     ctx.positions().len()
 }
@@ -308,33 +444,8 @@ extern "C" fn synthesis_c_matrix(ctx: &SynthesisContext) -> *const CMatrix {
 }
 
 #[no_mangle]
-extern "C" fn synthesis_primitive_matrix(ctx: &SynthesisContext) -> *const CMatrix {
-    ctx.primitive_matrix() as *const CMatrix
-}
-
-#[no_mangle]
-extern "C" fn synthesis_primitive_net(ctx: &SynthesisContext) -> *const PetriNet {
-    Box::into_raw(Box::new(ctx.primitive_net()))
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn synthesis_init(net: &PetriNet) -> *mut SynthesisContext {
-    Box::into_raw(Box::new(SynthesisContext::init(net)))
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn synthesis_position_index(ctx: &SynthesisContext, index: usize) -> usize {
-    ctx.positions[index].index() as usize
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn synthesis_transition_index(ctx: &SynthesisContext, index: usize) -> usize {
-    ctx.transitions[index].index() as usize
-}
-
-#[no_mangle]
-extern "C" fn synthesis_linear_base_fragments(ctx: &SynthesisContext) -> *mut PetriNet {
-    Box::into_raw(Box::new(ctx.linear_base_fragments()))
+pub unsafe extern "C" fn synthesis_init(decompose_ctx: &DecomposeContext) -> *mut SynthesisContext {
+    Box::into_raw(Box::new(SynthesisContext::init_syn(decompose_ctx)))
 }
 
 #[no_mangle]
@@ -358,22 +469,3 @@ extern "C" fn synthesis_eval_program(ctx: &mut SynthesisContext, index: usize) -
     let result = synthesis_program(ctx, index);
     Box::into_raw(Box::new(result))
 }
-// #[no_mangle]
-// pub unsafe extern "C" fn eval_program(ctx: &mut SynthesisContext, index: usize) -> *mut CommonResult {
-//     let result = synthesis_program(ctx, index);
-//
-//     let parents = program.get_parents();
-//     let petri_net = Box::new(FFIBoxedSlice::from_net(result.result_net));
-//     let c_matrix = Box::new(CMatrix::from_matrix(result.c_matrix));
-//     let lbf_matrix = Box::new(FFINamedMatrix::from_matrix(result.lbf_matrix));
-//     let fragments =
-//         Box::new(FFILogicalBaseFragmentsVec::from_vec(program.linear_base_fragments.clone()));
-//
-//     Box::into_raw(Box::new(CommonResult {
-//         petri_net: Box::into_raw(petri_net),
-//         c_matrix: Box::into_raw(c_matrix),
-//         lbf_matrix: Box::into_raw(lbf_matrix),
-//         logical_base_fragments: Box::into_raw(fragments),
-//         parents
-//     }))
-// }

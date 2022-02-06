@@ -4,6 +4,7 @@
 
 
 #include <QMenu>
+#include "../ffi/rust.h"
 #include "graphic_scene.h"
 #include "../elements/petri_object.h"
 #include "../elements/position.h"

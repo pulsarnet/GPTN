@@ -10,7 +10,6 @@
 #include <QDockWidget>
 #include <QTableView>
 #include <QHeaderView>
-#include "tab.h"
 #include "main_tree/treeview.h"
 #include "main_tree/treemodel.h"
 

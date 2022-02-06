@@ -5,6 +5,7 @@
 #include <QTextDocument>
 #include "petri_object.h"
 #include "arrow_line.h"
+#include "../ffi/rust.h"
 
 
 PetriObject::PetriObject(ffi::Vertex* vertex, QGraphicsItem *parent) : QGraphicsItem(parent), m_vertex(vertex) {
