@@ -9,6 +9,10 @@ class Position;
 class Transition;
 class ArrowLine;
 
+namespace ffi {
+    struct Vertex;
+}
+
 class GraphicScene : public QGraphicsScene {
 
     Q_OBJECT
@@ -30,20 +34,21 @@ public:
     Q_DECLARE_FLAGS(Modes, Mode);
 
     explicit GraphicScene(QObject* parent = nullptr);
+    explicit GraphicScene(const QVariant&, ffi::PetriNet*, QObject* parent = nullptr);
 
     void setAllowMods(Modes mods);
 
     QVariant toVariant();
-    void fromVariant(const QVariant&);
+    void fromVariant(const QVariant&, ffi::PetriNet*);
 
     void removeAll();
     PetriObject* netItemAt(const QPointF& pos);
 
-    Position* addPosition(const QString& name, const QPointF& point);
     Position* addPosition(int index, const QPointF& point);
-    Transition* addTransition(const QString& name, const QPointF& point);
+    Position* addPosition(ffi::Vertex* position, const QPointF& point);
     Transition* addTransition(int index, const QPointF& point);
-    ArrowLine* connectItems(PetriObject* from, PetriObject* to);
+    Transition* addTransition(ffi::Vertex* transition, const QPointF& point);
+    ArrowLine* connectItems(PetriObject* from, PetriObject* to, bool no_add = false);
 
     [[nodiscard]] const QList<Position*>& positions() const { return m_positions; }
     [[nodiscard]] const QList<Transition*>& transitions() const { return m_transition; }

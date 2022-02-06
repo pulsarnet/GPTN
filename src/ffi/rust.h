@@ -2,6 +2,7 @@
 #define FFI_RUST_RUST_H
 
 #include <array>
+#include <qvariant.h>
 
 namespace ffi {
 
@@ -48,9 +49,9 @@ namespace ffi {
 
     struct PetriNet {
         static PetriNet* create();
-        CVec<Vertex*> positions();
-        CVec<Vertex*> transitions();
-        CVec<Connection*> connections();
+        CVec<Vertex*> positions() const;
+        CVec<Vertex*> transitions() const;
+        CVec<Connection*> connections() const;
         Vertex* add_position();
         Vertex* add_position_with(usize);
         Vertex* get_position(usize);
@@ -61,21 +62,28 @@ namespace ffi {
         void remove_transition(Vertex*);
         void connect(Vertex*, Vertex*);
         void remove_connection(Vertex*, Vertex*);
+
+        QVariant toVariant() const;
+        void fromVariant(const QVariant& data);
     };
 
     struct Vertex {
-        usize index();
-        usize markers();
+        usize index() const;
+        usize markers() const;
         void add_marker();
         void remove_marker();
-        char* get_name();
+        char* get_name() const;
         void set_name(char* name);
-        VertexType type();
+        VertexType type() const;
+
+        QVariant toVariant() const;
     };
 
     struct Connection {
-        Vertex* from();
-        Vertex* to();
+        Vertex* from() const;
+        Vertex* to() const;
+
+        QVariant toVariant() const;
     };
 
     struct DecomposeContext {

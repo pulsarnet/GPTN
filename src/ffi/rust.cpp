@@ -10,9 +10,9 @@ using namespace ffi;
 extern "C" {
     // PetriNet
     PetriNet* create_net();
-    void net_positions(PetriNet& self, CVec<Vertex*>* return$);
-    void net_transitions(PetriNet& self, CVec<Vertex*>* return$);
-    void net_connections(PetriNet& self, CVec<Connection*>* return$);
+    void net_positions(const PetriNet& self, CVec<Vertex*>* return$);
+    void net_transitions(const PetriNet& self, CVec<Vertex*>* return$);
+    void net_connections(const PetriNet& self, CVec<Connection*>* return$);
     Vertex* add_position(PetriNet&);
     Vertex* add_position_with(PetriNet&, usize);
     Vertex* get_position(PetriNet&, usize);
@@ -25,17 +25,17 @@ extern "C" {
     void remove_connection(PetriNet&, Vertex*, Vertex*);
 
     // Vertex
-    usize vertex_index(Vertex&);
-    usize vertex_markers(Vertex&);
+    usize vertex_index(const Vertex&);
+    usize vertex_markers(const Vertex&);
     void vertex_add_marker(Vertex&);
     void vertex_remove_marker(Vertex&);
-    char* vertex_get_name(Vertex&);
+    char* vertex_get_name(const Vertex&);
     void vertex_set_name(Vertex&, char*);
-    VertexType vertex_type(Vertex&);
+    VertexType vertex_type(const Vertex&);
 
     // Connection
-    Vertex* connection_from(Connection& self);
-    Vertex* connection_to(Connection& self);
+    Vertex* connection_from(const Connection& self);
+    Vertex* connection_to(const Connection& self);
 
     // DecomposeContext
     DecomposeContext* decompose_context_init(PetriNet&);
@@ -77,23 +77,63 @@ extern "C" {
     Connection* const* vec_data_connection(const CVec<Connection*>* self);
 };
 
+template<>
+usize CVec<usize>::size() const noexcept {
+    return ::vec_len_u64(this);
+}
+
+template<>
+const usize* CVec<usize>::data() const noexcept {
+    return ::vec_data_u64(this);
+}
+
+template<>
+usize CVec<Vertex*>::size() const noexcept {
+    return ::vec_len_vertex(this);
+}
+
+template<>
+Vertex* const* CVec<Vertex*>::data() const noexcept {
+    return ::vec_data_vertex(this);
+}
+
+template<>
+const std::size_t CVec<Vertex *>::size_of() const noexcept {
+    return sizeof(Vertex*);
+}
+
+template<>
+usize CVec<Connection*>::size() const noexcept {
+    return ::vec_len_connection(this);
+}
+
+template<>
+Connection* const* CVec<Connection*>::data() const noexcept {
+    return ::vec_data_connection(this);
+}
+
+template<>
+const std::size_t CVec<Connection *>::size_of() const noexcept {
+    return sizeof(Connection*);
+}
+
 PetriNet *PetriNet::create() {
     return ::create_net();
 }
 
-CVec<Vertex*> PetriNet::positions() {
+CVec<Vertex*> PetriNet::positions() const {
     CVec<Vertex*> result${};
     ::net_positions(*this, &result$);
     return result$;
 }
 
-CVec<Vertex*> PetriNet::transitions() {
+CVec<Vertex*> PetriNet::transitions() const {
     CVec<Vertex*> result${};
     ::net_transitions(*this, &result$);
     return result$;
 }
 
-CVec<Connection *> PetriNet::connections() {
+CVec<Connection *> PetriNet::connections() const {
     CVec<Connection*> result${};
     ::net_connections(*this, &result$);
     return result$;
@@ -139,11 +179,81 @@ void PetriNet::remove_connection(Vertex *from, Vertex *to) {
     return ::remove_connection(*this, from, to);
 }
 
-usize Vertex::index() {
+QVariant PetriNet::toVariant() const {
+    QVariantHash net;
+    QVariantList vertexes;
+    QVariantList v_connections;
+
+    auto pos = positions();
+    auto trans = transitions();
+    auto conns = connections();
+
+    for (int i = 0; i < pos.size(); i++) {
+        auto position = pos[i];
+        vertexes.push_back(position->toVariant());
+    }
+
+    for (int i = 0; i < trans.size(); i++) {
+        auto transition = trans[i];
+        vertexes.push_back(transition->toVariant());
+    }
+
+    for (int i = 0; i < conns.size(); i++) {
+        auto connection = conns[i];
+        v_connections.push_back(connection->toVariant());
+    }
+
+    net["vertex"] = vertexes;
+    net["connections"] = v_connections;
+
+    return net;
+}
+
+void PetriNet::fromVariant(const QVariant &data) {
+    auto net = data.toHash();
+    auto vertexes = net["vertex"].toList();
+    auto connections = net["connections"].toList();
+
+    for (const auto& vertexVariant : vertexes) {
+        auto vertex = vertexVariant.toHash();
+        auto index = vertex["index"].toInt();
+        auto type = vertex["type"].toInt();
+        auto label = vertex["label"].toString();
+
+        Vertex* added = nullptr;
+
+        if (type == VertexType::Position) {
+            auto markers = vertex["markers"].toInt();
+            added = add_position_with(index);
+            // TODO: set markers
+        }
+        else {
+            added = add_transition_with(index);
+        }
+
+        added->set_name(label.toUtf8().data());
+    }
+
+    for (const auto& connection : connections) {
+        auto conn = connection.toHash();
+        auto from = conn["from"].toHash();
+        auto to = conn["to"].toHash();
+
+        auto from_type = from["type"].toInt();
+        if (from_type == VertexType::Position) {
+            connect(get_position(from["index"].toInt()), get_transition(to["index"].toInt()));
+        }
+        else {
+            connect(get_transition(from["index"].toInt()), get_position(to["index"].toInt()));
+        }
+    }
+}
+
+usize Vertex::index() const {
     return ::vertex_index(*this);
 }
 
-usize Vertex::markers() {
+usize Vertex::markers() const {
     return ::vertex_markers(*this);
 }
 
@@ -155,7 +265,7 @@ void Vertex::remove_marker() {
     ::vertex_remove_marker(*this);
 }
 
-char *Vertex::get_name() {
+char *Vertex::get_name() const {
     return ::vertex_get_name(*this);
 }
 
@@ -163,16 +273,48 @@ void Vertex::set_name(char *name) {
     ::vertex_set_name(*this, name);
 }
 
-VertexType Vertex::type() {
+VertexType Vertex::type() const {
     return ::vertex_type(*this);
 }
 
-Vertex *Connection::from() {
+QVariant Vertex::toVariant() const {
+    QVariantHash vertex;
+    vertex["type"] = type();
+    vertex["index"] = index();
+    vertex["label"] = get_name();
+
+    if (type() == VertexType::Position) {
+        vertex["markers"] = markers();
+    }
+
+    return vertex;
+}
+
+Vertex *Connection::from() const {
     return ::connection_from(*this);
 }
 
-Vertex *Connection::to() {
+Vertex *Connection::to() const {
     return ::connection_to(*this);
+}
+
+QVariant Connection::toVariant() const {
+    auto f = from();
+    auto t = to();
+
+    QVariantHash from;
+    from["type"] = f->type();
+    from["index"] = f->index();
+
+    QVariantHash to;
+    to["type"] = t->type();
+    to["index"] = t->index();
+
+    QVariantHash connection;
+    connection["from"] = from;
+    connection["to"] = to;
+
+    return connection;
 }
 
 DecomposeContext *DecomposeContext::init(PetriNet *net) {
@@ -257,44 +399,4 @@ usize CMatrix::rows() {
 
 usize CMatrix::columns() {
     return ::matrix_columns(*this);
-}
-
-template<>
-usize CVec<usize>::size() const noexcept {
-    return ::vec_len_u64(this);
-}
-
-template<>
-const usize* CVec<usize>::data() const noexcept {
-    return ::vec_data_u64(this);
-}
-
-template<>
-usize CVec<Vertex*>::size() const noexcept {
-    return ::vec_len_vertex(this);
-}
-
-template<>
-Vertex* const* CVec<Vertex*>::data() const noexcept {
-    return ::vec_data_vertex(this);
-}
-
-template<>
-const std::size_t CVec<Vertex *>::size_of() const noexcept {
-    return sizeof(Vertex*);
-}
-
-template<>
-usize CVec<Connection*>::size() const noexcept {
-    return ::vec_len_connection(this);
-}
-
-template<>
-Connection* const* CVec<Connection*>::data() const noexcept {
-    return ::vec_data_connection(this);
-}
-
-template<>
-const std::size_t CVec<Connection *>::size_of() const noexcept {
-    return sizeof(Connection*);
 }

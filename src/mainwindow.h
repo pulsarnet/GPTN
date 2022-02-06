@@ -23,6 +23,8 @@
 
 using namespace ads;
 
+class TreeModel;
+
 class MainWindow : public QMainWindow {
 
     enum SaveFileAnswer {
@@ -58,6 +60,7 @@ private:
 
     QStatusBar* statusBar = nullptr;
     QMenuBar* menuBar = nullptr;
+    TreeModel* treeModel = nullptr;
 
     CDockManager* manager = nullptr;
 };

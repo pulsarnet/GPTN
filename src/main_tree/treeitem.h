@@ -61,6 +61,9 @@ public:
     const QString& name() const;
 
     virtual ObjectType item_type() const = 0;
+    virtual QVariant toVariant() const {
+        return QVariant();
+    }
 
     ~TreeItem();
 
@@ -89,6 +92,9 @@ public:
         return ObjectType::O_Root;
     }
 
+    QVariant toVariant() const override;
+    void fromVariant(const QVariant& data);
+
 public slots:
 
     void onNetCreate(bool checked);
@@ -102,12 +108,15 @@ class NetTreeItem : public TreeItem
 {
 public:
     explicit NetTreeItem(TreeModel* model, TreeItem* parent = nullptr);
+    explicit NetTreeItem(const QVariant& data, TreeModel* model, TreeItem* parent = nullptr);
 
     QMenu *contextMenu() override;
 
     ObjectType item_type() const override {
         return ObjectType::O_Net;
     }
+
+    QVariant toVariant() const override;
 
 public slots:
 
@@ -206,7 +215,7 @@ public:
 
 
     ObjectType item_type() const override {
-        return ObjectType::O_SynthesisPrograms;
+        return ObjectType::O_SynthesisProgram;
     }
 
 private:

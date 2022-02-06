@@ -13,16 +13,72 @@
 #include "../graphviz/graphviz_wrapper.h"
 
 
-GraphicScene::GraphicScene(QObject *parent) : QGraphicsScene(parent) {
-    m_mod = Mode::A_Nothing;
-    m_allowMods = Mode::A_Nothing;
-    m_net = ffi::PetriNet::create();
-
+GraphicScene::GraphicScene(QObject *parent) : QGraphicsScene(parent), m_mod(Mode::A_Nothing), m_allowMods(Mode::A_Nothing), m_net(ffi::PetriNet::create()) {
     setSceneRect(-12500, -12500, 25000, 25000);
 
     connect(this, &QGraphicsScene::selectionChanged, this, &GraphicScene::slotSelectionChanged);
 }
 
+GraphicScene::GraphicScene(const QVariant &data, ffi::PetriNet *net, QObject *parent) : QGraphicsScene(parent), m_mod(Mode::A_Nothing), m_allowMods(Mode::A_Nothing), m_net(net) {
+    setSceneRect(-12500, -12500, 25000, 25000);
+
+    connect(this, &QGraphicsScene::selectionChanged, this, &GraphicScene::slotSelectionChanged);
+
+    auto common_data = data.toHash();
+
+    if (common_data.contains("items")) {
+        auto list = common_data.value("items").toList();
+        for (auto data : list) {
+            QVariantHash hash = data.toHash();
+            if (hash["type"] == ffi::VertexType::Position) {
+                auto vertex = m_net->get_position(hash["id"].toInt());
+                auto object = addPosition(vertex, hash["pos"].toPointF());
+            }
+            else if (hash["type"] == ffi::VertexType::Transition) {
+                auto vertex = m_net->get_transition(hash["id"].toInt());
+                auto object = addTransition(vertex, hash["pos"].toPointF());
+            }
+        }
+    }
+
+    qDebug() << m_positions.size();
+
+    auto connections = m_net->connections();
+    for (int i = 0; i < connections.size(); i++) {
+        auto connection = connections[i];
+        auto from = connection->from();
+        auto to = connection->to();
+
+        auto find_from = [=](PetriObject* object) {
+            return object->vertex()->type() == from->type() && object->index() == from->index();
+        };
+
+        auto find_to = [=](PetriObject* object) {
+            return object->vertex()->type() == to->type() && object->index() == to->index();
+        };
+
+        PetriObject* point1;
+        PetriObject* point2;
+
+        if (from->type() == ffi::VertexType::Position) {
+            auto point1_it = std::find_if(m_positions.begin(), m_positions.end(), find_from);
+            auto point2_it = std::find_if(m_transition.begin(), m_transition.end(), find_to);
+
+            point1 = dynamic_cast<PetriObject*>(*point1_it);
+            point2 = dynamic_cast<PetriObject*>(*point2_it);
+        }
+        else {
+            auto point1_it = std::find_if(m_transition.begin(), m_transition.end(), find_from);
+            auto point2_it = std::find_if(m_positions.begin(), m_positions.end(), find_to);
+
+            point1 = dynamic_cast<PetriObject*>(*point1_it);
+            point2 = dynamic_cast<PetriObject*>(*point2_it);
+        }
+
+        connectItems(point1, point2, true);
+    }
+
+}
 
 void GraphicScene::setMode(Mode mod) {
     if (m_allowMods & mod) m_mod = mod;
@@ -227,109 +283,27 @@ ffi::PetriNet *GraphicScene::net() {
 
 QVariant GraphicScene::toVariant() {
     QVariantList data_list;
-    QVariantList connections_list;
 
     for (auto position : m_positions) {
         QVariantHash data;
         data["pos"] = QVariant(position->scenePos());
-        data["name"] = QVariant(position->label());
-        data["rotation"] = QVariant(position->rotation());
-        data["type"] = QVariant(tr("position"));
         data["id"] = QVariant(position->index());
+        data["type"] = position->vertex()->type();
         data_list << data;
     }
 
     for (auto transition : m_transition) {
         QVariantHash data;
         data["pos"] = QVariant(transition->scenePos());
-        data["name"] = QVariant(transition->label());
-        data["rotation"] = QVariant(transition->rotation());
-        data["type"] = QVariant(tr("transition"));
         data["id"] = QVariant(transition->index());
+        data["type"] = transition->vertex()->type();
         data_list << data;
-    }
-
-    for (auto connection : m_connections) {
-        QVariantHash from;
-        from["type"] = QVariant(connection->from()->objectTypeStr());
-        from["id"] = QVariant(connection->from()->index());
-
-        QVariantHash to;
-        to["type"] = QVariant(connection->to()->objectTypeStr());
-        to["id"] = QVariant(connection->to()->index());
-
-        QVariantHash data;
-        data["from"] = QVariant(from);
-        data["to"] = QVariant(to);
-
-        connections_list << data;
     }
 
     QVariantHash common_data;
     common_data["items"] = data_list;
-    common_data["connections"] = connections_list;
 
     return QVariant(common_data);
-}
-
-void GraphicScene::fromVariant(const QVariant& data) {
-    auto common_data = data.toHash();
-
-    if (common_data.contains("items")) {
-        foreach(QVariant data, common_data.value("items").toList()) {
-            QVariantHash hash = data.toHash();
-            if (hash["type"] == "position") {
-                auto object = addPosition(hash["id"].toInt(), hash["pos"].toPointF());
-                object->setLabel(hash["name"].toString());
-            }
-            else if (hash["type"] == "transition") {
-                auto object = addTransition(hash["id"].toInt(), hash["pos"].toPointF());
-                object->setLabel(hash["name"].toString());
-                object->setRotation(hash["rotation"].toDouble());
-            }
-        }
-    }
-
-    qDebug() << "Positions: " << m_positions[0]->index() << m_positions[1]->index() << m_positions[2]->index();
-    qDebug() << "Transitions: " << m_positions[0]->index() << m_positions[1]->index() << m_positions[2]->index();
-
-    if (common_data.contains("connections")) {
-        foreach(QVariant connection, common_data.value("connections").toList()) {
-            QVariantHash hash = connection.toHash();
-
-            QVariantHash from = hash["from"].toHash();
-            QVariantHash to = hash["to"].toHash();
-
-            auto find_from = [=](PetriObject* object) {
-                return object->objectTypeStr() == from["type"].toString() && object->index() == from["id"].toInt();
-            };
-
-            auto find_to = [=](PetriObject* object) {
-                return object->objectTypeStr() == to["type"].toString() && object->index() == to["id"].toInt();
-            };
-
-            PetriObject* point1;
-            PetriObject* point2;
-
-            if (from["type"].toString() == "position") {
-                auto point1_it = std::find_if(m_positions.begin(), m_positions.end(), find_from);
-                auto point2_it = std::find_if(m_transition.begin(), m_transition.end(), find_to);
-
-                point1 = dynamic_cast<PetriObject*>(*point1_it);
-                point2 = dynamic_cast<PetriObject*>(*point2_it);
-            }
-            else {
-                auto point1_it = std::find_if(m_transition.begin(), m_transition.end(), find_from);
-                auto point2_it = std::find_if(m_positions.begin(), m_positions.end(), find_to);
-
-                point1 = dynamic_cast<PetriObject*>(*point1_it);
-                point2 = dynamic_cast<PetriObject*>(*point2_it);
-            }
-
-            connectItems(point1, point2);
-        }
-
-    }
 }
 
 void GraphicScene::removeAll() {
@@ -342,48 +316,41 @@ void GraphicScene::removeAll() {
     m_connections.clear();
 }
 
-Position* GraphicScene::addPosition(const QString &name, const QPointF &point) {
-
-    if (!name.startsWith("p")) throw 0;
-
-    auto index = name.mid(1).toInt();
-    return addPosition(index, point);
-}
-
 Position* GraphicScene::addPosition(int index, const QPointF &point) {
-
-    auto position = new Position(point, index == -1 ? m_net->add_position() : m_net->add_position_with(index));
-    m_positions.push_back(position);
-    addItem(position);
-
-    emit itemInserted(position);
-
-    return position;
+    return addPosition(index == -1 ? m_net->add_position() : m_net->add_position_with(index), point);
 }
 
-Transition* GraphicScene::addTransition(const QString &name, const QPointF &point) {
-    if (!name.startsWith("t")) throw 0;
+Position *GraphicScene::addPosition(ffi::Vertex *position, const QPointF &point) {
+    auto pos = new Position(point, position);
+    m_positions.push_back(pos);
+    addItem(pos);
 
-    auto index = name.mid(1).toInt();
-    return addTransition(index, point);
+    emit itemInserted(pos);
+    return pos;
 }
 
 Transition* GraphicScene::addTransition(int index, const QPointF &point) {
-    auto transition = new Transition(point, index == -1 ? m_net->add_transition() : m_net->add_transition_with(index));
-    m_transition.push_back(transition);
-    addItem(transition);
-
-    emit itemInserted(transition);
-
-    return transition;
+    return addTransition(index == -1 ? m_net->add_transition() : m_net->add_transition_with(index), point);
 }
 
-ArrowLine* GraphicScene::connectItems(PetriObject *from, PetriObject *to) {
+Transition *GraphicScene::addTransition(ffi::Vertex *transition, const QPointF &point) {
+    auto tran = new Transition(point, transition);
+    m_transition.push_back(tran);
+    addItem(tran);
+
+    emit itemInserted(tran);
+
+    return tran;
+}
+
+
+ArrowLine* GraphicScene::connectItems(PetriObject *from, PetriObject *to, bool no_add) {
 
     auto arrowLine = new ArrowLine(from, QLineF(from->connectionPos(to, false), to->connectionPos(from, true)));
     arrowLine->setTo(to);
 
-    m_net->connect(from->vertex(), to->vertex());
+    if (!no_add)
+        m_net->connect(from->vertex(), to->vertex());
 
     m_connections.push_back(arrowLine);
     addItem(arrowLine);

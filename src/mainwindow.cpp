@@ -10,8 +10,10 @@
 #include <QDockWidget>
 #include <QTableView>
 #include <QHeaderView>
+#include <QMessageBox>
 #include "main_tree/treeview.h"
 #include "main_tree/treemodel.h"
+#include "main_tree/treeitem.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
@@ -31,8 +33,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     centralWidget->setWidget(internalDockManager);
     manager->setCentralWidget(centralWidget);
 
+    treeModel = new TreeModel(internalDockManager);
+
     auto treeView = new TreeView;
-    treeView->setModel(new TreeModel(internalDockManager));
+    treeView->setModel(treeModel);
     auto treeDocker = new CDockWidget("Tree");
     treeDocker->setWidget(treeView);
     manager->addDockWidgetTab(DockWidgetArea::LeftDockWidgetArea, treeDocker);
@@ -96,9 +100,25 @@ void MainWindow::newFile(bool trigger) {
     //this->newTab();
 }
 
-
 void MainWindow::slotSaveFile(bool checked) {
+    QString fileName = QFileDialog::getSaveFileName(this,
+                                                    tr("Save Address Book"), "",
+                                                    tr("Address Book (*.ptn);;All Files (*)"));
 
+    if (fileName.isEmpty())
+        return;
+
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly)) {
+        QMessageBox::information(this, tr("Unable to open file"),
+                                 file.errorString());
+        return;
+    }
+
+    auto data = treeModel->root()->toVariant();
+    QDataStream out(&file);
+    out.setVersion(QDataStream::Qt_6_0);
+    out << data;
 }
 
 void MainWindow::slotSaveAsFile(bool checked) {
@@ -106,6 +126,28 @@ void MainWindow::slotSaveAsFile(bool checked) {
 }
 
 void MainWindow::slotOpenFile(bool checked) {
+
+    QString fileName = QFileDialog::getOpenFileName(this,
+                                                    tr("Open Address Book"), "",
+                                                    tr("Address Book (*.ptn);;All Files (*)"));
+
+    if (fileName.isEmpty())
+        return;
+
+    QFile file(fileName);
+
+    if (!file.open(QIODevice::ReadOnly)) {
+        QMessageBox::information(this, tr("Unable to open file"),
+                                 file.errorString());
+        return;
+    }
+
+    QVariant data;
+    QDataStream in(&file);
+    in.setVersion(QDataStream::Qt_6_0);
+    in >> data;
+
+    dynamic_cast<RootTreeItem*>(treeModel->root())->fromVariant(data);
 }
 
 void MainWindow::slotSplitAction(bool checked) {
