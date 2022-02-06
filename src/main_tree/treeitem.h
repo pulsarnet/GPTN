@@ -19,6 +19,18 @@ class TreeItem : public QObject
 {
 public:
 
+    enum ObjectType {
+        O_Root = 1,
+        O_Net,
+        O_Decompose,
+        O_PrimitiveSystem,
+        O_LinearBaseFragments,
+        O_Synthesis,
+        O_Matrix,
+        O_SynthesisPrograms,
+        O_SynthesisProgram,
+    };
+
     explicit TreeItem(TreeModel* model, TreeItem* parent = nullptr);
 
     int row() const;
@@ -48,6 +60,8 @@ public:
     void setName(const QString& name);
     const QString& name() const;
 
+    virtual ObjectType item_type() const = 0;
+
     ~TreeItem();
 
 protected:
@@ -71,6 +85,10 @@ public:
 
     QMenu* contextMenu() override;
 
+    ObjectType item_type() const override {
+        return ObjectType::O_Root;
+    }
+
 public slots:
 
     void onNetCreate(bool checked);
@@ -86,6 +104,10 @@ public:
     explicit NetTreeItem(TreeModel* model, TreeItem* parent = nullptr);
 
     QMenu *contextMenu() override;
+
+    ObjectType item_type() const override {
+        return ObjectType::O_Net;
+    }
 
 public slots:
 
@@ -104,6 +126,10 @@ public:
 
     QMenu *contextMenu() override;
 
+    ObjectType item_type() const override {
+        return ObjectType::O_Decompose;
+    }
+
 public slots:
 
     void onSynthesis(bool checked);
@@ -118,6 +144,11 @@ private:
 class PrimitiveSystemItem : public TreeItem {
 public:
     explicit PrimitiveSystemItem(ffi::PetriNet* net, TreeModel* model, TreeItem* parent = nullptr);
+
+    ObjectType item_type() const override {
+        return ObjectType::O_PrimitiveSystem;
+    }
+
 private:
     ffi::PetriNet* m_net;
     GraphicScene* m_scene;
@@ -126,6 +157,11 @@ private:
 class LinearBaseFragmentsItem : public TreeItem {
 public:
     explicit LinearBaseFragmentsItem(ffi::PetriNet* net, TreeModel* model, TreeItem* parent = nullptr);
+
+    ObjectType item_type() const override {
+        return ObjectType::O_LinearBaseFragments;
+    }
+
 private:
     ffi::PetriNet* m_net;
     GraphicScene* m_scene;
@@ -135,6 +171,9 @@ class SynthesisItem : public TreeItem {
 public:
     explicit SynthesisItem(ffi::SynthesisContext* ctx, TreeModel* model, TreeItem* parent = nullptr);
 
+    ObjectType item_type() const override {
+        return ObjectType::O_Synthesis;
+    }
 private:
     ffi::SynthesisContext* m_ctx = nullptr;
 };
@@ -142,11 +181,19 @@ private:
 class MatrixItem : public TreeItem {
 public:
     explicit MatrixItem(ffi::CMatrix* matrix, TreeModel* model, TreeItem* parent = nullptr);
+
+    ObjectType item_type() const override {
+        return ObjectType::O_Matrix;
+    }
 };
 
 class SynthesisProgramsItem : public TreeItem {
 public:
     explicit SynthesisProgramsItem(ffi::SynthesisContext* ctx, TreeModel* model, TreeItem* parent = nullptr);
+
+    ObjectType item_type() const override {
+        return ObjectType::O_SynthesisPrograms;
+    }
 
 public slots:
 
@@ -156,6 +203,11 @@ public slots:
 class SynthesisProgramItem : public TreeItem {
 public:
     explicit SynthesisProgramItem(ffi::PetriNet* net, TreeModel* model, TreeItem* parent = nullptr);
+
+
+    ObjectType item_type() const override {
+        return ObjectType::O_SynthesisPrograms;
+    }
 
 private:
 
