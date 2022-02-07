@@ -24,8 +24,8 @@ pub extern "C" fn vertex_add_marker(vertex: *mut Vertex) {
 }
 
 #[no_mangle]
-pub extern "C" fn vertex_remove_marker(vertex: *const Vertex) {
-    unsafe { &*vertex }.remove_marker();
+pub extern "C" fn vertex_remove_marker(vertex: *mut Vertex) {
+    unsafe { &mut *vertex }.remove_marker();
 }
 
 #[no_mangle]
@@ -38,8 +38,8 @@ pub extern "C" fn vertex_get_name(vertex: *const Vertex) -> *const c_char {
 }
 
 #[no_mangle]
-pub extern "C" fn vertex_set_name(vertex: *const Vertex, name: *mut c_char) {
-    unsafe { &*vertex }.set_name(unsafe { CStr::from_ptr(name) }.to_string_lossy().to_string());
+pub extern "C" fn vertex_set_name(vertex: *mut Vertex, name: *mut c_char) {
+    unsafe { &mut *vertex }.set_name(unsafe { CStr::from_ptr(name) }.to_string_lossy().to_string());
 }
 
 #[no_mangle]
@@ -49,4 +49,9 @@ pub extern "C" fn vertex_type(vertex: *const Vertex) -> VertexType {
         true => VertexType::Position,
         false => VertexType::Transition
     }
+}
+
+#[no_mangle]
+pub extern "C" fn vertex_parent(vertex: &Vertex) -> usize {
+    vertex.get_parent().map_or(0, |parent| parent as usize)
 }

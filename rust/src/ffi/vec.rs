@@ -3,7 +3,7 @@ use std::mem;
 use std::mem::MaybeUninit;
 use libc::c_void;
 use net::Connection;
-use Vertex;
+use ::{PetriNet, Vertex};
 
 #[repr(C)]
 pub struct CVec<T> {
@@ -62,5 +62,15 @@ pub unsafe extern "C" fn vec_len_connection(vec: *mut CVec<*const Connection>) -
 
 #[no_mangle]
 pub unsafe extern "C" fn vec_data_connection(vec: *mut CVec<*const Connection>) -> *const *const Connection {
+    (&mut *vec).raw()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn vec_len_nets(vec: *mut CVec<*const PetriNet>) -> usize {
+    (&mut *vec).len()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn vec_data_nets(vec: *mut CVec<*const PetriNet>) -> *const *const PetriNet {
     (&mut *vec).raw()
 }

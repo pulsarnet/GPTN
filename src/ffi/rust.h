@@ -54,10 +54,12 @@ namespace ffi {
         CVec<Connection*> connections() const;
         Vertex* add_position();
         Vertex* add_position_with(usize);
+        Vertex* add_position_with_parent(usize, usize);
         Vertex* get_position(usize);
         void remove_position(Vertex*);
         Vertex* add_transition();
         Vertex* add_transition_with(usize);
+        Vertex* add_transition_with_parent(usize, usize);
         Vertex* get_transition(usize);
         void remove_transition(Vertex*);
         void connect(Vertex*, Vertex*);
@@ -75,6 +77,7 @@ namespace ffi {
         char* get_name() const;
         void set_name(char* name);
         VertexType type() const;
+        usize parent() const;
 
         QVariant toVariant() const;
     };
@@ -89,6 +92,7 @@ namespace ffi {
     struct DecomposeContext {
 
         static DecomposeContext* init(PetriNet*);
+        static DecomposeContext* fromNets(const QVector<PetriNet*>&);
         usize positions();
         usize transitions();
         CMatrix* primitive_matrix();
@@ -96,6 +100,8 @@ namespace ffi {
         usize position_index(usize);
         usize transition_index(usize);
         PetriNet* linear_base_fragments();
+
+        CVec<PetriNet*> parts() const;
     };
 
     struct SynthesisContext {

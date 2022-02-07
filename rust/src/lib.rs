@@ -92,20 +92,10 @@ impl DecomposeContextBuilder {
         self.parts.sort();
 
         let parts = self.parts;
-        let positions = parts.0.iter().flat_map(|net| net.elements.iter().filter(|element| element.is_position())).cloned().collect::<Vec<_>>();
-        let transitions = parts.0.iter().flat_map(|net| net.elements.iter().filter(|element| element.is_transition())).cloned().collect::<Vec<_>>();
+        let positions = parts.0.iter().flat_map(|net| net.positions.iter()).cloned().collect::<Vec<_>>();
+        let transitions = parts.0.iter().flat_map(|net| net.transitions.iter()).cloned().collect::<Vec<_>>();
         let (primitive_net, primitive_matrix) = parts.primitive();
         let linear_base_fragments_matrix = parts.equivalent_matrix();
-
-        let vertex_children = {
-            let all_elements = positions.iter().chain(transitions.iter()).cloned().collect();
-            positions.iter().chain(transitions.iter())
-                .filter(|v| v.get_parent().is_none())
-                .fold(HashMap::new(), |mut acc, v| {
-                    acc.insert(v.clone(), PetriNetVec::get_children(v.clone(), &all_elements).into_iter().collect());
-                    acc
-                })
-        };
 
         DecomposeContext {
             parts,
@@ -114,7 +104,6 @@ impl DecomposeContextBuilder {
             primitive_net,
             primitive_matrix: CMatrix::from(primitive_matrix),
             linear_base_fragments_matrix,
-            vertex_children
         }
     }
 
@@ -127,7 +116,6 @@ pub struct DecomposeContext {
     pub primitive_net: PetriNet,
     pub primitive_matrix: CMatrix,
     pub linear_base_fragments_matrix: (CMatrix, CMatrix),
-    pub vertex_children: HashMap<Vertex, Vec<Vertex>>,
 }
 
 impl DecomposeContext {
@@ -160,8 +148,8 @@ impl DecomposeContext {
         let mut result = PetriNet::new();
         let (d_input, d_output) = &self.linear_base_fragments_matrix;
 
-        result.elements.extend(self.positions.iter().cloned());
-        result.elements.extend(self.transitions.iter().cloned());
+        result.positions.extend(self.positions.iter().cloned());
+        result.transitions.extend(self.transitions.iter().cloned());
 
         for row in 0..d_input.nrows() {
             for column in 0..d_input.ncols() {
@@ -189,8 +177,27 @@ impl DecomposeContext {
 }
 
 #[no_mangle]
+pub extern "C" fn decompose_context_parts(ctx: &DecomposeContext, parts: &mut CVec<*const PetriNet>) {
+    let result = ctx.parts
+        .0
+        .iter()
+        .map(|p| p as *const PetriNet).collect::<Vec<_>>();
+
+    unsafe { std::ptr::write_unaligned(parts, CVec::from(result)) };
+}
+
+#[no_mangle]
 pub extern "C" fn decompose_context_init(net: &PetriNet) -> *mut DecomposeContext {
     Box::into_raw(Box::new(DecomposeContext::init(net)))
+}
+
+#[no_mangle]
+pub extern "C" fn decompose_context_from_nets(nets: *mut *mut PetriNet, len: usize) -> *mut DecomposeContext {
+    let mut parts_m = vec![];
+    for i in 0..len {
+        parts_m.push(unsafe { &**nets.offset(i as isize) }.clone());
+    }
+    Box::into_raw(Box::new(DecomposeContextBuilder::new(PetriNetVec(parts_m)).build()))
 }
 
 #[no_mangle]

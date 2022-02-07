@@ -39,7 +39,6 @@ public:
     void setAllowMods(Modes mods);
 
     QVariant toVariant();
-    void fromVariant(const QVariant&, ffi::PetriNet*);
 
     void removeAll();
     PetriObject* netItemAt(const QPointF& pos);

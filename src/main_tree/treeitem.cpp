@@ -149,32 +149,38 @@ void RootTreeItem::fromVariant(const QVariant& data) {
 NetTreeItem::NetTreeItem(TreeModel* model, TreeItem* parent): TreeItem(model, parent)
 {
     setName("Net tree");
-    m_decompose = new QAction("Decompose", this);
-    connect(m_decompose, &QAction::triggered, this, &NetTreeItem::onDecompose);
-
-    auto view = new GraphicsView;
     m_scene = new GraphicScene;
     m_scene->setAllowMods(GraphicScene::A_Default);
-    view->setScene(m_scene);
 
-    setDockWidget(new ads::CDockWidget("Petri net"));
-    dockWidget()->setWidget(view);
-    dockManager()->addDockWidgetTab(ads::DockWidgetArea::CenterDockWidgetArea, dockWidget());
+    initialize();
 }
 
 NetTreeItem::NetTreeItem(const QVariant &data, TreeModel *model, TreeItem *parent): TreeItem(model, parent) {
-    m_decompose = new QAction("Decompose", this);
-    connect(m_decompose, &QAction::triggered, this, &NetTreeItem::onDecompose);
-
     auto map = data.toHash();
     setName(map["name"].toString());
 
     auto net = ffi::PetriNet::create();
     net->fromVariant(map["net"]);
 
-    auto view = new GraphicsView;
     m_scene = new GraphicScene(map["scene"], net);
     m_scene->setAllowMods(GraphicScene::A_Default);
+
+    auto children = map["children"].toList();
+    for (auto child : children) {
+        auto childHash = child.toHash();
+        if (childHash["type"] == O_Decompose) {
+            this->addChild(new DecomposeItem(childHash, net, model, this));
+        }
+    }
+
+    initialize();
+}
+
+void NetTreeItem::initialize() {
+    m_decompose = new QAction("Decompose", this);
+    connect(m_decompose, &QAction::triggered, this, &NetTreeItem::onDecompose);
+
+    auto view = new GraphicsView;
     view->setScene(m_scene);
 
     setDockWidget(new ads::CDockWidget("Petri net"));
@@ -198,25 +204,68 @@ void NetTreeItem::onDecompose(bool checked)
     addChild(new DecomposeItem(decomposeContext, model(), this));
 }
 
+ffi::PetriNet *NetTreeItem::net() const {
+    return m_scene->net();
+}
+
 QVariant NetTreeItem::toVariant() const {
     QVariantHash net;
     net["type"] = item_type();
     net["name"] = name();
     net["net"] = m_scene->net()->toVariant();
     net["scene"] = m_scene->toVariant();
+
+    QVariantList children;
+    for (int i = 0; i < childCount(); i++) {
+        children << child(i)->toVariant();
+    }
+
+    net["children"] = children;
+
     return net;
 }
 
 DecomposeItem::DecomposeItem(ffi::DecomposeContext* ctx, TreeModel* _model, TreeItem *parent) : TreeItem(_model, parent), m_ctx(ctx)
 {
     setName("Decompose");
-    m_synthesis = new QAction("Synthesis");
-    connect(m_synthesis, &QAction::triggered, this, &DecomposeItem::onSynthesis);
-
     addChild(new PrimitiveSystemItem(m_ctx->primitive_net(), model(), this));
     addChild(new LinearBaseFragmentsItem(m_ctx->linear_base_fragments(), model(), this));
 
+    initialize();
+}
 
+DecomposeItem::DecomposeItem(const QVariant& data, ffi::PetriNet* net, TreeModel *_model, TreeItem *parent) : TreeItem(_model, parent), m_ctx(nullptr)
+{
+    auto map = data.toHash();
+    setName(map["name"].toString());
+
+    auto parts = map["parts"].toList();
+    auto array = QVector<ffi::PetriNet*>();
+    for (const auto& part : parts) {
+        auto net = ffi::PetriNet::create();
+        net->fromVariant(part);
+        array.push_back(net);
+    }
+
+    m_ctx = ffi::DecomposeContext::fromNets(std::move(array));
+
+    auto children = map["children"].toList();
+    for (const auto& child : children) {
+        auto childHash = child.toHash();
+        if (childHash["type"].toInt() == O_PrimitiveSystem) {
+            addChild(new PrimitiveSystemItem(childHash, m_ctx->primitive_net(), model(), this));
+        }
+        else if (childHash["type"].toInt() == O_LinearBaseFragments) {
+            addChild(new LinearBaseFragmentsItem(childHash, m_ctx->linear_base_fragments(), model(), this));
+        }
+    }
+
+    initialize();
+}
+
+void DecomposeItem::initialize() {
+    m_synthesis = new QAction("Synthesis");
+    connect(m_synthesis, &QAction::triggered, this, &DecomposeItem::onSynthesis);
 }
 
 QMenu *DecomposeItem::contextMenu()
@@ -233,14 +282,55 @@ void DecomposeItem::onSynthesis(bool checked)
     addChild(new SynthesisItem(ffi::SynthesisContext::init(m_ctx), model(), this));
 }
 
+QVariant DecomposeItem::toVariant() const {
+
+    QVariantHash result;
+    QVariantList partsVariant;
+
+    result["type"] = item_type();
+    result["name"] = name();
+
+    auto parts = m_ctx->parts();
+    for (int i = 0; i < parts.size(); i++) {
+        partsVariant << parts[i]->toVariant();
+    }
+
+    result["parts"] = partsVariant;
+
+    QVariantList children;
+    for (int i = 0; i < childCount(); i++) {
+        children << child(i)->toVariant();
+    }
+    result["children"] = children;
+
+    return result;
+
+}
 
 PrimitiveSystemItem::PrimitiveSystemItem(ffi::PetriNet* net, TreeModel* _model, TreeItem *parent): TreeItem(_model, parent), m_net(net)
 {
     setName("Primitive system");
-    auto view = new GraphicsView;
     m_scene = new GraphicScene();
     m_scene->loadFromNet(m_net);
     m_scene->setAllowMods(GraphicScene::A_Nothing);
+
+    initialize();
+}
+
+PrimitiveSystemItem::PrimitiveSystemItem(const QVariant &data, ffi::PetriNet *net, TreeModel *_model, TreeItem *parent): TreeItem(_model, parent), m_net(net)
+{
+    auto map = data.toHash();
+
+    setName(map["name"].toString());
+
+    m_scene = new GraphicScene(map["scene"], net);
+    m_scene->setAllowMods(GraphicScene::A_Nothing);
+
+    initialize();
+}
+
+void PrimitiveSystemItem::initialize() {
+    auto view = new GraphicsView;
     view->setScene(m_scene);
 
     setDockWidget(new ads::CDockWidget("Primitive View"));
@@ -248,18 +338,50 @@ PrimitiveSystemItem::PrimitiveSystemItem(ffi::PetriNet* net, TreeModel* _model, 
     dockManager()->addDockWidgetTab(ads::DockWidgetArea::CenterDockWidgetArea, dockWidget());
 }
 
+QVariant PrimitiveSystemItem::toVariant() const {
+    QVariantHash result;
+    result["type"] = item_type();
+    result["name"] = name();
+    result["scene"] = m_scene->toVariant();
+    return result;
+}
+
 LinearBaseFragmentsItem::LinearBaseFragmentsItem(ffi::PetriNet* net, TreeModel* model, TreeItem *parent): TreeItem(model, parent), m_net(net)
 {
     setName("Linear base fragments");
-    auto view = new GraphicsView;
     m_scene = new GraphicScene;
     m_scene->loadFromNet(m_net);
     m_scene->setAllowMods(GraphicScene::A_Nothing);
+
+    initialize();
+}
+
+LinearBaseFragmentsItem::LinearBaseFragmentsItem(const QVariant &data, ffi::PetriNet *net, TreeModel *model, TreeItem *parent) : TreeItem(model, parent), m_net(net)
+{
+    auto map = data.toHash();
+    setName("Linear base fragments");
+    m_scene = new GraphicScene(map["scene"], net);
+    m_scene->setAllowMods(GraphicScene::A_Nothing);
+
+    initialize();
+}
+
+void LinearBaseFragmentsItem::initialize() {
+
+    auto view = new GraphicsView;
     view->setScene(m_scene);
 
     setDockWidget(new ads::CDockWidget("Linear base fragments"));
     dockWidget()->setWidget(view);
     dockManager()->addDockWidgetTab(ads::DockWidgetArea::CenterDockWidgetArea, dockWidget());
+}
+
+QVariant LinearBaseFragmentsItem::toVariant() const {
+    QVariantHash result;
+    result["type"] = item_type();
+    result["name"] = name();
+    result["scene"] = m_scene->toVariant();
+    return result;
 }
 
 SynthesisItem::SynthesisItem(ffi::SynthesisContext* ctx, TreeModel* _model, TreeItem *parent): TreeItem(_model, parent), m_ctx(ctx)

@@ -116,11 +116,17 @@ public:
         return ObjectType::O_Net;
     }
 
+    ffi::PetriNet* net() const;
+
     QVariant toVariant() const override;
 
 public slots:
 
     void onDecompose(bool checked);
+
+private:
+
+    void initialize();
 
 private:
 
@@ -131,13 +137,18 @@ private:
 
 class DecomposeItem : public TreeItem {
 public:
-    explicit DecomposeItem(ffi::DecomposeContext* ctx, TreeModel* model, TreeItem* parent = nullptr);
+    explicit DecomposeItem(ffi::DecomposeContext* ctx, TreeModel* model, TreeItem* parent);
+    explicit DecomposeItem(const QVariant& data, ffi::PetriNet* net, TreeModel* model, TreeItem* parent);
+
+    void initialize();
 
     QMenu *contextMenu() override;
 
     ObjectType item_type() const override {
         return ObjectType::O_Decompose;
     }
+
+    QVariant toVariant() const override;
 
 public slots:
 
@@ -153,10 +164,15 @@ private:
 class PrimitiveSystemItem : public TreeItem {
 public:
     explicit PrimitiveSystemItem(ffi::PetriNet* net, TreeModel* model, TreeItem* parent = nullptr);
+    explicit PrimitiveSystemItem(const QVariant& data, ffi::PetriNet* net, TreeModel* model, TreeItem* parent = nullptr);
+
+    void initialize();
 
     ObjectType item_type() const override {
         return ObjectType::O_PrimitiveSystem;
     }
+
+    QVariant toVariant() const override;
 
 private:
     ffi::PetriNet* m_net;
@@ -166,10 +182,15 @@ private:
 class LinearBaseFragmentsItem : public TreeItem {
 public:
     explicit LinearBaseFragmentsItem(ffi::PetriNet* net, TreeModel* model, TreeItem* parent = nullptr);
+    explicit LinearBaseFragmentsItem(const QVariant& data, ffi::PetriNet* net, TreeModel* model, TreeItem* parent = nullptr);
+
+    void initialize();
 
     ObjectType item_type() const override {
         return ObjectType::O_LinearBaseFragments;
     }
+
+    QVariant toVariant() const override;
 
 private:
     ffi::PetriNet* m_net;

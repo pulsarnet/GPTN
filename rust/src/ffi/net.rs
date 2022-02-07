@@ -14,9 +14,8 @@ pub extern "C" fn create_net() -> *mut PetriNet {
 
 #[no_mangle]
 pub unsafe extern "C" fn net_positions(net: &mut PetriNet, ret: &mut CVec<*const Vertex>) {
-    let result = net.elements
+    let result = net.positions
         .iter()
-        .filter(|p| p.is_position())
         .map(|p| p as *const Vertex).collect::<Vec<_>>();
 
     core::ptr::write_unaligned(ret, CVec::from(result));
@@ -24,9 +23,8 @@ pub unsafe extern "C" fn net_positions(net: &mut PetriNet, ret: &mut CVec<*const
 
 #[no_mangle]
 pub unsafe extern "C" fn net_transitions(net: &mut PetriNet, ret: &mut CVec<*const Vertex>) {
-    let result = net.elements
+    let result = net.transitions
         .iter()
-        .filter(|p| p.is_transition())
         .map(|p| p as *const Vertex).collect::<Vec<_>>();
 
     core::ptr::write_unaligned(ret, CVec::from(result));
@@ -44,20 +42,24 @@ pub unsafe extern "C" fn del(v: *mut PetriNet) {
 
 #[no_mangle]
 pub unsafe extern "C" fn add_position(net: &mut PetriNet) -> *const Vertex {
-    let added = net.add_position(net.next_position_index());
-    Box::into_raw(Box::new(added))
+    net.add_position(net.next_position_index()) as *const Vertex
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn add_position_with(net: &mut PetriNet, index: usize) -> *const Vertex {
-    let added = net.add_position(index as u64);
-    Box::into_raw(Box::new(added))
+    net.add_position(index as u64) as *const Vertex
+}
+
+#[no_mangle]
+pub extern "C" fn add_position_with_parent(net: &mut PetriNet, index: u64, parent: u64) -> *const Vertex {
+    let mut vertex = Vertex::position(index);
+    vertex.set_parent(parent);
+    net.insert(vertex) as *const Vertex
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn get_position(net: &mut PetriNet, index: usize) -> *const Vertex {
-    let position = net.get_position(index as u64).unwrap();
-    position as *const Vertex
+    net.get_position(index as u64).unwrap() as *const Vertex
 }
 
 #[no_mangle]
@@ -68,14 +70,19 @@ pub unsafe extern "C" fn remove_position(net: &mut PetriNet, position: *mut Vert
 
 #[no_mangle]
 pub unsafe extern "C" fn add_transition(net: &mut PetriNet) -> *const Vertex {
-    let added = net.add_transition(net.next_transition_index());
-    Box::into_raw(Box::new(added))
+    net.add_transition(net.next_transition_index()) as *const Vertex
 }
 
 #[no_mangle]
 pub extern "C" fn add_transition_with(net: &mut PetriNet, index: u64) -> *const Vertex {
-    let added = net.add_transition(index);
-    Box::into_raw(Box::new(added))
+    net.add_transition(index) as *const Vertex
+}
+
+#[no_mangle]
+pub extern "C" fn add_transition_with_parent(net: &mut PetriNet, index: u64, parent: u64) -> *const Vertex {
+    let mut vertex = Vertex::transition(index);
+    vertex.set_parent(parent);
+    net.insert(vertex) as *const Vertex
 }
 
 #[no_mangle]

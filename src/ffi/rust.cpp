@@ -15,10 +15,12 @@ extern "C" {
     void net_connections(const PetriNet& self, CVec<Connection*>* return$);
     Vertex* add_position(PetriNet&);
     Vertex* add_position_with(PetriNet&, usize);
+    Vertex* add_position_with_parent(PetriNet&, usize, usize);
     Vertex* get_position(PetriNet&, usize);
     void remove_position(PetriNet&, Vertex*);
     Vertex* add_transition(PetriNet&);
     Vertex* add_transition_with(PetriNet&, usize);
+    Vertex* add_transition_with_parent(PetriNet&, usize, usize);
     Vertex* get_transition(PetriNet&, usize);
     void remove_transition(PetriNet&, Vertex*);
     void connect_vertexes(PetriNet&, Vertex*, Vertex*);
@@ -32,6 +34,7 @@ extern "C" {
     char* vertex_get_name(const Vertex&);
     void vertex_set_name(Vertex&, char*);
     VertexType vertex_type(const Vertex&);
+    usize vertex_parent(const Vertex&);
 
     // Connection
     Vertex* connection_from(const Connection& self);
@@ -39,6 +42,7 @@ extern "C" {
 
     // DecomposeContext
     DecomposeContext* decompose_context_init(PetriNet&);
+    DecomposeContext* decompose_context_from_nets(PetriNet* const *, usize);
     usize decompose_context_positions(DecomposeContext&);
     usize decompose_context_transitions(DecomposeContext&);
     CMatrix* decompose_context_primitive_matrix(DecomposeContext&);
@@ -46,6 +50,7 @@ extern "C" {
     usize decompose_context_position_index(DecomposeContext&, usize);
     usize decompose_context_transition_index(DecomposeContext&, usize);
     PetriNet* decompose_context_linear_base_fragments(DecomposeContext&);
+    void decompose_context_parts(const DecomposeContext&, CVec<PetriNet*>* return$);
 
     // SynthesisContext
     SynthesisContext* synthesis_init(DecomposeContext&);
@@ -75,6 +80,10 @@ extern "C" {
     // CVec<Connection>
     usize vec_len_connection(const CVec<Connection*>* self);
     Connection* const* vec_data_connection(const CVec<Connection*>* self);
+
+    // CVec<PetriNet>
+    usize vec_len_nets(const CVec<PetriNet*>* self);
+    PetriNet* const* vec_data_nets(const CVec<PetriNet*>* self);
 };
 
 template<>
@@ -117,6 +126,21 @@ const std::size_t CVec<Connection *>::size_of() const noexcept {
     return sizeof(Connection*);
 }
 
+template<>
+usize CVec<PetriNet*>::size() const noexcept {
+    return ::vec_len_nets(this);
+}
+
+template<>
+PetriNet* const* CVec<PetriNet*>::data() const noexcept {
+    return ::vec_data_nets(this);
+}
+
+template<>
+const std::size_t CVec<PetriNet *>::size_of() const noexcept {
+    return sizeof(PetriNet*);
+}
+
 PetriNet *PetriNet::create() {
     return ::create_net();
 }
@@ -147,6 +171,10 @@ Vertex *PetriNet::add_position_with(usize index) {
     return ::add_position_with(*this, index);
 }
 
+Vertex *PetriNet::add_position_with_parent(usize index, usize parent) {
+    return ::add_position_with_parent(*this, index, parent);
+}
+
 Vertex *PetriNet::get_position(usize index) {
     return ::get_position(*this, index);
 }
@@ -161,6 +189,10 @@ Vertex *PetriNet::add_transition() {
 
 Vertex *PetriNet::add_transition_with(usize index) {
     return ::add_transition_with(*this, index);
+}
+
+Vertex *PetriNet::add_transition_with_parent(usize index, usize parent) {
+    return ::add_transition_with_parent(*this, index, parent);
 }
 
 Vertex *PetriNet::get_transition(usize index) {
@@ -219,16 +251,26 @@ void PetriNet::fromVariant(const QVariant &data) {
         auto index = vertex["index"].toInt();
         auto type = vertex["type"].toInt();
         auto label = vertex["label"].toString();
+        auto parent_index = vertex["parent"].toInt();
 
         Vertex* added = nullptr;
 
         if (type == VertexType::Position) {
-            auto markers = vertex["markers"].toInt();
-            added = add_position_with(index);
+            if (!parent_index) {
+                added = add_position_with(index);
+            }
+            else {
+                added = add_position_with_parent(index, parent_index);
+            }
             // TODO: set markers
         }
         else {
-            added = add_transition_with(index);
+            if (!parent_index) {
+                added = add_transition_with(index);
+            }
+            else {
+                added = add_transition_with_parent(index, parent_index);
+            }
         }
 
         added->set_name(label.toUtf8().data());
@@ -277,11 +319,16 @@ VertexType Vertex::type() const {
     return ::vertex_type(*this);
 }
 
+usize Vertex::parent() const {
+    return ::vertex_parent(*this);
+}
+
 QVariant Vertex::toVariant() const {
     QVariantHash vertex;
     vertex["type"] = type();
     vertex["index"] = index();
     vertex["label"] = get_name();
+    vertex["parent"] = parent();
 
     if (type() == VertexType::Position) {
         vertex["markers"] = markers();
@@ -321,6 +368,10 @@ DecomposeContext *DecomposeContext::init(PetriNet *net) {
     return ::decompose_context_init(*net);
 }
 
+DecomposeContext *DecomposeContext::fromNets(const QVector<PetriNet *>& data) {
+    return ::decompose_context_from_nets(data.data(), data.size());
+}
+
 usize DecomposeContext::positions() {
     return ::decompose_context_positions(*this);
 }
@@ -347,6 +398,12 @@ usize DecomposeContext::transition_index(usize i) {
 
 PetriNet *DecomposeContext::linear_base_fragments() {
     return ::decompose_context_linear_base_fragments(*this);
+}
+
+CVec<PetriNet *> DecomposeContext::parts() const {
+    CVec<PetriNet*> result${};
+    ::decompose_context_parts(*this, &result$);
+    return result$;
 }
 
 SynthesisContext *SynthesisContext::init(DecomposeContext *ctx) {
