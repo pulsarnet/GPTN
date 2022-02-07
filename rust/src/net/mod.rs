@@ -306,10 +306,10 @@ impl PetriNet {
 
         if let (Some(found), true) = (found, insert) {
             self.positions.insert(found + 1, element);
-        } else {
-            self.positions.push(element);
+            return &self.positions[found + 1];
         }
 
+        self.positions.push(element);
         self.positions.last().unwrap()
     }
 
@@ -338,10 +338,10 @@ impl PetriNet {
             insert, )
         {
             self.transitions.insert(found + 1, element);
-        } else {
-            self.transitions.push(element);
+            return &self.transitions[found + 1];
         }
 
+        self.transitions.push(element);
         self.transitions.last().unwrap()
     }
 
@@ -524,6 +524,8 @@ impl PetriNet {
         let mut result = Vec::new();
 
         for vertex in self.positions.iter() {
+
+            // If incoming edge to vertex exists then skip
             if self
                 .connections
                 .iter()
@@ -661,6 +663,8 @@ impl PetriNet {
         result.position_index = self.position_index.clone();
         result.transition_index = self.transition_index.clone();
 
+        log::info!("PART => {part:?}");
+
         // Fill result with loop elements
         part.iter().for_each(|element| {
             match element.type_ {
@@ -716,6 +720,7 @@ impl PetriNet {
                 };
 
                 if new_element.is_transition() {
+                    // Если переход не имеет выходных соединений
                     if let None = self.connections.iter().find(|c| c.first().eq(&new_element.index())) {
                         let parent = new_element.get_parent().unwrap();
                         if let Some(mut conn) = result
@@ -1011,7 +1016,7 @@ pub fn synthesis_program(programs: &mut SynthesisContext, index: usize) {
     {
         log::info!("SET MARKERS: {} <= {}", index, markers.row(index)[0]);
         position.set_markers(markers.row(index)[0] as usize);
-        pos_new_indexes.insert(position.clone(), index);
+        pos_new_indexes.insert(position.index(), index);
     }
 
     let mut trans_new_indexes = HashMap::new();
@@ -1021,12 +1026,12 @@ pub fn synthesis_program(programs: &mut SynthesisContext, index: usize) {
         .filter(|e| e.is_transition())
         .enumerate()
     {
-        trans_new_indexes.insert(transition.clone(), index);
+        trans_new_indexes.insert(transition.index(), index);
     }
 
     let mut connections = vec![];
     for transition in new_net.transitions.iter() {
-        let col = d_matrix.column(*trans_new_indexes.get(transition).unwrap());
+        let col = d_matrix.column(*trans_new_indexes.get(&transition.index()).unwrap());
         for (index, el) in col.iter().enumerate().filter(|e| e.1.ne(&0)) {
             let pos = pos_indexes_vec[index].clone();
             match *el > 0 {
