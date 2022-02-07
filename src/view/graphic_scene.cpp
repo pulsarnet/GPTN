@@ -50,17 +50,17 @@ GraphicScene::GraphicScene(const QVariant &data, ffi::PetriNet *net, QObject *pa
         auto to = connection->to();
 
         auto find_from = [=](PetriObject* object) {
-            return object->vertex()->type() == from->type() && object->index() == from->index();
+            return object->vertex()->type() == from.type && object->index() == from.id;
         };
 
         auto find_to = [=](PetriObject* object) {
-            return object->vertex()->type() == to->type() && object->index() == to->index();
+            return object->vertex()->type() == to.type && object->index() == to.id;
         };
 
         PetriObject* point1;
         PetriObject* point2;
 
-        if (from->type() == ffi::VertexType::Position) {
+        if (from.type == ffi::VertexType::Position) {
             auto point1_it = std::find_if(m_positions.begin(), m_positions.end(), find_from);
             auto point2_it = std::find_if(m_transition.begin(), m_transition.end(), find_to);
 
@@ -437,15 +437,15 @@ void GraphicScene::loadFromNet(ffi::PetriNet *net, const QString& algorithm) {
         auto from = connections[i]->from();
         auto to = connections[i]->to();
 
-        if (from->type() == ffi::VertexType::Position) {
-            auto position = getPosition(from->index());
-            auto transition = getTransition(to->index());
+        if (from.type == ffi::VertexType::Position) {
+            auto position = getPosition(from.id);
+            auto transition = getTransition(to.id);
             graph.addEdge(position->name(), transition->name());
             connectItems(position, transition);
         }
         else {
-            auto transition = getTransition(from->index());
-            auto position = getPosition(to->index());
+            auto transition = getTransition(from.id);
+            auto position = getPosition(to.id);
             graph.addEdge(position->name(), transition->name());
             connectItems(transition, position);
         }

@@ -3,22 +3,32 @@ use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::rc::Rc;
 
-#[derive(PartialEq, Hash, Eq, Clone)]
+#[repr(C)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub enum VertexType {
-    Position(u64, u64),
-    Transition(u64),
+    Position,
+    Transition
 }
 
 impl Default for VertexType {
     fn default() -> Self {
-        VertexType::Position(0, 0)
+        VertexType::Position
     }
+}
+
+#[repr(C)]
+#[derive(Default, PartialEq, Hash, Eq, Clone, Copy, Debug)]
+pub struct VertexIndex {
+    pub type_: VertexType,
+    pub id: usize,
 }
 
 #[derive(Clone, Default)]
 pub struct Vertex {
     type_: VertexType,
-    parent: Option<u64>,
+    id: usize,
+    markers: usize,
+    parent: Option<VertexIndex>,
     name: String
 }
 
@@ -38,10 +48,7 @@ impl Eq for Vertex {}
 
 impl Debug for Vertex {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let name = match self.type_ {
-            VertexType::Position(i, ..) => format!("p{}", i),
-            VertexType::Transition(i, ..) => format!("t{}", i),
-        };
+        let name = format!("{}", self.id);
 
         f.pad(name.as_str())
     }
@@ -49,10 +56,7 @@ impl Debug for Vertex {
 
 impl Display for Vertex {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let name = match self.type_ {
-            VertexType::Position(..) => self.get_name(),
-            VertexType::Transition(..) => self.get_name(),
-        };
+        let name = self.get_name();
 
         f.pad(name.as_str())
     }
@@ -67,45 +71,47 @@ impl Vertex {
     pub fn full_name(&self) -> String {
         let mut res = format!("{:?}", self);
         if let Some(parent) = self.parent {
-            res = format!("{}.{}", res, parent);
+            res = format!("{}.{}", res, parent.id);
         }
         res
     }
 
-    pub fn markers(&self) -> u64 {
+    pub fn markers(&self) -> usize {
         match self.type_ {
-            VertexType::Position(_, markers) => markers,
+            VertexType::Position => self.markers,
             _ => unreachable!(),
         }
     }
 
     pub fn add_marker(&mut self) {
-        if let VertexType::Position(.., ref mut v) = self.type_ {
-            *v += 1;
+        match self.type_ {
+            VertexType::Position => self.markers += 1,
+            _ => unreachable!()
         }
     }
 
-    pub fn set_markers(&mut self, count: u64) {
-        if let VertexType::Position(.., ref mut v) = self.type_ {
-            *v = count;
+    pub fn set_markers(&mut self, count: usize) {
+        match self.type_ {
+            VertexType::Position => self.markers = count,
+            _ => unreachable!()
         }
     }
 
     pub fn remove_marker(&mut self) {
-        if let VertexType::Position(.., ref mut v) = self.type_ {
-            if *v > 0 {
-                *v -= 1;
-            }
-        }
-    }
-
-    pub fn index(&self) -> u64 {
         match self.type_ {
-            VertexType::Position(i, ..) | VertexType::Transition(i, ..) => i,
+            VertexType::Position => self.markers -= 1,
+            _ => unreachable!()
         }
     }
 
-    pub fn get_parent(&self) -> Option<u64> {
+    pub fn index(&self) -> VertexIndex {
+        VertexIndex {
+            type_: self.type_,
+            id: self.id
+        }
+    }
+
+    pub fn get_parent(&self) -> Option<VertexIndex> {
         self.parent
     }
 
@@ -116,36 +122,37 @@ impl Vertex {
     pub fn get_name(&self) -> String {
         let mut name = self.name.clone();
         if self.parent.is_some() {
-            name = format!("{name}'");
+            name = format!("{name}");
         }
         name
     }
 
-    pub fn set_parent(&mut self, p: u64) {
+    pub fn set_parent(&mut self, p: VertexIndex) {
         self.parent = Some(p);
     }
 
-    pub fn split(&self, new_index: u64) -> Self {
+    pub fn split(&self, new_index: usize) -> Self {
         let mut split = self.clone();
-        match split.type_ {
-            VertexType::Position(ref mut index, _) | VertexType::Transition(ref mut index) => *index = new_index
-        };
-
+        split.id = new_index;
         split.parent = Some(self.index());
         split
     }
 
-    pub fn position(index: u64) -> Self {
+    pub fn position(index: usize) -> Self {
         Vertex {
-            type_: VertexType::Position(index, 0),
+            type_: VertexType::Position,
+            id: index,
+            markers: 0,
             parent: None,
             name: String::new()
         }
     }
 
-    pub fn transition(index: u64) -> Self {
+    pub fn transition(index: usize) -> Self {
         Vertex {
-            type_: VertexType::Transition(index),
+            type_: VertexType::Transition,
+            id: index,
+            markers: 0,
             parent: None,
             name: String::new()
         }
@@ -153,14 +160,14 @@ impl Vertex {
 
     pub fn is_position(&self) -> bool {
         match self.type_ {
-            VertexType::Position(..) => true,
+            VertexType::Position => true,
             _ => false,
         }
     }
 
     pub fn is_transition(&self) -> bool {
         match self.type_ {
-            VertexType::Transition(..) => true,
+            VertexType::Transition => true,
             _ => false,
         }
     }

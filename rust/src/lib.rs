@@ -156,15 +156,15 @@ impl DecomposeContext {
 
                 if d_input.row(row)[column] < 0 {
                     result.connect(
-                        self.positions.iter().enumerate().find(|(k, _)| *k == row).map(|(_, k)| k.clone()).unwrap(),
-                        self.transitions.iter().enumerate().find(|(k, _)| *k == column).map(|(_, k)| k.clone()).unwrap(),
+                        self.positions.iter().enumerate().find(|(k, _)| *k == row).map(|(_, k)| k.index()).unwrap(),
+                        self.transitions.iter().enumerate().find(|(k, _)| *k == column).map(|(_, k)| k.index()).unwrap(),
                     )
                 }
 
                 if d_output.column(column)[row] > 0 {
                     result.connect(
-                        self.transitions.iter().enumerate().find(|(k, _)| *k == column).map(|(_, k)| k.clone()).unwrap(),
-                        self.positions.iter().enumerate().find(|(k, _)| *k == row).map(|(_, k)| k.clone()).unwrap(),
+                        self.transitions.iter().enumerate().find(|(k, _)| *k == column).map(|(_, k)| k.index()).unwrap(),
+                        self.positions.iter().enumerate().find(|(k, _)| *k == row).map(|(_, k)| k.index()).unwrap(),
                     )
                 }
 
@@ -227,12 +227,12 @@ extern "C" fn decompose_context_linear_base_fragments(ctx: &DecomposeContext) ->
 
 #[no_mangle]
 pub unsafe extern "C" fn decompose_context_position_index(ctx: &DecomposeContext, index: usize) -> usize {
-    ctx.positions[index].index() as usize
+    ctx.positions[index].index().id as usize
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn decompose_context_transition_index(ctx: &DecomposeContext, index: usize) -> usize {
-    ctx.transitions[index].index() as usize
+    ctx.transitions[index].index().id as usize
 }
 
 pub struct SynthesisProgram {

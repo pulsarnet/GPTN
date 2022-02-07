@@ -69,6 +69,11 @@ namespace ffi {
         void fromVariant(const QVariant& data);
     };
 
+    struct VertexIndex {
+        VertexType type;
+        usize id;
+    };
+
     struct Vertex {
         usize index() const;
         usize markers() const;
@@ -83,8 +88,8 @@ namespace ffi {
     };
 
     struct Connection {
-        Vertex* from() const;
-        Vertex* to() const;
+        VertexIndex from() const;
+        VertexIndex to() const;
 
         QVariant toVariant() const;
     };

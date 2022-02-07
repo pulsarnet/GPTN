@@ -6,6 +6,7 @@
 use ffi::vec::CVec;
 use ::{PetriNet, Vertex};
 use net::Connection;
+use net::vertex::{VertexIndex, VertexType};
 
 #[no_mangle]
 pub extern "C" fn create_net() -> *mut PetriNet {
@@ -47,24 +48,24 @@ pub unsafe extern "C" fn add_position(net: &mut PetriNet) -> *const Vertex {
 
 #[no_mangle]
 pub unsafe extern "C" fn add_position_with(net: &mut PetriNet, index: usize) -> *const Vertex {
-    net.add_position(index as u64) as *const Vertex
+    net.add_position(index) as *const Vertex
 }
 
 #[no_mangle]
-pub extern "C" fn add_position_with_parent(net: &mut PetriNet, index: u64, parent: u64) -> *const Vertex {
+pub extern "C" fn add_position_with_parent(net: &mut PetriNet, index: usize, parent: usize) -> *const Vertex {
     let mut vertex = Vertex::position(index);
-    vertex.set_parent(parent);
+    vertex.set_parent(VertexIndex { type_: VertexType::Position, id: parent});
     net.insert(vertex) as *const Vertex
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn get_position(net: &mut PetriNet, index: usize) -> *const Vertex {
-    net.get_position(index as u64).unwrap() as *const Vertex
+    net.get_position(index).unwrap() as *const Vertex
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn remove_position(net: &mut PetriNet, position: *mut Vertex) {
-    net.remove_position((&*position).index());
+    net.remove_position((&*position).index().id);
     Box::from_raw(position);
 }
 
@@ -74,26 +75,26 @@ pub unsafe extern "C" fn add_transition(net: &mut PetriNet) -> *const Vertex {
 }
 
 #[no_mangle]
-pub extern "C" fn add_transition_with(net: &mut PetriNet, index: u64) -> *const Vertex {
+pub extern "C" fn add_transition_with(net: &mut PetriNet, index: usize) -> *const Vertex {
     net.add_transition(index) as *const Vertex
 }
 
 #[no_mangle]
-pub extern "C" fn add_transition_with_parent(net: &mut PetriNet, index: u64, parent: u64) -> *const Vertex {
+pub extern "C" fn add_transition_with_parent(net: &mut PetriNet, index: usize, parent: usize) -> *const Vertex {
     let mut vertex = Vertex::transition(index);
-    vertex.set_parent(parent);
+    vertex.set_parent(VertexIndex { type_: VertexType::Transition, id: parent});
     net.insert(vertex) as *const Vertex
 }
 
 #[no_mangle]
 pub extern "C" fn get_transition(net: &mut PetriNet, index: usize) -> *const Vertex {
-    let transition = net.get_transition(index as u64).unwrap();
+    let transition = net.get_transition(index).unwrap();
     transition as *const Vertex
 }
 
 #[no_mangle]
 pub extern "C" fn remove_transition(net: &mut PetriNet, transition: *mut Vertex) {
-    net.remove_transition(unsafe { &*transition }.index());
+    net.remove_transition(unsafe { &*transition }.index().id);
     unsafe { Box::from_raw(transition); }
 }
 
@@ -104,7 +105,7 @@ pub unsafe extern "C" fn connect_vertexes(
     to: *const Vertex,
 )
 {
-    net.connect((&*from).clone(), (&*to).clone());
+    net.connect((&*from).index(), (&*to).index());
 }
 
 #[no_mangle]
@@ -117,5 +118,5 @@ pub unsafe extern "C" fn remove_connection(
     let from = &*from;
     let to = &*to;
     net.connections
-        .drain_filter(|c| c.first().eq(from) && c.second().eq(to));
+        .drain_filter(|c| c.first().eq(&from.index()) && c.second().eq(&to.index()));
 }

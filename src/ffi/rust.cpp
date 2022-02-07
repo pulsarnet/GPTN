@@ -37,8 +37,8 @@ extern "C" {
     usize vertex_parent(const Vertex&);
 
     // Connection
-    Vertex* connection_from(const Connection& self);
-    Vertex* connection_to(const Connection& self);
+    VertexIndex connection_from(const Connection& self);
+    VertexIndex connection_to(const Connection& self);
 
     // DecomposeContext
     DecomposeContext* decompose_context_init(PetriNet&);
@@ -237,6 +237,7 @@ QVariant PetriNet::toVariant() const {
 
     for (int i = 0; i < conns.size(); i++) {
         auto connection = conns[i];
+
         v_connections.push_back(connection->toVariant());
     }
 
@@ -342,11 +343,11 @@ QVariant Vertex::toVariant() const {
     return vertex;
 }
 
-Vertex *Connection::from() const {
+VertexIndex Connection::from() const {
     return ::connection_from(*this);
 }
 
-Vertex *Connection::to() const {
+VertexIndex Connection::to() const {
     return ::connection_to(*this);
 }
 
@@ -355,12 +356,12 @@ QVariant Connection::toVariant() const {
     auto t = to();
 
     QVariantHash from;
-    from["type"] = f->type();
-    from["index"] = f->index();
+    from["type"] = f.type;
+    from["index"] = f.id;
 
     QVariantHash to;
-    to["type"] = t->type();
-    to["index"] = t->index();
+    to["type"] = t.type;
+    to["index"] = t.id;
 
     QVariantHash connection;
     connection["from"] = from;

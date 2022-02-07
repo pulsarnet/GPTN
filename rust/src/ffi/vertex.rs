@@ -1,20 +1,15 @@
 use std::ffi::{CStr, CString};
 use libc::c_char;
+use net::vertex::VertexType;
 use Vertex;
 
-#[repr(C)]
-pub enum VertexType {
-    Position,
-    Transition
+#[no_mangle]
+pub extern "C" fn vertex_index(vertex: *const Vertex) -> usize {
+    unsafe { &*vertex }.index().id
 }
 
 #[no_mangle]
-pub extern "C" fn vertex_index(vertex: *const Vertex) -> u64 {
-    unsafe { &*vertex }.index()
-}
-
-#[no_mangle]
-pub extern "C" fn vertex_markers(vertex: *const Vertex) -> u64 {
+pub extern "C" fn vertex_markers(vertex: *const Vertex) -> usize {
     unsafe { &*vertex }.markers()
 }
 
@@ -53,5 +48,5 @@ pub extern "C" fn vertex_type(vertex: *const Vertex) -> VertexType {
 
 #[no_mangle]
 pub extern "C" fn vertex_parent(vertex: &Vertex) -> usize {
-    vertex.get_parent().map_or(0, |parent| parent as usize)
+    vertex.get_parent().map_or(0, |parent| parent.id as usize)
 }

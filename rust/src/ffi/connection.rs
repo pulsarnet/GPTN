@@ -1,12 +1,13 @@
 use net::Connection;
+use net::vertex::{VertexIndex, VertexType};
 use Vertex;
 
 #[no_mangle]
-pub extern "C" fn connection_from(connection: *const Connection) -> *const Vertex {
-    unsafe { &*connection }.first() as *const Vertex
+pub extern "C" fn connection_from(connection: *const Connection) -> VertexIndex {
+    unsafe { &*connection }.first()
 }
 
 #[no_mangle]
-pub extern "C" fn connection_to(connection: *const Connection) -> *const Vertex {
-    unsafe { &*connection }.second() as *const Vertex
+pub extern "C" fn connection_to(connection: *const Connection) -> VertexIndex {
+    unsafe { &*connection }.second()
 }
