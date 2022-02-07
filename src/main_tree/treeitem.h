@@ -200,30 +200,43 @@ private:
 class SynthesisItem : public TreeItem {
 public:
     explicit SynthesisItem(ffi::SynthesisContext* ctx, TreeModel* model, TreeItem* parent = nullptr);
+    explicit SynthesisItem(const QVariant& data, ffi::DecomposeContext* ctx, TreeModel* model, TreeItem* parent = nullptr);
 
     ObjectType item_type() const override {
         return ObjectType::O_Synthesis;
     }
+
+    QVariant toVariant() const override;
+
 private:
     ffi::SynthesisContext* m_ctx = nullptr;
 };
 
 class MatrixItem : public TreeItem {
+
 public:
     explicit MatrixItem(ffi::CMatrix* matrix, TreeModel* model, TreeItem* parent = nullptr);
 
     ObjectType item_type() const override {
         return ObjectType::O_Matrix;
     }
+
+private:
+
+    ffi::CMatrix* m_matrix = nullptr;
+
 };
 
 class SynthesisProgramsItem : public TreeItem {
 public:
     explicit SynthesisProgramsItem(ffi::SynthesisContext* ctx, TreeModel* model, TreeItem* parent = nullptr);
+    explicit SynthesisProgramsItem(const QVariant& data, ffi::SynthesisContext* ctx, TreeModel* model, TreeItem* parent = nullptr);
 
     ObjectType item_type() const override {
         return ObjectType::O_SynthesisPrograms;
     }
+
+    QVariant toVariant() const override;
 
 public slots:
 
@@ -233,11 +246,14 @@ public slots:
 class SynthesisProgramItem : public TreeItem {
 public:
     explicit SynthesisProgramItem(ffi::PetriNet* net, TreeModel* model, TreeItem* parent = nullptr);
+    explicit SynthesisProgramItem(const QVariant& data, ffi::PetriNet* net, TreeModel* model, TreeItem* parent = nullptr);
 
 
     ObjectType item_type() const override {
         return ObjectType::O_SynthesisProgram;
     }
+
+    QVariant toVariant() const override;
 
 private:
 

@@ -130,19 +130,17 @@ void RootTreeItem::onNetCreate(bool checked)
 }
 
 QVariant RootTreeItem::toVariant() const {
-    QVariantList children;
+    QVariantList nets;
     for (int i = 0; i < childCount(); i++) {
-        children << child(i)->toVariant();
+        nets << child(i)->toVariant();
     }
-    return children;
+    return nets;
 }
 
 void RootTreeItem::fromVariant(const QVariant& data) {
-    auto children = data.toList();
-    for (auto & i : children) {
-        auto child = i.toHash();
-        if (child["type"] == O_Net)
-            this->addChild(new NetTreeItem(child, model(), this));
+    auto nets = data.toList();
+    for (auto & net : nets) {
+        this->addChild(new NetTreeItem(net, model(), this));
     }
 }
 
@@ -257,6 +255,9 @@ DecomposeItem::DecomposeItem(const QVariant& data, ffi::PetriNet* net, TreeModel
         }
         else if (childHash["type"].toInt() == O_LinearBaseFragments) {
             addChild(new LinearBaseFragmentsItem(childHash, m_ctx->linear_base_fragments(), model(), this));
+        }
+        else if (childHash["type"].toInt() == O_Synthesis) {
+            addChild(new SynthesisItem(childHash, m_ctx, model(), this));
         }
     }
 
@@ -391,7 +392,44 @@ SynthesisItem::SynthesisItem(ffi::SynthesisContext* ctx, TreeModel* _model, Tree
     addChild(new SynthesisProgramsItem(m_ctx, model(), this));
 }
 
-MatrixItem::MatrixItem(ffi::CMatrix* matrix, TreeModel* model, TreeItem *parent): TreeItem(model, parent)
+SynthesisItem::SynthesisItem(const QVariant &data, ffi::DecomposeContext *ctx, TreeModel *_model, TreeItem *parent): TreeItem(_model, parent)
+, m_ctx(ffi::SynthesisContext::create(ctx))
+{
+    auto map = data.toHash();
+    setName(map["name"].toString());
+    m_ctx->fromVariant(map["data"]);
+
+    auto children = map["children"].toList();
+    for (auto& ch : children) {
+        auto childHash = ch.toHash();
+        if (childHash["type"].toInt() == O_Matrix) {
+            addChild(new MatrixItem(m_ctx->c_matrix(), model(), this));
+        }
+        else if (childHash["type"].toInt() == O_SynthesisPrograms) {
+            addChild(new SynthesisProgramsItem(childHash, m_ctx, model(), this));
+        }
+    }
+}
+
+QVariant SynthesisItem::toVariant() const {
+    QVariantHash result;
+    result["type"] = item_type();
+    result["name"] = name();
+    result["data"] = m_ctx->toVariant();
+
+    QVariantList children;
+    for (int i = 0; i < childCount(); i++) {
+        if (child(i)->item_type() == O_Matrix)
+            continue;
+
+        children << child(i)->toVariant();
+    }
+    result["children"] = children;
+
+    return result;
+}
+
+MatrixItem::MatrixItem(ffi::CMatrix* matrix, TreeModel* model, TreeItem *parent): TreeItem(model, parent), m_matrix(matrix)
 {
     setName("Matrix");
     auto view = new QTableView;
@@ -413,10 +451,43 @@ SynthesisProgramsItem::SynthesisProgramsItem(ffi::SynthesisContext* ctx, TreeMod
     dockManager()->addDockWidgetTab(ads::DockWidgetArea::CenterDockWidgetArea, dockWidget());
 }
 
+SynthesisProgramsItem::SynthesisProgramsItem(const QVariant &data, ffi::SynthesisContext *ctx, TreeModel *_model, TreeItem *parent) : TreeItem(_model, parent)
+{
+    auto view = new SynthesisTable(ctx);
+    connect(view, &SynthesisTable::signalSynthesisedProgram, this, &SynthesisProgramsItem::onProgramSynthesed);
+
+    setDockWidget(new ads::CDockWidget(name()));
+    dockWidget()->setWidget(view);
+    dockManager()->addDockWidgetTab(ads::DockWidgetArea::CenterDockWidgetArea, dockWidget());
+
+    auto map = data.toMap();
+    setName(map["name"].toString());
+
+    auto programsList = map["children"].toList();
+    for (int i = 0; i < programsList.size(); i++) {
+        addChild(new SynthesisProgramItem(programsList[i], ctx->program_net_after(i), model(), this));
+    }
+}
+
 void SynthesisProgramsItem::onProgramSynthesed(ffi::PetriNet *net) {
     addChild(new SynthesisProgramItem(net, model(), this));
 }
 
+QVariant SynthesisProgramsItem::toVariant() const {
+    QVariantHash result;
+    result["type"] = item_type();
+    result["name"] = name();
+
+    QVariantList children;
+    for (int i = 0; i < childCount(); i++) {
+        auto variant = child(i)->toVariant();
+        if (!variant.isNull())
+            children << variant;
+    }
+    result["children"] = children;
+
+    return result;
+}
 
 SynthesisProgramItem::SynthesisProgramItem(ffi::PetriNet *net, TreeModel *model, TreeItem *parent): TreeItem(model, parent), m_net(net) {
     setName("Program result");
@@ -430,4 +501,28 @@ SynthesisProgramItem::SynthesisProgramItem(ffi::PetriNet *net, TreeModel *model,
     setDockWidget(new ads::CDockWidget("Program result"));
     dockWidget()->setWidget(view);
     dockManager()->addDockWidgetTab(ads::DockWidgetArea::CenterDockWidgetArea, dockWidget());
+}
+
+SynthesisProgramItem::SynthesisProgramItem(const QVariant &data, ffi::PetriNet *net, TreeModel *model, TreeItem *parent): TreeItem(model, parent), m_net(net)
+{
+    setName("Program result");
+
+    auto view = new GraphicsView;
+    m_scene = new GraphicScene(data.toHash()["scene"], net);
+    m_scene->loadFromNet(m_net);
+    m_scene->setAllowMods(GraphicScene::A_Nothing);
+    view->setScene(m_scene);
+
+    setDockWidget(new ads::CDockWidget("Program result"));
+    dockWidget()->setWidget(view);
+    dockManager()->addDockWidgetTab(ads::DockWidgetArea::CenterDockWidgetArea, dockWidget());
+}
+
+QVariant SynthesisProgramItem::toVariant() const {
+    QVariantHash result;
+    result["type"] = item_type();
+    result["name"] = name();
+    result["scene"] = m_scene->toVariant();
+
+    return result;
 }

@@ -53,21 +53,26 @@ extern "C" {
     void decompose_context_parts(const DecomposeContext&, CVec<PetriNet*>* return$);
 
     // SynthesisContext
+    SynthesisContext* synthesis_create(DecomposeContext&);
     SynthesisContext* synthesis_init(DecomposeContext&);
-    usize synthesis_programs(SynthesisContext&);
+    usize synthesis_programs(const SynthesisContext&);
+    usize synthesis_program_size(const SynthesisContext&, usize);
     void synthesis_add_program(SynthesisContext&);
     void synthesis_remove_program(SynthesisContext&, usize);
-    usize synthesis_program_value(SynthesisContext&, usize, usize);
+    usize synthesis_program_value(const SynthesisContext&, usize, usize);
     void synthesis_set_program_value(SynthesisContext&, usize, usize, usize);
-    char* synthesis_program_header_name(SynthesisContext&, usize, bool);
-    CMatrix* synthesis_c_matrix(SynthesisContext&);
+    char* synthesis_program_header_name(const SynthesisContext&, usize, bool);
+    CMatrix* synthesis_c_matrix(const SynthesisContext&);
     PetriNet* synthesis_eval_program(SynthesisContext&, usize);
-    DecomposeContext* synthesis_decompose_ctx(SynthesisContext&);
+    PetriNet* synthesis_program_net_after(const SynthesisContext&, usize);
+    PetriNet* synthesis_init_program_net_after(SynthesisContext&, usize);
+    DecomposeContext* synthesis_decompose_ctx(const SynthesisContext&);
 
     // CMatrix
-    i32 matrix_index(CMatrix&, usize, usize);
-    usize matrix_rows(CMatrix&);
-    usize matrix_columns(CMatrix&);
+    i32 matrix_index(const CMatrix&, usize, usize);
+    void matrix_set_value(CMatrix&, usize, usize, i32);
+    usize matrix_rows(const CMatrix&);
+    usize matrix_columns(const CMatrix&);
 
     // CVec<u64>
     usize vec_len_u64(const CVec<usize>* self);
@@ -406,12 +411,20 @@ CVec<PetriNet *> DecomposeContext::parts() const {
     return result$;
 }
 
+SynthesisContext *SynthesisContext::create(DecomposeContext *ctx) {
+    return ::synthesis_create(*ctx);
+}
+
 SynthesisContext *SynthesisContext::init(DecomposeContext *ctx) {
     return ::synthesis_init(*ctx);
 }
 
-usize SynthesisContext::programs() {
+usize SynthesisContext::programs() const {
     return ::synthesis_programs(*this);
+}
+
+usize SynthesisContext::program_size(usize index) const {
+    return ::synthesis_program_size(*this, index);
 }
 
 void SynthesisContext::add_program() {
@@ -422,7 +435,7 @@ void SynthesisContext::remove_program(usize index) {
     ::synthesis_remove_program(*this, index);
 }
 
-usize SynthesisContext::program_value(usize program, usize index) {
+usize SynthesisContext::program_value(usize program, usize index) const {
     return ::synthesis_program_value(*this, program, index);
 }
 
@@ -430,11 +443,11 @@ void SynthesisContext::set_program_value(usize program, usize index, usize value
     ::synthesis_set_program_value(*this, program, index, value);
 }
 
-char *SynthesisContext::program_header_name(usize index, bool label) {
+char *SynthesisContext::program_header_name(usize index, bool label) const {
     return ::synthesis_program_header_name(*this, index, label);
 }
 
-CMatrix *SynthesisContext::c_matrix() {
+CMatrix *SynthesisContext::c_matrix() const {
     return ::synthesis_c_matrix(*this);
 }
 
@@ -442,18 +455,101 @@ PetriNet *SynthesisContext::eval_program(usize index) {
     return ::synthesis_eval_program(*this, index);
 }
 
-DecomposeContext *SynthesisContext::decompose_ctx() {
+PetriNet* SynthesisContext::program_net_after(usize index) const {
+    return ::synthesis_program_net_after(*this, index);
+}
+
+PetriNet *SynthesisContext::init_program_after(usize index) {
+    return ::synthesis_init_program_net_after(*this, index);
+}
+
+DecomposeContext *SynthesisContext::decompose_ctx() const  {
     return ::synthesis_decompose_ctx(*this);
 }
 
-i32 CMatrix::index(usize row, usize col) {
+QVariant SynthesisContext::toVariant() const {
+    QVariantHash result;
+    result["c_matrix"] = c_matrix()->toVariant();
+
+    QVariantList programsList;
+    for (int i = 0; i < programs(); i++) {
+        QVariantHash programHash;
+        programHash["net_after"] = program_net_after(i)->toVariant();
+
+        QVariantList data;
+        for (int j = 0; j < program_size(i); j++) {
+            data.push_back(program_value(i, j));
+        }
+        programHash["data"] = data;
+
+        programsList << programHash;
+    }
+
+    result["programs"] = programsList;
+
+    return result;
+}
+
+void SynthesisContext::fromVariant(const QVariant &data) {
+    auto map = data.toHash();
+
+    // Восстановим тензор преобразования
+    c_matrix()->fromVariant(map["c_matrix"]);
+
+    // Восстановим синтезированные программы
+    auto programsList = map["programs"].toList();
+    for (auto& program : programsList) {
+        add_program();
+
+        auto programHash = program.toHash();
+        auto net = init_program_after(programs() - 1);
+        net->fromVariant(programHash["net_after"]);
+
+        auto programValues = programHash["data"].toList();
+        for (int i = 0; i < programValues.size(); i++) {
+            set_program_value(programs() - 1, i, programValues[i].toInt());
+        }
+    }
+}
+
+i32 CMatrix::index(usize row, usize col) const {
     return ::matrix_index(*this, row, col);
 }
 
-usize CMatrix::rows() {
+void CMatrix::set_value(usize row, usize col, i32 value) {
+    ::matrix_set_value(*this, row, col, value);
+}
+
+usize CMatrix::rows() const {
     return ::matrix_rows(*this);
 }
 
-usize CMatrix::columns() {
+usize CMatrix::columns() const {
     return ::matrix_columns(*this);
+}
+
+QVariant CMatrix::toVariant() const {
+    QVariantHash result;
+    result["rows"] = rows();
+    result["columns"] = columns();
+
+    QVariantList data;
+    for (int i = 0; i < rows(); i++) {
+        for (int j = 0; j < columns(); j++) {
+            data << index(i, j);
+        }
+    }
+    result["data"] = data;
+
+    return result;
+}
+
+void CMatrix::fromVariant(const QVariant &data) {
+    auto map = data.toHash();
+    auto raw = map["data"].toList();
+    for (int i = 0; i < rows(); i++) {
+        for (int j = 0; j < columns(); j++) {
+            set_value(i, j, raw[i * columns() + j].toInt());
+        }
+    }
 }

@@ -235,13 +235,37 @@ pub unsafe extern "C" fn decompose_context_transition_index(ctx: &DecomposeConte
     ctx.transitions[index].index() as usize
 }
 
+pub struct SynthesisProgram {
+    data: Vec<usize>,
+    net_before: Option<PetriNet>,
+    net_after: Option<PetriNet>
+}
+
+impl SynthesisProgram {
+    pub fn new(size: usize) -> Self {
+        SynthesisProgram {
+            data: vec![0; size],
+            net_before: None,
+            net_after: None
+        }
+    }
+}
+
 pub struct SynthesisContext<'a> {
-    pub programs: Vec<Vec<usize>>,
+    pub programs: Vec<SynthesisProgram>,
     pub c_matrix: crate::CMatrix,
     pub decompose_context: &'a DecomposeContext
 }
 
 impl<'a> SynthesisContext<'a> {
+
+    pub fn new(decompose_ctx: &'a DecomposeContext) -> Self {
+        SynthesisContext {
+            programs: vec![],
+            c_matrix: CMatrix::from(DMatrix::<i32>::zeros(decompose_ctx.positions.len(), decompose_ctx.positions.len())),
+            decompose_context: decompose_ctx
+        }
+    }
 
     pub fn init_syn(decompose_ctx: &'a DecomposeContext) -> Self {
 
@@ -290,12 +314,12 @@ impl<'a> SynthesisContext<'a> {
         &self.decompose_context.transitions
     }
 
-    pub fn programs(&self) -> &Vec<Vec<usize>> {
+    pub fn programs(&self) -> &Vec<SynthesisProgram> {
         &self.programs
     }
 
     pub fn add_program(&mut self) {
-        self.programs.push(vec![0; self.positions().len() + self.transitions().len()])
+        self.programs.push(SynthesisProgram::new(self.positions().len() + self.transitions().len()))
     }
 
     pub fn remove_program(&mut self, index: usize) {
@@ -303,11 +327,11 @@ impl<'a> SynthesisContext<'a> {
     }
 
     pub fn program_value(&self, program: usize, index: usize) -> usize {
-        self.programs()[program][index]
+        self.programs()[program].data[index]
     }
 
     pub fn set_program_value(&mut self, program: usize, index: usize, value: usize) {
-        self.programs[program][index] = value;
+        self.programs[program].data[index] = value;
     }
 
     pub fn program_header_name(&self, index: usize, label: bool) -> String {
@@ -396,6 +420,11 @@ impl<'a> SynthesisContext<'a> {
 }
 
 #[no_mangle]
+pub extern "C" fn synthesis_create(ctx: &DecomposeContext) -> *const SynthesisContext {
+    Box::into_raw(Box::new(SynthesisContext::new(ctx)))
+}
+
+#[no_mangle]
 pub extern "C" fn synthesis_decompose_ctx(ctx: &SynthesisContext) -> *const DecomposeContext {
     ctx.decompose_context as *const DecomposeContext
 }
@@ -444,6 +473,21 @@ extern "C" fn synthesis_programs(ctx: &SynthesisContext) -> usize {
     ctx.programs().len()
 }
 
+#[no_mangle]
+extern "C" fn synthesis_program_size(ctx: &SynthesisContext, index: usize) -> usize {
+    ctx.programs()[index].data.len()
+}
+
+#[no_mangle]
+extern "C" fn synthesis_program_net_after(ctx: &SynthesisContext, index: usize) -> *const PetriNet {
+    ctx.programs()[index].net_after.as_ref().unwrap() as *const PetriNet
+}
+
+#[no_mangle]
+extern "C" fn synthesis_init_program_net_after(ctx: &mut SynthesisContext, index: usize) -> *const PetriNet {
+    ctx.programs[index].net_after = Some(PetriNet::new());
+    ctx.programs[index].net_after.as_ref().unwrap() as *const PetriNet
+}
 
 #[no_mangle]
 extern "C" fn synthesis_c_matrix(ctx: &SynthesisContext) -> *const CMatrix {
@@ -461,6 +505,11 @@ extern "C" fn matrix_index(matrix: &CMatrix, row: usize, column: usize) -> i32 {
 }
 
 #[no_mangle]
+extern "C" fn matrix_set_value(matrix: &mut CMatrix, row: usize, column: usize, value: i32) {
+    matrix.inner.row_mut(row)[column] = value;
+}
+
+#[no_mangle]
 extern "C" fn matrix_rows(matrix: &CMatrix) -> usize {
     matrix.inner.nrows()
 }
@@ -472,7 +521,11 @@ extern "C" fn matrix_columns(matrix: &CMatrix) -> usize {
 
 // Вычисление программ синтеза
 #[no_mangle]
-extern "C" fn synthesis_eval_program(ctx: &mut SynthesisContext, index: usize) -> *mut PetriNet {
-    let result = synthesis_program(ctx, index);
-    Box::into_raw(Box::new(result))
+extern "C" fn synthesis_eval_program(ctx: &mut SynthesisContext, index: usize) -> *const PetriNet {
+    if ctx.programs[index].net_after.is_some() {
+        return ctx.programs[index].net_after.as_ref().unwrap() as *const PetriNet
+    }
+
+    synthesis_program(ctx, index);
+    ctx.programs[index].net_after.as_ref().unwrap() as *const PetriNet
 }

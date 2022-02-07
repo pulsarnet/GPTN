@@ -107,22 +107,33 @@ namespace ffi {
     struct SynthesisContext {
 
         static SynthesisContext* init(DecomposeContext*);
+        static SynthesisContext* create(DecomposeContext*);
 
-        usize programs();
+        usize programs() const;
+        usize program_size(usize index) const;
         void add_program();
         void remove_program(usize index);
-        usize program_value(usize program, usize index);
+        usize program_value(usize program, usize index) const;
         void set_program_value(usize program, usize index, usize value);
-        char* program_header_name(usize index, bool label);
-        CMatrix* c_matrix();
+        char* program_header_name(usize index, bool label) const;
+        CMatrix* c_matrix() const;
         PetriNet* eval_program(usize index);
-        DecomposeContext* decompose_ctx();
+        PetriNet* program_net_after(usize index) const;
+        PetriNet* init_program_after(usize index);
+        DecomposeContext* decompose_ctx() const;
+
+        QVariant toVariant() const;
+        void fromVariant(const QVariant& data);
     };
 
     struct CMatrix {
-        i32 index(usize, usize);
-        usize rows();
-        usize columns();
+        i32 index(usize, usize) const;
+        void set_value(usize, usize, i32);
+        usize rows() const;
+        usize columns() const;
+
+        QVariant toVariant() const;
+        void fromVariant(const QVariant& data);
     };
 
     template<typename T>
