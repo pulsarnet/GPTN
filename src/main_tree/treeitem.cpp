@@ -11,7 +11,7 @@
 #include <QMenu>
 
 TreeItem::TreeItem(TreeModel* model, TreeItem* parent)
-    : QObject(), m_widget(nullptr), m_model(model), m_parentItem(parent)
+    : QObject(parent), m_widget(nullptr), m_model(model), m_parentItem(parent)
 {
     m_parentItem = parent;
 
@@ -113,6 +113,14 @@ TreeItem::~TreeItem()
     }
 }
 
+GraphicsViewTreeItem::GraphicsViewTreeItem(TreeModel *model, TreeItem *parent) : TreeItem(model, parent), m_view(new GraphicsView) {
+
+}
+
+GraphicsViewTreeItem::~GraphicsViewTreeItem() noexcept {
+    delete m_view;
+}
+
 RootTreeItem::RootTreeItem(TreeModel* model, TreeItem* parent) : TreeItem(model, parent)
 {
     setName("Root");
@@ -148,7 +156,7 @@ void RootTreeItem::fromVariant(const QVariant& data) {
     }
 }
 
-NetTreeItem::NetTreeItem(TreeModel* model, TreeItem* parent): TreeItem(model, parent)
+NetTreeItem::NetTreeItem(TreeModel* model, TreeItem* parent): GraphicsViewTreeItem(model, parent)
 {
     setName("Net tree");
     m_scene = new GraphicScene;
@@ -157,7 +165,7 @@ NetTreeItem::NetTreeItem(TreeModel* model, TreeItem* parent): TreeItem(model, pa
     initialize();
 }
 
-NetTreeItem::NetTreeItem(const QVariant &data, TreeModel *model, TreeItem *parent): TreeItem(model, parent) {
+NetTreeItem::NetTreeItem(const QVariant &data, TreeModel *model, TreeItem *parent): GraphicsViewTreeItem(model, parent) {
     auto map = data.toHash();
     setName(map["name"].toString());
 
@@ -182,11 +190,10 @@ void NetTreeItem::initialize() {
     m_decompose = new QAction("Decompose", this);
     connect(m_decompose, &QAction::triggered, this, &NetTreeItem::onDecompose);
 
-    auto view = new GraphicsView;
-    view->setScene(m_scene);
+    view()->setScene(m_scene);
 
     setDockWidget(new ads::CDockWidget("Petri net"));
-    dockWidget()->setWidget(view);
+    dockWidget()->setWidget(view());
     dockManager()->addDockWidgetTab(ads::DockWidgetArea::CenterDockWidgetArea, dockWidget());
 }
 
@@ -323,7 +330,7 @@ DecomposeItem::~DecomposeItem() noexcept {
     delete m_synthesis;
 }
 
-PrimitiveSystemItem::PrimitiveSystemItem(ffi::PetriNet* net, TreeModel* _model, TreeItem *parent): TreeItem(_model, parent), m_net(net)
+PrimitiveSystemItem::PrimitiveSystemItem(ffi::PetriNet* net, TreeModel* _model, TreeItem *parent): GraphicsViewTreeItem(_model, parent), m_net(net)
 {
     setName("Primitive system");
     m_scene = new GraphicScene();
@@ -333,7 +340,7 @@ PrimitiveSystemItem::PrimitiveSystemItem(ffi::PetriNet* net, TreeModel* _model, 
     initialize();
 }
 
-PrimitiveSystemItem::PrimitiveSystemItem(const QVariant &data, ffi::PetriNet *net, TreeModel *_model, TreeItem *parent): TreeItem(_model, parent), m_net(net)
+PrimitiveSystemItem::PrimitiveSystemItem(const QVariant &data, ffi::PetriNet *net, TreeModel *_model, TreeItem *parent): GraphicsViewTreeItem(_model, parent), m_net(net)
 {
     auto map = data.toHash();
 
@@ -346,11 +353,10 @@ PrimitiveSystemItem::PrimitiveSystemItem(const QVariant &data, ffi::PetriNet *ne
 }
 
 void PrimitiveSystemItem::initialize() {
-    auto view = new GraphicsView;
-    view->setScene(m_scene);
+    view()->setScene(m_scene);
 
     setDockWidget(new ads::CDockWidget("Primitive View"));
-    dockWidget()->setWidget(view);
+    dockWidget()->setWidget(view());
     dockManager()->addDockWidgetTab(ads::DockWidgetArea::CenterDockWidgetArea, dockWidget());
 }
 
@@ -366,7 +372,7 @@ PrimitiveSystemItem::~PrimitiveSystemItem() noexcept {
     delete m_scene;
 }
 
-LinearBaseFragmentsItem::LinearBaseFragmentsItem(ffi::PetriNet* net, TreeModel* model, TreeItem *parent): TreeItem(model, parent), m_net(net)
+LinearBaseFragmentsItem::LinearBaseFragmentsItem(ffi::PetriNet* net, TreeModel* model, TreeItem *parent): GraphicsViewTreeItem(model, parent), m_net(net)
 {
     setName("Linear base fragments");
     m_scene = new GraphicScene;
@@ -376,7 +382,7 @@ LinearBaseFragmentsItem::LinearBaseFragmentsItem(ffi::PetriNet* net, TreeModel* 
     initialize();
 }
 
-LinearBaseFragmentsItem::LinearBaseFragmentsItem(const QVariant &data, ffi::PetriNet *net, TreeModel *model, TreeItem *parent) : TreeItem(model, parent), m_net(net)
+LinearBaseFragmentsItem::LinearBaseFragmentsItem(const QVariant &data, ffi::PetriNet *net, TreeModel *model, TreeItem *parent) : GraphicsViewTreeItem(model, parent), m_net(net)
 {
     auto map = data.toHash();
     setName("Linear base fragments");
@@ -388,11 +394,9 @@ LinearBaseFragmentsItem::LinearBaseFragmentsItem(const QVariant &data, ffi::Petr
 
 void LinearBaseFragmentsItem::initialize() {
 
-    auto view = new GraphicsView;
-    view->setScene(m_scene);
-
+    view()->setScene(m_scene);
     setDockWidget(new ads::CDockWidget("Linear base fragments"));
-    dockWidget()->setWidget(view);
+    dockWidget()->setWidget(view());
     dockManager()->addDockWidgetTab(ads::DockWidgetArea::CenterDockWidgetArea, dockWidget());
 }
 
@@ -520,31 +524,29 @@ QVariant SynthesisProgramsItem::toVariant() const {
     return result;
 }
 
-SynthesisProgramItem::SynthesisProgramItem(ffi::PetriNet *net, TreeModel *model, TreeItem *parent): TreeItem(model, parent), m_net(net) {
+SynthesisProgramItem::SynthesisProgramItem(ffi::PetriNet *net, TreeModel *model, TreeItem *parent): GraphicsViewTreeItem(model, parent), m_net(net) {
     setName("Program result");
 
-    auto view = new GraphicsView;
     m_scene = new GraphicScene;
     m_scene->loadFromNet(m_net);
     m_scene->setAllowMods(GraphicScene::A_Nothing);
-    view->setScene(m_scene);
+    view()->setScene(m_scene);
 
     setDockWidget(new ads::CDockWidget("Program result"));
-    dockWidget()->setWidget(view);
+    dockWidget()->setWidget(view());
     dockManager()->addDockWidgetTab(ads::DockWidgetArea::CenterDockWidgetArea, dockWidget());
 }
 
-SynthesisProgramItem::SynthesisProgramItem(const QVariant &data, ffi::PetriNet *net, TreeModel *model, TreeItem *parent): TreeItem(model, parent), m_net(net)
+SynthesisProgramItem::SynthesisProgramItem(const QVariant &data, ffi::PetriNet *net, TreeModel *model, TreeItem *parent): GraphicsViewTreeItem(model, parent), m_net(net)
 {
     setName("Program result");
 
-    auto view = new GraphicsView;
     m_scene = new GraphicScene(data.toHash()["scene"], net);
     m_scene->setAllowMods(GraphicScene::A_Nothing);
-    view->setScene(m_scene);
+    view()->setScene(m_scene);
 
     setDockWidget(new ads::CDockWidget("Program result"));
-    dockWidget()->setWidget(view);
+    dockWidget()->setWidget(view());
     dockManager()->addDockWidgetTab(ads::DockWidgetArea::CenterDockWidgetArea, dockWidget());
 }
 

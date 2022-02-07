@@ -8,6 +8,7 @@
 class QTableView;
 class GraphicScene;
 class TreeModel;
+class GraphicsView;
 
 namespace ffi {
     struct SynthesisContext;
@@ -82,6 +83,23 @@ private:
     QString m_name;
 };
 
+class GraphicsViewTreeItem : public TreeItem {
+
+public:
+
+    explicit GraphicsViewTreeItem(TreeModel* model, TreeItem* parent);
+
+    GraphicsView* view() const {
+        return m_view;
+    }
+
+    ~GraphicsViewTreeItem();
+
+private:
+
+    GraphicsView* m_view;
+};
+
 class RootTreeItem : public TreeItem
 {
 public:
@@ -109,7 +127,7 @@ private:
     QAction* m_netCreate = nullptr;
 };
 
-class NetTreeItem : public TreeItem
+class NetTreeItem : public GraphicsViewTreeItem
 {
 public:
     explicit NetTreeItem(TreeModel* model, TreeItem* parent = nullptr);
@@ -170,7 +188,7 @@ private:
     ffi::DecomposeContext* m_ctx = nullptr;
 };
 
-class PrimitiveSystemItem : public TreeItem {
+class PrimitiveSystemItem : public GraphicsViewTreeItem {
 public:
     explicit PrimitiveSystemItem(ffi::PetriNet* net, TreeModel* model, TreeItem* parent = nullptr);
     explicit PrimitiveSystemItem(const QVariant& data, ffi::PetriNet* net, TreeModel* model, TreeItem* parent = nullptr);
@@ -190,7 +208,7 @@ private:
     GraphicScene* m_scene;
 };
 
-class LinearBaseFragmentsItem : public TreeItem {
+class LinearBaseFragmentsItem : public GraphicsViewTreeItem {
 public:
     explicit LinearBaseFragmentsItem(ffi::PetriNet* net, TreeModel* model, TreeItem* parent = nullptr);
     explicit LinearBaseFragmentsItem(const QVariant& data, ffi::PetriNet* net, TreeModel* model, TreeItem* parent = nullptr);
@@ -261,7 +279,7 @@ public slots:
     void onProgramSynthesed(ffi::PetriNet* net);
 };
 
-class SynthesisProgramItem : public TreeItem {
+class SynthesisProgramItem : public GraphicsViewTreeItem {
 public:
     explicit SynthesisProgramItem(ffi::PetriNet* net, TreeModel* model, TreeItem* parent = nullptr);
     explicit SynthesisProgramItem(const QVariant& data, ffi::PetriNet* net, TreeModel* model, TreeItem* parent = nullptr);

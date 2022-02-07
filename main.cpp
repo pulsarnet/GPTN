@@ -1,5 +1,6 @@
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "Bcrypt.lib")
+
 #include <QApplication>
 #include <QFontDatabase>
 #include <QFile>
@@ -7,6 +8,7 @@
 #include "src/ffi/rust.h"
 
 int main(int argc, char **argv) {
+
 
     ffi::init();
 
