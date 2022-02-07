@@ -10,6 +10,7 @@ using namespace ffi;
 extern "C" {
     // PetriNet
     PetriNet* create_net();
+    void delete_net(PetriNet*);
     void net_positions(const PetriNet& self, CVec<Vertex*>* return$);
     void net_transitions(const PetriNet& self, CVec<Vertex*>* return$);
     void net_connections(const PetriNet& self, CVec<Connection*>* return$);
@@ -43,6 +44,7 @@ extern "C" {
     // DecomposeContext
     DecomposeContext* decompose_context_init(PetriNet&);
     DecomposeContext* decompose_context_from_nets(PetriNet* const *, usize);
+    void decompose_context_delete(DecomposeContext*);
     usize decompose_context_positions(DecomposeContext&);
     usize decompose_context_transitions(DecomposeContext&);
     CMatrix* decompose_context_primitive_matrix(DecomposeContext&);
@@ -55,6 +57,7 @@ extern "C" {
     // SynthesisContext
     SynthesisContext* synthesis_create(DecomposeContext&);
     SynthesisContext* synthesis_init(DecomposeContext&);
+    void synthesis_delete(SynthesisContext*);
     usize synthesis_programs(const SynthesisContext&);
     usize synthesis_program_size(const SynthesisContext&, usize);
     void synthesis_add_program(SynthesisContext&);
@@ -297,6 +300,10 @@ void PetriNet::fromVariant(const QVariant &data) {
     }
 }
 
+void PetriNet::drop() {
+    ::delete_net(this);
+}
+
 usize Vertex::index() const {
     return ::vertex_index(*this);
 }
@@ -412,6 +419,10 @@ CVec<PetriNet *> DecomposeContext::parts() const {
     return result$;
 }
 
+void DecomposeContext::drop() {
+    ::decompose_context_delete(this);
+}
+
 SynthesisContext *SynthesisContext::create(DecomposeContext *ctx) {
     return ::synthesis_create(*ctx);
 }
@@ -511,6 +522,10 @@ void SynthesisContext::fromVariant(const QVariant &data) {
             set_program_value(programs() - 1, i, programValues[i].toInt());
         }
     }
+}
+
+void SynthesisContext::drop() {
+    ::synthesis_delete(this);
 }
 
 i32 CMatrix::index(usize row, usize col) const {

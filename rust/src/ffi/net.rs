@@ -37,7 +37,7 @@ pub unsafe extern "C" fn net_connections(net: &mut PetriNet, ret: &mut CVec<*con
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn del(v: *mut PetriNet) {
+pub unsafe extern "C" fn delete_net(v: *mut PetriNet) {
     Box::from_raw(v);
 }
 

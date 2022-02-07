@@ -441,13 +441,13 @@ void GraphicScene::loadFromNet(ffi::PetriNet *net, const QString& algorithm) {
             auto position = getPosition(from.id);
             auto transition = getTransition(to.id);
             graph.addEdge(position->name(), transition->name());
-            connectItems(position, transition);
+            connectItems(position, transition, true);
         }
         else {
             auto transition = getTransition(from.id);
             auto position = getPosition(to.id);
             graph.addEdge(position->name(), transition->name());
-            connectItems(transition, position);
+            connectItems(transition, position, true);
         }
     }
 

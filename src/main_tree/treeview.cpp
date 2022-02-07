@@ -7,10 +7,19 @@ TreeView::TreeView(QWidget* parent) : QTreeView(parent)
 {
     setContextMenuPolicy(Qt::CustomContextMenu);
     setUpdatesEnabled(true);
+    setSelectionMode(QTreeView::SingleSelection);
     connect(this, &QTreeView::customContextMenuRequested, this, &TreeView::onCustomMenu);
     connect(this, &QTreeView::doubleClicked, this, &TreeView::onDoubleClick);
 
     setExpandsOnDoubleClick(false);
+}
+
+void TreeView::keyPressEvent(QKeyEvent *event) {
+    if (event->key() == Qt::Key_Delete) {
+        const QModelIndex index = selectionModel()->currentIndex();
+        if (index.isValid())
+            model()->removeRow(index.row(), index.parent());
+    }
 }
 
 void TreeView::onCustomMenu(const QPoint &point)

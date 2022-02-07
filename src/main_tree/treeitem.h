@@ -5,6 +5,7 @@
 #include <QAction>
 #include <DockManager.h>
 
+class QTableView;
 class GraphicScene;
 class TreeModel;
 
@@ -40,7 +41,7 @@ public:
     QString data(int column) const;
 
     void addChild(TreeItem* child);
-    void removeChild(TreeItem* child);
+    bool removeChildren(int position, int count);
 
     TreeItem* child(int row) const;
     TreeItem* parentItem() const {
@@ -95,6 +96,10 @@ public:
     QVariant toVariant() const override;
     void fromVariant(const QVariant& data);
 
+    ~RootTreeItem() {
+        qDebug() << "~RootTreeItem()";
+    }
+
 public slots:
 
     void onNetCreate(bool checked);
@@ -119,6 +124,8 @@ public:
     ffi::PetriNet* net() const;
 
     QVariant toVariant() const override;
+
+    virtual ~NetTreeItem();
 
 public slots:
 
@@ -150,6 +157,8 @@ public:
 
     QVariant toVariant() const override;
 
+    virtual ~DecomposeItem();
+
 public slots:
 
     void onSynthesis(bool checked);
@@ -174,6 +183,8 @@ public:
 
     QVariant toVariant() const override;
 
+    virtual ~PrimitiveSystemItem();
+
 private:
     ffi::PetriNet* m_net;
     GraphicScene* m_scene;
@@ -192,6 +203,8 @@ public:
 
     QVariant toVariant() const override;
 
+    virtual ~LinearBaseFragmentsItem();
+
 private:
     ffi::PetriNet* m_net;
     GraphicScene* m_scene;
@@ -208,6 +221,8 @@ public:
 
     QVariant toVariant() const override;
 
+    virtual ~SynthesisItem();
+
 private:
     ffi::SynthesisContext* m_ctx = nullptr;
 };
@@ -221,9 +236,12 @@ public:
         return ObjectType::O_Matrix;
     }
 
+    ~MatrixItem();
+
 private:
 
     ffi::CMatrix* m_matrix = nullptr;
+    QTableView* m_view = nullptr;
 
 };
 

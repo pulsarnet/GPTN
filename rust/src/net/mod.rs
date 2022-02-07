@@ -1034,9 +1034,11 @@ pub fn synthesis_program(programs: &mut SynthesisContext, index: usize) {
         let col = d_matrix.column(*trans_new_indexes.get(&transition.index()).unwrap());
         for (index, el) in col.iter().enumerate().filter(|e| e.1.ne(&0)) {
             let pos = pos_indexes_vec[index].clone();
-            match *el > 0 {
-                false => (0..el.abs()).into_iter().for_each(|_| connections.push(Connection::new(pos.index(), transition.index()))),
-                true => (0..el.abs()).into_iter().for_each(|_| connections.push(Connection::new(transition.index(), pos.index()))),
+            if *el > 0 {
+                (0..el.abs()).into_iter().for_each(|_| connections.push(Connection::new(pos.index(), transition.index())));
+            }
+            else if *el < 0 {
+                (0..el.abs()).into_iter().for_each(|_| connections.push(Connection::new(transition.index(), pos.index())));
             }
         }
     }

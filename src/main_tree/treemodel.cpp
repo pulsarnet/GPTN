@@ -79,6 +79,18 @@ int TreeModel::columnCount(const QModelIndex &parent) const
     return 1;
 }
 
+bool TreeModel::removeRows(int position, int rows, const QModelIndex &parent) {
+    TreeItem *parentItem = getItem(parent);
+    if (!parentItem)
+        return false;
+
+    beginRemoveRows(parent, position, position + rows - 1);
+    parentItem->removeChildren(position, rows);
+    endRemoveRows();
+
+    return true;
+}
+
 QModelIndex TreeModel::indexForTreeItem(TreeItem *item) {
     return createIndex(item->row(), 0, item);
 }

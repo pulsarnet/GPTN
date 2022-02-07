@@ -8,6 +8,8 @@ class TreeView : public QTreeView
 public:
     explicit TreeView(QWidget* parent = nullptr);
 
+    void keyPressEvent(QKeyEvent *event) override;
+
 public slots:
 
     void onCustomMenu(const QPoint &point);

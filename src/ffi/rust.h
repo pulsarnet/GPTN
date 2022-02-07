@@ -67,6 +67,8 @@ namespace ffi {
 
         QVariant toVariant() const;
         void fromVariant(const QVariant& data);
+
+        void drop();
     };
 
     struct VertexIndex {
@@ -107,6 +109,8 @@ namespace ffi {
         PetriNet* linear_base_fragments();
 
         CVec<PetriNet*> parts() const;
+
+        void drop();
     };
 
     struct SynthesisContext {
@@ -129,6 +133,8 @@ namespace ffi {
 
         QVariant toVariant() const;
         void fromVariant(const QVariant& data);
+
+        void drop();
     };
 
     struct CMatrix {

@@ -235,6 +235,11 @@ pub unsafe extern "C" fn decompose_context_transition_index(ctx: &DecomposeConte
     ctx.transitions[index].index().id as usize
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn decompose_context_delete(ctx: *mut DecomposeContext) {
+    Box::from_raw(ctx);
+}
+
 pub struct SynthesisProgram {
     data: Vec<usize>,
     net_before: Option<PetriNet>,
@@ -283,20 +288,27 @@ impl<'a> SynthesisContext<'a> {
             }
         }
 
-        for i in 0..positions {
-            for j in 0..positions {
-                if i == j {
-                    c_matrix.row_mut(i)[j] = 1;
-                }
-                else if i > 0 || i < (positions - 1) {
-                    if i == (j + 1) && i % 2 == 0 {
-                        c_matrix.row_mut(i)[j] = 1;
+        let mut offset = 0;
+        for net in decompose_ctx.parts.0.iter() {
+            let net_positions = net.positions.len();
+
+            for i in 0..net_positions {
+                for j in 0..net_positions {
+                    if i == j {
+                        c_matrix.row_mut(i + offset)[j + offset] = 1;
                     }
-                    else if j == (i + 1) && j % 2 == 0 {
-                        c_matrix.row_mut(i)[j] = 1;
+                    else if i > 0 || i < (net_positions - 1) {
+                        if i == (j + 1) && i % 2 == 0 {
+                            c_matrix.row_mut(i + offset)[j + offset] = 1;
+                        }
+                        else if j == (i + 1) && j % 2 == 0 {
+                            c_matrix.row_mut(i + offset)[j + offset] = 1;
+                        }
                     }
                 }
             }
+
+            offset += net_positions;
         }
 
         SynthesisContext {
@@ -497,6 +509,11 @@ extern "C" fn synthesis_c_matrix(ctx: &SynthesisContext) -> *const CMatrix {
 #[no_mangle]
 pub unsafe extern "C" fn synthesis_init(decompose_ctx: &DecomposeContext) -> *mut SynthesisContext {
     Box::into_raw(Box::new(SynthesisContext::init_syn(decompose_ctx)))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn synthesis_delete(ctx: *mut SynthesisContext) {
+    Box::from_raw(ctx);
 }
 
 #[no_mangle]
