@@ -159,7 +159,7 @@ void RootTreeItem::fromVariant(const QVariant& data) {
 NetTreeItem::NetTreeItem(TreeModel* model, TreeItem* parent): GraphicsViewTreeItem(model, parent)
 {
     setName("Net tree");
-    m_scene = new GraphicScene;
+    m_scene = new GraphicScene(ffi::PetriNet::create());
     m_scene->setAllowMods(GraphicScene::A_Default);
 
     initialize();
@@ -333,8 +333,7 @@ DecomposeItem::~DecomposeItem() noexcept {
 PrimitiveSystemItem::PrimitiveSystemItem(ffi::PetriNet* net, TreeModel* _model, TreeItem *parent): GraphicsViewTreeItem(_model, parent), m_net(net)
 {
     setName("Primitive system");
-    m_scene = new GraphicScene();
-    m_scene->loadFromNet(m_net);
+    m_scene = new GraphicScene(m_net);
     m_scene->setAllowMods(GraphicScene::A_Nothing);
 
     initialize();
@@ -375,8 +374,7 @@ PrimitiveSystemItem::~PrimitiveSystemItem() noexcept {
 LinearBaseFragmentsItem::LinearBaseFragmentsItem(ffi::PetriNet* net, TreeModel* model, TreeItem *parent): GraphicsViewTreeItem(model, parent), m_net(net)
 {
     setName("Linear base fragments");
-    m_scene = new GraphicScene;
-    m_scene->loadFromNet(m_net);
+    m_scene = new GraphicScene(m_net);
     m_scene->setAllowMods(GraphicScene::A_Nothing);
 
     initialize();
@@ -527,8 +525,7 @@ QVariant SynthesisProgramsItem::toVariant() const {
 SynthesisProgramItem::SynthesisProgramItem(ffi::PetriNet *net, TreeModel *model, TreeItem *parent): GraphicsViewTreeItem(model, parent), m_net(net) {
     setName("Program result");
 
-    m_scene = new GraphicScene;
-    m_scene->loadFromNet(m_net);
+    m_scene = new GraphicScene(m_net);
     m_scene->setAllowMods(GraphicScene::A_Nothing);
     view()->setScene(m_scene);
 

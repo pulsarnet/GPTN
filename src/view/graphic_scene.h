@@ -33,7 +33,7 @@ public:
 
     Q_DECLARE_FLAGS(Modes, Mode);
 
-    explicit GraphicScene(QObject* parent = nullptr);
+    explicit GraphicScene(ffi::PetriNet* net, QObject* parent = nullptr);
     explicit GraphicScene(const QVariant&, ffi::PetriNet*, QObject* parent = nullptr);
 
     void setAllowMods(Modes mods);
@@ -59,8 +59,6 @@ public:
     QPointF getTransitionPos(int index);
     QPointF getPositionPos(int index);
 
-    void loadFromNet(ffi::PetriNet*, const QString& algorithm = QString());
-
     void dotVisualization(char* algorithm);
 
     ffi::PetriNet* net();
@@ -68,15 +66,12 @@ public:
 public slots:
 
     void setMode(GraphicScene::Mode mode);
-    void slotSelectionChanged();
-
     void slotHorizontalAlignment(bool triggered);
     void slotVerticalAlignment(bool triggered);
 
 signals:
     void itemInserted(QGraphicsItem* item);
-    void itemSelected(QGraphicsItem* item);
-
+    void itemRemoved();
 
 protected:
 

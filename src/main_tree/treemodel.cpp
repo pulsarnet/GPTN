@@ -81,7 +81,7 @@ int TreeModel::columnCount(const QModelIndex &parent) const
 
 bool TreeModel::removeRows(int position, int rows, const QModelIndex &parent) {
     TreeItem *parentItem = getItem(parent);
-    if (!parentItem)
+    if (!parentItem || !parentItem->child(position)->allowManualDelete())
         return false;
 
     beginRemoveRows(parent, position, position + rows - 1);

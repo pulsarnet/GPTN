@@ -12,18 +12,58 @@
 #include "../elements/arrow_line.h"
 #include "../graphviz/graphviz_wrapper.h"
 
-
-GraphicScene::GraphicScene(QObject *parent) : QGraphicsScene(parent), m_mod(Mode::A_Nothing), m_allowMods(Mode::A_Nothing), m_net(ffi::PetriNet::create()) {
+GraphicScene::GraphicScene(ffi::PetriNet *net, QObject *parent) :
+    m_mod(Mode::A_Nothing),
+    m_allowMods(Mode::A_Nothing),
+    m_net(net)
+{
     setSceneRect(-12500, -12500, 25000, 25000);
+    GraphVizWrapper graph;
+    QString algorithm = "neato";
 
-    connect(this, &QGraphicsScene::selectionChanged, this, &GraphicScene::slotSelectionChanged);
+    auto positions = m_net->positions();
+    auto transitions = m_net->transitions();
+    auto connections = m_net->connections();
+
+    for (int i = 0; i < positions.size(); i++) {
+        graph.addCircle(QString("p%1").arg(positions[i]->index()).toLocal8Bit().data(), QSizeF(80, 80));
+        m_positions.push_back(new Position(QPointF(0, 0), positions[i]));
+        addItem(m_positions.last());
+    }
+
+    for (int i = 0; i < transitions.size(); i++) {
+        graph.addRectangle(QString("t%1").arg(transitions[i]->index()).toLocal8Bit().data(), QSizeF(120, 60));
+        m_transition.push_back(new Transition(QPointF(0, 0), transitions[i]));
+        addItem(m_transition.last());
+    }
+
+    for (int i = 0; i < connections.size(); i++) {
+        auto from = connections[i]->from();
+        auto to = connections[i]->to();
+
+        if (from.type == ffi::VertexType::Position) {
+            auto position = getPosition(from.id);
+            auto transition = getTransition(to.id);
+            graph.addEdge(position->name(), transition->name());
+            connectItems(position, transition, true);
+        }
+        else {
+            auto transition = getTransition(from.id);
+            auto position = getPosition(to.id);
+            graph.addEdge(position->name(), transition->name());
+            connectItems(transition, position, true);
+        }
+    }
+
+    auto result = graph.save(algorithm.isEmpty() ? (char*)"sfdp" : algorithm.toLocal8Bit().data());
+    for (auto& element : result.elements) {
+        auto vertex = getVertex(element.first);
+        vertex->setPos(element.second);
+    }
 }
 
 GraphicScene::GraphicScene(const QVariant &data, ffi::PetriNet *net, QObject *parent) : QGraphicsScene(parent), m_mod(Mode::A_Nothing), m_allowMods(Mode::A_Nothing), m_net(net) {
     setSceneRect(-12500, -12500, 25000, 25000);
-
-    connect(this, &QGraphicsScene::selectionChanged, this, &GraphicScene::slotSelectionChanged);
-
     auto common_data = data.toHash();
 
     if (common_data.contains("items")) {
@@ -83,12 +123,6 @@ GraphicScene::GraphicScene(const QVariant &data, ffi::PetriNet *net, QObject *pa
 void GraphicScene::setMode(Mode mod) {
     if (m_allowMods & mod) m_mod = mod;
     else qDebug() << "Mode " << mod << " not allowed!";
-}
-
-void GraphicScene::slotSelectionChanged() {
-
-
-
 }
 
 void GraphicScene::setAllowMods(Modes mods) {
@@ -157,7 +191,6 @@ void GraphicScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
     QGraphicsScene::mouseReleaseEvent(event);
 }
 
-
 void GraphicScene::insertPosition(QGraphicsSceneMouseEvent *event) {
     addPosition(-1, event->scenePos());
 }
@@ -175,6 +208,7 @@ void GraphicScene::removeObject(QGraphicsSceneMouseEvent *event) {
         removeConnectionsAssociatedWith(position);
         m_net->remove_position(position->vertex());
         delete position;
+        emit itemRemoved();
     }
     else if (auto transition = dynamic_cast<Transition*>(item); transition) {
         auto index = m_transition.indexOf(transition);
@@ -182,12 +216,14 @@ void GraphicScene::removeObject(QGraphicsSceneMouseEvent *event) {
         removeConnectionsAssociatedWith(transition);
         m_net->remove_transition(transition->vertex());
         delete transition;
+        emit itemRemoved();
     }
     else if (auto connection_line = dynamic_cast<ArrowLine*>(item); connection_line) {
         connection_line->disconnect(m_net);
         removeItem(connection_line);
         m_connections.removeAt(m_connections.indexOf(connection_line));
         delete connection_line;
+        emit itemRemoved();
     }
 
 }
@@ -408,55 +444,6 @@ QPointF GraphicScene::getTransitionPos(int index) {
 
 QPointF GraphicScene::getPositionPos(int index) {
     return getPosition(index)->scenePos();
-}
-
-void GraphicScene::loadFromNet(ffi::PetriNet *net, const QString& algorithm) {
-
-    removeAll();
-    m_net = net;
-
-    GraphVizWrapper graph;
-
-    auto positions = m_net->positions();
-    auto transitions = m_net->transitions();
-    auto connections = m_net->connections();
-
-    for (int i = 0; i < positions.size(); i++) {
-        graph.addCircle(QString("p%1").arg(positions[i]->index()).toLocal8Bit().data(), QSizeF(80, 80));
-        m_positions.push_back(new Position(QPointF(0, 0), positions[i]));
-        addItem(m_positions.last());
-    }
-
-    for (int i = 0; i < transitions.size(); i++) {
-        graph.addRectangle(QString("t%1").arg(transitions[i]->index()).toLocal8Bit().data(), QSizeF(120, 60));
-        m_transition.push_back(new Transition(QPointF(0, 0), transitions[i]));
-        addItem(m_transition.last());
-    }
-
-    for (int i = 0; i < connections.size(); i++) {
-        auto from = connections[i]->from();
-        auto to = connections[i]->to();
-
-        if (from.type == ffi::VertexType::Position) {
-            auto position = getPosition(from.id);
-            auto transition = getTransition(to.id);
-            graph.addEdge(position->name(), transition->name());
-            connectItems(position, transition, true);
-        }
-        else {
-            auto transition = getTransition(from.id);
-            auto position = getPosition(to.id);
-            graph.addEdge(position->name(), transition->name());
-            connectItems(transition, position, true);
-        }
-    }
-
-    auto result = graph.save(algorithm.isEmpty() ? (char*)"sfdp" : algorithm.toLocal8Bit().data());
-    for (auto& element : result.elements) {
-        auto vertex = getVertex(element.first);
-        vertex->setPos(element.second);
-    }
-
 }
 
 PetriObject *GraphicScene::getVertex(const QString &name) {

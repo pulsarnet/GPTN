@@ -67,6 +67,10 @@ public:
         return QVariant();
     }
 
+    virtual bool allowManualDelete() const {
+        return false;
+    }
+
     ~TreeItem();
 
 protected:
@@ -143,6 +147,10 @@ public:
 
     QVariant toVariant() const override;
 
+    bool allowManualDelete() const override {
+        return true;
+    }
+
     virtual ~NetTreeItem();
 
 public slots:
@@ -174,6 +182,10 @@ public:
     }
 
     QVariant toVariant() const override;
+
+    bool allowManualDelete() const override {
+        return true;
+    }
 
     virtual ~DecomposeItem();
 
@@ -239,6 +251,10 @@ public:
 
     QVariant toVariant() const override;
 
+    bool allowManualDelete() const override {
+        return true;
+    }
+
     virtual ~SynthesisItem();
 
 private:
@@ -290,6 +306,10 @@ public:
     }
 
     QVariant toVariant() const override;
+
+    bool allowManualDelete() const override {
+        return true;
+    }
 
 private:
 
