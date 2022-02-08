@@ -34,11 +34,12 @@ class MainWindow : public QMainWindow {
     };
 
 public:
+    MainWindow() = delete;
+    MainWindow(const MainWindow&) = delete;
+    MainWindow(MainWindow&&) = delete;
     explicit MainWindow(QWidget *parent = nullptr);
 
 public slots:
-
-    void newFile(bool trigger);
 
     void slotSaveFile(bool checked);
 
@@ -46,7 +47,12 @@ public slots:
 
     void slotOpenFile(bool checked);
 
-    void slotSplitAction(bool checked);
+    void onDocumentChanged();
+protected:
+
+    void closeEvent(QCloseEvent* event) override;
+
+    bool saveOnExit();
 
 private:
 
@@ -63,6 +69,8 @@ private:
     TreeModel* treeModel = nullptr;
 
     CDockManager* manager = nullptr;
+    QString m_fileName;
+    bool m_changed;
 };
 
 #endif //FFI_RUST_MAINWINDOW_H

@@ -159,7 +159,7 @@ void RootTreeItem::fromVariant(const QVariant& data) {
 NetTreeItem::NetTreeItem(TreeModel* model, TreeItem* parent): GraphicsViewTreeItem(model, parent)
 {
     setName("Net tree");
-    m_scene = new GraphicScene(ffi::PetriNet::create());
+    m_scene = new GraphicScene(ffi::PetriNet::create(), this);
     m_scene->setAllowMods(GraphicScene::A_Default);
 
     initialize();
@@ -172,7 +172,7 @@ NetTreeItem::NetTreeItem(const QVariant &data, TreeModel *model, TreeItem *paren
     auto net = ffi::PetriNet::create();
     net->fromVariant(map["net"]);
 
-    m_scene = new GraphicScene(map["scene"], net);
+    m_scene = new GraphicScene(map["scene"], net, this);
     m_scene->setAllowMods(GraphicScene::A_Default);
 
     auto children = map["children"].toList();
@@ -333,7 +333,7 @@ DecomposeItem::~DecomposeItem() noexcept {
 PrimitiveSystemItem::PrimitiveSystemItem(ffi::PetriNet* net, TreeModel* _model, TreeItem *parent): GraphicsViewTreeItem(_model, parent), m_net(net)
 {
     setName("Primitive system");
-    m_scene = new GraphicScene(m_net);
+    m_scene = new GraphicScene(m_net, this);
     m_scene->setAllowMods(GraphicScene::A_Nothing);
 
     initialize();
@@ -345,7 +345,7 @@ PrimitiveSystemItem::PrimitiveSystemItem(const QVariant &data, ffi::PetriNet *ne
 
     setName(map["name"].toString());
 
-    m_scene = new GraphicScene(map["scene"], net);
+    m_scene = new GraphicScene(map["scene"], net, this);
     m_scene->setAllowMods(GraphicScene::A_Nothing);
 
     initialize();
@@ -374,7 +374,7 @@ PrimitiveSystemItem::~PrimitiveSystemItem() noexcept {
 LinearBaseFragmentsItem::LinearBaseFragmentsItem(ffi::PetriNet* net, TreeModel* model, TreeItem *parent): GraphicsViewTreeItem(model, parent), m_net(net)
 {
     setName("Linear base fragments");
-    m_scene = new GraphicScene(m_net);
+    m_scene = new GraphicScene(m_net, this);
     m_scene->setAllowMods(GraphicScene::A_Nothing);
 
     initialize();
@@ -384,7 +384,7 @@ LinearBaseFragmentsItem::LinearBaseFragmentsItem(const QVariant &data, ffi::Petr
 {
     auto map = data.toHash();
     setName("Linear base fragments");
-    m_scene = new GraphicScene(map["scene"], net);
+    m_scene = new GraphicScene(map["scene"], net, this);
     m_scene->setAllowMods(GraphicScene::A_Nothing);
 
     initialize();
@@ -525,7 +525,7 @@ QVariant SynthesisProgramsItem::toVariant() const {
 SynthesisProgramItem::SynthesisProgramItem(ffi::PetriNet *net, TreeModel *model, TreeItem *parent): GraphicsViewTreeItem(model, parent), m_net(net) {
     setName("Program result");
 
-    m_scene = new GraphicScene(m_net);
+    m_scene = new GraphicScene(m_net, this);
     m_scene->setAllowMods(GraphicScene::A_Nothing);
     view()->setScene(m_scene);
 
@@ -538,7 +538,7 @@ SynthesisProgramItem::SynthesisProgramItem(const QVariant &data, ffi::PetriNet *
 {
     setName("Program result");
 
-    m_scene = new GraphicScene(data.toHash()["scene"], net);
+    m_scene = new GraphicScene(data.toHash()["scene"], net, this);
     m_scene->setAllowMods(GraphicScene::A_Nothing);
     view()->setScene(m_scene);
 

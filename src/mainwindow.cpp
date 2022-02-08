@@ -40,23 +40,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     auto treeDocker = new CDockWidget("Tree");
     treeDocker->setWidget(treeView);
     manager->addDockWidgetTab(DockWidgetArea::LeftDockWidgetArea, treeDocker);
+
+    connect(treeModel, &QAbstractItemModel::dataChanged, this, &MainWindow::onDocumentChanged);
 }
 
 void MainWindow::createMenuBar() {
     menuBar = new QMenuBar;
 
     auto file_menu = new QMenu("&File");
-    {
-        auto newMenu = new QMenu("New");
-
-        auto new_action = new QAction("File");
-        new_action->setShortcut(QKeySequence::fromString(tr("Ctrl+N")));
-        newMenu->addAction(new_action);
-        connect(new_action, &QAction::triggered, this, &MainWindow::newFile);
-
-        file_menu->addMenu(newMenu);
-    }
-
     auto save_action = new QAction("Save");
     save_action->setShortcut(tr("Ctrl+S"));
     connect(save_action, &QAction::triggered, this, &MainWindow::slotSaveFile);
@@ -75,29 +66,12 @@ void MainWindow::createMenuBar() {
 
     menuBar->addMenu(file_menu);
 
-    {
-        auto action_menu = new QMenu("Actions");
-
-        auto split = new QAction("Split");
-        split->setShortcut(tr("F9"));
-        connect(split, &QAction::triggered, this, &MainWindow::slotSplitAction);
-
-        action_menu->addAction(split);
-
-        menuBar->addMenu(action_menu);
-    }
-
     this->setMenuBar(menuBar);
 }
 
 void MainWindow::createStatusBar() {
     statusBar = new QStatusBar;
     this->setStatusBar(statusBar);
-}
-
-void MainWindow::newFile(bool trigger) {
-    Q_UNUSED(trigger);
-    //this->newTab();
 }
 
 void MainWindow::slotSaveFile(bool checked) {
@@ -150,6 +124,42 @@ void MainWindow::slotOpenFile(bool checked) {
     dynamic_cast<RootTreeItem*>(treeModel->root())->fromVariant(data);
 }
 
-void MainWindow::slotSplitAction(bool checked) {
+void MainWindow::onDocumentChanged() {
+    m_changed = true;
+}
 
+void MainWindow::closeEvent(QCloseEvent *event) {
+
+    if (saveOnExit()) {
+        event->accept();
+    }
+    else {
+        event->ignore();
+    }
+
+}
+
+bool MainWindow::saveOnExit() {
+    if (!m_changed)
+        return true;
+
+    const QMessageBox::StandardButton ret = QMessageBox::warning(
+            this,
+            m_fileName,
+            tr("The document has been modified.\n"
+               "Do you want to save your changes?"),
+            QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+
+    switch (ret)
+    {
+        case QMessageBox::Save:
+            slotSaveFile(true);
+            return true;
+        case QMessageBox::Cancel:
+            return false;
+        default:
+            break;
+    }
+
+    return true;
 }

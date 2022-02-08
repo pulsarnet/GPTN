@@ -66,7 +66,6 @@ pub unsafe extern "C" fn get_position(net: &mut PetriNet, index: usize) -> *cons
 #[no_mangle]
 pub unsafe extern "C" fn remove_position(net: &mut PetriNet, position: *mut Vertex) {
     net.remove_position((&*position).index().id);
-    Box::from_raw(position);
 }
 
 #[no_mangle]
@@ -95,7 +94,6 @@ pub extern "C" fn get_transition(net: &mut PetriNet, index: usize) -> *const Ver
 #[no_mangle]
 pub extern "C" fn remove_transition(net: &mut PetriNet, transition: *mut Vertex) {
     net.remove_transition(unsafe { &*transition }.index().id);
-    unsafe { Box::from_raw(transition); }
 }
 
 #[no_mangle]

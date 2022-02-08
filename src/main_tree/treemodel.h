@@ -10,19 +10,17 @@ class TreeModel : public QAbstractItemModel
 public:
     explicit TreeModel(ads::CDockManager* dockManager, QObject *parent = nullptr);
 
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
-    Qt::ItemFlags flags(const QModelIndex &index) const override;
-    QVariant headerData(int section, Qt::Orientation orientation,
-                            int role = Qt::DisplayRole) const override;
-    QModelIndex index(int row, int column,
-                          const QModelIndex &parent = QModelIndex()) const override;
-    QModelIndex parent(const QModelIndex &index) const override;
-    TreeItem* getItem(const QModelIndex &index) const;
-    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
-    int columnCount(const QModelIndex &parent = QModelIndex()) const override;
-    bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
+    [[nodiscard]] QVariant data(const QModelIndex &index, int role) const override;
+    [[nodiscard]] Qt::ItemFlags flags(const QModelIndex &index) const override;
+    [[nodiscard]] QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
+    [[nodiscard]] QModelIndex index(int row, int column, const QModelIndex &parent) const override;
+    [[nodiscard]] QModelIndex parent(const QModelIndex &index) const override;
+    [[nodiscard]] TreeItem* getItem(const QModelIndex &index) const;
+    [[nodiscard]] int rowCount(const QModelIndex &parent) const override;
+    [[nodiscard]] int columnCount(const QModelIndex &parent) const override;
+    bool removeRows(int row, int count, const QModelIndex &parent) override;
 
-    TreeItem* root() const {
+    [[nodiscard]] TreeItem* root() const {
         return rootItem;
     }
 
@@ -36,9 +34,9 @@ public:
         endInsertRows();
     }
 
-    ~TreeModel();
+    ~TreeModel() override;
 
-    ads::CDockManager* dockManager() const {
+    [[nodiscard]] ads::CDockManager* dockManager() const {
         return m_dockManager;
     }
 
