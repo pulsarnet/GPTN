@@ -26,14 +26,14 @@ GraphicScene::GraphicScene(ffi::PetriNet *net, QObject *parent) :
     auto connections = m_net->connections();
 
     for (int i = 0; i < positions.size(); i++) {
-        graph.addCircle(QString("p%1").arg(positions[i]->index()).toLocal8Bit().data(), QSizeF(80, 80));
-        m_positions.push_back(new Position(QPointF(0, 0), positions[i]));
+        graph.addCircle(QString("p%1").arg(positions[i]->index().id).toLocal8Bit().data(), QSizeF(80, 80));
+        m_positions.push_back(new Position(QPointF(0, 0), m_net, positions[i]->index()));
         addItem(m_positions.last());
     }
 
     for (int i = 0; i < transitions.size(); i++) {
-        graph.addRectangle(QString("t%1").arg(transitions[i]->index()).toLocal8Bit().data(), QSizeF(120, 60));
-        m_transition.push_back(new Transition(QPointF(0, 0), transitions[i]));
+        graph.addRectangle(QString("t%1").arg(transitions[i]->index().id).toLocal8Bit().data(), QSizeF(120, 60));
+        m_transition.push_back(new Transition(QPointF(0, 0), m_net, transitions[i]->index()));
         addItem(m_transition.last());
     }
 
@@ -357,7 +357,7 @@ Position* GraphicScene::addPosition(int index, const QPointF &point) {
 }
 
 Position *GraphicScene::addPosition(ffi::Vertex *position, const QPointF &point) {
-    auto pos = new Position(point, position);
+    auto pos = new Position(point, m_net, position->index());
     m_positions.push_back(pos);
     addItem(pos);
 
@@ -370,7 +370,7 @@ Transition* GraphicScene::addTransition(int index, const QPointF &point) {
 }
 
 Transition *GraphicScene::addTransition(ffi::Vertex *transition, const QPointF &point) {
-    auto tran = new Transition(point, transition);
+    auto tran = new Transition(point, m_net, transition->index());
     m_transition.push_back(tran);
     addItem(tran);
 

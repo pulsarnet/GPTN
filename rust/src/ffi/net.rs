@@ -14,9 +14,17 @@ pub extern "C" fn create_net() -> *mut PetriNet {
 }
 
 #[no_mangle]
+pub extern "C" fn net_get_vertex(net: &PetriNet, index: VertexIndex) -> *const Vertex {
+    match index.type_ {
+        VertexType::Position => net.get_position(index.id).unwrap() as *const Vertex,
+        VertexType::Transition => net.get_transition(index.id).unwrap() as *const Vertex
+    }
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn net_positions(net: &mut PetriNet, ret: &mut CVec<*const Vertex>) {
     let result = net.positions
-        .iter()
+        .values()
         .map(|p| p as *const Vertex).collect::<Vec<_>>();
 
     core::ptr::write_unaligned(ret, CVec::from(result));
@@ -25,7 +33,7 @@ pub unsafe extern "C" fn net_positions(net: &mut PetriNet, ret: &mut CVec<*const
 #[no_mangle]
 pub unsafe extern "C" fn net_transitions(net: &mut PetriNet, ret: &mut CVec<*const Vertex>) {
     let result = net.transitions
-        .iter()
+        .values()
         .map(|p| p as *const Vertex).collect::<Vec<_>>();
 
     core::ptr::write_unaligned(ret, CVec::from(result));

@@ -23,6 +23,22 @@ pub struct VertexIndex {
     pub id: usize,
 }
 
+impl VertexIndex {
+    pub fn position(index: usize) -> VertexIndex {
+        VertexIndex {
+            type_: VertexType::Position,
+            id: index
+        }
+    }
+
+    pub fn transition(index: usize) -> VertexIndex {
+        VertexIndex {
+            type_: VertexType::Transition,
+            id: index
+        }
+    }
+}
+
 #[derive(Clone, Default)]
 pub struct Vertex {
     type_: VertexType,

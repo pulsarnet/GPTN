@@ -27,8 +27,10 @@ extern "C" {
     void connect_vertexes(PetriNet&, Vertex*, Vertex*);
     void remove_connection(PetriNet&, Vertex*, Vertex*);
 
+    Vertex* net_get_vertex(const PetriNet&, VertexIndex);
+
     // Vertex
-    usize vertex_index(const Vertex&);
+    VertexIndex vertex_index(const Vertex&);
     usize vertex_markers(const Vertex&);
     void vertex_add_marker(Vertex&);
     void vertex_remove_marker(Vertex&);
@@ -219,6 +221,10 @@ void PetriNet::remove_connection(Vertex *from, Vertex *to) {
     return ::remove_connection(*this, from, to);
 }
 
+Vertex *PetriNet::getVertex(VertexIndex index) const {
+    return ::net_get_vertex(*this, index);
+}
+
 QVariant PetriNet::toVariant() const {
     QVariantHash net;
     QVariantList vertexes;
@@ -304,7 +310,7 @@ void PetriNet::drop() {
     ::delete_net(this);
 }
 
-usize Vertex::index() const {
+VertexIndex Vertex::index() const {
     return ::vertex_index(*this);
 }
 
@@ -339,7 +345,7 @@ usize Vertex::parent() const {
 QVariant Vertex::toVariant() const {
     QVariantHash vertex;
     vertex["type"] = type();
-    vertex["index"] = index();
+    vertex["index"] = index().id;
     vertex["label"] = get_name();
     vertex["parent"] = parent();
 

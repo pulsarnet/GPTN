@@ -46,6 +46,10 @@ namespace ffi {
 
     };
 
+    struct VertexIndex {
+        VertexType type;
+        usize id;
+    };
 
     struct PetriNet {
         static PetriNet* create();
@@ -65,19 +69,16 @@ namespace ffi {
         void connect(Vertex*, Vertex*);
         void remove_connection(Vertex*, Vertex*);
 
+        Vertex* getVertex(VertexIndex index) const;
+
         QVariant toVariant() const;
         void fromVariant(const QVariant& data);
 
         void drop();
     };
 
-    struct VertexIndex {
-        VertexType type;
-        usize id;
-    };
-
     struct Vertex {
-        usize index() const;
+        VertexIndex index() const;
         usize markers() const;
         void add_marker();
         void remove_marker();

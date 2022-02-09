@@ -15,7 +15,7 @@ class Transition : public PetriObject {
 
 public:
 
-    explicit Transition(const QPointF& origin, ffi::Vertex* transition, QGraphicsItem* parent = nullptr);
+    explicit Transition(const QPointF& origin, ffi::PetriNet* net, ffi::VertexIndex transition, QGraphicsItem *parent = nullptr);
 
     [[nodiscard]] QRectF boundingRect() const override;
 

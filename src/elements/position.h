@@ -17,7 +17,7 @@ class Position : public PetriObject {
 
 public:
 
-    explicit Position(const QPointF& origin, ffi::Vertex* position, QGraphicsItem* parent = nullptr);
+    explicit Position(const QPointF& origin, ffi::PetriNet* net, ffi::VertexIndex position, QGraphicsItem* parent = nullptr);
 
     [[nodiscard]] QRectF boundingRect() const override;
 

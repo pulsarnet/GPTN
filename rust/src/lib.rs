@@ -8,6 +8,7 @@ extern crate ndarray_linalg;
 extern crate log4rs;
 extern crate log;
 extern crate chrono;
+extern crate indexmap;
 
 use std::cmp::{max_by, min_by};
 use std::collections::HashMap;
@@ -92,8 +93,8 @@ impl DecomposeContextBuilder {
         self.parts.sort();
 
         let parts = self.parts;
-        let positions = parts.0.iter().flat_map(|net| net.positions.iter()).cloned().collect::<Vec<_>>();
-        let transitions = parts.0.iter().flat_map(|net| net.transitions.iter()).cloned().collect::<Vec<_>>();
+        let positions = parts.0.iter().flat_map(|net| net.positions.values()).cloned().collect::<Vec<_>>();
+        let transitions = parts.0.iter().flat_map(|net| net.transitions.values()).cloned().collect::<Vec<_>>();
         let (primitive_net, primitive_matrix) = parts.primitive();
         let linear_base_fragments_matrix = parts.equivalent_matrix();
 
@@ -148,8 +149,8 @@ impl DecomposeContext {
         let mut result = PetriNet::new();
         let (d_input, d_output) = &self.linear_base_fragments_matrix;
 
-        result.positions.extend(self.positions.iter().cloned());
-        result.transitions.extend(self.transitions.iter().cloned());
+        result.positions.extend(self.positions.iter().map(|v| (v.index(), v.clone())));
+        result.transitions.extend(self.transitions.iter().map(|v| (v.index(), v.clone())));
 
         for row in 0..d_input.nrows() {
             for column in 0..d_input.ncols() {

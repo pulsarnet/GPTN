@@ -1,11 +1,11 @@
 use std::ffi::{CStr, CString};
 use libc::c_char;
-use net::vertex::VertexType;
+use net::vertex::{VertexIndex, VertexType};
 use Vertex;
 
 #[no_mangle]
-pub extern "C" fn vertex_index(vertex: *const Vertex) -> usize {
-    unsafe { &*vertex }.index().id
+pub extern "C" fn vertex_index(vertex: *const Vertex) -> VertexIndex {
+    unsafe { &*vertex }.index()
 }
 
 #[no_mangle]

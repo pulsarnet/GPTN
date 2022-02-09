@@ -6,7 +6,7 @@
 #include "transition.h"
 #include "../ffi/rust.h"
 
-Transition::Transition(const QPointF& origin, ffi::Vertex* transition, QGraphicsItem *parent) : PetriObject(transition, parent), m_origin(origin) {
+Transition::Transition(const QPointF& origin, ffi::PetriNet* net, ffi::VertexIndex transition, QGraphicsItem *parent) : PetriObject(net, transition, parent), m_origin(origin) {
     this->setPos(m_origin);
 }
 

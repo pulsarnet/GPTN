@@ -2,7 +2,7 @@
 #include "transition.h"
 #include "../ffi/rust.h"
 
-Position::Position(const QPointF& origin, ffi::Vertex* position, QGraphicsItem *parent) : PetriObject(position, parent) {
+Position::Position(const QPointF& origin, ffi::PetriNet* net, ffi::VertexIndex position, QGraphicsItem* parent) : PetriObject(net, position, parent) {
     this->setPos(origin);
 }
 

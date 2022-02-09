@@ -11,18 +11,16 @@ use std::cell::RefCell;
 use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
-use libc::abs;
-use std::fmt::Write;
-use log::{info, log};
+use log::{log};
 use {SynthesisContext};
 use ::{CMatrix, NamedMatrix};
 use net::vertex::{VertexIndex, VertexType};
-use SynthesisProgram;
+use indexmap::map::IndexMap;
 
 #[derive(Debug)]
 pub struct PetriNet {
-    pub positions: Vec<Vertex>,
-    pub transitions: Vec<Vertex>,
+    pub positions: IndexMap<VertexIndex, Vertex>,
+    pub transitions: IndexMap<VertexIndex, Vertex>,
     pub connections: Vec<Connection>,
     position_index: Rc<RefCell<usize>>,
     transition_index: Rc<RefCell<usize>>,
@@ -36,7 +34,7 @@ impl PetriNetVec {
     pub fn positions(&self) -> Vec<Vertex> {
         self.0
             .iter()
-            .flat_map(|n| n.positions.iter())
+            .flat_map(|n| n.positions.iter().map(|p| p.1))
             .cloned()
             .collect()
     }
@@ -44,7 +42,7 @@ impl PetriNetVec {
     pub fn transitions(&self) -> Vec<Vertex> {
         self.0
             .iter()
-            .flat_map(|n| n.transitions.iter())
+            .flat_map(|n| n.transitions.iter().map(|p| p.1))
             .cloned()
             .collect()
     }
@@ -58,18 +56,18 @@ impl PetriNetVec {
     pub fn position_indexes(&self) -> HashMap<VertexIndex, usize> {
         self.0
             .iter()
-            .flat_map(|net| net.positions.iter())
+            .flat_map(|net| net.positions.keys())
             .enumerate()
-            .map(|(i, v)| (v.index(), i))
+            .map(|(i, &v)| (v, i))
             .collect()
     }
 
     pub fn transition_indexes(&self) -> HashMap<VertexIndex, usize> {
         self.0
             .iter()
-            .flat_map(|net| net.transitions.iter())
+            .flat_map(|net| net.transitions.keys())
             .enumerate()
-            .map(|(i, v)| (v.index(), i))
+            .map(|(i, &v)| (v, i))
             .collect()
     }
 
@@ -79,7 +77,7 @@ impl PetriNetVec {
         for net in self.0.iter() {
             let transitions = &net.transitions;
 
-            'brk: for transition in transitions.iter() {
+            'brk: for transition in transitions.values() {
                 let mut vertexes = vec![
                     Vertex::position(0),
                     Vertex::transition(0),
@@ -88,7 +86,7 @@ impl PetriNetVec {
                 let mut from = net.connections.iter().filter(|c| c.first().eq(&transition.index()));
 
                 while let Some(f) = from.next() {
-                    if result.positions.iter().find(|v: &&Vertex| v.index().eq(&f.second())).is_some() {
+                    if result.positions.get(&f.second()).is_some() {
                         continue;
                     }
 
@@ -98,7 +96,7 @@ impl PetriNetVec {
                         .filter(|c| c.first().ne(&f.second()) && c.second().eq(&transition.index()));
 
                     while let Some(t) = to.next() {
-                        if result.positions.iter().find(|v: &&Vertex| v.index().eq(&t.first())).is_some() {
+                        if result.positions.get(&t.first()).is_some() {
                             continue;
                         }
 
@@ -140,7 +138,7 @@ impl PetriNetVec {
         
         self.0
             .iter()
-            .flat_map(|n| n.positions.iter().chain(n.transitions.iter()))
+            .flat_map(|n| n.positions.values().chain(n.transitions.values()))
             .cloned()
             .collect()
         
@@ -209,8 +207,8 @@ impl Clone for PetriNet {
 impl Default for PetriNet {
     fn default() -> Self {
         PetriNet {
-            positions: vec![],
-            transitions: vec![],
+            positions: IndexMap::new(),
+            transitions: IndexMap::new(),
             connections: vec![],
             position_index: Rc::new(RefCell::new(1)),
             transition_index: Rc::new(RefCell::new(1)),
@@ -225,124 +223,75 @@ impl PetriNet {
     }
 
     pub fn get_position(&self, index: usize) -> Option<&Vertex> {
-        self.positions
-            .iter()
-            .find(|p| (*p).index().id.eq(&index))
+        self.positions.get(&VertexIndex::position(index))
     }
 
     pub fn remove_position(&mut self, index: usize) {
         let position = self.get_position(index).unwrap().index();
         self.connections
-            .drain_filter(|c| c.first().type_ == VertexType::Position && c.first().eq(&position) || c.second().type_ == VertexType::Position && c.first().eq(&position));
-        self.positions
-            .remove(self.positions.iter().position(|e| e.index().eq(&position)).unwrap());
+            .drain_filter(|c| c.first().eq(&position) || c.first().eq(&position));
+        self.positions.remove(&position);
     }
 
     pub fn get_transition(&self, index: usize) -> Option<&Vertex> {
-        self.transitions
-            .iter()
-            .find(|p| (*p).index().id.eq(&index))
+        self.transitions.get(&VertexIndex::transition(index))
     }
 
     pub fn remove_transition(&mut self, index: usize) {
         let transition = self.get_transition(index).unwrap().index();
         self.connections
-            .drain_filter(|c| c.first().type_ == VertexType::Transition && c.first().eq(&transition) || c.second().type_ == VertexType::Transition && c.second().eq(&transition));
-        self.transitions.remove(
-            self.transitions
-                .iter()
-                .position(|e| e.index().eq(&transition))
-                .unwrap(),
-        );
+            .drain_filter(|c| c.first().eq(&transition) || c.second().eq(&transition));
+        self.transitions.remove(&transition);
     }
 
     pub fn add_position(&mut self, index: usize) -> &Vertex {
-        if let Some(i) = (0..self.positions.len()).find(|&i| self.positions[i].index().id == index) {
-            &self.positions[i]
+        self.positions
+            .entry(VertexIndex::position(index))
+            .or_insert_with(|| Vertex::position(index));
+
+        if index >= self.get_position_index() {
+            *(*self.position_index).borrow_mut() = index + 1;
         }
-        else {
-            self.positions.push(Vertex::position(index));
-            if index >= self.get_position_index() {
-                *(*self.position_index).borrow_mut() = index + 1;
-            }
-            self.positions.last().unwrap()
-        }
+        self.positions.get(&VertexIndex::position(index)).unwrap()
     }
 
     pub fn add_transition(&mut self, index: usize) -> &Vertex {
-        if let Some(i) = (0..self.transitions.len()).find(|&i| self.transitions[i].index().id == index) {
-            &self.transitions[i]
+        self.transitions
+            .entry(VertexIndex::transition(index))
+            .or_insert_with(|| Vertex::transition(index));
+
+        if index >= self.get_transition_index() {
+            *(*self.transition_index).borrow_mut() = index + 1;
         }
-        else {
-            self.transitions.push(Vertex::transition(index));
-            if index >= self.get_transition_index() {
-                *(*self.transition_index).borrow_mut() = index + 1;
-            }
-            self.transitions.last().unwrap()
-        }
+        self.transitions.get(&VertexIndex::transition(index)).unwrap()
     }
 
     pub fn insert_position(&mut self, element: Vertex, insert: bool) -> &Vertex {
-        if let Some(p) = self
-            .positions
-            .iter()
-            .enumerate()
-            .find(|(index, el)| el.index() == element.index())
-            .map(|(index, _)| index)
-        {
-            log::info!("Element already exists {:?}", p);
-            return &self.positions[p];
+        match self.positions.contains_key(&element.index()) {
+            true => self.positions.get(&element.index()).unwrap(),
+            false => {
+                let index = element.index();
+                if index.id >= self.get_position_index() {
+                    *(*self.position_index).borrow_mut() = index.id + 1;
+                }
+                self.positions.insert(index,element);
+                self.positions.get(&index).unwrap()
+            }
         }
-
-        if element.index().id >= self.get_position_index() {
-            *(*self.position_index).borrow_mut() = element.index().id + 1;
-        }
-
-        let found = self.positions
-            .iter()
-            .enumerate()
-            .find(|e| element.get_parent().contains(&e.1.index()))
-            .map(|e| e.0);
-
-        if let (Some(found), true) = (found, insert) {
-            self.positions.insert(found + 1, element);
-            return &self.positions[found + 1];
-        }
-
-        self.positions.push(element);
-        self.positions.last().unwrap()
     }
 
     pub fn insert_transition(&mut self, element: Vertex, insert: bool) -> &Vertex {
-        if let Some(p) = self
-            .transitions
-            .iter()
-            .enumerate()
-            .find(|(index, el)| el.index() == element.index())
-            .map(|(index, _)| index)
-        {
-            log::info!("Element already exists {:?}", p);
-            return &self.transitions[p];
+        match self.transitions.contains_key(&element.index()) {
+            true => self.transitions.get(&element.index()).unwrap(),
+            false => {
+                let index = element.index();
+                if index.id >= self.get_transition_index() {
+                    *(*self.transition_index).borrow_mut() = index.id + 1;
+                }
+                self.transitions.insert(index,element);
+                self.transitions.get(&index).unwrap()
+            }
         }
-
-        if element.index().id >= self.get_transition_index() {
-            *(*self.transition_index).borrow_mut() = element.index().id + 1;
-        }
-
-        if let (Some(found), true) = (
-            self.transitions
-                .iter()
-                .enumerate()
-                .find(|e| element.get_parent().contains(&e.1.index()))
-                .map(|e| e.0),
-            insert, )
-        {
-            self.transitions.insert(found + 1, element);
-            return &self.transitions[found + 1];
-        }
-
-        self.transitions.push(element);
-        self.transitions.last().unwrap()
     }
 
     pub fn insert(&mut self, element: Vertex) -> &Vertex {
@@ -356,10 +305,10 @@ impl PetriNet {
         self.connections.push(Connection::new(a, b));
     }
 
-    fn get_indexes(positions: &[Vertex], transitions: &[Vertex]) -> HashMap<VertexIndex, usize> {
+    fn get_indexes(positions: &IndexMap<VertexIndex, Vertex>, transitions: &IndexMap<VertexIndex, Vertex>) -> HashMap<VertexIndex, usize> {
         transitions
-            .iter()
-            .chain(positions.iter())
+            .values()
+            .chain(positions.values())
             .enumerate()
             .fold(HashMap::new(), |mut acc, (index, element)| {
                 acc.insert(element.index(), index);
@@ -523,7 +472,7 @@ impl PetriNet {
     pub fn get_part(&self) -> Option<Vec<VertexIndex>> {
         let mut result = Vec::new();
 
-        for vertex in self.positions.iter() {
+        for vertex in self.positions.values() {
 
             // If incoming edge to vertex exists then skip
             if self
@@ -576,8 +525,8 @@ impl PetriNet {
         let positions = self.positions.clone();
         let transitions = self.transitions.clone();
 
-        let pos_indexes = positions.iter().enumerate().map(|(i, v)| (v.index(), i)).collect::<HashMap<_, _>>();
-        let tran_indexes = transitions.iter().enumerate().map(|(i, v)| (v.index(), i)).collect::<HashMap<_, _>>();
+        let pos_indexes = positions.values().enumerate().map(|(i, v)| (v.index(), i)).collect::<HashMap<_, _>>();
+        let tran_indexes = transitions.values().enumerate().map(|(i, v)| (v.index(), i)).collect::<HashMap<_, _>>();
 
         let mut d_input = DMatrix::<i32>::zeros(positions.len(), transitions.len());
         let mut d_output = DMatrix::<i32>::zeros(positions.len(), transitions.len());
@@ -589,8 +538,8 @@ impl PetriNet {
             }
         }
 
-        (NamedMatrix::new_from(positions.clone(), transitions.clone(), d_input),
-         NamedMatrix::new_from(positions, transitions, d_output))
+        (NamedMatrix::new_from(positions.values().cloned().collect(), transitions.values().cloned().collect(), d_input),
+         NamedMatrix::new_from(positions.values().cloned().collect(), transitions.values().cloned().collect(), d_output))
 
     }
 
@@ -623,7 +572,7 @@ impl PetriNet {
         let mut conns = vec![];
         let mut positions = vec![];
 
-        for position in self.positions.iter() {
+        for position in self.positions.values() {
             if need == 0 {
                 break;
             }
@@ -760,8 +709,8 @@ impl PetriNet {
             }
 
             match loop_element.type_ {
-                VertexType::Position => self.positions.remove(self.positions.iter().position(|e| e.index().eq(&loop_element)).unwrap()),
-                VertexType::Transition => self.transitions.remove(self.transitions.iter().position(|e| e.index().eq(&loop_element)).unwrap()),
+                VertexType::Position => self.positions.remove(loop_element),
+                VertexType::Transition => self.transitions.remove(loop_element),
             };
         }
 
@@ -1005,13 +954,13 @@ pub fn synthesis_program(programs: &mut SynthesisContext, index: usize) {
 
 
     let mut new_net = PetriNet::new();
-    new_net.positions = pos_indexes_vec.iter().cloned().collect();
-    new_net.transitions = tran_indexes_vec.iter().cloned().collect();
+    new_net.positions = pos_indexes_vec.iter().map(|v| (v.index(), v.clone())).collect();
+    new_net.transitions = tran_indexes_vec.iter().map(|v| (v.index(), v.clone())).collect();
 
     let mut pos_new_indexes = HashMap::new();
     for (index, position) in new_net
         .positions
-        .iter_mut()
+        .values_mut()
         .enumerate()
     {
         log::info!("SET MARKERS: {} <= {}", index, markers.row(index)[0]);
@@ -1022,7 +971,7 @@ pub fn synthesis_program(programs: &mut SynthesisContext, index: usize) {
     let mut trans_new_indexes = HashMap::new();
     for (index, transition) in new_net
         .transitions
-        .iter()
+        .values()
         .filter(|e| e.is_transition())
         .enumerate()
     {
@@ -1030,7 +979,7 @@ pub fn synthesis_program(programs: &mut SynthesisContext, index: usize) {
     }
 
     let mut connections = vec![];
-    for transition in new_net.transitions.iter() {
+    for transition in new_net.transitions.values() {
         let col = d_matrix.column(*trans_new_indexes.get(&transition.index()).unwrap());
         for (index, el) in col.iter().enumerate().filter(|e| e.1.ne(&0)) {
             let pos = pos_indexes_vec[index].clone();

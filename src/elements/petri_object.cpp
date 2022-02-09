@@ -8,10 +8,10 @@
 #include "../ffi/rust.h"
 
 
-PetriObject::PetriObject(ffi::Vertex* vertex, QGraphicsItem *parent) : QGraphicsItem(parent), m_vertex(vertex) {
+PetriObject::PetriObject(ffi::PetriNet* net, ffi::VertexIndex _vertex, QGraphicsItem* parent) : QGraphicsItem(parent), m_net(net), m_vertex(_vertex) {
     setFlags(ItemIsMovable | ItemSendsGeometryChanges | ItemIsSelectable | ItemUsesExtendedStyleOption);
 
-    m_labelItem = new QGraphicsTextItem(vertex->get_name(), this);
+    m_labelItem = new QGraphicsTextItem(vertex()->get_name(), this);
     m_labelItem->setFlags(m_labelItem->flags() & 0);
     m_labelItem->setCacheMode(DeviceCoordinateCache);
     m_labelItem->setTextInteractionFlags(Qt::TextInteractionFlag::TextEditable);
@@ -123,15 +123,15 @@ QVariant PetriObject::itemChange(QGraphicsItem::GraphicsItemChange change, const
 }
 
 uint64_t PetriObject::index() const {
-    return m_vertex->index();
+    return vertex()->index().id;
 }
 
 void PetriObject::connectTo(ffi::PetriNet *net, PetriObject *other) {
     net->connect(vertex(), other->vertex());
 }
 
-ffi::Vertex *PetriObject::vertex() {
-    return m_vertex;
+ffi::Vertex *PetriObject::vertex() const {
+    return m_net->getVertex(m_vertex);
 }
 
 void PetriObject::updateLabelPosition() {
@@ -143,7 +143,7 @@ void PetriObject::updateLabelPosition() {
 }
 
 void PetriObject::labelChanged() {
-    this->m_vertex->set_name(m_labelItem->document()->toRawText().toLocal8Bit().data());
+    this->vertex()->set_name(m_labelItem->document()->toRawText().toLocal8Bit().data());
     updateLabelPosition();
 }
 
@@ -157,7 +157,7 @@ QString PetriObject::label() const {
 }
 
 void PetriObject::setLabel(const QString& label) {
-    m_vertex->set_name(label.toLocal8Bit().data());
+    vertex()->set_name(label.toLocal8Bit().data());
     m_labelItem->document()->setPlainText(label);
     updateLabelPosition();
 }

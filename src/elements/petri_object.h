@@ -10,11 +10,7 @@
 #include <QStyleOptionGraphicsItem>
 #include <QtMath>
 #include <QGraphicsSceneMouseEvent>
-
-namespace ffi {
-    struct Vertex;
-    struct PetriNet;
-}
+#include "../ffi/rust.h"
 
 class ArrowLine;
 
@@ -31,7 +27,7 @@ public:
         Transition
     };
 
-    explicit PetriObject(ffi::Vertex* vertex, QGraphicsItem* parent = nullptr);
+    explicit PetriObject(ffi::PetriNet* net, ffi::VertexIndex vertex, QGraphicsItem* parent = nullptr);
 
 protected:
 
@@ -64,7 +60,7 @@ public:
 
     void connectTo(ffi::PetriNet* net, PetriObject* other);
 
-    ffi::Vertex* vertex();
+    ffi::Vertex* vertex() const;
 
     void setColored(bool colored) {
         m_colored = colored;
@@ -94,7 +90,9 @@ protected:
 
     bool m_colored = false;
     QList<ArrowLine*> m_connections;
-    ffi::Vertex* m_vertex;
+
+    ffi::PetriNet* m_net;
+    ffi::VertexIndex m_vertex;
 
     QGraphicsTextItem* m_labelItem;
 
