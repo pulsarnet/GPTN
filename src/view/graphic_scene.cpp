@@ -62,7 +62,12 @@ GraphicScene::GraphicScene(ffi::PetriNet *net, QObject *parent) :
     }
 }
 
-GraphicScene::GraphicScene(const QVariant &data, ffi::PetriNet *net, QObject *parent) : QGraphicsScene(parent), m_mod(Mode::A_Nothing), m_allowMods(Mode::A_Nothing), m_net(net) {
+GraphicScene::GraphicScene(const QVariant &data, ffi::PetriNet *net, QObject *parent) : QGraphicsScene(parent)
+    , m_mod(Mode::A_Nothing)
+    , m_allowMods(Mode::A_Nothing)
+    , m_net(net)
+    , m_restore(true)
+{
     setSceneRect(-12500, -12500, 25000, 25000);
     auto common_data = data.toHash();
 
@@ -80,8 +85,6 @@ GraphicScene::GraphicScene(const QVariant &data, ffi::PetriNet *net, QObject *pa
             }
         }
     }
-
-    qDebug() << m_positions.size();
 
     auto connections = m_net->connections();
     for (int i = 0; i < connections.size(); i++) {
@@ -118,6 +121,7 @@ GraphicScene::GraphicScene(const QVariant &data, ffi::PetriNet *net, QObject *pa
         connectItems(point1, point2, true);
     }
 
+    m_restore = false;
 }
 
 void GraphicScene::setMode(Mode mod) {
@@ -148,6 +152,7 @@ void GraphicScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
                 event->setAccepted(true);
                 break;
             case A_Move:
+                m_dragInProgress = true;
                 QGraphicsScene::mousePressEvent(event);
                 break;
             case A_Rotation:
@@ -179,6 +184,11 @@ void GraphicScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
             break;
         case A_Move:
             QGraphicsScene::mouseMoveEvent(event);
+
+            if (m_dragInProgress && !mouseGrabberItem()) {
+                m_dragInProgress = false;
+            }
+
             break;
         default:
             break;
@@ -188,6 +198,12 @@ void GraphicScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
 }
 
 void GraphicScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
+
+    if (m_dragInProgress) {
+        m_dragInProgress = false;
+        onSceneChanged();
+    }
+
     QGraphicsScene::mouseReleaseEvent(event);
 }
 
@@ -208,7 +224,7 @@ void GraphicScene::removeObject(QGraphicsSceneMouseEvent *event) {
         removeConnectionsAssociatedWith(position);
         m_net->remove_position(position->vertex());
         delete position;
-        emit itemRemoved();
+        onSceneChanged();
     }
     else if (auto transition = dynamic_cast<Transition*>(item); transition) {
         auto index = m_transition.indexOf(transition);
@@ -216,14 +232,14 @@ void GraphicScene::removeObject(QGraphicsSceneMouseEvent *event) {
         removeConnectionsAssociatedWith(transition);
         m_net->remove_transition(transition->vertex());
         delete transition;
-        emit itemRemoved();
+        onSceneChanged();
     }
     else if (auto connection_line = dynamic_cast<ArrowLine*>(item); connection_line) {
         connection_line->disconnect(m_net);
         removeItem(connection_line);
         m_connections.removeAt(m_connections.indexOf(connection_line));
         delete connection_line;
-        emit itemRemoved();
+        onSceneChanged();
     }
 
 }
@@ -272,7 +288,6 @@ void GraphicScene::connectionRollback(QGraphicsSceneMouseEvent *event) {
     }
 }
 
-
 void GraphicScene::removeConnectionsAssociatedWith(PetriObject *object) {
 
     QMutableListIterator iter(m_connections);
@@ -287,7 +302,6 @@ void GraphicScene::removeConnectionsAssociatedWith(PetriObject *object) {
     }
 
 }
-
 
 PetriObject *GraphicScene::netItemAt(const QPointF &pos) {
     auto it = std::find_if(m_positions.begin(), m_positions.end(), [&](Position* item) {
@@ -315,6 +329,13 @@ void GraphicScene::rotateObject(QGraphicsSceneMouseEvent *event) {
 
 ffi::PetriNet *GraphicScene::net() {
     return m_net;
+}
+
+void GraphicScene::onSceneChanged() {
+    if (m_restore)
+        return;
+
+    emit sceneChanged();
 }
 
 QVariant GraphicScene::toVariant() {
@@ -361,7 +382,7 @@ Position *GraphicScene::addPosition(ffi::Vertex *position, const QPointF &point)
     m_positions.push_back(pos);
     addItem(pos);
 
-    emit itemInserted(pos);
+    onSceneChanged();
     return pos;
 }
 
@@ -374,7 +395,7 @@ Transition *GraphicScene::addTransition(ffi::Vertex *transition, const QPointF &
     m_transition.push_back(tran);
     addItem(tran);
 
-    emit itemInserted(tran);
+    onSceneChanged();
 
     return tran;
 }

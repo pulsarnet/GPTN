@@ -63,6 +63,8 @@ public:
 
     ffi::PetriNet* net();
 
+    void onSceneChanged();
+
 public slots:
 
     void setMode(GraphicScene::Mode mode);
@@ -70,8 +72,7 @@ public slots:
     void slotVerticalAlignment(bool triggered);
 
 signals:
-    void itemInserted(QGraphicsItem* item);
-    void itemRemoved();
+    void sceneChanged();
 
 protected:
 
@@ -106,6 +107,9 @@ private:
     Modes m_allowMods;
 
     ffi::PetriNet* m_net;
+
+    bool m_restore = false;
+    bool m_dragInProgress = false;
 
 };
 

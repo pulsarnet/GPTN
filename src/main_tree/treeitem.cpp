@@ -6,6 +6,7 @@
 #include "../ffi/rust.h"
 #include "treemodel.h"
 #include "../matrix_model.h"
+#include "../synthesis/synthesis_model.h"
 #include <QTableView>
 
 #include <QMenu>
@@ -44,6 +45,8 @@ void TreeItem::addChild(TreeItem *child)
         beginInsertRows();
         m_childItems.push_back(child);
         endInsertRows();
+
+        onChanged();
     }
 }
 
@@ -54,6 +57,8 @@ bool TreeItem::removeChildren(int position, int count)
 
     for (int row = 0; row < count; ++row)
         delete m_childItems.takeAt(position);
+
+    onChanged();
 
     return true;
 }
@@ -111,6 +116,10 @@ TreeItem::~TreeItem()
         m_model->dockManager()->removeDockWidget(m_widget);
         delete m_widget;
     }
+}
+
+void TreeItem::onChanged() {
+    emit m_model->dataChanged(QModelIndex(), QModelIndex());
 }
 
 GraphicsViewTreeItem::GraphicsViewTreeItem(TreeModel *model, TreeItem *parent) : TreeItem(model, parent), m_view(new GraphicsView) {
@@ -191,6 +200,7 @@ void NetTreeItem::initialize() {
     connect(m_decompose, &QAction::triggered, this, &NetTreeItem::onDecompose);
 
     view()->setScene(m_scene);
+    connect(m_scene, &GraphicScene::sceneChanged, this, &TreeItem::onChanged);
 
     setDockWidget(new ads::CDockWidget("Petri net"));
     dockWidget()->setWidget(view());
@@ -353,6 +363,7 @@ PrimitiveSystemItem::PrimitiveSystemItem(const QVariant &data, ffi::PetriNet *ne
 
 void PrimitiveSystemItem::initialize() {
     view()->setScene(m_scene);
+    connect(m_scene, &GraphicScene::sceneChanged, this, &TreeItem::onChanged);
 
     setDockWidget(new ads::CDockWidget("Primitive View"));
     dockWidget()->setWidget(view());
@@ -393,6 +404,8 @@ LinearBaseFragmentsItem::LinearBaseFragmentsItem(const QVariant &data, ffi::Petr
 void LinearBaseFragmentsItem::initialize() {
 
     view()->setScene(m_scene);
+    connect(m_scene, &GraphicScene::sceneChanged, this, &TreeItem::onChanged);
+
     setDockWidget(new ads::CDockWidget("Linear base fragments"));
     dockWidget()->setWidget(view());
     dockManager()->addDockWidgetTab(ads::DockWidgetArea::CenterDockWidgetArea, dockWidget());
@@ -488,6 +501,7 @@ SynthesisProgramsItem::SynthesisProgramsItem(const QVariant &data, ffi::Synthesi
     setName("Programs");
     auto view = new SynthesisTable(ctx);
     connect(view, &SynthesisTable::signalSynthesisedProgram, this, &SynthesisProgramsItem::onProgramSynthesed);
+    connect(view->model(), &QAbstractItemModel::dataChanged, this, &TreeItem::onChanged);
 
     setDockWidget(new ads::CDockWidget(name()));
     dockWidget()->setWidget(view);

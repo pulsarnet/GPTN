@@ -73,6 +73,10 @@ public:
 
     ~TreeItem();
 
+public slots:
+
+    void onChanged();
+
 protected:
 
     ads::CDockManager* dockManager() const;

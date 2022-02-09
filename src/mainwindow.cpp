@@ -15,7 +15,7 @@
 #include "main_tree/treemodel.h"
 #include "main_tree/treeitem.h"
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_changed(false) {
 
     createMenuBar();
     createStatusBar();
@@ -41,7 +41,105 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     treeDocker->setWidget(treeView);
     manager->addDockWidgetTab(DockWidgetArea::LeftDockWidgetArea, treeDocker);
 
-    connect(treeModel, &QAbstractItemModel::dataChanged, this, &MainWindow::onDocumentChanged);
+    connect(treeModel, &QAbstractItemModel::rowsInserted, this, &MainWindow::onDocumentChanged);
+    connect(treeModel, &QAbstractItemModel::rowsInserted, this, &MainWindow::onDocumentChanged);
+
+}
+
+void MainWindow::setFileName(const QString &name) {
+    m_filename = name;
+
+    if (m_filename.isEmpty())
+        setWindowTitle("Petri Net Editor");
+    else
+        setWindowTitle("Petri Net Editor - " + m_filename);
+}
+
+bool MainWindow::saveAs() {
+
+    QString fileName = QFileDialog::getSaveFileName(this,
+                                                    tr("Save Address Book"), "",
+                                                    tr("Address Book (*.ptn);;All Files (*)"));
+
+    if (fileName.isEmpty())
+        return false;
+
+    return saveFile(fileName);
+}
+
+bool MainWindow::save() {
+    if (m_filename.isEmpty())
+        return saveAs();
+
+    return saveFile(m_filename);
+}
+
+bool MainWindow::saveFile(const QString &filename) {
+
+    QFile file(filename);
+    if (!file.open(QIODevice::WriteOnly)) {
+        QMessageBox::information(this, tr("Unable to open file"),
+                                 file.errorString());
+        return false;
+    }
+
+    auto data = treeModel->root()->toVariant();
+    QDataStream out(&file);
+    out.setVersion(QDataStream::Qt_6_0);
+    out << data;
+
+    setFileName(filename);
+    m_changed = false;
+
+    return true;
+
+}
+
+bool MainWindow::open() {
+
+    QString fileName = QFileDialog::getOpenFileName(this,
+                                                    tr("Open Address Book"), "",
+                                                    tr("Address Book (*.ptn);;All Files (*)"));
+
+    if (fileName.isEmpty())
+        return false;
+
+    if (m_changed) {
+        auto ret = onSaveFileAsk();
+        if (ret == QMessageBox::Cancel || (ret == QMessageBox::Save && !save()))
+            return false;
+    }
+
+    treeModel->root()->removeChildren(0, treeModel->root()->childCount());
+
+    QFile file(fileName);
+
+    if (!file.open(QIODevice::ReadOnly)) {
+        QMessageBox::information(this, tr("Unable to open file"),
+                                 file.errorString());
+        return false;
+    }
+
+    QVariant data;
+    QDataStream in(&file);
+    in.setVersion(QDataStream::Qt_6_0);
+    in >> data;
+
+    dynamic_cast<RootTreeItem*>(treeModel->root())->fromVariant(data);
+
+    setFileName(fileName);
+    m_changed = false;
+
+    return true;
+}
+
+QMessageBox::StandardButton MainWindow::onSaveFileAsk() {
+    return QMessageBox::warning(
+            this,
+            m_filename,
+            tr("The document has been modified.\n"
+               "Do you want to save your changes?"),
+            QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
 }
 
 void MainWindow::createMenuBar() {
@@ -75,53 +173,15 @@ void MainWindow::createStatusBar() {
 }
 
 void MainWindow::slotSaveFile(bool checked) {
-    QString fileName = QFileDialog::getSaveFileName(this,
-                                                    tr("Save Address Book"), "",
-                                                    tr("Address Book (*.ptn);;All Files (*)"));
-
-    if (fileName.isEmpty())
-        return;
-
-    QFile file(fileName);
-    if (!file.open(QIODevice::WriteOnly)) {
-        QMessageBox::information(this, tr("Unable to open file"),
-                                 file.errorString());
-        return;
-    }
-
-    auto data = treeModel->root()->toVariant();
-    QDataStream out(&file);
-    out.setVersion(QDataStream::Qt_6_0);
-    out << data;
+    save();
 }
 
 void MainWindow::slotSaveAsFile(bool checked) {
-
+    saveAs();
 }
 
 void MainWindow::slotOpenFile(bool checked) {
-
-    QString fileName = QFileDialog::getOpenFileName(this,
-                                                    tr("Open Address Book"), "",
-                                                    tr("Address Book (*.ptn);;All Files (*)"));
-
-    if (fileName.isEmpty())
-        return;
-
-    QFile file(fileName);
-
-    if (!file.open(QIODevice::ReadOnly)) {
-        QMessageBox::information(this, tr("Unable to open file"),
-                                 file.errorString());
-        return;
-    }
-
-    QVariant data;
-    QDataStream in(&file);
-    in.setVersion(QDataStream::Qt_6_0);
-    in >> data;
-
-    dynamic_cast<RootTreeItem*>(treeModel->root())->fromVariant(data);
+    open();
 }
 
 void MainWindow::onDocumentChanged() {
@@ -143,18 +203,10 @@ bool MainWindow::saveOnExit() {
     if (!m_changed)
         return true;
 
-    const QMessageBox::StandardButton ret = QMessageBox::warning(
-            this,
-            m_fileName,
-            tr("The document has been modified.\n"
-               "Do you want to save your changes?"),
-            QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
-
-    switch (ret)
+    switch (onSaveFileAsk())
     {
         case QMessageBox::Save:
-            slotSaveFile(true);
-            return true;
+            return save();
         case QMessageBox::Cancel:
             return false;
         default:

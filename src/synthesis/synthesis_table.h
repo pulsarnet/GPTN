@@ -16,6 +16,7 @@ class QToolBar;
 class QAction;
 class QTableView;
 class Switch;
+class SynthesisModel;
 
 class SynthesisTable : public QWidget {
 
@@ -25,6 +26,7 @@ public:
 
     explicit SynthesisTable(ffi::SynthesisContext* ctx, QWidget* parent = nullptr);
 
+    SynthesisModel* model() const;
 
 public slots:
 

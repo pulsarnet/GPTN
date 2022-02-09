@@ -45,6 +45,10 @@ SynthesisTable::SynthesisTable(ffi::SynthesisContext *ctx, QWidget *parent): QWi
     layout()->addWidget(m_table);
 }
 
+SynthesisModel *SynthesisTable::model() const {
+    return dynamic_cast<SynthesisModel*>(m_table->model());
+}
+
 void SynthesisTable::slotEvalProgram(bool) {
     auto index = m_table->currentIndex();
     if (!index.isValid()) return;

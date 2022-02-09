@@ -20,6 +20,7 @@
 #include <QLabel>
 #include <DockAreaWidget.h>
 #include <DockManager.h>
+#include <QMessageBox>
 
 using namespace ads;
 
@@ -38,6 +39,14 @@ public:
     MainWindow(const MainWindow&) = delete;
     MainWindow(MainWindow&&) = delete;
     explicit MainWindow(QWidget *parent = nullptr);
+
+    void setFileName(const QString& name);
+    bool saveAs();
+    bool save();
+    bool open();
+
+    bool saveFile(const QString& filename);
+    QMessageBox::StandardButton onSaveFileAsk();
 
 public slots:
 
@@ -69,7 +78,7 @@ private:
     TreeModel* treeModel = nullptr;
 
     CDockManager* manager = nullptr;
-    QString m_fileName;
+    QString m_filename;
     bool m_changed;
 };
 

@@ -64,7 +64,10 @@ impl Eq for Vertex {}
 
 impl Debug for Vertex {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let name = format!("{}", self.id);
+        let name = match self.type_ {
+            VertexType::Position => format!("p{}", self.id),
+            VertexType::Transition => format!("t{}", self.id)
+        };
 
         f.pad(name.as_str())
     }
