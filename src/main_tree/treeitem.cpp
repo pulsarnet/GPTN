@@ -516,8 +516,17 @@ SynthesisProgramsItem::SynthesisProgramsItem(const QVariant &data, ffi::Synthesi
     }
 }
 
-void SynthesisProgramsItem::onProgramSynthesed(ffi::PetriNet *net) {
-    addChild(new SynthesisProgramItem(net, model(), this));
+void SynthesisProgramsItem::onProgramSynthesed(ffi::PetriNet *net, int index) {
+
+    for (auto i = 0; i < childCount(); i++) {
+        auto ch = dynamic_cast<SynthesisProgramItem*>(child(i));
+        if (index == ch->index())
+            return;
+    }
+
+    auto synthesedProgram = new SynthesisProgramItem(net, model(), this);
+    synthesedProgram->setIndex(index);
+    addChild(synthesedProgram);
 }
 
 QVariant SynthesisProgramsItem::toVariant() const {
@@ -536,7 +545,10 @@ QVariant SynthesisProgramsItem::toVariant() const {
     return result;
 }
 
-SynthesisProgramItem::SynthesisProgramItem(ffi::PetriNet *net, TreeModel *model, TreeItem *parent): GraphicsViewTreeItem(model, parent), m_net(net) {
+SynthesisProgramItem::SynthesisProgramItem(ffi::PetriNet *net, TreeModel *model, TreeItem *parent): GraphicsViewTreeItem(model, parent)
+    , m_net(net)
+    , m_programTableIndex(-1)
+{
     setName("Program result");
 
     m_scene = new GraphicScene(m_net, this);
@@ -548,11 +560,16 @@ SynthesisProgramItem::SynthesisProgramItem(ffi::PetriNet *net, TreeModel *model,
     dockManager()->addDockWidgetTab(ads::DockWidgetArea::CenterDockWidgetArea, dockWidget());
 }
 
-SynthesisProgramItem::SynthesisProgramItem(const QVariant &data, ffi::PetriNet *net, TreeModel *model, TreeItem *parent): GraphicsViewTreeItem(model, parent), m_net(net)
+SynthesisProgramItem::SynthesisProgramItem(const QVariant &data, ffi::PetriNet *net, TreeModel *model, TreeItem *parent): GraphicsViewTreeItem(model, parent)
+    , m_net(net)
+    , m_programTableIndex(-1)
 {
     setName("Program result");
 
-    m_scene = new GraphicScene(data.toHash()["scene"], net, this);
+    auto map = data.toHash();
+    m_programTableIndex = map["index"].toInt();
+
+    m_scene = new GraphicScene(map["scene"], net, this);
     m_scene->setAllowMods(GraphicScene::A_Nothing);
     view()->setScene(m_scene);
 
@@ -561,10 +578,19 @@ SynthesisProgramItem::SynthesisProgramItem(const QVariant &data, ffi::PetriNet *
     dockManager()->addDockWidgetTab(ads::DockWidgetArea::CenterDockWidgetArea, dockWidget());
 }
 
+void SynthesisProgramItem::setIndex(int index) {
+    m_programTableIndex = index;
+}
+
+int SynthesisProgramItem::index() const {
+    return m_programTableIndex;
+}
+
 QVariant SynthesisProgramItem::toVariant() const {
     QVariantHash result;
     result["type"] = item_type();
     result["name"] = name();
+    result["index"] = index();
     result["scene"] = m_scene->toVariant();
 
     return result;

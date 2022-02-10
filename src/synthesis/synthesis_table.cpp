@@ -56,7 +56,7 @@ void SynthesisTable::slotEvalProgram(bool) {
     auto model = dynamic_cast<SynthesisModel*>(m_table->model());
     auto result = model->ctx()->eval_program(index.row());
 
-    emit signalSynthesisedProgram(result);
+    emit signalSynthesisedProgram(result, index.row());
 }
 
 void SynthesisTable::slotAddProgram(bool) {

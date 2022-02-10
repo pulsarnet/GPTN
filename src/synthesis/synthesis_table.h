@@ -35,7 +35,7 @@ public slots:
 
 signals:
 
-    void signalSynthesisedProgram(ffi::PetriNet*);
+    void signalSynthesisedProgram(ffi::PetriNet*, int);
 
 private:
 

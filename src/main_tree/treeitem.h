@@ -296,7 +296,7 @@ public:
 
 public slots:
 
-    void onProgramSynthesed(ffi::PetriNet* net);
+    void onProgramSynthesed(ffi::PetriNet* net, int index);
 };
 
 class SynthesisProgramItem : public GraphicsViewTreeItem {
@@ -304,6 +304,8 @@ public:
     explicit SynthesisProgramItem(ffi::PetriNet* net, TreeModel* model, TreeItem* parent = nullptr);
     explicit SynthesisProgramItem(const QVariant& data, ffi::PetriNet* net, TreeModel* model, TreeItem* parent = nullptr);
 
+    void setIndex(int index);
+    int index() const;
 
     ObjectType item_type() const override {
         return ObjectType::O_SynthesisProgram;
@@ -319,6 +321,7 @@ private:
 
     GraphicScene* m_scene;
     ffi::PetriNet* m_net;
+    int m_programTableIndex;
 };
 
 #endif // TREEITEM_H
