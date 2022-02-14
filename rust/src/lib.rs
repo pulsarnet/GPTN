@@ -350,13 +350,13 @@ impl<'a> SynthesisContext<'a> {
     pub fn program_header_name(&self, index: usize, label: bool) -> String {
         if index < self.transitions().len() {
             match label {
-                true => self.transitions()[index].get_name(),
+                true => self.transitions()[index].label(false),
                 false => self.transitions()[index].full_name()
             }
         }
         else {
             match label {
-                true => self.positions()[index - self.transitions().len()].get_name(),
+                true => self.positions()[index - self.transitions().len()].label(false),
                 false => self.positions()[index - self.transitions().len()].full_name()
             }
         }

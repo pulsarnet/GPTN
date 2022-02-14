@@ -78,11 +78,6 @@ impl PetriNetVec {
             let transitions = &net.transitions;
 
             'brk: for transition in transitions.values() {
-                let mut vertexes = vec![
-                    Vertex::position(0),
-                    Vertex::transition(0),
-                    Vertex::position(0),
-                ];
                 let mut from = net.connections.iter().filter(|c| c.first().eq(&transition.index()));
 
                 while let Some(f) = from.next() {

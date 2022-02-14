@@ -75,7 +75,7 @@ impl Debug for Vertex {
 
 impl Display for Vertex {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let name = self.get_name();
+        let name = self.label(false);
 
         f.pad(name.as_str())
     }
@@ -134,14 +134,14 @@ impl Vertex {
         self.parent
     }
 
-    pub fn set_name(&mut self, name: String) {
+    pub fn set_label(&mut self, name: String) {
         self.name = name;
     }
 
-    pub fn get_name(&self) -> String {
+    pub fn label(&self, show_parent: bool) -> String {
         let mut name = self.name.clone();
-        if self.parent.is_some() {
-            name = format!("{name}");
+        if let (Some(VertexIndex { id, ..}), true) = (self.parent, show_parent) {
+            name = format!("{name}.{id}");
         }
         name
     }

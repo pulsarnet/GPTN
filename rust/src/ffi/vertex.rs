@@ -25,7 +25,7 @@ pub extern "C" fn vertex_remove_marker(vertex: *mut Vertex) {
 
 #[no_mangle]
 pub extern "C" fn vertex_get_name(vertex: *const Vertex) -> *const c_char {
-    let name = unsafe { &*vertex }.get_name();
+    let name = unsafe { &*vertex }.label(false);
     let result = CString::new(name).unwrap();
     let ptr = result.as_ptr();
     std::mem::forget(result);
@@ -34,7 +34,7 @@ pub extern "C" fn vertex_get_name(vertex: *const Vertex) -> *const c_char {
 
 #[no_mangle]
 pub extern "C" fn vertex_set_name(vertex: *mut Vertex, name: *mut c_char) {
-    unsafe { &mut *vertex }.set_name(unsafe { CStr::from_ptr(name) }.to_string_lossy().to_string());
+    unsafe { &mut *vertex }.set_label(unsafe { CStr::from_ptr(name) }.to_string_lossy().to_string());
 }
 
 #[no_mangle]
