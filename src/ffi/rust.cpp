@@ -34,10 +34,11 @@ extern "C" {
     usize vertex_markers(const Vertex&);
     void vertex_add_marker(Vertex&);
     void vertex_remove_marker(Vertex&);
-    char* vertex_get_name(const Vertex&);
-    void vertex_set_name(Vertex&, char*);
+    char* vertex_label(const Vertex&, bool);
+    void vertex_set_label(Vertex&, char*);
     VertexType vertex_type(const Vertex&);
     usize vertex_parent(const Vertex&);
+    void vertex_set_parent(Vertex&, VertexIndex);
 
     // Connection
     VertexIndex connection_from(const Connection& self);
@@ -289,6 +290,7 @@ void PetriNet::fromVariant(const QVariant &data) {
         }
 
         added->set_name(label.toUtf8().data());
+        added->set_parent(VertexIndex { (VertexType)type, (ffi::usize)parent_index });
     }
 
     for (const auto& connection : connections) {
@@ -326,16 +328,20 @@ void Vertex::remove_marker() {
     ::vertex_remove_marker(*this);
 }
 
-char *Vertex::get_name() const {
-    return ::vertex_get_name(*this);
+char *Vertex::get_name(bool show_parent) const {
+    return ::vertex_label(*this, show_parent);
 }
 
 void Vertex::set_name(char *name) {
-    ::vertex_set_name(*this, name);
+    ::vertex_set_label(*this, name);
 }
 
 VertexType Vertex::type() const {
     return ::vertex_type(*this);
+}
+
+void Vertex::set_parent(VertexIndex index) {
+    ::vertex_set_parent(*this, index);
 }
 
 usize Vertex::parent() const {
@@ -346,7 +352,7 @@ QVariant Vertex::toVariant() const {
     QVariantHash vertex;
     vertex["type"] = type();
     vertex["index"] = index().id;
-    vertex["label"] = get_name();
+    vertex["label"] = get_name(false);
     vertex["parent"] = parent();
 
     if (type() == VertexType::Position) {

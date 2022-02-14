@@ -1,17 +1,16 @@
 mod connection;
 pub mod vertex;
 
-use std::any::Any;
 use core::MatrixFormat;
 use nalgebra::DMatrix;
-use ndarray_linalg::Solve;
+
 pub use net::connection::Connection;
 pub use net::vertex::Vertex;
 use std::cell::RefCell;
 use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
-use log::{log};
+
 use {SynthesisContext};
 use ::{CMatrix, NamedMatrix};
 use net::vertex::{VertexIndex, VertexType};
@@ -153,7 +152,7 @@ impl PetriNetVec {
         let pos_indexes = self.position_indexes();
         let tran_indexes = self.transition_indexes();
         
-        let all_elements = self.elements();
+        //let all_elements = self.elements();
         let all_connections = self.connections();
 
         let mut d_input = nalgebra::DMatrix::<i32>::zeros(pos_indexes.len(), tran_indexes.len());
@@ -261,7 +260,7 @@ impl PetriNet {
         self.transitions.get(&VertexIndex::transition(index)).unwrap()
     }
 
-    pub fn insert_position(&mut self, element: Vertex, insert: bool) -> &Vertex {
+    pub fn insert_position(&mut self, element: Vertex) -> &Vertex {
         match self.positions.contains_key(&element.index()) {
             true => self.positions.get(&element.index()).unwrap(),
             false => {
@@ -275,7 +274,7 @@ impl PetriNet {
         }
     }
 
-    pub fn insert_transition(&mut self, element: Vertex, insert: bool) -> &Vertex {
+    pub fn insert_transition(&mut self, element: Vertex) -> &Vertex {
         match self.transitions.contains_key(&element.index()) {
             true => self.transitions.get(&element.index()).unwrap(),
             false => {
@@ -291,8 +290,8 @@ impl PetriNet {
 
     pub fn insert(&mut self, element: Vertex) -> &Vertex {
         match element.is_position() {
-            true => self.insert_position(element, false),
-            false => self.insert_transition(element, false),
+            true => self.insert_position(element),
+            false => self.insert_transition(element),
         }
     }
 
@@ -596,7 +595,7 @@ impl PetriNet {
         }
 
         positions.into_iter().for_each(|p| {
-            self.insert_position(p, true);
+            self.insert_position(p);
         });
         conns.into_iter().for_each(|c| self.connections.push(c));
     }
@@ -654,11 +653,11 @@ impl PetriNet {
             if add_element {
                 match loop_element.type_ {
                     VertexType::Position => {
-                        self.insert_position(new_element.clone(), true);
+                        self.insert_position(new_element.clone());
                         self.update_position_index();
                     },
                     VertexType::Transition => {
-                        self.insert_transition(new_element.clone(), true);
+                        self.insert_transition(new_element.clone());
                         self.update_transition_index();
                     },
                 };
@@ -674,7 +673,7 @@ impl PetriNet {
                             .cloned()
                         {
                             let index = self.next_position_index();
-                            let pos = self.insert_position(result.get_position(conn.second().id).unwrap().split(index), true);
+                            let pos = self.insert_position(result.get_position(conn.second().id).unwrap().split(index));
                             *conn.first_mut() = new_element.index();
                             *conn.second_mut() = pos.index();
                             self.connections.push(conn);
@@ -694,7 +693,7 @@ impl PetriNet {
                             .cloned()
                         {
                             let index = self.next_position_index();
-                            let pos = self.insert_position(result.get_position(conn.first().id).unwrap().split(index), true);
+                            let pos = self.insert_position(result.get_position(conn.first().id).unwrap().split(index));
                             *conn.first_mut() = pos.index();
                             *conn.second_mut() = new_element.index();
                             self.connections.push(conn);
@@ -731,7 +730,7 @@ pub fn synthesis_program(programs: &mut SynthesisContext, index: usize) {
         .enumerate()
         .for_each(|e| markers.row_mut(e.0)[0] = e.1 as i32);
 
-    let mut result = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
+    //let mut result = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
     let mut save_vec = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
     let current_program = &programs.programs[index].data;
     let mut t_sets = vec![];

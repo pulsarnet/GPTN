@@ -41,12 +41,11 @@ QModelIndex TreeModel::index(int row, int column, const QModelIndex &parent) con
         return QModelIndex();
 
     TreeItem *parentItem = getItem(parent);
-    if (!parentItem)
-        return QModelIndex();
-
     TreeItem *childItem = parentItem->child(row);
+
     if (childItem)
         return createIndex(row, column, childItem);
+
     return QModelIndex();
 }
 
@@ -80,8 +79,13 @@ int TreeModel::columnCount(const QModelIndex &parent) const
 }
 
 bool TreeModel::removeRows(int position, int rows, const QModelIndex &parent) {
+
     TreeItem *parentItem = getItem(parent);
-    if (!parentItem || !parentItem->child(position)->allowManualDelete())
+    if (parentItem && parentItem->childCount() == 0)
+        return true;
+
+    //if (!parentItem || !parentItem->child(position)->allowManualDelete())
+    if (!parentItem)
         return false;
 
     beginRemoveRows(parent, position, position + rows - 1);
@@ -92,6 +96,9 @@ bool TreeModel::removeRows(int position, int rows, const QModelIndex &parent) {
 }
 
 QModelIndex TreeModel::indexForTreeItem(TreeItem *item) {
+    if (item == rootItem)
+        return QModelIndex();
+
     return createIndex(item->row(), 0, item);
 }
 

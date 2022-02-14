@@ -11,17 +11,16 @@ extern crate chrono;
 extern crate indexmap;
 
 use std::cmp::{max_by, min_by};
-use std::collections::HashMap;
 use std::ffi::CString;
 use std::ops::Deref;
-use libc::{c_char, labs};
+use libc::c_char;
 use log4rs::append::file::FileAppender;
 use log4rs::{Config, config::Logger};
 use log4rs::config::{Appender, Root};
 use log4rs::encode::pattern::PatternEncoder;
 use log::{info, LevelFilter};
 use core::NamedMatrix;
-use nalgebra::{abs, DMatrix, MatrixSum, Vector};
+use nalgebra::DMatrix;
 use ffi::vec::CVec;
 
 
@@ -243,7 +242,10 @@ pub unsafe extern "C" fn decompose_context_delete(ctx: *mut DecomposeContext) {
 
 pub struct SynthesisProgram {
     data: Vec<usize>,
+
+    #[allow(dead_code)]
     net_before: Option<PetriNet>,
+
     net_after: Option<PetriNet>
 }
 
@@ -278,7 +280,6 @@ impl<'a> SynthesisContext<'a> {
         let positions = decompose_ctx.positions.len();
         let transitions = decompose_ctx.transitions.len();
         let (equivalent_input, equivalent_output) = &decompose_ctx.linear_base_fragments_matrix;
-        let primitive_matrix = &decompose_ctx.primitive_matrix;
 
         let mut c_matrix = nalgebra::DMatrix::<i32>::zeros(positions, positions);
 

@@ -110,7 +110,8 @@ bool MainWindow::open() {
             return false;
     }
 
-    treeModel->root()->removeChildren(0, treeModel->root()->childCount());
+    treeModel->removeRows(0, treeModel->root()->childCount(), treeModel->indexForTreeItem(treeModel->root()));
+    //treeModel->root()->removeChildren(0, treeModel->root()->childCount());
 
     QFile file(fileName);
 

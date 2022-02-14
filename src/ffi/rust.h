@@ -82,9 +82,10 @@ namespace ffi {
         usize markers() const;
         void add_marker();
         void remove_marker();
-        char* get_name() const;
+        char* get_name(bool show_parent = true) const;
         void set_name(char* name);
         VertexType type() const;
+        void set_parent(VertexIndex);
         usize parent() const;
 
         QVariant toVariant() const;

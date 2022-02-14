@@ -1,5 +1,4 @@
 use net::vertex::VertexIndex;
-use crate::net::vertex::Vertex;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Connection {
