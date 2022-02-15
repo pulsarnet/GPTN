@@ -290,7 +290,9 @@ void PetriNet::fromVariant(const QVariant &data) {
         }
 
         added->set_name(label.toUtf8().data());
-        added->set_parent(VertexIndex { (VertexType)type, (ffi::usize)parent_index });
+
+        if (parent_index > 0)
+            added->set_parent(VertexIndex { (VertexType)type, (ffi::usize)parent_index });
     }
 
     for (const auto& connection : connections) {
