@@ -78,7 +78,7 @@ set(HEADERS
         src/view/graphic_scene.h
         src/graphviz/graphviz_wrapper.h
         src/overrides/switch.h
-        src/synthesis/synthesis_table.h src/synthesis/synthesis_table.cpp src/synthesis/synthesis_model.cpp src/synthesis/synthesis_model.h src/synthesis/synthesis_item_delegate.cpp src/synthesis/synthesis_item_delegate.h src/main_tree/treeview.cpp src/main_tree/treeview.h)
+        src/synthesis/synthesis_table.h src/synthesis/synthesis_table.cpp src/synthesis/synthesis_model.cpp src/synthesis/synthesis_model.h src/synthesis/synthesis_item_delegate.cpp src/synthesis/synthesis_item_delegate.h src/main_tree/treeview.cpp src/main_tree/treeview.h src/windows_types/close_on_inactive.cpp src/windows_types/close_on_inactive.h)
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 

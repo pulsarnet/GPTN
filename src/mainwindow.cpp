@@ -14,6 +14,7 @@
 #include "main_tree/treeview.h"
 #include "main_tree/treemodel.h"
 #include "main_tree/treeitem.h"
+#include "windows_types/close_on_inactive.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_changed(false) {
 
@@ -178,7 +179,9 @@ void MainWindow::slotSaveFile(bool checked) {
 }
 
 void MainWindow::slotSaveAsFile(bool checked) {
-    saveAs();
+    auto window = new CloseOnInActive;
+    window->show();
+    //saveAs();
 }
 
 void MainWindow::slotOpenFile(bool checked) {

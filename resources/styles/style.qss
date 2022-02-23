@@ -1,4 +1,4 @@
-* {
+/* * {
     background-color: #FFF8ED;
     color: #546E7A;
     selection-background-color: #E7C496;
@@ -38,4 +38,4 @@ QMenu::item {
 
 QTableView {
     selection-background-color: #2FCF69;
-}
+}*/
