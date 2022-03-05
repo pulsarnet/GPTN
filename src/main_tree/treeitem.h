@@ -160,6 +160,7 @@ public:
 public slots:
 
     void onDecompose(bool checked);
+    void onAsMatrix(bool checked) const;
 
 private:
 
@@ -168,6 +169,7 @@ private:
 private:
 
     QAction* m_decompose = nullptr;
+    QAction* m_asMatrix = nullptr;
 
     GraphicScene* m_scene;
 };

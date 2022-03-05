@@ -6,6 +6,8 @@
 
 namespace ffi {
 
+    struct CNamedMatrix;
+
     extern "C" void init();
 
     extern "C" enum VertexType {
@@ -73,6 +75,8 @@ namespace ffi {
 
         QVariant toVariant() const;
         void fromVariant(const QVariant& data);
+
+        CNamedMatrix* as_matrix() const;
 
         void drop();
     };
@@ -147,6 +151,14 @@ namespace ffi {
 
         QVariant toVariant() const;
         void fromVariant(const QVariant& data);
+    };
+
+    struct CNamedMatrix {
+        i32 index(usize, usize) const;
+        QString horizontalHeader(usize) const;
+        QString verticalHeader(usize) const;
+        usize rows() const;
+        usize columns() const;
     };
 
     template<typename T>

@@ -2,3 +2,4 @@ pub mod net;
 pub mod vec;
 pub mod vertex;
 pub mod connection;
+pub mod matrix;

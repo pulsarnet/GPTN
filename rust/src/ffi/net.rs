@@ -5,6 +5,7 @@
 
 use ffi::vec::CVec;
 use ::{PetriNet, Vertex};
+use ffi::matrix::CNamedMatrix;
 use net::Connection;
 use net::vertex::{VertexIndex, VertexType};
 
@@ -125,4 +126,10 @@ pub unsafe extern "C" fn remove_connection(
     let to = &*to;
     net.connections
         .drain_filter(|c| c.first().eq(&from.index()) && c.second().eq(&to.index()));
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn petri_net_as_matrix(net: &PetriNet) -> *const CNamedMatrix {
+    let matrix = net.as_matrix().0;
+    Box::into_raw(Box::new(matrix))
 }

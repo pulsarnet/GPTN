@@ -11,10 +11,11 @@ use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
-use {SynthesisContext};
-use ::{CMatrix, NamedMatrix};
+use SynthesisContext;
+use CMatrix;
 use net::vertex::{VertexIndex, VertexType};
 use indexmap::map::IndexMap;
+use crate::ffi::matrix::CNamedMatrix;
 
 #[derive(Debug)]
 pub struct PetriNet {
@@ -173,7 +174,7 @@ impl PetriNetVec {
         (CMatrix::from(d_input), CMatrix::from(d_output))
     }
 
-    pub fn lbf_matrix(&self) -> Vec<(NamedMatrix, NamedMatrix)> {
+    pub fn lbf_matrix(&self) -> Vec<(CNamedMatrix, CNamedMatrix)> {
         self.0.iter().map(|net| net.as_matrix()).collect()
     }
 
@@ -514,7 +515,7 @@ impl PetriNet {
         ret
     }
 
-    pub fn as_matrix(&self) -> (NamedMatrix, NamedMatrix) {
+    pub fn as_matrix(&self) -> (CNamedMatrix, CNamedMatrix) {
 
         let positions = self.positions.clone();
         let transitions = self.transitions.clone();
@@ -532,8 +533,8 @@ impl PetriNet {
             }
         }
 
-        (NamedMatrix::new_from(positions.values().cloned().collect(), transitions.values().cloned().collect(), d_input),
-         NamedMatrix::new_from(positions.values().cloned().collect(), transitions.values().cloned().collect(), d_output))
+        (CNamedMatrix::new(&positions, &transitions, d_input),
+         CNamedMatrix::new(&positions, &transitions, d_output))
 
     }
 

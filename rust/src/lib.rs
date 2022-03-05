@@ -19,7 +19,6 @@ use log4rs::{Config, config::Logger};
 use log4rs::config::{Appender, Root};
 use log4rs::encode::pattern::PatternEncoder;
 use log::{info, LevelFilter};
-use core::NamedMatrix;
 use nalgebra::DMatrix;
 use ffi::vec::CVec;
 

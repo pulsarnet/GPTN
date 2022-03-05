@@ -6,75 +6,64 @@
 #define FFI_RUST_NAMED_MATRIX_MODEL_H
 
 #include <QAbstractTableModel>
-#include "ffi/named_matrix.h"
+#include "ffi/rust.h"
 
 class NamedMatrixModel : public QAbstractTableModel {
 
 public:
 
+    explicit NamedMatrixModel(ffi::CNamedMatrix* matrix, QObject* parent = nullptr): QAbstractTableModel(parent), m_matrix(matrix) {
+
+    }
+
     bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) override {
         return false;
     }
 
-    Qt::ItemFlags flags(const QModelIndex &index) const override {
-        return Qt::ItemFlag::ItemIsEditable | Qt::ItemFlag::ItemIsEnabled;
+    [[nodiscard]] Qt::ItemFlags flags(const QModelIndex &index) const override {
+        return Qt::ItemFlag::ItemIsEnabled;
     }
 
-    int rowCount(const QModelIndex &parent) const override {
-        return m_matrix.rows.length();
+    [[nodiscard]] int rowCount(const QModelIndex &parent) const override {
+        return (int)m_matrix->rows();
     }
 
-    int columnCount(const QModelIndex &parent) const override {
-        return m_matrix.cols.length();
+    [[nodiscard]] int columnCount(const QModelIndex &parent) const override {
+        return (int)m_matrix->columns();
     }
 
-    QVariant data(const QModelIndex &index, int role) const override {
+    [[nodiscard]] QVariant data(const QModelIndex &index, int role) const override {
         if (role == Qt::DisplayRole) {
-            return QString("%1").arg(m_matrix(index.row(), index.column()));
+            return QString("%1").arg(m_matrix->index(index.row(), index.column()));
         }
 
-        return QVariant();
+        return {};
     }
 
-    QVariant headerData(int section, Qt::Orientation orientation, int role) const override {
+    [[nodiscard]] QVariant headerData(int section, Qt::Orientation orientation, int role) const override {
         if (role == Qt::DisplayRole) {
             if (orientation == Qt::Orientation::Horizontal) {
-                return m_matrix.cols[section];
+                return m_matrix->horizontalHeader(section);
             }
             else {
-                return m_matrix.rows[section];
+                return m_matrix->verticalHeader(section);
             }
         }
 
-        return QVariant();
+        return {};
     }
 
-    bool setData(const QModelIndex &index, const QVariant &value, int role) override {
-        if (role == Qt::EditRole) {
-            m_matrix(index.row(), index.column()) = value.toInt();
-            return true;
-        }
-        return QAbstractItemModel::setData(index, value, role);
-    }
-
-    QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override {
+    [[nodiscard]] QModelIndex index(int row, int column, const QModelIndex &parent) const override {
         return createIndex(row, column);
     }
 
-    QModelIndex sibling(int row, int column, const QModelIndex &idx) const override {
+    [[nodiscard]] QModelIndex sibling(int row, int column, const QModelIndex &idx) const override {
         return createIndex(row, column);
     }
-
-    static NamedMatrixModel* loadFromMatrix(const NamedMatrix& m) {
-        auto model = new NamedMatrixModel;
-        model->m_matrix = m;
-        return model;
-    }
-
 
 private:
 
-    NamedMatrix m_matrix = NamedMatrix{};
+    ffi::CNamedMatrix* m_matrix;
 
 };
 

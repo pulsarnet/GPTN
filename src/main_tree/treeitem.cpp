@@ -7,6 +7,7 @@
 #include "treemodel.h"
 #include "../matrix_model.h"
 #include "../synthesis/synthesis_model.h"
+#include "../named_matrix_model.h"
 #include <QTableView>
 
 #include <QMenu>
@@ -195,6 +196,9 @@ void NetTreeItem::initialize() {
     m_decompose = new QAction("Decompose", this);
     connect(m_decompose, &QAction::triggered, this, &NetTreeItem::onDecompose);
 
+    m_asMatrix = new QAction("As Matrix", this);
+    connect(m_asMatrix, &QAction::triggered, this, &NetTreeItem::onAsMatrix);
+
     view()->setScene(m_scene);
     connect(m_scene, &GraphicScene::sceneChanged, this, &TreeItem::onChanged);
 
@@ -207,6 +211,7 @@ QMenu *NetTreeItem::contextMenu()
 {
     auto menu = new QMenu;
     menu->addAction(m_decompose);
+    menu->addAction(m_asMatrix);
     return menu;
 }
 
@@ -217,6 +222,14 @@ void NetTreeItem::onDecompose(bool checked)
     auto decomposeContext = ffi::DecomposeContext::init(m_scene->net());
 
     new DecomposeItem(decomposeContext, model(), this);
+}
+
+void NetTreeItem::onAsMatrix(bool checked) const {
+    Q_UNUSED(checked)
+    auto matrix = net()->as_matrix();
+    auto view = new QTableView;
+    view->setModel(new NamedMatrixModel(matrix));
+    view->show();
 }
 
 ffi::PetriNet *NetTreeItem::net() const {

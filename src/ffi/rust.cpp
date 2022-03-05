@@ -26,6 +26,7 @@ extern "C" {
     void remove_transition(PetriNet&, Vertex*);
     void connect_vertexes(PetriNet&, Vertex*, Vertex*);
     void remove_connection(PetriNet&, Vertex*, Vertex*);
+    CNamedMatrix* petri_net_as_matrix(const PetriNet&);
 
     Vertex* net_get_vertex(const PetriNet&, VertexIndex);
 
@@ -80,6 +81,13 @@ extern "C" {
     usize matrix_rows(const CMatrix&);
     usize matrix_columns(const CMatrix&);
 
+    // CNamedMatrix
+    i32 named_matrix_index(const CNamedMatrix&, usize, usize);
+    char* named_matrix_column_name(const CNamedMatrix&, usize);
+    char* named_matrix_row_name(const CNamedMatrix&, usize);
+    usize named_matrix_rows(const CNamedMatrix&);
+    usize named_matrix_columns(const CNamedMatrix&);
+
     // CVec<u64>
     usize vec_len_u64(const CVec<usize>* self);
     const usize* vec_data_u64(const CVec<usize>* self);
@@ -95,6 +103,9 @@ extern "C" {
     // CVec<PetriNet>
     usize vec_len_nets(const CVec<PetriNet*>* self);
     PetriNet* const* vec_data_nets(const CVec<PetriNet*>* self);
+
+    //Helpers
+    void remove_string(char*);
 };
 
 template<>
@@ -308,6 +319,10 @@ void PetriNet::fromVariant(const QVariant &data) {
             connect(get_transition(from["index"].toInt()), get_position(to["index"].toInt()));
         }
     }
+}
+
+CNamedMatrix *PetriNet::as_matrix() const {
+    return ::petri_net_as_matrix(*this);
 }
 
 void PetriNet::drop() {
@@ -582,4 +597,30 @@ void CMatrix::fromVariant(const QVariant &data) {
             set_value(i, j, raw[i * columns() + j].toInt());
         }
     }
+}
+
+i32 CNamedMatrix::index(usize row, usize column) const {
+    return ::named_matrix_index(*this, row, column);
+}
+
+QString CNamedMatrix::horizontalHeader(usize column) const {
+    auto name = ::named_matrix_column_name(*this, column);
+    auto result = QString::fromStdString(std::string(name));
+    ::remove_string(name);
+    return result;
+}
+
+QString CNamedMatrix::verticalHeader(usize column) const {
+    auto name = ::named_matrix_row_name(*this, column);
+    auto result = QString::fromStdString(std::string(name));
+    ::remove_string(name);
+    return result;
+}
+
+usize CNamedMatrix::rows() const {
+    return ::named_matrix_rows(*this);
+}
+
+usize CNamedMatrix::columns() const {
+    return ::named_matrix_columns(*this);
 }

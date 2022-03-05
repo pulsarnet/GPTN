@@ -119,32 +119,3 @@ impl<T: Default + PartialEq + Clone> Unique for Vec<T> {
         *self = result;
     }
 }
-
-#[derive(Clone)]
-pub struct NamedMatrix {
-    pub rows: HashMap<Vertex, usize>,
-    pub cols: HashMap<Vertex, usize>,
-    pub matrix: DMatrix<i32>,
-}
-
-impl NamedMatrix {
-    pub fn new(
-        rows: HashMap<Vertex, usize>,
-        cols: HashMap<Vertex, usize>,
-        matrix: DMatrix<i32>,
-    ) -> Self {
-        NamedMatrix { rows, cols, matrix }
-    }
-
-    pub fn new_from(
-        pos: Vec<Vertex>,
-        trans: Vec<Vertex>,
-        matrix: DMatrix<i32>,
-    ) -> Self {
-        NamedMatrix::new(
-            pos.into_iter().enumerate().map(|a| (a.1, a.0)).collect(),
-            trans.into_iter().enumerate().map(|a| (a.1, a.0)).collect(),
-            matrix
-        )
-    }
-}
