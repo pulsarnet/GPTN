@@ -76,7 +76,7 @@ namespace ffi {
         QVariant toVariant() const;
         void fromVariant(const QVariant& data);
 
-        CNamedMatrix* as_matrix() const;
+        std::pair<CNamedMatrix*, CNamedMatrix*> as_matrix() const;
 
         void drop();
     };

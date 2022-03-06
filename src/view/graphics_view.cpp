@@ -12,6 +12,7 @@
 #include "graphics_view_zoom.h"
 #include "graphic_scene.h"
 #include "../toolbox/toolbox.h"
+#include "../overrides/MatrixWindow.h"
 
 GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
 
@@ -192,25 +193,36 @@ void GraphicsView::paintEvent(QPaintEvent *event) {
 
 void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
     auto gScene = dynamic_cast<GraphicScene*>(scene());
-    auto item = gScene->netItemAt(mapToScene(event->pos()));
-    if (!item) return;
+    //auto item = gScene->netItemAt(mapToScene(event->pos()));
+    //if (!item) return;
 
-    if (item->isSelected() && scene()->selectedItems().length() > 1) {
-        QMenu *menu = new QMenu;
+    auto itemSelected =scene()->selectedItems().length() > 1;
 
-        auto horz = new QAction("Horizontal alignment", this);
-        connect(horz, &QAction::triggered, gScene, &GraphicScene::slotHorizontalAlignment);
+    QMenu* menu = new QMenu;
 
-        auto vert = new QAction("Vertical alignment", this);
-        connect(vert, &QAction::triggered, gScene, &GraphicScene::slotVerticalAlignment);
+    auto horz = new QAction("Horizontal alignment", this);
+    horz->setEnabled(itemSelected);
+    connect(horz, &QAction::triggered, gScene, &GraphicScene::slotHorizontalAlignment);
 
-        menu->addAction(horz);
-        menu->addAction(vert);
-        menu->popup(event->globalPos());
-    }
+    auto vert = new QAction("Vertical alignment", this);
+    vert->setEnabled(itemSelected);
+    connect(vert, &QAction::triggered, gScene, &GraphicScene::slotVerticalAlignment);
 
+    auto matrix = new QAction("I/O matrix view", this);
+    connect(matrix, &QAction::triggered, this, &GraphicsView::slotMatrixView);
+
+    menu->addAction(horz);
+    menu->addAction(vert);
+    menu->addAction(matrix);
+    menu->popup(event->globalPos());
 
     QGraphicsView::contextMenuEvent(event);
+}
+
+void GraphicsView::slotMatrixView(bool checked) {
+    auto matrix = dynamic_cast<GraphicScene*>(scene())->net()->as_matrix();
+    auto view = new MatrixWindow(matrix.first, matrix.second);
+    view->show();
 }
 
 void GraphicsView::slotDotVisualization(bool checked) {

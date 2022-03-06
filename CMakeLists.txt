@@ -90,7 +90,7 @@ set(HEADERS
         src/main_tree/treeview.h
         src/windows_types/close_on_inactive.cpp
         src/windows_types/close_on_inactive.h
-        src/named_matrix_model.h)
+        src/named_matrix_model.h src/overrides/MatrixWindow.cpp src/overrides/MatrixWindow.h)
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 

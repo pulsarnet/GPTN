@@ -26,7 +26,7 @@ extern "C" {
     void remove_transition(PetriNet&, Vertex*);
     void connect_vertexes(PetriNet&, Vertex*, Vertex*);
     void remove_connection(PetriNet&, Vertex*, Vertex*);
-    CNamedMatrix* petri_net_as_matrix(const PetriNet&);
+    void petri_net_as_matrix(const PetriNet&, CNamedMatrix**, CNamedMatrix**);
 
     Vertex* net_get_vertex(const PetriNet&, VertexIndex);
 
@@ -321,8 +321,11 @@ void PetriNet::fromVariant(const QVariant &data) {
     }
 }
 
-CNamedMatrix *PetriNet::as_matrix() const {
-    return ::petri_net_as_matrix(*this);
+std::pair<CNamedMatrix*, CNamedMatrix*> PetriNet::as_matrix() const {
+    CNamedMatrix* first;
+    CNamedMatrix* second;
+    ::petri_net_as_matrix(*this, &first, &second);
+    return {first, second};
 }
 
 void PetriNet::drop() {

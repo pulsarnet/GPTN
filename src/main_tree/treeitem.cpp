@@ -8,6 +8,7 @@
 #include "../matrix_model.h"
 #include "../synthesis/synthesis_model.h"
 #include "../named_matrix_model.h"
+#include "../overrides/MatrixWindow.h"
 #include <QTableView>
 
 #include <QMenu>
@@ -227,8 +228,7 @@ void NetTreeItem::onDecompose(bool checked)
 void NetTreeItem::onAsMatrix(bool checked) const {
     Q_UNUSED(checked)
     auto matrix = net()->as_matrix();
-    auto view = new QTableView;
-    view->setModel(new NamedMatrixModel(matrix));
+    auto view = new MatrixWindow(matrix.first, matrix.second);
     view->show();
 }
 

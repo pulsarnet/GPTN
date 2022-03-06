@@ -52,6 +52,8 @@ protected slots:
     void removeChecked(bool checked);
     void markerChecked(bool checked);
 
+    void slotMatrixView(bool checked);
+
 private:
 
     QAction* makeAction(const QString &name, const QIcon &icon, bool checkable, QActionGroup *actionGroup);
