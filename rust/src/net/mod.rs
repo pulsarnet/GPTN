@@ -538,6 +538,24 @@ impl PetriNet {
 
     }
 
+    pub fn incidence_matrix(&self) -> CNamedMatrix {
+
+        let headers = self.transitions.values().chain(self.positions.values()).collect::<Vec<_>>();
+        let indexes = headers.iter().enumerate().map(|(i, v)| (v.index(), i)).collect::<HashMap<_, _>>();
+
+        let size = headers.len();
+        let mut incidence = DMatrix::<i32>::zeros(size, size);
+
+        for conn in self.connections.iter() {
+            incidence.row_mut(*indexes.get(&conn.first()).unwrap())[*indexes.get(&conn.second()).unwrap()] = 1
+        }
+
+        CNamedMatrix::square(
+            headers.iter().map(|v| v.name()).collect::<Vec<_>>(),
+            incidence
+        )
+    }
+
     #[inline]
     pub fn update_transition_index(&self) {
         *(*self.transition_index).borrow_mut() += 1;

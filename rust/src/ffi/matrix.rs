@@ -25,6 +25,14 @@ impl CNamedMatrix {
             matrix
         }
     }
+
+    pub fn square(headers: Vec<String>, matrix: DMatrix<i32>) -> Self {
+        CNamedMatrix {
+            rows: headers.clone(),
+            cols: headers,
+            matrix
+        }
+    }
 }
 
 #[no_mangle]
