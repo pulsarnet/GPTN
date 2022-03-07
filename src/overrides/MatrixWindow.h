@@ -10,14 +10,19 @@
 #include <QTableView>
 #include "../ffi/rust.h"
 
-using namespace ffi;
-
 class MatrixWindow : public QWidget {
+
+    Q_OBJECT
 
 public:
 
-    explicit MatrixWindow(CNamedMatrix* matrix1, CNamedMatrix* matrix2, QWidget* parent = nullptr);
+    explicit MatrixWindow(ffi::CNamedMatrix* matrix1, ffi::CNamedMatrix* matrix2, QWidget* parent = nullptr);
 
+    void closeEvent(QCloseEvent *event) override;
+
+signals:
+
+    void onWindowClose(QWidget*);
 
 private:
 

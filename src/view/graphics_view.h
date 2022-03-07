@@ -14,6 +14,7 @@
 
 class ToolBox;
 class GraphicsViewZoom;
+class MatrixWindow;
 
 class GraphicsView : public QGraphicsView {
 
@@ -22,6 +23,7 @@ class GraphicsView : public QGraphicsView {
 public:
 
     explicit GraphicsView(QWidget* parent = nullptr);
+    virtual ~GraphicsView() noexcept;
 
 protected:
 
@@ -53,6 +55,7 @@ protected slots:
     void markerChecked(bool checked);
 
     void slotMatrixView(bool checked);
+    void slotIOWindowClose(QWidget*);
 
 private:
 
@@ -71,6 +74,8 @@ private:
     QAction* remove_action = nullptr;
     QAction* marker_action = nullptr;
     QActionGroup* actionGroup = nullptr;
+
+    MatrixWindow* m_IOMatrixWindow = nullptr;
 
 };
 

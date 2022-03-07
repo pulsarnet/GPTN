@@ -538,21 +538,27 @@ impl PetriNet {
 
     }
 
-    pub fn incidence_matrix(&self) -> CNamedMatrix {
+    pub fn incidence_matrix(&self) -> (CNamedMatrix, CNamedMatrix) {
 
-        let headers = self.transitions.values().chain(self.positions.values()).collect::<Vec<_>>();
-        let indexes = headers.iter().enumerate().map(|(i, v)| (v.index(), i)).collect::<HashMap<_, _>>();
+        let positions = self.positions.values().collect::<Vec<_>>();
+        let transitions = self.transitions.values().collect::<Vec<_>>();
 
-        let size = headers.len();
-        let mut incidence = DMatrix::<i32>::zeros(size, size);
+        let position_indexes = positions.iter().enumerate().map(|(i, v)| (v.index(), i)).collect::<HashMap<_, _>>();
+        let transition_indexes = transitions.iter().enumerate().map(|(i, v)| (v.index(), i)).collect::<HashMap<_, _>>();
+
+        let mut input = DMatrix::<i32>::zeros(positions.len(), transitions.len());
+        let mut output = DMatrix::<i32>::zeros(positions.len(), transitions.len());
 
         for conn in self.connections.iter() {
-            incidence.row_mut(*indexes.get(&conn.first()).unwrap())[*indexes.get(&conn.second()).unwrap()] = 1
+            match conn.first().type_ {
+                VertexType::Transition => output.row_mut(*position_indexes.get(&conn.second()).unwrap())[*transition_indexes.get(&conn.first()).unwrap()] = 1,
+                VertexType::Position => input.row_mut(*position_indexes.get(&conn.first()).unwrap())[*transition_indexes.get(&conn.second()).unwrap()] = 1,
+            }
         }
 
-        CNamedMatrix::square(
-            headers.iter().map(|v| v.name()).collect::<Vec<_>>(),
-            incidence
+        (
+            CNamedMatrix::new(&self.positions, &self.transitions, input),
+            CNamedMatrix::new(&self.positions, &self.transitions, output)
         )
     }
 

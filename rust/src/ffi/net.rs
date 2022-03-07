@@ -130,7 +130,7 @@ pub unsafe extern "C" fn remove_connection(
 
 #[no_mangle]
 pub unsafe extern "C" fn petri_net_as_matrix(net: &PetriNet, matrix1: &mut *const CNamedMatrix, matrix2: &mut *const CNamedMatrix) {
-    let (matrix_1, matrix_2) = net.as_matrix();
+    let (matrix_1, matrix_2) = net.incidence_matrix();
     *matrix1 = Box::into_raw(Box::new(matrix_1));
     *matrix2 = Box::into_raw(Box::new(matrix_2));
 }

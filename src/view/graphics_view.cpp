@@ -220,9 +220,19 @@ void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
 }
 
 void GraphicsView::slotMatrixView(bool checked) {
-    auto matrix = dynamic_cast<GraphicScene*>(scene())->net()->as_matrix();
-    auto view = new MatrixWindow(matrix.first, matrix.second);
-    view->show();
+    if (m_IOMatrixWindow)
+        m_IOMatrixWindow->activateWindow();
+    else {
+        auto matrix = dynamic_cast<GraphicScene*>(scene())->net()->as_matrix();
+        m_IOMatrixWindow = new MatrixWindow(matrix.first, matrix.second);
+        connect(m_IOMatrixWindow, &MatrixWindow::onWindowClose, this, &GraphicsView::slotIOWindowClose);
+        m_IOMatrixWindow->show();
+    }
+}
+
+void GraphicsView::slotIOWindowClose(QWidget *window) {
+    qDebug() << "Remove widget: " << window;
+    m_IOMatrixWindow = nullptr;
 }
 
 void GraphicsView::slotDotVisualization(bool checked) {
@@ -255,4 +265,8 @@ void GraphicsView::slotPatchworkVisualization(bool checked) {
 
 void GraphicsView::slotSFDPpVisualization(bool checked) {
     dynamic_cast<GraphicScene*>(scene())->dotVisualization((char *) "sfdp");
+}
+
+GraphicsView::~GraphicsView() noexcept {
+    m_IOMatrixWindow->close();
 }
