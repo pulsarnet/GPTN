@@ -188,7 +188,7 @@ void GraphicsView::paintEvent(QPaintEvent *event) {
 
     QPainter painter(viewport());
     painter.setFont(QFont());
-    painter.drawText(rect().x() / 2., rect().y() / 2., rect().width(), 40, Qt::AlignCenter, this->windowTitle());
+    painter.drawText(int(rect().x() / 2.), int(rect().y() / 2.), rect().width(), 40, Qt::AlignCenter, this->windowTitle());
 }
 
 void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
@@ -197,8 +197,7 @@ void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
     //if (!item) return;
 
     auto itemSelected = scene()->selectedItems().length() > 1;
-
-    QMenu* menu = new QMenu;
+    auto menu = new QMenu;
 
     auto horz = new QAction("Horizontal alignment", this);
     horz->setEnabled(itemSelected);
@@ -220,6 +219,8 @@ void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
 }
 
 void GraphicsView::slotMatrixView(bool checked) {
+    Q_UNUSED(checked)
+
     if (m_IOMatrixWindow)
         m_IOMatrixWindow->activateWindow();
     else {
@@ -236,34 +237,42 @@ void GraphicsView::slotIOWindowClose(QWidget *window) {
 }
 
 void GraphicsView::slotDotVisualization(bool checked) {
+    Q_UNUSED(checked)
     dynamic_cast<GraphicScene*>(scene())->dotVisualization((char *) "dot");
 }
 
 void GraphicsView::slotNeatoVisualization(bool checked) {
+    Q_UNUSED(checked)
     dynamic_cast<GraphicScene*>(scene())->dotVisualization((char *) "neato");
 }
 
 void GraphicsView::slotTwopiVisualization(bool checked) {
+    Q_UNUSED(checked)
     dynamic_cast<GraphicScene*>(scene())->dotVisualization((char *) "twopi");
 }
 
 void GraphicsView::slotCircoVisualization(bool checked) {
+    Q_UNUSED(checked)
     dynamic_cast<GraphicScene*>(scene())->dotVisualization((char *) "circo");
 }
 
 void GraphicsView::slotFDPVisualization(bool checked) {
+    Q_UNUSED(checked)
     dynamic_cast<GraphicScene*>(scene())->dotVisualization((char *) "fdp");
 }
 
 void GraphicsView::slotOsageVisualization(bool checked) {
+    Q_UNUSED(checked)
     dynamic_cast<GraphicScene*>(scene())->dotVisualization((char *) "osage");
 }
 
 void GraphicsView::slotPatchworkVisualization(bool checked) {
+    Q_UNUSED(checked)
     dynamic_cast<GraphicScene*>(scene())->dotVisualization((char *) "patchwork");
 }
 
 void GraphicsView::slotSFDPpVisualization(bool checked) {
+    Q_UNUSED(checked)
     dynamic_cast<GraphicScene*>(scene())->dotVisualization((char *) "sfdp");
 }
 
