@@ -196,7 +196,7 @@ void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
     //auto item = gScene->netItemAt(mapToScene(event->pos()));
     //if (!item) return;
 
-    auto itemSelected =scene()->selectedItems().length() > 1;
+    auto itemSelected = scene()->selectedItems().length() > 1;
 
     QMenu* menu = new QMenu;
 
