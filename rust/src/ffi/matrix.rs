@@ -20,8 +20,8 @@ impl CNamedMatrix {
         matrix: DMatrix<i32>,
     ) -> Self {
         CNamedMatrix {
-            rows: rows.iter().map(|(_, v)| v.name()).collect(),
-            cols:  cols.iter().map(|(_, v)| v.name()).collect(),
+            rows: rows.values().map(|v| v.name()).collect(),
+            cols:  cols.values().map(|v| v.name()).collect(),
             matrix
         }
     }

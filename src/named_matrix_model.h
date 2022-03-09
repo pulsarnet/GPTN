@@ -34,7 +34,7 @@ public:
 
     [[nodiscard]] QVariant data(const QModelIndex &index, int role) const override {
         if (role == Qt::DisplayRole) {
-            return QString("%1").arg(m_matrix->index(index.row(), index.column()));
+            return m_matrix->index(index.row(), index.column());
         }
 
         return {};

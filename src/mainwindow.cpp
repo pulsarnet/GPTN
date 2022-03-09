@@ -43,7 +43,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_changed(false) 
     manager->addDockWidgetTab(DockWidgetArea::LeftDockWidgetArea, treeDocker);
 
     connect(treeModel, &QAbstractItemModel::rowsInserted, this, &MainWindow::onDocumentChanged);
-    connect(treeModel, &QAbstractItemModel::rowsInserted, this, &MainWindow::onDocumentChanged);
 
 }
 
@@ -57,15 +56,12 @@ void MainWindow::setFileName(const QString &name) {
 }
 
 bool MainWindow::saveAs() {
+    QString filename = QFileDialog::getSaveFileName(this, tr("Save Petri network file"), tr("Petri network file (*.ptn);;All Files (*)"));
 
-    QString fileName = QFileDialog::getSaveFileName(this,
-                                                    tr("Save Address Book"), "",
-                                                    tr("Address Book (*.ptn);;All Files (*)"));
-
-    if (fileName.isEmpty())
+    if (filename.isEmpty())
         return false;
 
-    return saveFile(fileName);
+    return saveFile(filename);
 }
 
 bool MainWindow::save() {
@@ -78,9 +74,8 @@ bool MainWindow::save() {
 bool MainWindow::saveFile(const QString &filename) {
 
     QFile file(filename);
-    if (!file.open(QIODevice::WriteOnly)) {
-        QMessageBox::information(this, tr("Unable to open file"),
-                                 file.errorString());
+    if (!file.open(QFile::WriteOnly)) {
+        QMessageBox::critical(this, tr("Unable to save file"), file.errorString());
         return false;
     }
 

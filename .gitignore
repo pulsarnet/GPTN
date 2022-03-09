@@ -1,5 +1,6 @@
 build
 rust/target
+rust/Cargo.lock
 .git
 cmake-build-*
 .idea
