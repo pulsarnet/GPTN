@@ -9,7 +9,7 @@
 
 namespace ffi {
     struct PetriNet;
-    struct SynthesisContext;
+    struct DecomposeContext;
 }
 
 class QToolBar;
@@ -24,7 +24,7 @@ class SynthesisTable : public QWidget {
 
 public:
 
-    explicit SynthesisTable(ffi::SynthesisContext* ctx, QWidget* parent = nullptr);
+    explicit SynthesisTable(ffi::DecomposeContext* ctx, QWidget* parent = nullptr);
 
     SynthesisModel* model() const;
 
@@ -40,7 +40,7 @@ signals:
 private:
 
     QTableView* m_table = nullptr;
-    ffi::SynthesisContext* m_context = nullptr;
+    ffi::DecomposeContext* m_context = nullptr;
 
     QToolBar* m_toolBar = nullptr;
     QAction* m_evalProgram = nullptr;

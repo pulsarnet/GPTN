@@ -5,7 +5,7 @@
 #include "synthesis_model.h"
 #include "../ffi/rust.h"
 
-SynthesisModel::SynthesisModel(ffi::SynthesisContext *ctx, QObject *parent) : QAbstractTableModel(parent), m_ctx(ctx) {
+SynthesisModel::SynthesisModel(ffi::DecomposeContext *ctx, QObject *parent) : QAbstractTableModel(parent), m_ctx(ctx) {
 
 }
 
@@ -14,7 +14,7 @@ int SynthesisModel::rowCount(const QModelIndex &parent) const {
 }
 
 int SynthesisModel::columnCount(const QModelIndex &parent) const {
-    return static_cast<int>(m_ctx->decompose_ctx()->transitions()) + static_cast<int>(m_ctx->decompose_ctx()->positions());
+    return static_cast<int>(m_ctx->transitions()) + static_cast<int>(m_ctx->positions());
 }
 
 QVariant SynthesisModel::data(const QModelIndex &index, int role) const {

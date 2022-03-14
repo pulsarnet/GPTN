@@ -8,6 +8,15 @@
 using namespace ffi;
 
 extern "C" {
+
+    // PetriNetContext
+    PetriNetContext* new_context();
+    PetriNet* ctx_net(const PetriNetContext*);
+    DecomposeContext* ctx_decompose_context(const PetriNetContext*);
+    void ctx_set_decompose_context(PetriNetContext*, DecomposeContext*);
+    void ctx_decompose(PetriNetContext&);
+    void delete_context(PetriNetContext*);
+
     // PetriNet
     PetriNet* create_net();
     void delete_net(PetriNet*);
@@ -57,23 +66,17 @@ extern "C" {
     usize decompose_context_transition_index(DecomposeContext&, usize);
     PetriNet* decompose_context_linear_base_fragments(DecomposeContext&);
     void decompose_context_parts(const DecomposeContext&, CVec<PetriNet*>* return$);
-
-    // SynthesisContext
-    SynthesisContext* synthesis_create(DecomposeContext&);
-    SynthesisContext* synthesis_init(DecomposeContext&);
-    void synthesis_delete(SynthesisContext*);
-    usize synthesis_programs(const SynthesisContext&);
-    usize synthesis_program_size(const SynthesisContext&, usize);
-    void synthesis_add_program(SynthesisContext&);
-    void synthesis_remove_program(SynthesisContext&, usize);
-    usize synthesis_program_value(const SynthesisContext&, usize, usize);
-    void synthesis_set_program_value(SynthesisContext&, usize, usize, usize);
-    char* synthesis_program_header_name(const SynthesisContext&, usize, bool);
-    CMatrix* synthesis_c_matrix(const SynthesisContext&);
-    PetriNet* synthesis_eval_program(SynthesisContext&, usize);
-    PetriNet* synthesis_program_net_after(const SynthesisContext&, usize);
-    PetriNet* synthesis_init_program_net_after(SynthesisContext&, usize);
-    DecomposeContext* synthesis_decompose_ctx(const SynthesisContext&);
+    usize synthesis_programs(const DecomposeContext&);
+    usize synthesis_program_size(const DecomposeContext&, usize);
+    void synthesis_add_program(DecomposeContext&);
+    void synthesis_remove_program(DecomposeContext&, usize);
+    usize synthesis_program_value(const DecomposeContext&, usize, usize);
+    void synthesis_set_program_value(DecomposeContext&, usize, usize, usize);
+    char* synthesis_program_header_name(const DecomposeContext&, usize, bool);
+    CMatrix* synthesis_c_matrix(const DecomposeContext&);
+    PetriNet* synthesis_eval_program(DecomposeContext&, usize);
+    PetriNet* synthesis_program_net_after(const DecomposeContext&, usize);
+    PetriNet* synthesis_init_program_net_after(DecomposeContext&, usize);
 
     // CMatrix
     i32 matrix_index(const CMatrix&, usize, usize);
@@ -161,6 +164,30 @@ PetriNet* const* CVec<PetriNet*>::data() const noexcept {
 template<>
 const std::size_t CVec<PetriNet *>::size_of() const noexcept {
     return sizeof(PetriNet*);
+}
+
+PetriNetContext *PetriNetContext::create() {
+    return ::new_context();
+}
+
+void PetriNetContext::free(PetriNetContext *context) {
+    ::delete_context(context);
+}
+
+DecomposeContext *PetriNetContext::decompose_ctx() const {
+    return ::ctx_decompose_context(this);
+}
+
+PetriNet *PetriNetContext::net() const {
+    return ::ctx_net(this);
+}
+
+void PetriNetContext::decompose() {
+    ::ctx_decompose(*this);
+}
+
+void PetriNetContext::set_decompose_ctx(DecomposeContext *ctx) {
+    ::ctx_set_decompose_context(this, ctx);
 }
 
 PetriNet *PetriNet::create() {
@@ -451,114 +478,95 @@ CVec<PetriNet *> DecomposeContext::parts() const {
     return result$;
 }
 
-void DecomposeContext::drop() {
-    ::decompose_context_delete(this);
-}
 
-SynthesisContext *SynthesisContext::create(DecomposeContext *ctx) {
-    return ::synthesis_create(*ctx);
-}
-
-SynthesisContext *SynthesisContext::init(DecomposeContext *ctx) {
-    return ::synthesis_init(*ctx);
-}
-
-usize SynthesisContext::programs() const {
+usize DecomposeContext::programs() const {
     return ::synthesis_programs(*this);
 }
 
-usize SynthesisContext::program_size(usize index) const {
+usize DecomposeContext::program_size(usize index) const {
     return ::synthesis_program_size(*this, index);
 }
 
-void SynthesisContext::add_program() {
+void DecomposeContext::add_program() {
     ::synthesis_add_program(*this);
 }
 
-void SynthesisContext::remove_program(usize index) {
+void DecomposeContext::remove_program(usize index) {
     ::synthesis_remove_program(*this, index);
 }
 
-usize SynthesisContext::program_value(usize program, usize index) const {
+usize DecomposeContext::program_value(usize program, usize index) const {
     return ::synthesis_program_value(*this, program, index);
 }
 
-void SynthesisContext::set_program_value(usize program, usize index, usize value) {
+void DecomposeContext::set_program_value(usize program, usize index, usize value) {
     ::synthesis_set_program_value(*this, program, index, value);
 }
 
-char *SynthesisContext::program_header_name(usize index, bool label) const {
+char *DecomposeContext::program_header_name(usize index, bool label) const {
     return ::synthesis_program_header_name(*this, index, label);
 }
 
-CMatrix *SynthesisContext::c_matrix() const {
+CMatrix *DecomposeContext::c_matrix() const {
     return ::synthesis_c_matrix(*this);
 }
 
-PetriNet *SynthesisContext::eval_program(usize index) {
+PetriNet *DecomposeContext::eval_program(usize index) {
     return ::synthesis_eval_program(*this, index);
 }
 
-PetriNet* SynthesisContext::program_net_after(usize index) const {
+PetriNet* DecomposeContext::program_net_after(usize index) const {
     return ::synthesis_program_net_after(*this, index);
 }
 
-PetriNet *SynthesisContext::init_program_after(usize index) {
+PetriNet *DecomposeContext::init_program_after(usize index) {
     return ::synthesis_init_program_net_after(*this, index);
 }
 
-DecomposeContext *SynthesisContext::decompose_ctx() const  {
-    return ::synthesis_decompose_ctx(*this);
-}
-
-QVariant SynthesisContext::toVariant() const {
-    QVariantHash result;
-    result["c_matrix"] = c_matrix()->toVariant();
-
-    QVariantList programsList;
-    for (int i = 0; i < programs(); i++) {
-        QVariantHash programHash;
-        programHash["net_after"] = program_net_after(i)->toVariant();
-
-        QVariantList data;
-        for (int j = 0; j < program_size(i); j++) {
-            data.push_back(program_value(i, j));
-        }
-        programHash["data"] = data;
-
-        programsList << programHash;
-    }
-
-    result["programs"] = programsList;
-
-    return result;
-}
-
-void SynthesisContext::fromVariant(const QVariant &data) {
-    auto map = data.toHash();
-
-    // Восстановим тензор преобразования
-    c_matrix()->fromVariant(map["c_matrix"]);
-
-    // Восстановим синтезированные программы
-    auto programsList = map["programs"].toList();
-    for (auto& program : programsList) {
-        add_program();
-
-        auto programHash = program.toHash();
-        auto net = init_program_after(programs() - 1);
-        net->fromVariant(programHash["net_after"]);
-
-        auto programValues = programHash["data"].toList();
-        for (int i = 0; i < programValues.size(); i++) {
-            set_program_value(programs() - 1, i, programValues[i].toInt());
-        }
-    }
-}
-
-void SynthesisContext::drop() {
-    ::synthesis_delete(this);
-}
+//QVariant SynthesisContext::toVariant() const {
+//    QVariantHash result;
+//    result["c_matrix"] = c_matrix()->toVariant();
+//
+//    QVariantList programsList;
+//    for (int i = 0; i < programs(); i++) {
+//        QVariantHash programHash;
+//        programHash["net_after"] = program_net_after(i)->toVariant();
+//
+//        QVariantList data;
+//        for (int j = 0; j < program_size(i); j++) {
+//            data.push_back(program_value(i, j));
+//        }
+//        programHash["data"] = data;
+//
+//        programsList << programHash;
+//    }
+//
+//    result["programs"] = programsList;
+//
+//    return result;
+//}
+//
+//void SynthesisContext::fromVariant(const QVariant &data) {
+//    auto map = data.toHash();
+//
+//    // Восстановим тензор преобразования
+//    c_matrix()->fromVariant(map["c_matrix"]);
+//
+//    // Восстановим синтезированные программы
+//    auto programsList = map["programs"].toList();
+//    for (auto& program : programsList) {
+//        add_program();
+//
+//        auto programHash = program.toHash();
+//        auto net = init_program_after(programs() - 1);
+//        net->fromVariant(programHash["net_after"]);
+//
+//        auto programValues = programHash["data"].toList();
+//        for (int i = 0; i < programValues.size(); i++) {
+//            set_program_value(programs() - 1, i, programValues[i].toInt());
+//        }
+//    }
+//}
 
 i32 CMatrix::index(usize row, usize col) const {
     return ::matrix_index(*this, row, col);

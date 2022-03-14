@@ -14,7 +14,7 @@
 #include "../overrides/switch.h"
 #include "../ffi/rust.h"
 
-SynthesisTable::SynthesisTable(ffi::SynthesisContext *ctx, QWidget *parent): QWidget(parent), m_context(ctx) {
+SynthesisTable::SynthesisTable(ffi::DecomposeContext *ctx, QWidget *parent): QWidget(parent), m_context(ctx) {
     setLayout(new QVBoxLayout(this));
 
     m_addProgram = new QAction("Add program");

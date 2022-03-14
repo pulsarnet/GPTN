@@ -163,20 +163,20 @@ void RootTreeItem::fromVariant(const QVariant& data) {
     }
 }
 
-NetTreeItem::NetTreeItem(TreeModel* model, TreeItem* parent): GraphicsViewTreeItem(model, parent)
+NetTreeItem::NetTreeItem(TreeModel* model, TreeItem* parent): GraphicsViewTreeItem(model, parent), m_ctx(ffi::PetriNetContext::create())
 {
     setName("Net tree");
-    m_scene = new GraphicScene(ffi::PetriNet::create(), this);
+    m_scene = new GraphicScene(m_ctx->net(), this);
     m_scene->setAllowMods(GraphicScene::A_Default);
 
     initialize();
 }
 
-NetTreeItem::NetTreeItem(const QVariant &data, TreeModel *model, TreeItem *parent): GraphicsViewTreeItem(model, parent) {
+NetTreeItem::NetTreeItem(const QVariant &data, TreeModel *model, TreeItem *parent): GraphicsViewTreeItem(model, parent), m_ctx(ffi::PetriNetContext::create()) {
     auto map = data.toHash();
     setName(map["name"].toString());
 
-    auto net = ffi::PetriNet::create();
+    auto net = m_ctx->net();
     net->fromVariant(map["net"]);
 
     m_scene = new GraphicScene(map["scene"], net, this);
@@ -220,9 +220,8 @@ void NetTreeItem::onDecompose(bool checked)
 {
     Q_UNUSED(checked)
 
-    auto decomposeContext = ffi::DecomposeContext::init(m_scene->net());
-
-    new DecomposeItem(decomposeContext, model(), this);
+    m_ctx->decompose();
+    new DecomposeItem(m_ctx->decompose_ctx(), model(), this);
 }
 
 void NetTreeItem::onAsMatrix(bool checked) const {
@@ -254,9 +253,8 @@ QVariant NetTreeItem::toVariant() const {
 }
 
 NetTreeItem::~NetTreeItem() noexcept {
-    auto net = m_scene->net();
     delete m_scene;
-    net->drop();
+    ffi::PetriNetContext::free(m_ctx);
 }
 
 DecomposeItem::DecomposeItem(ffi::DecomposeContext* ctx, TreeModel* _model, TreeItem *parent) : TreeItem(_model, parent), m_ctx(ctx)
@@ -293,7 +291,7 @@ DecomposeItem::DecomposeItem(const QVariant& data, ffi::PetriNet* net, TreeModel
             new LinearBaseFragmentsItem(childHash, m_ctx->linear_base_fragments(), model(), this);
         }
         else if (childHash["type"].toInt() == O_Synthesis) {
-            new SynthesisItem(childHash, m_ctx, model(), this);
+            //new SynthesisItem(childHash, m_ctx, model(), this);
         }
     }
 
@@ -301,22 +299,13 @@ DecomposeItem::DecomposeItem(const QVariant& data, ffi::PetriNet* net, TreeModel
 }
 
 void DecomposeItem::initialize() {
-    m_synthesis = new QAction("Synthesis");
-    connect(m_synthesis, &QAction::triggered, this, &DecomposeItem::onSynthesis);
+
 }
 
 QMenu *DecomposeItem::contextMenu()
 {
     auto menu = new QMenu;
-    menu->addAction(m_synthesis);
     return menu;
-}
-
-void DecomposeItem::onSynthesis(bool checked)
-{
-    Q_UNUSED(checked)
-
-    new SynthesisItem(ffi::SynthesisContext::init(m_ctx), model(), this);
 }
 
 QVariant DecomposeItem::toVariant() const {
@@ -345,8 +334,7 @@ QVariant DecomposeItem::toVariant() const {
 }
 
 DecomposeItem::~DecomposeItem() noexcept {
-    m_ctx->drop();
-    delete m_synthesis;
+
 }
 
 PrimitiveSystemItem::PrimitiveSystemItem(ffi::PetriNet* net, TreeModel* _model, TreeItem *parent): GraphicsViewTreeItem(_model, parent), m_net(net)
@@ -432,53 +420,6 @@ LinearBaseFragmentsItem::~LinearBaseFragmentsItem() noexcept {
     delete m_scene;
 }
 
-SynthesisItem::SynthesisItem(ffi::SynthesisContext* ctx, TreeModel* _model, TreeItem *parent): TreeItem(_model, parent), m_ctx(ctx)
-{
-    setName("Synthesis");
-    new MatrixItem(ctx->c_matrix(), model(), this);
-    new SynthesisProgramsItem(m_ctx, model(), this);
-}
-
-SynthesisItem::SynthesisItem(const QVariant &data, ffi::DecomposeContext *ctx, TreeModel *_model, TreeItem *parent): TreeItem(_model, parent)
-, m_ctx(ffi::SynthesisContext::create(ctx))
-{
-    auto map = data.toHash();
-    setName(map["name"].toString());
-    m_ctx->fromVariant(map["data"]);
-
-    new MatrixItem(m_ctx->c_matrix(), model(), this);
-
-    auto children = map["children"].toList();
-    for (auto& ch : children) {
-        auto childHash = ch.toHash();
-        if (childHash["type"].toInt() == O_SynthesisPrograms) {
-            new SynthesisProgramsItem(childHash, m_ctx, model(), this);
-        }
-    }
-}
-
-QVariant SynthesisItem::toVariant() const {
-    QVariantHash result;
-    result["type"] = item_type();
-    result["name"] = name();
-    result["data"] = m_ctx->toVariant();
-
-    QVariantList children;
-    for (int i = 0; i < childCount(); i++) {
-        if (child(i)->item_type() == O_Matrix)
-            continue;
-
-        children << child(i)->toVariant();
-    }
-    result["children"] = children;
-
-    return result;
-}
-
-SynthesisItem::~SynthesisItem() noexcept {
-    m_ctx->drop();
-}
-
 MatrixItem::MatrixItem(ffi::CMatrix* matrix, TreeModel* model, TreeItem *parent): TreeItem(model, parent), m_matrix(matrix)
 {
     setName("Matrix");
@@ -494,7 +435,7 @@ MatrixItem::~MatrixItem() noexcept {
     delete m_view;
 }
 
-SynthesisProgramsItem::SynthesisProgramsItem(ffi::SynthesisContext* ctx, TreeModel* model, TreeItem *parent): TreeItem(model, parent)
+SynthesisProgramsItem::SynthesisProgramsItem(ffi::DecomposeContext* ctx, TreeModel* model, TreeItem *parent): TreeItem(model, parent)
 {
     setName("Programs");
     auto view = new SynthesisTable(ctx);
@@ -505,7 +446,7 @@ SynthesisProgramsItem::SynthesisProgramsItem(ffi::SynthesisContext* ctx, TreeMod
     dockManager()->addDockWidgetTab(ads::DockWidgetArea::CenterDockWidgetArea, dockWidget());
 }
 
-SynthesisProgramsItem::SynthesisProgramsItem(const QVariant &data, ffi::SynthesisContext *ctx, TreeModel *_model, TreeItem *parent) : TreeItem(_model, parent)
+SynthesisProgramsItem::SynthesisProgramsItem(const QVariant &data, ffi::DecomposeContext *ctx, TreeModel *_model, TreeItem *parent) : TreeItem(_model, parent)
 {
     setName("Programs");
     auto view = new SynthesisTable(ctx);

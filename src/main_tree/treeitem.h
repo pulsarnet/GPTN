@@ -11,10 +11,10 @@ class TreeModel;
 class GraphicsView;
 
 namespace ffi {
-    struct SynthesisContext;
     struct DecomposeContext;
     struct PetriNet;
     struct CMatrix;
+    struct PetriNetContext;
 }
 
 class TreeItem : public QObject
@@ -172,6 +172,8 @@ private:
     QAction* m_asMatrix = nullptr;
 
     GraphicScene* m_scene;
+
+    ffi::PetriNetContext* m_ctx;
 };
 
 class DecomposeItem : public TreeItem {
@@ -195,13 +197,7 @@ public:
 
     virtual ~DecomposeItem();
 
-public slots:
-
-    void onSynthesis(bool checked);
-
 private:
-
-    QAction* m_synthesis = nullptr;
 
     ffi::DecomposeContext* m_ctx = nullptr;
 };
@@ -246,27 +242,6 @@ private:
     GraphicScene* m_scene;
 };
 
-class SynthesisItem : public TreeItem {
-public:
-    explicit SynthesisItem(ffi::SynthesisContext* ctx, TreeModel* model, TreeItem* parent = nullptr);
-    explicit SynthesisItem(const QVariant& data, ffi::DecomposeContext* ctx, TreeModel* model, TreeItem* parent = nullptr);
-
-    ObjectType item_type() const override {
-        return ObjectType::O_Synthesis;
-    }
-
-    QVariant toVariant() const override;
-
-    bool allowManualDelete() const override {
-        return true;
-    }
-
-    virtual ~SynthesisItem();
-
-private:
-    ffi::SynthesisContext* m_ctx = nullptr;
-};
-
 class MatrixItem : public TreeItem {
 
 public:
@@ -287,8 +262,8 @@ private:
 
 class SynthesisProgramsItem : public TreeItem {
 public:
-    explicit SynthesisProgramsItem(ffi::SynthesisContext* ctx, TreeModel* model, TreeItem* parent = nullptr);
-    explicit SynthesisProgramsItem(const QVariant& data, ffi::SynthesisContext* ctx, TreeModel* model, TreeItem* parent = nullptr);
+    explicit SynthesisProgramsItem(ffi::DecomposeContext* ctx, TreeModel* model, TreeItem* parent = nullptr);
+    explicit SynthesisProgramsItem(const QVariant& data, ffi::DecomposeContext* ctx, TreeModel* model, TreeItem* parent = nullptr);
 
     ObjectType item_type() const override {
         return ObjectType::O_SynthesisPrograms;

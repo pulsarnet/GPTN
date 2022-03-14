@@ -87,6 +87,44 @@ impl DecomposeContextBuilder {
         }
     }
 
+    pub fn calculate_c_matrix(parts: &PetriNetVec, positions: usize, transitions: usize, linear_base_fragments: &(CMatrix, CMatrix)) -> CMatrix {
+        let (equivalent_input, equivalent_output) = linear_base_fragments;
+
+        let mut c_matrix = nalgebra::DMatrix::<i32>::zeros(positions, positions);
+
+        let mut d_matrix = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
+        for i in 0..d_matrix.nrows() {
+            for j in 0..d_matrix.ncols() {
+                d_matrix.row_mut(i)[j] = equivalent_input.row(i)[j] + equivalent_output.row(i)[j];
+            }
+        }
+
+        let mut offset = 0;
+        for net in parts.0.iter() {
+            let net_positions = net.positions.len();
+
+            for i in 0..net_positions {
+                for j in 0..net_positions {
+                    if i == j {
+                        c_matrix.row_mut(i + offset)[j + offset] = 1;
+                    }
+                    else if i > 0 || i < (net_positions - 1) {
+                        if i == (j + 1) && i % 2 == 0 {
+                            c_matrix.row_mut(i + offset)[j + offset] = 1;
+                        }
+                        else if j == (i + 1) && j % 2 == 0 {
+                            c_matrix.row_mut(i + offset)[j + offset] = 1;
+                        }
+                    }
+                }
+            }
+
+            offset += net_positions;
+        }
+
+        CMatrix::from(c_matrix)
+    }
+
     pub fn build(mut self) -> DecomposeContext {
         self.parts.sort();
 
@@ -95,6 +133,7 @@ impl DecomposeContextBuilder {
         let transitions = parts.0.iter().flat_map(|net| net.transitions.values()).cloned().collect::<Vec<_>>();
         let (primitive_net, primitive_matrix) = parts.primitive();
         let linear_base_fragments_matrix = parts.equivalent_matrix();
+        let c_matrix = DecomposeContextBuilder::calculate_c_matrix(&parts, positions.len(), transitions.len(), &linear_base_fragments_matrix);
 
         DecomposeContext {
             parts,
@@ -103,6 +142,8 @@ impl DecomposeContextBuilder {
             primitive_net,
             primitive_matrix: CMatrix::from(primitive_matrix),
             linear_base_fragments_matrix,
+            c_matrix,
+            programs: vec![]
         }
     }
 
@@ -115,6 +156,9 @@ pub struct DecomposeContext {
     pub primitive_net: PetriNet,
     pub primitive_matrix: CMatrix,
     pub linear_base_fragments_matrix: (CMatrix, CMatrix),
+
+    pub programs: Vec<SynthesisProgram>,
+    pub c_matrix: crate::CMatrix,
 }
 
 impl DecomposeContext {
@@ -173,6 +217,116 @@ impl DecomposeContext {
         result
     }
 
+    pub fn positions(&self) -> &Vec<Vertex> {
+        &self.positions
+    }
+
+    pub fn transitions(&self) -> &Vec<Vertex> {
+        &self.transitions
+    }
+
+    pub fn programs(&self) -> &Vec<SynthesisProgram> {
+        &self.programs
+    }
+
+    pub fn add_program(&mut self) {
+        self.programs.push(SynthesisProgram::new(self.positions().len() + self.transitions().len()))
+    }
+
+    pub fn remove_program(&mut self, index: usize) {
+        self.programs.remove(index);
+    }
+
+    pub fn program_value(&self, program: usize, index: usize) -> usize {
+        self.programs()[program].data[index]
+    }
+
+    pub fn set_program_value(&mut self, program: usize, index: usize, value: usize) {
+        self.programs[program].data[index] = value;
+    }
+
+    pub fn program_header_name(&self, index: usize, label: bool) -> String {
+        if index < self.transitions().len() {
+            match label {
+                true => self.transitions()[index].label(false),
+                false => self.transitions()[index].full_name()
+            }
+        }
+        else {
+            match label {
+                true => self.positions()[index - self.transitions().len()].label(false),
+                false => self.positions()[index - self.transitions().len()].full_name()
+            }
+        }
+    }
+
+    pub fn c_matrix(&self) -> &crate::CMatrix {
+        &self.c_matrix
+    }
+
+    pub fn primitive_matrix(&self) -> &crate::CMatrix {
+        &self.primitive_matrix
+    }
+
+    pub fn primitive_net(&self) -> &PetriNet {
+        &self.primitive_net
+    }
+
+    pub fn transition_synthesis_program(
+        &self,
+        t_set: &Vec<usize>,
+        d_input: &mut DMatrix<i32>,
+        d_output: &mut DMatrix<i32>,
+    ) {
+
+        let mut input = DMatrix::<i32>::zeros(d_input.nrows(), 1);
+        let mut output = DMatrix::<i32>::zeros(d_input.nrows(), 1);
+        for t in t_set.iter() {
+            d_input.column(*t).iter().enumerate().for_each(|(index, &b)| {
+                let a = input.row(index)[0];
+                input.row_mut(index)[0] = min_by(a, b, |&ra, &rb| ra.cmp(&rb));
+            });
+
+            d_output.column(*t).iter().enumerate().for_each(|(index, &b)| {
+                let a = output.row(index)[0];
+                output.row_mut(index)[0] = max_by(a, b, |&ra, &rb| ra.cmp(&rb));
+            });
+        }
+
+        for t in t_set.iter() {
+            d_input.set_column(*t, &input.column(0));
+            d_output.set_column(*t, &output.column(0));
+        }
+
+    }
+
+    pub fn position_synthesis_program(
+        &self,
+        p_set: &Vec<usize>,
+        d_input: &mut DMatrix<i32>,
+        d_output: &mut DMatrix<i32>,
+    ) {
+
+        let mut input = DMatrix::<i32>::zeros(1, d_input.ncols());
+        let mut output = DMatrix::<i32>::zeros(1, d_input.ncols());
+        for p in p_set.iter() {
+            d_input.row(*p).iter().enumerate().for_each(|(index, &b)| {
+                let a = input.column(index)[0];
+                input.column_mut(index)[0] = min_by(a, b, |&ra, &rb| ra.cmp(&rb));
+            });
+
+            d_output.row(*p).iter().enumerate().for_each(|(index, &b)| {
+                let a = output.column(index)[0];
+                output.column_mut(index)[0] = max_by(a, b, |&ra, &rb| ra.cmp(&rb));
+            });
+        }
+
+        for p in p_set.iter() {
+            d_input.set_row(*p, &input.row(0));
+            d_output.set_row(*p, &output.row(0));
+        }
+
+    }
 }
 
 #[no_mangle]
@@ -258,222 +412,28 @@ impl SynthesisProgram {
     }
 }
 
-pub struct SynthesisContext<'a> {
-    pub programs: Vec<SynthesisProgram>,
-    pub c_matrix: crate::CMatrix,
-    pub decompose_context: &'a DecomposeContext
-}
-
-impl<'a> SynthesisContext<'a> {
-
-    pub fn new(decompose_ctx: &'a DecomposeContext) -> Self {
-        SynthesisContext {
-            programs: vec![],
-            c_matrix: CMatrix::from(DMatrix::<i32>::zeros(decompose_ctx.positions.len(), decompose_ctx.positions.len())),
-            decompose_context: decompose_ctx
-        }
-    }
-
-    pub fn init_syn(decompose_ctx: &'a DecomposeContext) -> Self {
-
-        let positions = decompose_ctx.positions.len();
-        let transitions = decompose_ctx.transitions.len();
-        let (equivalent_input, equivalent_output) = &decompose_ctx.linear_base_fragments_matrix;
-
-        let mut c_matrix = nalgebra::DMatrix::<i32>::zeros(positions, positions);
-
-        let mut d_matrix = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
-        for i in 0..d_matrix.nrows() {
-            for j in 0..d_matrix.ncols() {
-                d_matrix.row_mut(i)[j] = equivalent_input.row(i)[j] + equivalent_output.row(i)[j];
-            }
-        }
-
-        let mut offset = 0;
-        for net in decompose_ctx.parts.0.iter() {
-            let net_positions = net.positions.len();
-
-            for i in 0..net_positions {
-                for j in 0..net_positions {
-                    if i == j {
-                        c_matrix.row_mut(i + offset)[j + offset] = 1;
-                    }
-                    else if i > 0 || i < (net_positions - 1) {
-                        if i == (j + 1) && i % 2 == 0 {
-                            c_matrix.row_mut(i + offset)[j + offset] = 1;
-                        }
-                        else if j == (i + 1) && j % 2 == 0 {
-                            c_matrix.row_mut(i + offset)[j + offset] = 1;
-                        }
-                    }
-                }
-            }
-
-            offset += net_positions;
-        }
-
-        SynthesisContext {
-            programs: vec![],
-            c_matrix: CMatrix::from(c_matrix),
-            decompose_context: decompose_ctx,
-        }
-    }
-
-    pub fn positions(&self) -> &Vec<Vertex> {
-        &self.decompose_context.positions
-    }
-
-    pub fn transitions(&self) -> &Vec<Vertex> {
-        &self.decompose_context.transitions
-    }
-
-    pub fn programs(&self) -> &Vec<SynthesisProgram> {
-        &self.programs
-    }
-
-    pub fn add_program(&mut self) {
-        self.programs.push(SynthesisProgram::new(self.positions().len() + self.transitions().len()))
-    }
-
-    pub fn remove_program(&mut self, index: usize) {
-        self.programs.remove(index);
-    }
-
-    pub fn program_value(&self, program: usize, index: usize) -> usize {
-        self.programs()[program].data[index]
-    }
-
-    pub fn set_program_value(&mut self, program: usize, index: usize, value: usize) {
-        self.programs[program].data[index] = value;
-    }
-
-    pub fn program_header_name(&self, index: usize, label: bool) -> String {
-        if index < self.transitions().len() {
-            match label {
-                true => self.transitions()[index].label(false),
-                false => self.transitions()[index].full_name()
-            }
-        }
-        else {
-            match label {
-                true => self.positions()[index - self.transitions().len()].label(false),
-                false => self.positions()[index - self.transitions().len()].full_name()
-            }
-        }
-    }
-
-    pub fn c_matrix(&self) -> &crate::CMatrix {
-        &self.c_matrix
-    }
-
-    pub fn primitive_matrix(&self) -> &crate::CMatrix {
-        &self.decompose_context.primitive_matrix
-    }
-
-    pub fn primitive_net(&self) -> &PetriNet {
-        &self.decompose_context.primitive_net
-    }
-
-    pub fn transition_synthesis_program(
-        &self,
-        t_set: &Vec<usize>,
-        d_input: &mut DMatrix<i32>,
-        d_output: &mut DMatrix<i32>,
-    ) {
-
-        let mut input = DMatrix::<i32>::zeros(d_input.nrows(), 1);
-        let mut output = DMatrix::<i32>::zeros(d_input.nrows(), 1);
-        for t in t_set.iter() {
-            d_input.column(*t).iter().enumerate().for_each(|(index, &b)| {
-                let a = input.row(index)[0];
-                input.row_mut(index)[0] = min_by(a, b, |&ra, &rb| ra.cmp(&rb));
-            });
-
-            d_output.column(*t).iter().enumerate().for_each(|(index, &b)| {
-                let a = output.row(index)[0];
-                output.row_mut(index)[0] = max_by(a, b, |&ra, &rb| ra.cmp(&rb));
-            });
-        }
-
-        for t in t_set.iter() {
-            d_input.set_column(*t, &input.column(0));
-            d_output.set_column(*t, &output.column(0));
-        }
-
-    }
-
-    pub fn position_synthesis_program(
-        &self,
-        p_set: &Vec<usize>,
-        d_input: &mut DMatrix<i32>,
-        d_output: &mut DMatrix<i32>,
-    ) {
-
-        let mut input = DMatrix::<i32>::zeros(1, d_input.ncols());
-        let mut output = DMatrix::<i32>::zeros(1, d_input.ncols());
-        for p in p_set.iter() {
-            d_input.row(*p).iter().enumerate().for_each(|(index, &b)| {
-                let a = input.column(index)[0];
-                input.column_mut(index)[0] = min_by(a, b, |&ra, &rb| ra.cmp(&rb));
-            });
-
-            d_output.row(*p).iter().enumerate().for_each(|(index, &b)| {
-                let a = output.column(index)[0];
-                output.column_mut(index)[0] = max_by(a, b, |&ra, &rb| ra.cmp(&rb));
-            });
-        }
-
-        for p in p_set.iter() {
-            d_input.set_row(*p, &input.row(0));
-            d_output.set_row(*p, &output.row(0));
-        }
-
-    }
-
-}
-
 #[no_mangle]
-pub extern "C" fn synthesis_create(ctx: &DecomposeContext) -> *const SynthesisContext {
-    Box::into_raw(Box::new(SynthesisContext::new(ctx)))
-}
-
-#[no_mangle]
-pub extern "C" fn synthesis_decompose_ctx(ctx: &SynthesisContext) -> *const DecomposeContext {
-    ctx.decompose_context as *const DecomposeContext
-}
-
-#[no_mangle]
-pub extern "C" fn synthesis_positions(ctx: &SynthesisContext) -> usize {
-    ctx.positions().len()
-}
-
-#[no_mangle]
-extern "C" fn synthesis_transitions(ctx: &SynthesisContext) -> usize {
-    ctx.transitions().len()
-}
-
-#[no_mangle]
-extern "C" fn synthesis_add_program(ctx: &mut SynthesisContext) {
+extern "C" fn synthesis_add_program(ctx: &mut DecomposeContext) {
     ctx.add_program();
 }
 
 #[no_mangle]
-extern "C" fn synthesis_remove_program(ctx: &mut SynthesisContext, index: usize) {
+extern "C" fn synthesis_remove_program(ctx: &mut DecomposeContext, index: usize) {
     ctx.remove_program(index);
 }
 
 #[no_mangle]
-extern "C" fn synthesis_program_value(ctx: &SynthesisContext, program: usize, index: usize) -> usize {
+extern "C" fn synthesis_program_value(ctx: &DecomposeContext, program: usize, index: usize) -> usize {
     ctx.program_value(program, index)
 }
 
 #[no_mangle]
-extern "C" fn synthesis_set_program_value(ctx: &mut SynthesisContext, program: usize, index: usize, value: usize) {
+extern "C" fn synthesis_set_program_value(ctx: &mut DecomposeContext, program: usize, index: usize, value: usize) {
     ctx.set_program_value(program, index, value);
 }
 
 #[no_mangle]
-extern "C" fn synthesis_program_header_name(ctx: &mut SynthesisContext, index: usize, label: bool) -> *const c_char {
+extern "C" fn synthesis_program_header_name(ctx: &mut DecomposeContext, index: usize, label: bool) -> *const c_char {
     // TODO: Исправить постоянное выделение памяти
     let c_str = CString::new(ctx.program_header_name(index, label)).unwrap();
     let pointer = c_str.as_ptr();
@@ -482,39 +442,29 @@ extern "C" fn synthesis_program_header_name(ctx: &mut SynthesisContext, index: u
 }
 
 #[no_mangle]
-extern "C" fn synthesis_programs(ctx: &SynthesisContext) -> usize {
+extern "C" fn synthesis_programs(ctx: &DecomposeContext) -> usize {
     ctx.programs().len()
 }
 
 #[no_mangle]
-extern "C" fn synthesis_program_size(ctx: &SynthesisContext, index: usize) -> usize {
+extern "C" fn synthesis_program_size(ctx: &DecomposeContext, index: usize) -> usize {
     ctx.programs()[index].data.len()
 }
 
 #[no_mangle]
-extern "C" fn synthesis_program_net_after(ctx: &SynthesisContext, index: usize) -> *const PetriNet {
+extern "C" fn synthesis_program_net_after(ctx: &DecomposeContext, index: usize) -> *const PetriNet {
     ctx.programs()[index].net_after.as_ref().unwrap() as *const PetriNet
 }
 
 #[no_mangle]
-extern "C" fn synthesis_init_program_net_after(ctx: &mut SynthesisContext, index: usize) -> *const PetriNet {
+extern "C" fn synthesis_init_program_net_after(ctx: &mut DecomposeContext, index: usize) -> *const PetriNet {
     ctx.programs[index].net_after = Some(PetriNet::new());
     ctx.programs[index].net_after.as_ref().unwrap() as *const PetriNet
 }
 
 #[no_mangle]
-extern "C" fn synthesis_c_matrix(ctx: &SynthesisContext) -> *const CMatrix {
+extern "C" fn synthesis_c_matrix(ctx: &DecomposeContext) -> *const CMatrix {
     ctx.c_matrix() as *const CMatrix
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn synthesis_init(decompose_ctx: &DecomposeContext) -> *mut SynthesisContext {
-    Box::into_raw(Box::new(SynthesisContext::init_syn(decompose_ctx)))
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn synthesis_delete(ctx: *mut SynthesisContext) {
-    Box::from_raw(ctx);
 }
 
 #[no_mangle]
@@ -539,7 +489,7 @@ extern "C" fn matrix_columns(matrix: &CMatrix) -> usize {
 
 // Вычисление программ синтеза
 #[no_mangle]
-extern "C" fn synthesis_eval_program(ctx: &mut SynthesisContext, index: usize) -> *const PetriNet {
+extern "C" fn synthesis_eval_program(ctx: &mut DecomposeContext, index: usize) -> *const PetriNet {
     if ctx.programs[index].net_after.is_some() {
         return ctx.programs[index].net_after.as_ref().unwrap() as *const PetriNet
     }

@@ -8,14 +8,14 @@
 #include <QAbstractTableModel>
 
 namespace ffi {
-    struct SynthesisContext;
+    struct DecomposeContext;
 }
 
 class SynthesisModel : public QAbstractTableModel {
 
 public:
 
-    explicit SynthesisModel(ffi::SynthesisContext* ctx, QObject* parent = nullptr);
+    explicit SynthesisModel(ffi::DecomposeContext* ctx, QObject* parent = nullptr);
 
     int columnCount(const QModelIndex &parent) const override;
 
@@ -31,7 +31,7 @@ public:
 
     bool setData(const QModelIndex &index, const QVariant &value, int role) override;
 
-    ffi::SynthesisContext* ctx() {
+    ffi::DecomposeContext* ctx() {
         return m_ctx;
     }
 
@@ -41,7 +41,7 @@ public slots:
 
 private:
 
-    ffi::SynthesisContext* m_ctx = nullptr;
+    ffi::DecomposeContext* m_ctx = nullptr;
     bool m_enableLabels = false;
 
 };

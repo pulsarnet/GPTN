@@ -11,7 +11,7 @@ use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
-use SynthesisContext;
+use ::{DecomposeContext};
 use CMatrix;
 use net::vertex::{VertexIndex, VertexType};
 use indexmap::map::IndexMap;
@@ -739,14 +739,14 @@ impl PetriNet {
     }
 }
 
-pub fn synthesis_program(programs: &mut SynthesisContext, index: usize) {
+pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) {
 
     let positions = programs.positions().len();
     let transitions = programs.transitions().len();
     let mut pos_indexes_vec = programs.positions().clone();
     let mut tran_indexes_vec = programs.transitions().clone();
     let c_matrix = programs.c_matrix.inner.clone();
-    let lbf_matrix = programs.decompose_context.primitive_matrix.inner.clone();
+    let lbf_matrix = programs.primitive_matrix.inner.clone();
     let mut markers = nalgebra::DMatrix::<i32>::zeros(positions, 1);
     programs
         .positions()

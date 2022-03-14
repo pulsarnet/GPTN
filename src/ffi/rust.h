@@ -17,9 +17,10 @@ namespace ffi {
 
     extern "C" struct PetriNet;
     extern "C" struct Vertex;
-    extern "C" struct SynthesisContext;
     extern "C" struct CMatrix;
     extern "C" struct Connection;
+    extern "C" struct PetriNetContext;
+    extern "C" struct DecomposeContext;
 
     typedef uint64_t usize;
     typedef int i32;
@@ -53,8 +54,20 @@ namespace ffi {
         usize id;
     };
 
+    struct PetriNetContext {
+        static PetriNetContext* create();
+        static void free(PetriNetContext* context);
+
+        void decompose();
+
+        PetriNet* net() const;
+        DecomposeContext* decompose_ctx() const;
+        void set_decompose_ctx(DecomposeContext* ctx);
+    };
+
     struct PetriNet {
         static PetriNet* create();
+
         CVec<Vertex*> positions() const;
         CVec<Vertex*> transitions() const;
         CVec<Connection*> connections() const;
@@ -70,6 +83,7 @@ namespace ffi {
         void remove_transition(Vertex*);
         void connect(Vertex*, Vertex*);
         void remove_connection(Vertex*, Vertex*);
+
 
         Vertex* getVertex(VertexIndex index) const;
 
@@ -114,16 +128,6 @@ namespace ffi {
         usize transition_index(usize);
         PetriNet* linear_base_fragments();
 
-        CVec<PetriNet*> parts() const;
-
-        void drop();
-    };
-
-    struct SynthesisContext {
-
-        static SynthesisContext* init(DecomposeContext*);
-        static SynthesisContext* create(DecomposeContext*);
-
         usize programs() const;
         usize program_size(usize index) const;
         void add_program();
@@ -135,12 +139,8 @@ namespace ffi {
         PetriNet* eval_program(usize index);
         PetriNet* program_net_after(usize index) const;
         PetriNet* init_program_after(usize index);
-        DecomposeContext* decompose_ctx() const;
 
-        QVariant toVariant() const;
-        void fromVariant(const QVariant& data);
-
-        void drop();
+        CVec<PetriNet*> parts() const;
     };
 
     struct CMatrix {
