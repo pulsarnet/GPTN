@@ -7,7 +7,6 @@
 #include "treemodel.h"
 #include "../matrix_model.h"
 #include "../synthesis/synthesis_model.h"
-#include "../named_matrix_model.h"
 #include "../overrides/MatrixWindow.h"
 #include <QTableView>
 
@@ -262,6 +261,8 @@ DecomposeItem::DecomposeItem(ffi::DecomposeContext* ctx, TreeModel* _model, Tree
     setName("Decompose");
     new PrimitiveSystemItem(m_ctx->primitive_net(), model(), this);
     new LinearBaseFragmentsItem(m_ctx->linear_base_fragments(), model(), this);
+    new MatrixItem(m_ctx->c_matrix(), model(), this);
+    new SynthesisProgramsItem(m_ctx, model(), this);
 
     initialize();
 }
