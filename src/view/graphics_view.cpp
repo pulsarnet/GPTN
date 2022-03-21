@@ -106,6 +106,10 @@ GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
 
 }
 
+void GraphicsView::setToolBoxVisibility(bool visible) {
+    m_mainToolBar->setVisible(visible);
+}
+
 QAction* GraphicsView::makeAction(const QString &name, const QIcon &icon, bool checkable, QActionGroup *actionGroup) {
     auto action = new QAction(name);
     action->setIcon(icon);
@@ -277,5 +281,6 @@ void GraphicsView::slotSFDPpVisualization(bool checked) {
 }
 
 GraphicsView::~GraphicsView() noexcept {
-    m_IOMatrixWindow->close();
+    if (m_IOMatrixWindow)
+        m_IOMatrixWindow->close();
 }

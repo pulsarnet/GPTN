@@ -15,6 +15,7 @@
 #include "main_tree/treemodel.h"
 #include "main_tree/treeitem.h"
 #include "windows_types/close_on_inactive.h"
+#include "ActionTabWidget/ActionTabWidget.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_changed(false) {
 
@@ -43,6 +44,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_changed(false) 
     manager->addDockWidgetTab(DockWidgetArea::LeftDockWidgetArea, treeDocker);
 
     connect(treeModel, &QAbstractItemModel::rowsInserted, this, &MainWindow::onDocumentChanged);
+
+    auto tabWidget = new ActionTabWidget;
+    setCentralWidget(tabWidget);
 
 }
 

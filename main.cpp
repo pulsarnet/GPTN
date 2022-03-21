@@ -9,6 +9,12 @@
 
 int main(int argc, char **argv) {
 
+    CDockManager::setConfigFlag(CDockManager::DockAreaHideDisabledButtons, true);
+    CDockManager::setConfigFlag(CDockManager::AllTabsHaveCloseButton, false);
+    CDockManager::setConfigFlag(CDockManager::AlwaysShowTabs, false);
+    CDockManager::setConfigFlag(CDockManager::DockAreaHasUndockButton, false);
+    CDockManager::setConfigFlag(CDockManager::DockAreaHasCloseButton, false);
+    CDockManager::setConfigFlag(CDockManager::DockAreaHasTabsMenuButton, false);
 
     ffi::init();
 

@@ -25,6 +25,8 @@ public:
     explicit GraphicsView(QWidget* parent = nullptr);
     virtual ~GraphicsView() noexcept;
 
+    void setToolBoxVisibility(bool visible = true);
+
 protected:
 
     void mousePressEvent(QMouseEvent *event) override;
