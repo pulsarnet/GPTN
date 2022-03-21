@@ -11,9 +11,6 @@
 #include <QTableView>
 #include <QHeaderView>
 #include <QMessageBox>
-#include "main_tree/treeview.h"
-#include "main_tree/treemodel.h"
-#include "main_tree/treeitem.h"
 #include "windows_types/close_on_inactive.h"
 #include "ActionTabWidget/ActionTabWidget.h"
 
@@ -21,29 +18,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_changed(false) 
 
     createMenuBar();
     createStatusBar();
-
-    CDockManager::setConfigFlag(CDockManager::DragPreviewShowsContentPixmap, false);
-    CDockManager::setConfigFlag(CDockManager::OpaqueSplitterResize, true);
-    CDockManager::setConfigFlag(CDockManager::XmlCompressionEnabled, false);
-
-    manager = new CDockManager(this);
-    this->setCentralWidget(manager);
-
-
-    auto internalDockManager = new CDockManager;
-    auto centralWidget = new CDockWidget("Central");
-    centralWidget->setWidget(internalDockManager);
-    manager->setCentralWidget(centralWidget);
-
-    treeModel = new TreeModel(internalDockManager);
-
-    auto treeView = new TreeView;
-    treeView->setModel(treeModel);
-    auto treeDocker = new CDockWidget("Tree");
-    treeDocker->setWidget(treeView);
-    manager->addDockWidgetTab(DockWidgetArea::LeftDockWidgetArea, treeDocker);
-
-    connect(treeModel, &QAbstractItemModel::rowsInserted, this, &MainWindow::onDocumentChanged);
 
     auto tabWidget = new ActionTabWidget;
     setCentralWidget(tabWidget);
@@ -83,13 +57,13 @@ bool MainWindow::saveFile(const QString &filename) {
         return false;
     }
 
-    auto data = treeModel->root()->toVariant();
-    QDataStream out(&file);
-    out.setVersion(QDataStream::Qt_6_0);
-    out << data;
-
-    setFileName(filename);
-    m_changed = false;
+//    auto data = treeModel->root()->toVariant();
+//    QDataStream out(&file);
+//    out.setVersion(QDataStream::Qt_6_0);
+//    out << data;
+//
+//    setFileName(filename);
+//    m_changed = false;
 
     return true;
 
@@ -110,7 +84,7 @@ bool MainWindow::open() {
             return false;
     }
 
-    treeModel->removeRows(0, treeModel->root()->childCount(), treeModel->indexForTreeItem(treeModel->root()));
+    //treeModel->removeRows(0, treeModel->root()->childCount(), treeModel->indexForTreeItem(treeModel->root()));
     //treeModel->root()->removeChildren(0, treeModel->root()->childCount());
 
     QFile file(fileName);
@@ -126,7 +100,7 @@ bool MainWindow::open() {
     in.setVersion(QDataStream::Qt_6_0);
     in >> data;
 
-    dynamic_cast<RootTreeItem*>(treeModel->root())->fromVariant(data);
+    //dynamic_cast<RootTreeItem*>(treeModel->root())->fromVariant(data);
 
     setFileName(fileName);
     m_changed = false;

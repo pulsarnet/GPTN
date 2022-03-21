@@ -35,21 +35,22 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     connect(m_synthesisTable, &SynthesisTable::signalSynthesisedProgram, this, &DecomposeModelTab::slotSynthesisedProgram);
 
 
-    //auto synthesisedProgramScene = new GraphicScene(m_ctx->primitive_net());
     m_synthesisedProgramView = new GraphicsView;
-    //m_synthesisedProgramView->setScene(synthesisedProgramScene);
     m_synthesisedProgramView->setWindowTitle("Синтезированная структура");
     m_synthesisedProgramView->setToolBoxVisibility(false);
 
 
     horizontalSplitter1->addWidget(new WrappedLayoutWidget(m_linearBaseFragmentsView, this));
     horizontalSplitter1->addWidget(new WrappedLayoutWidget(m_primitiveNetView, this));
+    horizontalSplitter1->setSizes(QList<int>({INT_MAX, INT_MAX}));
 
     horizontalSplitter2->addWidget(new WrappedLayoutWidget(m_synthesisTable, this));
     horizontalSplitter2->addWidget(new WrappedLayoutWidget(m_synthesisedProgramView, this));
+    horizontalSplitter2->setSizes(QList<int>({INT_MAX, INT_MAX}));
 
     verticalSplitter->addWidget(horizontalSplitter1);
     verticalSplitter->addWidget(horizontalSplitter2);
+    verticalSplitter->setSizes(QList<int>({INT_MAX, INT_MAX}));
 
     setLayout(new QGridLayout(this));
     layout()->addWidget(verticalSplitter);

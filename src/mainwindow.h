@@ -18,13 +18,8 @@
 #include <QPushButton>
 #include <QToolButton>
 #include <QLabel>
-#include <DockAreaWidget.h>
-#include <DockManager.h>
 #include <QMessageBox>
 
-using namespace ads;
-
-class TreeModel;
 
 class MainWindow : public QMainWindow {
 
@@ -75,9 +70,7 @@ private:
 
     QStatusBar* statusBar = nullptr;
     QMenuBar* menuBar = nullptr;
-    TreeModel* treeModel = nullptr;
 
-    CDockManager* manager = nullptr;
     QString m_filename;
     bool m_changed;
 };

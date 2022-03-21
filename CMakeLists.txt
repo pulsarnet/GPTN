@@ -59,13 +59,14 @@ set(SRC_FILES
         src/view/graphics_view_zoom.cpp
         src/view/graphic_scene.cpp
         src/overrides/switch.cpp
-        src/main_tree/treeitem.cpp
-        src/main_tree/treemodel.cpp
         src/graphviz/graphviz_wrapper.cpp
         src/synthesis/synthesis_model.cpp
         src/synthesis/synthesis_item_delegate.cpp
         src/ActionTabWidget/ActionTabWidget.cpp
-        src/ActionTabWidget/NetModelingTab.cpp src/ActionTabWidget/DecomposeModelTab.cpp src/ActionTabWidget/DecomposeModelTab.h)
+        src/ActionTabWidget/NetModelingTab.cpp
+        src/overrides/MatrixWindow.cpp
+        src/ActionTabWidget/WrappedLayoutWidget.cpp
+        src/ActionTabWidget/DecomposeModelTab.cpp)
 
 set(HEADERS
         src/mainwindow.h
@@ -88,16 +89,14 @@ set(HEADERS
         src/synthesis/synthesis_model.h
         src/synthesis/synthesis_item_delegate.cpp
         src/synthesis/synthesis_item_delegate.h
-        src/main_tree/treeview.cpp
-        src/main_tree/treeview.h
         src/windows_types/close_on_inactive.cpp
         src/windows_types/close_on_inactive.h
         src/named_matrix_model.h
-        src/overrides/MatrixWindow.cpp
         src/overrides/MatrixWindow.h
         src/ActionTabWidget/ActionTabWidget.h
         src/ActionTabWidget/NetModelingTab.h
-        src/ActionTabWidget/DecomposeModelTab.cpp src/ActionTabWidget/DecomposeModelTab.h src/ActionTabWidget/WrappedLayoutWidget.cpp src/ActionTabWidget/WrappedLayoutWidget.h)
+        src/ActionTabWidget/DecomposeModelTab.h
+        src/ActionTabWidget/WrappedLayoutWidget.h)
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 
