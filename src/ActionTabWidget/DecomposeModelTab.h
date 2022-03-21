@@ -8,16 +8,30 @@
 #include <QWidget>
 #include "NetModelingTab.h"
 
+class GraphicsView;
+class SynthesisTable;
+
 class DecomposeModelTab : public QWidget {
 
 public:
 
     explicit DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent = nullptr);
 
+
+public slots:
+
+    void slotSynthesisedProgram(ffi::PetriNet* net, int index);
+
 private:
 
     NetModelingTab* m_netModelingTab;
     ffi::DecomposeContext* m_ctx;
+
+    GraphicsView* m_linearBaseFragmentsView;
+    GraphicsView* m_primitiveNetView;
+    GraphicsView* m_synthesisedProgramView;
+
+    SynthesisTable* m_synthesisTable;
 
 };
 

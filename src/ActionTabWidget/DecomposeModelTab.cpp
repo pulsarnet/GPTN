@@ -18,38 +18,47 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     auto horizontalSplitter2 = new QSplitter(Qt::Horizontal, this);
     auto verticalSplitter = new QSplitter(Qt::Vertical, this);
 
-    auto linear_base_fragments_scene = new GraphicScene(m_ctx->linear_base_fragments());
-    auto linear_base_fragments_view = new GraphicsView;
-    linear_base_fragments_view->setScene(linear_base_fragments_scene);
-    linear_base_fragments_view->setWindowTitle("Линейно-базовые фрагменты");
-    linear_base_fragments_view->setToolBoxVisibility(false);
+    auto linearBaseFragmentsScene = new GraphicScene(m_ctx->linear_base_fragments());
+    m_linearBaseFragmentsView = new GraphicsView;
+    m_linearBaseFragmentsView->setScene(linearBaseFragmentsScene);
+    m_linearBaseFragmentsView->setWindowTitle("Линейно-базовые фрагменты");
+    m_linearBaseFragmentsView->setToolBoxVisibility(false);
 
 
-    auto primitive_net_scene = new GraphicScene(m_ctx->primitive_net());
-    auto primitive_net_view = new GraphicsView;
-    primitive_net_view->setScene(primitive_net_scene);
-    primitive_net_view->setWindowTitle("Примитивная система");
-    primitive_net_view->setToolBoxVisibility(false);
+    auto primitiveNetScene = new GraphicScene(m_ctx->primitive_net());
+    m_primitiveNetView = new GraphicsView;
+    m_primitiveNetView->setScene(primitiveNetScene);
+    m_primitiveNetView->setWindowTitle("Примитивная система");
+    m_primitiveNetView->setToolBoxVisibility(false);
 
-    auto programs_table = new SynthesisTable(m_ctx);
-
-
-    auto primitive_net_scene1 = new GraphicScene(m_ctx->primitive_net());
-    auto primitive_net_view1 = new GraphicsView;
-    primitive_net_view1->setScene(primitive_net_scene1);
-    primitive_net_view1->setWindowTitle("Hello");
-    primitive_net_view1->setToolBoxVisibility(false);
+    m_synthesisTable = new SynthesisTable(m_ctx);
+    connect(m_synthesisTable, &SynthesisTable::signalSynthesisedProgram, this, &DecomposeModelTab::slotSynthesisedProgram);
 
 
-    horizontalSplitter1->addWidget(new WrappedLayoutWidget(linear_base_fragments_view, this));
-    horizontalSplitter1->addWidget(new WrappedLayoutWidget(primitive_net_view, this));
+    //auto synthesisedProgramScene = new GraphicScene(m_ctx->primitive_net());
+    m_synthesisedProgramView = new GraphicsView;
+    //m_synthesisedProgramView->setScene(synthesisedProgramScene);
+    m_synthesisedProgramView->setWindowTitle("Синтезированная структура");
+    m_synthesisedProgramView->setToolBoxVisibility(false);
 
-    horizontalSplitter2->addWidget(new WrappedLayoutWidget(programs_table, this));
-    horizontalSplitter2->addWidget(new WrappedLayoutWidget(primitive_net_view1, this));
+
+    horizontalSplitter1->addWidget(new WrappedLayoutWidget(m_linearBaseFragmentsView, this));
+    horizontalSplitter1->addWidget(new WrappedLayoutWidget(m_primitiveNetView, this));
+
+    horizontalSplitter2->addWidget(new WrappedLayoutWidget(m_synthesisTable, this));
+    horizontalSplitter2->addWidget(new WrappedLayoutWidget(m_synthesisedProgramView, this));
 
     verticalSplitter->addWidget(horizontalSplitter1);
     verticalSplitter->addWidget(horizontalSplitter2);
 
     setLayout(new QGridLayout(this));
     layout()->addWidget(verticalSplitter);
+}
+
+void DecomposeModelTab::slotSynthesisedProgram(ffi::PetriNet *net, int index) {
+    auto newScene = new GraphicScene(net);
+    auto oldScene = m_synthesisedProgramView->scene();
+
+    m_synthesisedProgramView->setScene(newScene);
+    delete oldScene;
 }
