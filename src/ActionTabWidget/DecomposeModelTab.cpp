@@ -5,61 +5,62 @@
 #include "DecomposeModelTab.h"
 #include "../view/graphic_scene.h"
 #include "../synthesis/synthesis_table.h"
-#include "WrappedLayoutWidget.h"
+#include "../DockSystem/DockToolbar.h"
 #include <QGridLayout>
 #include <QSplitter>
+#include <DockAreaWidget.h>
+#include <QLabel>
 
 DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) : QWidget(parent)
     , m_netModelingTab(mainTab)
 {
     m_ctx = mainTab->ctx()->decompose_ctx();
 
-    auto horizontalSplitter1 = new QSplitter(Qt::Horizontal, this);
-    auto horizontalSplitter2 = new QSplitter(Qt::Horizontal, this);
-    auto verticalSplitter = new QSplitter(Qt::Vertical, this);
+    m_dockManager = new ads::CDockManager(this);
 
     auto linearBaseFragmentsScene = new GraphicScene(m_ctx->linear_base_fragments());
-    m_linearBaseFragmentsView = new GraphicsView;
-    m_linearBaseFragmentsView->setScene(linearBaseFragmentsScene);
-    m_linearBaseFragmentsView->setWindowTitle("Линейно-базовые фрагменты");
-    m_linearBaseFragmentsView->setToolBoxVisibility(false);
-
+    auto linearBaseFragmentsView = new GraphicsView;
+    linearBaseFragmentsView->setScene(linearBaseFragmentsScene);
+    linearBaseFragmentsView->setWindowTitle("Линейно-базовые фрагменты");
+    linearBaseFragmentsView->setToolBoxVisibility(false);
+    m_linearBaseFragmentsView = new DockWidget("LBF");
+    m_linearBaseFragmentsView->setWidget(linearBaseFragmentsView);
 
     auto primitiveNetScene = new GraphicScene(m_ctx->primitive_net());
-    m_primitiveNetView = new GraphicsView;
-    m_primitiveNetView->setScene(primitiveNetScene);
-    m_primitiveNetView->setWindowTitle("Примитивная система");
-    m_primitiveNetView->setToolBoxVisibility(false);
+    auto primitiveNetView = new GraphicsView;
+    primitiveNetView->setScene(primitiveNetScene);
+    primitiveNetView->setWindowTitle("Примитивная система");
+    primitiveNetView->setToolBoxVisibility(false);
+    m_primitiveNetView = new DockWidget("Primitive view");
+    m_primitiveNetView->setWidget(primitiveNetView);
 
-    m_synthesisTable = new SynthesisTable(m_ctx);
-    connect(m_synthesisTable, &SynthesisTable::signalSynthesisedProgram, this, &DecomposeModelTab::slotSynthesisedProgram);
+    auto synthesisTable = new SynthesisTable(m_ctx);
+    connect(synthesisTable, &SynthesisTable::signalSynthesisedProgram, this, &DecomposeModelTab::slotSynthesisedProgram);
+    m_synthesisTable = new DockWidget("Synthesis table");
+    m_synthesisTable->setWidget(synthesisTable);
 
+    auto synthesisedProgramView = new GraphicsView;
+    synthesisedProgramView->setWindowTitle("Синтезированная структура");
+    synthesisedProgramView->setToolBoxVisibility(false);
+    m_synthesisedProgramView = new DockWidget("Synthesised program");
+    m_synthesisedProgramView->setWidget(synthesisedProgramView);
 
-    m_synthesisedProgramView = new GraphicsView;
-    m_synthesisedProgramView->setWindowTitle("Синтезированная структура");
-    m_synthesisedProgramView->setToolBoxVisibility(false);
+    auto area = m_dockManager->addDockWidget(ads::LeftDockWidgetArea, m_linearBaseFragmentsView);
+    area = m_dockManager->addDockWidget(ads::RightDockWidgetArea, m_primitiveNetView, area);
+    area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
 
-
-    horizontalSplitter1->addWidget(new WrappedLayoutWidget(m_linearBaseFragmentsView, this));
-    horizontalSplitter1->addWidget(new WrappedLayoutWidget(m_primitiveNetView, this));
-    horizontalSplitter1->setSizes(QList<int>({INT_MAX, INT_MAX}));
-
-    horizontalSplitter2->addWidget(new WrappedLayoutWidget(m_synthesisTable, this));
-    horizontalSplitter2->addWidget(new WrappedLayoutWidget(m_synthesisedProgramView, this));
-    horizontalSplitter2->setSizes(QList<int>({INT_MAX, INT_MAX}));
-
-    verticalSplitter->addWidget(horizontalSplitter1);
-    verticalSplitter->addWidget(horizontalSplitter2);
-    verticalSplitter->setSizes(QList<int>({INT_MAX, INT_MAX}));
+    area = m_dockManager->addDockWidget(ads::BottomDockWidgetArea, m_synthesisTable);
+    area = m_dockManager->addDockWidget(ads::RightDockWidgetArea, m_synthesisedProgramView, area);
+    area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
 
     setLayout(new QGridLayout(this));
-    layout()->addWidget(verticalSplitter);
+    layout()->addWidget(m_dockManager);
 }
 
 void DecomposeModelTab::slotSynthesisedProgram(ffi::PetriNet *net, int index) {
     auto newScene = new GraphicScene(net);
-    auto oldScene = m_synthesisedProgramView->scene();
+    auto oldScene = dynamic_cast<GraphicsView*>(m_synthesisedProgramView->widget())->scene();
 
-    m_synthesisedProgramView->setScene(newScene);
+    dynamic_cast<GraphicsView*>(m_synthesisedProgramView->widget())->setScene(newScene);
     delete oldScene;
 }

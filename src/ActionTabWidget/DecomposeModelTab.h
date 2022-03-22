@@ -7,9 +7,9 @@
 
 #include <QWidget>
 #include "NetModelingTab.h"
+#include "../DockSystem/DockWidget.h"
+#include <DockManager.h>
 
-class GraphicsView;
-class SynthesisTable;
 
 class DecomposeModelTab : public QWidget {
 
@@ -27,11 +27,11 @@ private:
     NetModelingTab* m_netModelingTab;
     ffi::DecomposeContext* m_ctx;
 
-    GraphicsView* m_linearBaseFragmentsView;
-    GraphicsView* m_primitiveNetView;
-    GraphicsView* m_synthesisedProgramView;
-
-    SynthesisTable* m_synthesisTable;
+    ads::CDockManager* m_dockManager;
+    DockWidget* m_linearBaseFragmentsView;
+    DockWidget* m_primitiveNetView;
+    DockWidget* m_synthesisedProgramView;
+    DockWidget* m_synthesisTable;
 
 };
 

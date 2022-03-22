@@ -6,8 +6,20 @@
 #include <QFile>
 #include "src/mainwindow.h"
 #include "src/ffi/rust.h"
+#include "src/DockSystem/SplittableComponentsFactory.h"
+#include <DockManager.h>
+#include <DockComponentsFactory.h>
+#include <DockAreaTitleBar.h>
 
 int main(int argc, char **argv) {
+
+    ads::CDockManager::setConfigFlag(ads::CDockManager::DockAreaHasTabsMenuButton, false);
+    ads::CDockManager::setConfigFlag(ads::CDockManager::DockAreaHasUndockButton, false);
+    ads::CDockManager::setConfigFlag(ads::CDockManager::AlwaysShowTabs, true);
+    ads::CDockManager::setConfigFlag(ads::CDockManager::EqualSplitOnInsertion, true);
+    ads::CDockManager::setConfigFlag(ads::CDockManager::OpaqueSplitterResize, true);
+
+    ads::CDockComponentsFactory::setFactory(new SplittableComponentsFactory);
 
     ffi::init();
 

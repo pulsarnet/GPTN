@@ -41,7 +41,7 @@ ExternalProject_Add(
 )
 
 set(CMAKE_PREFIX_PATH ${Qt6_DIR})
-find_package(Qt6 COMPONENTS Widgets Core Gui OpenGLWidgets REQUIRED)
+find_package(Qt6 COMPONENTS Widgets Core Gui OpenGLWidgets Charts REQUIRED)
 
 set(CMAKE_PREFIX_PATH ${Qt_ADVANCED_DOCKING_SYSTEM_DIR})
 find_package(qtadvanceddocking)
@@ -66,7 +66,7 @@ set(SRC_FILES
         src/ActionTabWidget/NetModelingTab.cpp
         src/overrides/MatrixWindow.cpp
         src/ActionTabWidget/WrappedLayoutWidget.cpp
-        src/ActionTabWidget/DecomposeModelTab.cpp)
+        src/ActionTabWidget/DecomposeModelTab.cpp src/DockSystem/SplittableComponentsFactory.cpp src/DockSystem/SplittableComponentsFactory.h src/DockSystem/DockToolbar.cpp src/DockSystem/DockToolbar.h src/DockSystem/DockWidget.cpp src/DockSystem/DockWidget.h)
 
 set(HEADERS
         src/mainwindow.h
@@ -96,7 +96,7 @@ set(HEADERS
         src/ActionTabWidget/ActionTabWidget.h
         src/ActionTabWidget/NetModelingTab.h
         src/ActionTabWidget/DecomposeModelTab.h
-        src/ActionTabWidget/WrappedLayoutWidget.h)
+        src/ActionTabWidget/WrappedLayoutWidget.h src/DockSystem/SplittableComponentsFactory.cpp src/DockSystem/SplittableComponentsFactory.h src/DockSystem/DockToolbar.cpp src/DockSystem/DockToolbar.h src/DockSystem/DockWidget.cpp src/DockSystem/DockWidget.h)
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 
@@ -109,11 +109,13 @@ add_executable(ffi_rust
 
 add_dependencies(ffi_rust rust)
 
-target_link_libraries(ffi_rust PRIVATE "${CMAKE_SOURCE_DIR}/rust/target/debug/hello_world.lib"
+target_link_libraries(ffi_rust PRIVATE
+        "${CMAKE_SOURCE_DIR}/rust/target/debug/hello_world.lib"
         Qt6::Widgets
         Qt6::Core
         Qt6::Gui
         Qt6::OpenGLWidgets
+        Qt6::Charts
         ads::qtadvanceddocking
         libopenblas
         gvc
