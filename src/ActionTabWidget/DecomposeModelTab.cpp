@@ -21,7 +21,6 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     auto linearBaseFragmentsScene = new GraphicScene(m_ctx->linear_base_fragments());
     auto linearBaseFragmentsView = new GraphicsView;
     linearBaseFragmentsView->setScene(linearBaseFragmentsScene);
-    linearBaseFragmentsView->setWindowTitle("Линейно-базовые фрагменты");
     linearBaseFragmentsView->setToolBoxVisibility(false);
     m_linearBaseFragmentsView = new DockWidget("LBF");
     m_linearBaseFragmentsView->setWidget(linearBaseFragmentsView);
@@ -29,7 +28,6 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     auto primitiveNetScene = new GraphicScene(m_ctx->primitive_net());
     auto primitiveNetView = new GraphicsView;
     primitiveNetView->setScene(primitiveNetScene);
-    primitiveNetView->setWindowTitle("Примитивная система");
     primitiveNetView->setToolBoxVisibility(false);
     m_primitiveNetView = new DockWidget("Primitive view");
     m_primitiveNetView->setWidget(primitiveNetView);
@@ -40,17 +38,24 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     m_synthesisTable->setWidget(synthesisTable);
 
     auto synthesisedProgramView = new GraphicsView;
-    synthesisedProgramView->setWindowTitle("Синтезированная структура");
     synthesisedProgramView->setToolBoxVisibility(false);
     m_synthesisedProgramView = new DockWidget("Synthesised program");
     m_synthesisedProgramView->setWidget(synthesisedProgramView);
 
     auto area = m_dockManager->addDockWidget(ads::LeftDockWidgetArea, m_linearBaseFragmentsView);
+    area->setWindowTitle("Линейно-базовые фрагменты");
+    area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
+
     area = m_dockManager->addDockWidget(ads::RightDockWidgetArea, m_primitiveNetView, area);
+    area->setWindowTitle("Примитивная система");
     area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
 
     area = m_dockManager->addDockWidget(ads::BottomDockWidgetArea, m_synthesisTable);
+    area->setWindowTitle("Программы синтеза");
+    area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
+
     area = m_dockManager->addDockWidget(ads::RightDockWidgetArea, m_synthesisedProgramView, area);
+    area->setWindowTitle("Синтезированная структура");
     area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
 
     setLayout(new QGridLayout(this));

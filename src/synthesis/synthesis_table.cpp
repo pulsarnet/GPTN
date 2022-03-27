@@ -17,10 +17,14 @@
 SynthesisTable::SynthesisTable(ffi::DecomposeContext *ctx, QWidget *parent): QWidget(parent), m_context(ctx) {
     setLayout(new QVBoxLayout(this));
 
-    m_addProgram = new QAction("Add program");
+    m_addProgram = new QAction("");
+    m_addProgram->setIcon(QIcon(":/images/add.svg"));
+    m_addProgram->setToolTip("Добавить программу");
     connect(m_addProgram, &QAction::triggered, this, &SynthesisTable::slotAddProgram);
 
-    m_evalProgram = new QAction("Eval program");
+    m_evalProgram = new QAction("");
+    m_evalProgram->setIcon(QIcon(":/images/play.svg"));
+    m_evalProgram->setToolTip("Вычислить синтез");
     connect(m_evalProgram, &QAction::triggered, this, &SynthesisTable::slotEvalProgram);
 
     m_toolBar = new QToolBar(this);

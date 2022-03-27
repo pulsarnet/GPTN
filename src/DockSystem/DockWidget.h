@@ -13,6 +13,10 @@ public:
 
     explicit DockWidget(const QString& name, QWidget *parent = nullptr);
 
+public slots:
+
+    void onWindowTitleChanged(const QString &title);
+
 };
 
 

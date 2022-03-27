@@ -31,6 +31,7 @@ ActionTabWidget::ActionTabWidget(QWidget *parent) : QTabWidget(parent) {
 
     m_netModelingTab = new NetModelingTab;
     auto tab = insertTab(0, m_netModelingTab, "Modeling");
+    setTabIcon(0, QIcon(":/images/modeling.svg"));
     setCurrentIndex(tab);
 
     connect(this, &QTabWidget::tabBarClicked, this, &ActionTabWidget::slotTabBarClicked);
@@ -52,7 +53,8 @@ void ActionTabWidget::slotDecompose() {
     m_netModelingTab->ctx()->decompose();
 
     m_decomposeModelTab = new DecomposeModelTab(m_netModelingTab, this);
-    insertTab(tabBar()->count() - 1, m_decomposeModelTab, "Decomposition and Synthesis");
+    auto index = insertTab(tabBar()->count() - 1, m_decomposeModelTab, "Decomposition and Synthesis");
+    setTabIcon(index, QIcon(":/images/decompose.svg"));
 }
 
 void ActionTabWidget::slotDDR() {}

@@ -28,7 +28,9 @@ signals:
 
     void signalFullScreen();
 
-protected:
+public slots:
+
+    void onWindowTitleChanged(const QString& title);
 
 private:
 

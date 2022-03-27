@@ -12,10 +12,10 @@
 #include <QAction>
 #include <QToolButton>
 
-DockToolbar::DockToolbar(ads::CDockAreaWidget *parent) :
-        ads::CDockAreaTitleBar(parent), m_parent(nullptr), m_label(new QLabel("...", this))
+DockToolbar::DockToolbar(ads::CDockAreaWidget *_parent) :
+        ads::CDockAreaTitleBar(_parent), m_parent(nullptr), m_label(new QLabel("...", this))
 {
-    parent->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
+    _parent->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
 
     setMinimumHeight(28);
     setMaximumHeight(30);
@@ -23,21 +23,24 @@ DockToolbar::DockToolbar(ads::CDockAreaWidget *parent) :
 
     m_label->setAlignment(Qt::AlignVCenter | Qt::AlignHCenter);
     m_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    m_label->setMinimumSize(QSize(0, 0));
+    m_label->setMaximumSize(QSize(INT_MAX, INT_MAX));
 
     m_fullScreenButton = new QToolButton(this);
+    m_fullScreenButton->setAutoRaise(true);
     m_fullScreenButton->setIcon(QIcon(":/images/fullscreen.svg"));
     m_fullScreenButton->setMinimumSize(QSize(24, 24));
     m_fullScreenButton->setMaximumSize(QSize(24, 24));
     m_fullScreenButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Minimum);
 
-    insertWidget(0, m_label);
-    insertWidget(1, m_fullScreenButton);
+    insertWidget(indexOf(button(ads::TitleBarButtonTabsMenu)) - 1, m_label);
+    insertWidget(indexOf(button(ads::TitleBarButtonClose)), m_fullScreenButton);
 
-    tabBar()->setVisible(false);
-    tabBar()->setEnabled(false);
     connect(m_fullScreenButton, &QPushButton::clicked, this, &DockToolbar::signalFullScreen);
+    connect(_parent, &ads::CDockAreaWidget::windowTitleChanged, this, &DockToolbar::onWindowTitleChanged);
 
     m_label->installEventFilter(this);
+
 }
 
 bool DockToolbar::eventFilter(QObject *object, QEvent *event) {
@@ -58,5 +61,9 @@ bool DockToolbar::eventFilter(QObject *object, QEvent *event) {
     }
 
     return QObject::eventFilter(object, event);
+}
+
+void DockToolbar::onWindowTitleChanged(const QString &title) {
+    m_label->setText(title);
 }
 

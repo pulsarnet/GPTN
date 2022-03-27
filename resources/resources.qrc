@@ -12,5 +12,9 @@
         <file>images/marker.png</file>
         <file>images/fullscreen.svg</file>
         <file>images/close.svg</file>
+        <file>images/add.svg</file>
+        <file>images/play.svg</file>
+        <file>images/modeling.svg</file>
+        <file>images/decompose.svg</file>
     </qresource>
 </RCC>
