@@ -137,6 +137,10 @@ void MainWindow::createMenuBar() {
     file_menu->addAction(save_as_action);
 
     menuBar->addMenu(file_menu);
+    menuBar->addMenu(new QMenu("&Edit"));
+    menuBar->addMenu(new QMenu("&Tools"));
+    menuBar->addMenu(new QMenu("&Window"));
+    menuBar->addMenu(new QMenu("&Help"));
 
     this->setMenuBar(menuBar);
 }

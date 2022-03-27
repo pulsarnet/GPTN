@@ -66,7 +66,12 @@ set(SRC_FILES
         src/ActionTabWidget/NetModelingTab.cpp
         src/overrides/MatrixWindow.cpp
         src/ActionTabWidget/WrappedLayoutWidget.cpp
-        src/ActionTabWidget/DecomposeModelTab.cpp src/DockSystem/SplittableComponentsFactory.cpp src/DockSystem/SplittableComponentsFactory.h src/DockSystem/DockToolbar.cpp src/DockSystem/DockToolbar.h src/DockSystem/DockWidget.cpp src/DockSystem/DockWidget.h)
+        src/ActionTabWidget/DecomposeModelTab.cpp
+        src/DockSystem/SplittableComponentsFactory.cpp
+        src/DockSystem/DockToolbar.cpp
+        src/DockSystem/DockWidget.cpp
+        src/synthesis/synthesis_table.cpp
+        )
 
 set(HEADERS
         src/mainwindow.h
@@ -84,19 +89,19 @@ set(HEADERS
         src/graphviz/graphviz_wrapper.h
         src/overrides/switch.h
         src/synthesis/synthesis_table.h
-        src/synthesis/synthesis_table.cpp
-        src/synthesis/synthesis_model.cpp
         src/synthesis/synthesis_model.h
-        src/synthesis/synthesis_item_delegate.cpp
         src/synthesis/synthesis_item_delegate.h
-        src/windows_types/close_on_inactive.cpp
         src/windows_types/close_on_inactive.h
         src/named_matrix_model.h
         src/overrides/MatrixWindow.h
         src/ActionTabWidget/ActionTabWidget.h
         src/ActionTabWidget/NetModelingTab.h
         src/ActionTabWidget/DecomposeModelTab.h
-        src/ActionTabWidget/WrappedLayoutWidget.h src/DockSystem/SplittableComponentsFactory.cpp src/DockSystem/SplittableComponentsFactory.h src/DockSystem/DockToolbar.cpp src/DockSystem/DockToolbar.h src/DockSystem/DockWidget.cpp src/DockSystem/DockWidget.h)
+        src/ActionTabWidget/WrappedLayoutWidget.h
+        src/DockSystem/SplittableComponentsFactory.h
+        src/DockSystem/DockToolbar.h
+        src/DockSystem/DockWidget.h
+        )
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 

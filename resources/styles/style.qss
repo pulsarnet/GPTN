@@ -9,6 +9,8 @@ separatorsColor = #D9D9D9
 highlightColor = #CCCCCC
 */
 
+QToolButton::menu-indicator { image: none; }
+
 QSplitter {
   spacing: 0px;
   padding: 0px;
@@ -30,15 +32,15 @@ QTabWidget {
 }
 
 QTabWidget::tab-bar {
-    left: 15px; /* move to the right by 5px */
     border-bottom: 3px solid black;
     padding: 0px;
     margin: 0px;
 }
 
 QTabWidget::pane {
-    border: 1px solid black;
-    background: white;
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+    background: gray;
 }
 
 GraphicsView {
@@ -46,12 +48,11 @@ GraphicsView {
     border: none;
 }
 
-/* Style the tab using the tab sub-control. Note that
-    it reads QTabBar _not_ QTabWidget */
+
 QTabBar::tab {
     /* background: #lightgray; */
     background: #F0F0F0;
-    border: 0px;
+    border: none;
     min-width: 8ex;
     padding: 5px;
 }
@@ -91,4 +92,8 @@ QMenuBar::item:selected, QMenu::item:selected {
 
 QMenu::item {
     padding: 8px;
+}
+
+QToolTip {
+    background: red;
 }

@@ -1,15 +1,15 @@
 <!DOCTYPE RCC><RCC version="1.0">
     <qresource>
-        <file>images/circle.png</file>
-        <file>images/connect.png</file>
-        <file>images/move.png</file>
-        <file>images/rectangle.png</file>
-        <file>images/rotation.png</file>
-        <file>images/remove.png</file>
+        <file>images/tools/position.svg</file>
+        <file>images/tools/connect.svg</file>
+        <file>images/tools/move.svg</file>
+        <file>images/tools/transition.svg</file>
+        <file>images/tools/rotation.svg</file>
+        <file>images/tools/remove.svg</file>
         <file>images/close.png</file>
         <file>styles/style.qss</file>
         <file>fonts/JetBrainsMono-Medium.ttf</file>
-        <file>images/marker.png</file>
+        <file>images/tools/marker.svg</file>
         <file>images/fullscreen.svg</file>
         <file>images/close.svg</file>
         <file>images/add.svg</file>

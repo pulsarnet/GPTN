@@ -77,13 +77,13 @@ GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
 
     actionGroup = new QActionGroup(m_mainToolBar);
 
-    position_action = makeAction("Position", QIcon(":/images/circle.png"), true, actionGroup);
-    transition_action = makeAction("Transition", QIcon(":/images/rectangle.png"), true, actionGroup);
-    move_action = makeAction("Move", QIcon(":/images/move.png"), true, actionGroup);
-    connect_action = makeAction("Connect", QIcon(":/images/connect.png"), true, actionGroup);
-    rotation_action = makeAction("Rotate", QIcon(":/images/rotation.png"), true, actionGroup);
-    remove_action = makeAction("Remove", QIcon(":/images/remove.png"), true, actionGroup);
-    marker_action = makeAction("Marker", QIcon(":/images/marker.png"), true, actionGroup);
+    position_action = makeAction("Position", QIcon(":/images/tools/position.svg"), true, actionGroup);
+    transition_action = makeAction("Transition", QIcon(":/images/tools/transition.svg"), true, actionGroup);
+    move_action = makeAction("Move", QIcon(":/images/tools/move.svg"), true, actionGroup);
+    connect_action = makeAction("Connect", QIcon(":/images/tools/connect.svg"), true, actionGroup);
+    rotation_action = makeAction("Rotate", QIcon(":/images/tools/rotation.svg"), true, actionGroup);
+    remove_action = makeAction("Remove", QIcon(":/images/tools/remove.svg"), true, actionGroup);
+    marker_action = makeAction("Marker", QIcon(":/images/tools/marker.svg"), true, actionGroup);
 
 
     connect(position_action, &QAction::toggled, this, &GraphicsView::positionChecked);
@@ -155,7 +155,11 @@ void GraphicsView::mousePressEvent(QMouseEvent *event) {
 
     if (event->button() == Qt::MiddleButton) {
         m_origin = event->pos();
-        setCursor(QCursor(Qt::SizeAllCursor));
+        //setCursor(QCursor(Qt::SizeAllCursor));
+
+        auto icon = QPixmap(":/images/tools/move.svg");
+
+        setCursor(QCursor(icon));
         setInteractive(false);
     }
 

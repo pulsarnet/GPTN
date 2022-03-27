@@ -8,6 +8,7 @@
 #include <QTabBar>
 #include <QBoxLayout>
 #include <QMenu>
+#include <QLabel>
 
 ActionTabWidget::ActionTabWidget(QWidget *parent) : QTabWidget(parent) {
 
@@ -30,7 +31,7 @@ ActionTabWidget::ActionTabWidget(QWidget *parent) : QTabWidget(parent) {
     setTabToolTip(added, "Add a new tab to the current workspace");
 
     m_netModelingTab = new NetModelingTab;
-    auto tab = insertTab(0, m_netModelingTab, "Modeling");
+    auto tab = insertTab(0, m_netModelingTab, "Моделирование");
     setTabIcon(0, QIcon(":/images/modeling.svg"));
     setCurrentIndex(tab);
 
@@ -41,8 +42,9 @@ ActionTabWidget::ActionTabWidget(QWidget *parent) : QTabWidget(parent) {
 void ActionTabWidget::slotTabBarClicked(int index) {
     if (index == -1) return;
 
-    if (index == (tabBar()->count() - 1))
-        m_newTabMenu->exec(tabBar()->tabRect(index).bottomRight());
+    if (index == (tabBar()->count() - 1)) {
+        m_newTabMenu->exec(mapToGlobal(tabBar()->tabRect(index).bottomLeft()));
+    }
     else
         setCurrentIndex(index);
 }
@@ -53,7 +55,7 @@ void ActionTabWidget::slotDecompose() {
     m_netModelingTab->ctx()->decompose();
 
     m_decomposeModelTab = new DecomposeModelTab(m_netModelingTab, this);
-    auto index = insertTab(tabBar()->count() - 1, m_decomposeModelTab, "Decomposition and Synthesis");
+    auto index = insertTab(tabBar()->count() - 1, m_decomposeModelTab, "Декомпозиция и синтез");
     setTabIcon(index, QIcon(":/images/decompose.svg"));
 }
 

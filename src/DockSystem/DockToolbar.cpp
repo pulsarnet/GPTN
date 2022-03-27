@@ -24,7 +24,7 @@ DockToolbar::DockToolbar(ads::CDockAreaWidget *_parent) :
     m_label->setAlignment(Qt::AlignVCenter | Qt::AlignHCenter);
     m_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     m_label->setMinimumSize(QSize(0, 0));
-    m_label->setMaximumSize(QSize(INT_MAX, INT_MAX));
+    m_label->setMaximumSize(QSize(100000, 100000));
 
     m_fullScreenButton = new QToolButton(this);
     m_fullScreenButton->setAutoRaise(true);
