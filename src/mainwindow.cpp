@@ -9,7 +9,6 @@
 #include <QGraphicsDropShadowEffect>
 #include <QDockWidget>
 #include <QTableView>
-#include <QHeaderView>
 #include <QMessageBox>
 #include "windows_types/close_on_inactive.h"
 #include "ActionTabWidget/ActionTabWidget.h"
@@ -129,7 +128,7 @@ void MainWindow::createMenuBar() {
     save_as_action->setShortcut(tr("Ctrl+Shift+S"));
     connect(save_as_action, &QAction::triggered, this, &MainWindow::slotSaveAsFile);
 
-    auto open_action = new QAction("Open");
+    auto open_action = new QAction("&Open");
     open_action->setShortcut(tr("Ctrl+O"));
     connect(open_action, &QAction::triggered, this, &MainWindow::slotOpenFile);
 

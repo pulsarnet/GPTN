@@ -9,6 +9,8 @@
 #include <DockAreaWidget.h>
 #include <DockAreaTitleBar.h>
 #include <DockAreaTabBar.h>
+#include <QAction>
+#include <QToolButton>
 
 DockToolbar::DockToolbar(ads::CDockAreaWidget *parent) :
         ads::CDockAreaTitleBar(parent), m_parent(nullptr), m_label(new QLabel("...", this))
@@ -19,17 +21,14 @@ DockToolbar::DockToolbar(ads::CDockAreaWidget *parent) :
     setMaximumHeight(30);
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
 
-    auto spacer1 = new QSpacerItem(40, 20, QSizePolicy::Fixed, QSizePolicy::Fixed);
-    auto spacer2 = new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding);
-
     m_label->setAlignment(Qt::AlignVCenter | Qt::AlignHCenter);
-    m_label->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    m_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    m_fullScreenButton = new QPushButton;
+    m_fullScreenButton = new QToolButton(this);
     m_fullScreenButton->setIcon(QIcon(":/images/fullscreen.svg"));
     m_fullScreenButton->setMinimumSize(QSize(24, 24));
     m_fullScreenButton->setMaximumSize(QSize(24, 24));
-    m_fullScreenButton->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    m_fullScreenButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Minimum);
 
     insertWidget(0, m_label);
     insertWidget(1, m_fullScreenButton);

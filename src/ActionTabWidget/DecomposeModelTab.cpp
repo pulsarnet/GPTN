@@ -55,6 +55,7 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
 
     setLayout(new QGridLayout(this));
     layout()->addWidget(m_dockManager);
+    layout()->setContentsMargins(0, 0, 0, 0);
 }
 
 void DecomposeModelTab::slotSynthesisedProgram(ffi::PetriNet *net, int index) {

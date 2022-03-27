@@ -9,7 +9,6 @@
 #include "src/DockSystem/SplittableComponentsFactory.h"
 #include <DockManager.h>
 #include <DockComponentsFactory.h>
-#include <DockAreaTitleBar.h>
 
 int main(int argc, char **argv) {
 
@@ -33,7 +32,7 @@ int main(int argc, char **argv) {
     auto qss_text = stream.readAll();
 
     app.setStyleSheet(qss_text);
-    QApplication::setFont(QFont("JetBrains Mono", 13, QFont::Medium));
+    QApplication::setFont(QFont("Segoe UI", 12, QFont::Medium));
 
     MainWindow window(nullptr);
     window.setWindowState(Qt::WindowMaximized);

@@ -18,6 +18,7 @@ NetModelingTab::NetModelingTab(QWidget *parent) : QWidget(parent) {
     m_view->setScene(scene);
 
     layout()->addWidget(m_view);
+    layout()->setContentsMargins(0, 0, 0, 0);
 }
 
 ffi::PetriNetContext *NetModelingTab::ctx() const {

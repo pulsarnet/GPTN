@@ -104,6 +104,8 @@ GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
     m_mainToolBar->addTool(move_action);
     m_mainToolBar->addTool(rotation_action);
 
+    setContentsMargins(0, 0, 0, 0);
+
 }
 
 void GraphicsView::setToolBoxVisibility(bool visible) {

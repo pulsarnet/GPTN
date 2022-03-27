@@ -1,45 +1,74 @@
 
+/*
+backgroundColor = #F0F0F0
+foregroundColor = #403F53
+selectionBackgroundColor = #D3E8F8
+selectionForegroundColor = #403F53
+accentColor = #2AA298
+separatorsColor = #D9D9D9
+highlightColor = #CCCCCC
+*/
+
+QSplitter {
+  spacing: 0px;
+  padding: 0px;
+  margin: 0px;
+}
+
 QSplitter::handle {
-    background: palette(dark);
+  background-color: #D9D9D9;
+  border: 0px;
+  spacing: 0px;
+  padding: 0px;
+  margin: 0px;
+
+  height: 1px;
+}
+
+QTabWidget {
+    background: #000000;
 }
 
 QTabWidget::tab-bar {
-    left: 5px; /* move to the right by 5px */
+    left: 15px; /* move to the right by 5px */
+    border-bottom: 3px solid black;
+    padding: 0px;
+    margin: 0px;
+}
+
+QTabWidget::pane {
+    border: 1px solid black;
+    background: white;
+}
+
+GraphicsView {
+    background: #F0F0F0;
+    border: none;
 }
 
 /* Style the tab using the tab sub-control. Note that
     it reads QTabBar _not_ QTabWidget */
 QTabBar::tab {
-    background: lightgrey;
+    /* background: #lightgray; */
+    background: #F0F0F0;
     border: 0px;
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
     min-width: 8ex;
     padding: 5px;
 }
 
-QTabBar::tab:selected, QTabBar::tab:hover {
-    background: #B4B4B4;
+QTabBar::tab:hover {
+    /* background: #B4B4B4; */
+    background: #CCCCCC;
 }
 
-QTabBar::tab:!selected {
-    margin-top: 2px; /* make non-selected tabs look smaller */
-}
-/* * {
-    background-color: #FFF8ED;
-    color: #546E7A;
-    selection-background-color: #E7C496;
-    selection-color: #272727;
+QTabBar::tab:selected {
+    /* background: #B4B4B4; */
+    background: #D3E8F8;
+    color: #403F53;
 }
 
-QPushButton, QToolButton {
-    border: none;
-    background-color: #F6D7B0;
-}
-
-QPushButton:hover, QToolButton:hover {
-    border: none;
-    background-color: #E7C496;
+QTabBar::tab:selected {
+    border-bottom: 2px solid #2AA298;
 }
 
 QMenu {
@@ -56,13 +85,10 @@ QMenuBar::item {
 }
 
 QMenuBar::item:selected, QMenu::item:selected {
-    background: #E7C496;
+    background: #D3E8F8;
+    color: #403F53;
 }
 
 QMenu::item {
     padding: 8px;
 }
-
-QTableView {
-    selection-background-color: #2FCF69;
-}*/

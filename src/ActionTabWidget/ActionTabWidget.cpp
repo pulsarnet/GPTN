@@ -6,6 +6,7 @@
 #include "NetModelingTab.h"
 #include "DecomposeModelTab.h"
 #include <QTabBar>
+#include <QBoxLayout>
 #include <QMenu>
 
 ActionTabWidget::ActionTabWidget(QWidget *parent) : QTabWidget(parent) {

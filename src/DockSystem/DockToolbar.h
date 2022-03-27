@@ -11,6 +11,8 @@
 #include <QLabel>
 #include <QPushButton>
 
+class QToolButton;
+
 class DockToolbar : public ads::CDockAreaTitleBar {
 
     Q_OBJECT
@@ -31,7 +33,7 @@ protected:
 private:
 
     QLabel* m_label;
-    QPushButton* m_fullScreenButton;
+    QToolButton* m_fullScreenButton;
 
     ads::CDockWidget* m_parent;
 
