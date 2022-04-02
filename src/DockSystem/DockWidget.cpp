@@ -13,13 +13,11 @@ DockWidget::DockWidget(const QString& name, QWidget *parent) : ads::CDockWidget(
     setFrameShape(QFrame::NoFrame);
 
     setFeature(ads::CDockWidget::DockWidgetFloatable, false);
-    //setFeature(ads::CDockWidget::DockWidgetDeleteOnClose, true);
     setFeature(ads::CDockWidget::NoTab, true);
-    //setFeature(ads::CDockWidget::CustomCloseHandling, true);
     setFeature(ads::CDockWidget::DockWidgetClosable, false);
     setFeature(ads::CDockWidget::DockWidgetFocusable, true);
 
-    layout()->setContentsMargins(10, 10, 10, 10);
+    layout()->setContentsMargins(0, 0, 0, 0);
 
 }
 

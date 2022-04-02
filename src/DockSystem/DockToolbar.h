@@ -24,13 +24,15 @@ public:
 
     bool eventFilter(QObject* object, QEvent* event) override;
 
-signals:
+    bool isFullScreen() const;
 
-    void signalFullScreen();
+    static QIcon minimizeIcon();
+    static QIcon expandIcon();
 
 public slots:
 
     void onWindowTitleChanged(const QString& title);
+    void toggleFullScreen();
 
 private:
 
@@ -38,8 +40,17 @@ private:
     QToolButton* m_fullScreenButton;
 
     ads::CDockWidget* m_parent;
+    bool m_fullScreen = false;
 
 };
 
+
+class SpacerWidget : public QWidget {
+    Q_OBJECT
+public:
+    explicit SpacerWidget(QWidget* parent = 0);
+    virtual QSize sizeHint() const override { return QSize(0, 0); }
+    virtual QSize minimumSizeHint() const override { return QSize(0, 0); }
+};
 
 #endif //FFI_RUST_DOCKTOOLB

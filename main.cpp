@@ -17,6 +17,7 @@ int main(int argc, char **argv) {
     ads::CDockManager::setConfigFlag(ads::CDockManager::AlwaysShowTabs, true);
     ads::CDockManager::setConfigFlag(ads::CDockManager::EqualSplitOnInsertion, true);
     ads::CDockManager::setConfigFlag(ads::CDockManager::OpaqueSplitterResize, true);
+    ads::CDockManager::setConfigFlag(ads::CDockManager::DockAreaHideDisabledButtons, true);
 
     ads::CDockComponentsFactory::setFactory(new SplittableComponentsFactory);
 

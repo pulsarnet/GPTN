@@ -9,11 +9,22 @@
 #include <DockAreaWidget.h>
 #include <DockAreaTitleBar.h>
 #include <DockAreaTabBar.h>
+#include <DockManager.h>
 #include <QAction>
 #include <QToolButton>
 
+QIcon DockToolbar::minimizeIcon() {
+    static QIcon icon = QIcon(":/images/minimize.svg");
+    return icon;
+}
+
+QIcon DockToolbar::expandIcon() {
+    static QIcon icon = QIcon(":/images/fullscreen.svg");
+    return icon;
+}
+
 DockToolbar::DockToolbar(ads::CDockAreaWidget *_parent) :
-        ads::CDockAreaTitleBar(_parent), m_parent(nullptr), m_label(new QLabel("...", this))
+        ads::CDockAreaTitleBar(_parent), m_parent(nullptr), m_label(new QLabel("..."))
 {
     _parent->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
 
@@ -22,22 +33,24 @@ DockToolbar::DockToolbar(ads::CDockAreaWidget *_parent) :
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
 
     m_label->setAlignment(Qt::AlignVCenter | Qt::AlignHCenter);
-    m_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    m_label->setMinimumSize(QSize(0, 0));
-    m_label->setMaximumSize(QSize(100000, 100000));
+    m_label->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
+    m_label->setContentsMargins(0, 0, 0, 0);
 
     m_fullScreenButton = new QToolButton(this);
     m_fullScreenButton->setAutoRaise(true);
-    m_fullScreenButton->setIcon(QIcon(":/images/fullscreen.svg"));
+    m_fullScreenButton->setIcon(DockToolbar::expandIcon());
     m_fullScreenButton->setMinimumSize(QSize(24, 24));
     m_fullScreenButton->setMaximumSize(QSize(24, 24));
     m_fullScreenButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Minimum);
 
+    insertWidget(indexOf(button(ads::TitleBarButtonTabsMenu)) - 1, new SpacerWidget);
     insertWidget(indexOf(button(ads::TitleBarButtonTabsMenu)) - 1, m_label);
     insertWidget(indexOf(button(ads::TitleBarButtonClose)), m_fullScreenButton);
 
-    connect(m_fullScreenButton, &QPushButton::clicked, this, &DockToolbar::signalFullScreen);
+    connect(m_fullScreenButton, &QPushButton::clicked, this, &DockToolbar::toggleFullScreen);
     connect(_parent, &ads::CDockAreaWidget::windowTitleChanged, this, &DockToolbar::onWindowTitleChanged);
+
+    button(ads::TitleBarButtonClose)->setHidden(true);
 
     m_label->installEventFilter(this);
 
@@ -67,3 +80,33 @@ void DockToolbar::onWindowTitleChanged(const QString &title) {
     m_label->setText(title);
 }
 
+void DockToolbar::toggleFullScreen() {
+    if (m_fullScreen) {
+        m_fullScreenButton->setIcon(DockToolbar::expandIcon());
+        m_fullScreen = false;
+    }
+    else {
+        m_fullScreenButton->setIcon(DockToolbar::minimizeIcon());
+        m_fullScreen = true;
+    }
+
+    auto areaWidget = qobject_cast<ads::CDockAreaWidget*>(parent());
+    auto dockManager = areaWidget->dockManager();
+    for (int i = 0; i < dockManager->dockAreaCount(); i++)
+    {
+        auto area = dockManager->dockArea(i);
+        if (area != areaWidget)
+        {
+            area->setVisible(!isFullScreen());
+        }
+    }
+}
+
+bool DockToolbar::isFullScreen() const {
+    return m_fullScreen;
+}
+
+SpacerWidget::SpacerWidget(QWidget *parent) {
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    setStyleSheet("border: none; background: none;");
+}

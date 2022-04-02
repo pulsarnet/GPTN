@@ -11,6 +11,7 @@
         <file>fonts/JetBrainsMono-Medium.ttf</file>
         <file>images/tools/marker.svg</file>
         <file>images/fullscreen.svg</file>
+        <file>images/minimize.svg</file>
         <file>images/close.svg</file>
         <file>images/add.svg</file>
         <file>images/play.svg</file>
