@@ -63,6 +63,9 @@ namespace ffi {
         PetriNet* net() const;
         DecomposeContext* decompose_ctx() const;
         void set_decompose_ctx(DecomposeContext* ctx);
+
+        void saveState(QVariant& data) const;
+        void restoreState(const QVariant& data);
     };
 
     struct PetriNet {

@@ -13,13 +13,12 @@
 #include "windows_types/close_on_inactive.h"
 #include "ActionTabWidget/ActionTabWidget.h"
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_changed(false) {
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_changed(false), m_tabWidget(new ActionTabWidget) {
 
     createMenuBar();
     createStatusBar();
 
-    auto tabWidget = new ActionTabWidget;
-    setCentralWidget(tabWidget);
+    setCentralWidget(m_tabWidget);
 
 }
 
@@ -56,13 +55,13 @@ bool MainWindow::saveFile(const QString &filename) {
         return false;
     }
 
-//    auto data = treeModel->root()->toVariant();
-//    QDataStream out(&file);
-//    out.setVersion(QDataStream::Qt_6_0);
-//    out << data;
-//
-//    setFileName(filename);
-//    m_changed = false;
+    auto data = m_tabWidget->saveState();
+    QDataStream out(&file);
+    out.setVersion(QDataStream::Qt_6_0);
+    out << data;
+
+    setFileName(filename);
+    m_changed = false;
 
     return true;
 
@@ -82,9 +81,6 @@ bool MainWindow::open() {
         if (ret == QMessageBox::Cancel || (ret == QMessageBox::Save && !save()))
             return false;
     }
-
-    //treeModel->removeRows(0, treeModel->root()->childCount(), treeModel->indexForTreeItem(treeModel->root()));
-    //treeModel->root()->removeChildren(0, treeModel->root()->childCount());
 
     QFile file(fileName);
 

@@ -39,6 +39,21 @@ ActionTabWidget::ActionTabWidget(QWidget *parent) : QTabWidget(parent) {
 
 }
 
+QVariant ActionTabWidget::saveState() const {
+    QVariantHash result;
+
+    QVariant netModelingTab;
+    m_netModelingTab->saveState(netModelingTab);
+    result["mainNetData"] = std::move(netModelingTab);
+
+    return result;
+}
+
+void ActionTabWidget::restoreState(const QVariant &data) {
+    QVariantHash hash = data.toHash();
+    m_netModelingTab->restoreState(hash["mainNetData"]);
+}
+
 void ActionTabWidget::slotTabBarClicked(int index) {
     if (index == -1) return;
 

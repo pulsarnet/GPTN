@@ -21,6 +21,16 @@ NetModelingTab::NetModelingTab(QWidget *parent) : QWidget(parent) {
     layout()->setContentsMargins(0, 0, 0, 0);
 }
 
+void NetModelingTab::saveState(QVariant &data) const {
+    QVariant state;
+    m_ctx->saveState(state);
+    data.setValue(std::move(state));
+}
+
+void NetModelingTab::restoreState(const QVariant &data) {
+    m_ctx->restoreState(data);
+}
+
 ffi::PetriNetContext *NetModelingTab::ctx() const {
     return m_ctx;
 }

@@ -20,6 +20,8 @@
 #include <QLabel>
 #include <QMessageBox>
 
+class ActionTabWidget;
+
 
 class MainWindow : public QMainWindow {
 
@@ -70,6 +72,7 @@ private:
 
     QStatusBar* statusBar = nullptr;
     QMenuBar* menuBar = nullptr;
+    ActionTabWidget* m_tabWidget = nullptr;
 
     QString m_filename;
     bool m_changed;

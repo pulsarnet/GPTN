@@ -190,6 +190,17 @@ void PetriNetContext::set_decompose_ctx(DecomposeContext *ctx) {
     ::ctx_set_decompose_context(this, ctx);
 }
 
+void PetriNetContext::saveState(QVariant &data) const {
+    QVariantHash hash;
+    hash["net"] = net()->toVariant();
+    data.setValue(std::move(hash));
+}
+
+void PetriNetContext::restoreState(const QVariant &data) {
+    QVariantHash hash = data.toHash();
+    net()->fromVariant(hash["net"]);
+}
+
 PetriNet *PetriNet::create() {
     return ::create_net();
 }

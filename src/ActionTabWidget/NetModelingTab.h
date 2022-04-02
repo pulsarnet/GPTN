@@ -15,6 +15,9 @@ public:
 
     explicit NetModelingTab(QWidget *parent = nullptr);
 
+    void saveState(QVariant& data) const;
+    void restoreState(const QVariant& data);
+
     ffi::PetriNetContext* ctx() const;
 
 private:

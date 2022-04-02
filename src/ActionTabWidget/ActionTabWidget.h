@@ -17,6 +17,9 @@ public:
 
     explicit ActionTabWidget(QWidget *parent = nullptr);
 
+    QVariant saveState() const;
+    void restoreState(const QVariant&);
+
 public slots:
 
     void slotTabBarClicked(int index);
