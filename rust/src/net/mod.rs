@@ -269,7 +269,21 @@ impl PetriNet {
                 if index.id >= self.get_position_index() {
                     *(*self.position_index).borrow_mut() = index.id + 1;
                 }
-                self.positions.insert(index,element);
+
+                if let Some(parent_index) = element.get_parent() {
+                    // Найдем индекс родителя
+                    match self.positions.iter().position(|(pos_index, _)| *pos_index == parent_index) {
+                        Some(i) => {
+                            let new_map = self.positions.split_off(i + 1);
+                            self.positions.insert(index, element);
+                            self.positions.extend(new_map.into_iter());
+                        },
+                        None => { self.positions.insert(index, element); },
+                    }
+                }
+                else {
+                    self.positions.insert(index,element);
+                }
                 self.positions.get(&index).unwrap()
             }
         }
@@ -283,7 +297,21 @@ impl PetriNet {
                 if index.id >= self.get_transition_index() {
                     *(*self.transition_index).borrow_mut() = index.id + 1;
                 }
-                self.transitions.insert(index,element);
+
+                if let Some(parent_index) = element.get_parent() {
+                    // Найдем индекс родителя
+                    match self.transitions.iter().position(|(tran_index, _)| *tran_index == parent_index) {
+                        Some(i) => {
+                            let new_map = self.transitions.split_off(i + 1);
+                            self.transitions.insert(index, element);
+                            self.transitions.extend(new_map.into_iter());
+                        }
+                        None => { self.transitions.insert(index, element); },
+                    }
+                }
+                else {
+                    self.transitions.insert(index, element);
+                }
                 self.transitions.get(&index).unwrap()
             }
         }
@@ -1002,10 +1030,10 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) {
         let col = d_matrix.column(*trans_new_indexes.get(&transition.index()).unwrap());
         for (index, el) in col.iter().enumerate().filter(|e| e.1.ne(&0)) {
             let pos = pos_indexes_vec[index].clone();
-            if *el > 0 {
+            if *el < 0 {
                 (0..el.abs()).into_iter().for_each(|_| connections.push(Connection::new(pos.index(), transition.index())));
             }
-            else if *el < 0 {
+            else if *el > 0 {
                 (0..el.abs()).into_iter().for_each(|_| connections.push(Connection::new(transition.index(), pos.index())));
             }
         }
