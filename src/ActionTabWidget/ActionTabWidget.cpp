@@ -35,6 +35,7 @@ ActionTabWidget::ActionTabWidget(QWidget *parent) : QTabWidget(parent) {
     setTabIcon(0, QIcon(":/images/modeling.svg"));
     setCurrentIndex(tab);
 
+    connect(this->tabBar(), &QTabBar::currentChanged, this, &ActionTabWidget::slotTabChanged);
     connect(this, &QTabWidget::tabBarClicked, this, &ActionTabWidget::slotTabBarClicked);
 
 }
@@ -62,6 +63,18 @@ void ActionTabWidget::slotTabBarClicked(int index) {
     }
     else
         setCurrentIndex(index);
+}
+
+void ActionTabWidget::slotTabChanged(int index) {
+    if (index == -1) return;
+
+    if (index == (tabBar()->count() - 1)) {
+        if (m_lastTab == -1) m_lastTab = 0;
+        setCurrentIndex(m_lastTab);
+    }
+    else {
+        m_lastTab = index;
+    }
 }
 
 void ActionTabWidget::slotDecompose() {

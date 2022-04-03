@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
     QApplication::setFont(QFont("Segoe UI", 12, QFont::Medium));
 
     MainWindow window(nullptr);
-    window.setWindowState(Qt::WindowMaximized);
+    window.setMaximumSize(QSize(1280, 720));
     window.show();
 
     return app.exec();

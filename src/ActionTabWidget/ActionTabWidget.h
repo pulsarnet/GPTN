@@ -23,6 +23,7 @@ public:
 public slots:
 
     void slotTabBarClicked(int index);
+    void slotTabChanged(int index);
 
     void slotDecompose();
     void slotDDR();
@@ -38,6 +39,8 @@ private:
 
     NetModelingTab* m_netModelingTab;
     DecomposeModelTab* m_decomposeModelTab;
+
+    int m_lastTab = -1;
 };
 
 
