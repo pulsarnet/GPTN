@@ -1,5 +1,5 @@
 <!DOCTYPE RCC><RCC version="1.0">
-    <qresource>
+    <qresource prefix="/">
         <file>images/tools/position.svg</file>
         <file>images/tools/connect.svg</file>
         <file>images/tools/move.svg</file>

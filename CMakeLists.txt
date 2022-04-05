@@ -9,6 +9,7 @@ set(TARGET_DIR ${CMAKE_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TARGET_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${TARGET_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${TARGET_DIR}/lib)
+set(CMAKE_AUTORCC ON)
 
 if (NOT GRAPHVIZ_DIR)
     message(FATAL_ERROR "Graphviz dir not set")
@@ -41,7 +42,7 @@ ExternalProject_Add(
 )
 
 set(CMAKE_PREFIX_PATH ${Qt6_DIR})
-find_package(Qt6 COMPONENTS Widgets Core Gui OpenGLWidgets Charts REQUIRED)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Core Gui OpenGLWidgets Svg Charts)
 
 set(CMAKE_PREFIX_PATH ${Qt_ADVANCED_DOCKING_SYSTEM_DIR})
 find_package(qtadvanceddocking)
@@ -121,10 +122,15 @@ target_link_libraries(ffi_rust PRIVATE
         Qt6::Gui
         Qt6::OpenGLWidgets
         Qt6::Charts
+        Qt6::Svg
         ads::qtadvanceddocking
         libopenblas
         gvc
         cgraph)
+
+qt6_import_plugins(ffi_rust
+        INCLUDE_BY_TYPE imageformats
+        )
 
 set_target_properties(ffi_rust PROPERTIES
         AUTOMOC ON

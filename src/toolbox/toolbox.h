@@ -70,7 +70,7 @@ public:
             case TopLeft:
                 return QPointF(
                         (parentWidget() ? parentWidget()->geometry().topLeft().x() : 0) + 20,
-                        (parentWidget() ? parentWidget()->geometry().topLeft().y() : 0) + 60
+                        (parentWidget() ? parentWidget()->geometry().topLeft().y() : 0) + 20
                         );
             case TopRight:
                 return QPointF(
@@ -80,12 +80,12 @@ public:
             case BottomLeft:
                 return QPointF(
                         (parentWidget() ? parentWidget()->geometry().bottomLeft().x() : 0) + 20,
-                        (parentWidget() ? parentWidget()->geometry().bottomLeft().y() : 0) + 60
+                        (parentWidget() ? parentWidget()->geometry().bottomLeft().y() : 0) - 20 - qreal((m_buttonSize.height() + 6) * m_buttons.count())
                 );
             case BottomRight:
                 return QPointF(
-                        (parentWidget() ? parentWidget()->geometry().bottomRight().x() : 0) + 20,
-                        (parentWidget() ? parentWidget()->geometry().bottomRight().y() : 0) + 60
+                        (parentWidget() ? parentWidget()->geometry().bottomRight().x() : 0) - 20 - m_buttonSize.width(),
+                        (parentWidget() ? parentWidget()->geometry().bottomRight().y() : 0) - 20 - qreal((m_buttonSize.height() + 6) * m_buttons.count())
                 );
         }
     }

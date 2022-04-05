@@ -23,7 +23,6 @@ int main(int argc, char **argv) {
 
     ffi::init();
 
-    QCoreApplication::addLibraryPath(R"(C:\Qt\6.2.2\msvc2019_64\plugins)");
     QApplication app(argc, argv);
 
     QFile qss(":/styles/style.qss");
