@@ -73,7 +73,7 @@ GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
     m_mainToolBar = new ToolBox;
     m_mainToolBar->setParent(this);
     m_mainToolBar->setVisible(true);
-    m_mainToolBar->setToolArea(ToolBox::BottomRight);
+    m_mainToolBar->setToolArea(ToolBox::TopLeft);
     m_mainToolBar->setButtonSize(QSize(40, 40));
 
     actionGroup = new QActionGroup(m_mainToolBar);

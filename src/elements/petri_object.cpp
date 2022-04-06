@@ -78,7 +78,7 @@ void PetriObject::updateConnections() {
     for (auto conn : m_connections) {
         PetriObject* from = conn->from();
         PetriObject* to = conn->to();
-        Key key = { from, to};
+        Key key = { from, to };
         lineGroups[key].append(conn);
     }
 

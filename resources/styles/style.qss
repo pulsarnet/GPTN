@@ -93,7 +93,3 @@ QMenuBar::item:selected, QMenu::item:selected {
 QMenu::item {
     padding: 8px;
 }
-
-QToolTip {
-    background: red;
-}

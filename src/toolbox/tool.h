@@ -8,6 +8,8 @@
 #include <QToolButton>
 #include <QPainterPath>
 #include <QPainter>
+#include <QCursor>
+#include <QToolTip>
 
 class Tool : public QToolButton {
 
@@ -50,6 +52,16 @@ public:
         QRect iconRect = rect().adjusted(5, 5, -5, -5);
         if (defaultAction()) defaultAction()->icon().paint(&painter, iconRect);
 
+    }
+
+protected:
+
+    void enterEvent(QEnterEvent *) override {
+        setCursor(Qt::PointingHandCursor);
+    }
+
+    void leaveEvent(QEvent *) override {
+        setCursor(Qt::ArrowCursor);
     }
 
 };
