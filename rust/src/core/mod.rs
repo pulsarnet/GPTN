@@ -1,3 +1,7 @@
+mod counter;
+
+pub use self::counter::Counter;
+
 use crate::net::Vertex;
 use nalgebra::DMatrix;
 use std::cmp::max;

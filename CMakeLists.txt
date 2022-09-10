@@ -23,8 +23,8 @@ if (NOT Qt_ADVANCED_DOCKING_SYSTEM_DIR)
     message(FATAL_ERROR "Qt_ADVANCED_DOCKING_SYSTEM_DIR not set")
 endif()
 
-include_directories(${GRAPHVIZ_DIR}/include)
-link_directories(${GRAPHVIZ_DIR}/lib)
+include_directories(${GRAPHVIZ_DIR}/include/)
+link_directories(${GRAPHVIZ_DIR}/lib/)
 
 if(NOT WIN32)
     #set(CMAKE_PREFIX_PATH "/Users/nikolajmuravev/Qt/6.2.1/macos/lib/cmake")
@@ -114,9 +114,8 @@ add_executable(ffi_rust
         )
 
 add_dependencies(ffi_rust rust)
-
 target_link_libraries(ffi_rust PRIVATE
-        "${CMAKE_SOURCE_DIR}/rust/target/debug/hello_world.lib"
+        "${CMAKE_SOURCE_DIR}/rust/target/$<$<CONFIG:Debug>:debug>$<$<CONFIG:Release>:release>/hello_world.lib"
         Qt6::Widgets
         Qt6::Core
         Qt6::Gui
@@ -126,7 +125,8 @@ target_link_libraries(ffi_rust PRIVATE
         ads::qtadvanceddocking
         libopenblas
         gvc
-        cgraph)
+        cgraph
+        )
 
 qt6_import_plugins(ffi_rust
         INCLUDE_BY_TYPE imageformats

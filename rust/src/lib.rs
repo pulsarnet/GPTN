@@ -20,6 +20,7 @@ use log4rs::config::{Appender, Root};
 use log4rs::encode::pattern::PatternEncoder;
 use log::{info, LevelFilter};
 use nalgebra::DMatrix;
+use core::Counter;
 use ffi::vec::CVec;
 
 
@@ -179,7 +180,33 @@ impl DecomposeContext {
 
         let parts = PetriNetVec(parts);
 
-        DecomposeContextBuilder::new(parts).build()
+        let mut res = DecomposeContextBuilder::new(parts).build();
+        res.add_synthesis_programs();
+        res
+    }
+
+    pub fn add_synthesis_programs(&mut self) {
+        let transitions = self.transitions.len();
+        let positions = self.positions.len();
+
+        let mut t_counter = Counter::new(transitions);
+        let mut t_programs = vec![];
+        while let Some(t_program) = t_counter.next() {
+            t_programs.push(Vec::from(t_program))
+        }
+
+        for t_program in t_programs {
+            let mut p_counter = Counter::new(positions);
+            while let Some(p_program) = p_counter.next() {
+                let mut program = SynthesisProgram::new(transitions + positions);
+                t_program.iter()
+                    .chain(p_program.iter())
+                    .enumerate()
+                    .for_each(|(i, v)| program.data[i] = *v);
+                self.programs.push(program);
+                synthesis_program(self, self.programs.len() - 1);
+            }
+        }
     }
 
     pub fn linear_base_fragments(&self) -> PetriNet {
