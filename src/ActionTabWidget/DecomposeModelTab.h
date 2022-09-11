@@ -17,10 +17,7 @@ public:
 
     explicit DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent = nullptr);
 
-
-public slots:
-
-    void slotSynthesisedProgram(ffi::PetriNet* net, int index);
+    void wheelEvent(QWheelEvent *event) override;
 
 private:
 
@@ -30,9 +27,7 @@ private:
     ads::CDockManager* m_dockManager;
     DockWidget* m_linearBaseFragmentsView;
     DockWidget* m_primitiveNetView;
-    DockWidget* m_synthesisedProgramView;
-    DockWidget* m_synthesisTable;
-
+    DockWidget* m_plotWidget;
 };
 
 

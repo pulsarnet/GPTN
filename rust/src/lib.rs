@@ -43,8 +43,8 @@ extern "C" fn init() {
         .appender(Appender::builder().build("requests", Box::new(requests)))
         .logger(Logger::builder()
             .appender("requests")
-            .build("app::requests", LevelFilter::Info))
-        .build(Root::builder().appender("requests").build(LevelFilter::Debug))
+            .build("app::requests", LevelFilter::Error))
+        .build(Root::builder().appender("requests").build(LevelFilter::Error))
         .unwrap();
 
     log4rs::init_config(config).unwrap();
@@ -190,19 +190,28 @@ impl DecomposeContext {
         let positions = self.positions.len();
 
         let mut t_counter = Counter::new(transitions);
-        let mut t_programs = vec![];
-        while let Some(t_program) = t_counter.next() {
-            t_programs.push(Vec::from(t_program))
+        let mut t_programs = Vec::with_capacity(Counter::new(transitions).count());
+        while let Some(c) = t_counter.next() {
+            t_programs.push(c);
         }
 
+        let mut p_counter = Counter::new(positions);
+        let mut p_programs = Vec::with_capacity(Counter::new(positions).count());
+        while let Some(c) = p_counter.next() {
+            p_programs.push(c);
+        }
+
+        println!("T: {}", t_programs.len());
+        println!("P: {}", p_programs.len());
+
         for t_program in t_programs {
-            let mut p_counter = Counter::new(positions);
-            while let Some(p_program) = p_counter.next() {
+            for p_program in p_programs.iter() {
                 let mut program = SynthesisProgram::new(transitions + positions);
                 t_program.iter()
                     .chain(p_program.iter())
                     .enumerate()
                     .for_each(|(i, v)| program.data[i] = *v);
+
                 self.programs.push(program);
                 synthesis_program(self, self.programs.len() - 1);
             }

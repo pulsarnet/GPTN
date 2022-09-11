@@ -1,43 +1,62 @@
+use std::cmp::max;
 use std::collections::HashSet;
+use SynthesisProgram;
 
 pub struct Counter {
-    max: usize,
-    data: Vec<usize>,
+    a: Vec<usize>,
+    b: Vec<usize>,
+    init: bool,
 }
 
 impl Counter {
     pub fn new(max: usize) -> Counter {
         Counter {
-            max,
-            data: vec![0; max]
+            a: vec![0; max],
+            b: vec![0; max],
+            init: true,
         }
     }
 
-    pub fn next<'a>(&'a mut self) -> Option<&'a [usize]> {
-        let len = self.data.len();
-        let max = self.max;
-        let (i, val) = self.data
-            .iter_mut()
-            .enumerate()
-            .rev()
-            .find(|(i, value)| **value < max)
-            .map(|(i, v)| (i, *v))?;
-
-        if i > 0 && i < len - 1 {
-            self.data[i + 1] = 0;
+    pub fn next_borrow(&mut self) -> Option<&[usize]> {
+        let length = self.a.len();
+        let mut c = length - 1;
+        while self.a[c] == length - 1 || self.a[c] > self.b[c] {
+            c = c - 1;
         }
 
-        self.data[i] = val + 1;
-
-        if has_unique_elements(self.data.iter()) {
-            self.next()
-        } else {
-            Some(self.data.as_slice())
+        if c == 0 {
+            return None;
         }
+
+        self.a[c] += 1;
+
+        for i in (c + 1)..length {
+            self.a[i] = 0;
+            self.b[i] = max(self.a[i - 1], self.b[i - 1]);
+        }
+
+        Some(&self.a)
     }
+
 }
 
-fn has_unique_elements<'a, T: Iterator<Item = &'a usize>>(iter: T) -> bool {
-    let mut uniq = HashSet::new();
-    iter.filter(|v| **v != 0).all(move |x| uniq.insert(*x))
+impl Iterator for Counter {
+    type Item = Vec<usize>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.init {
+            self.init = false;
+            Some(self.a.clone())
+        } else {
+            self.next_borrow().map(Vec::from)
+        }
+    }
+
+    fn count(mut self) -> usize where Self: Sized {
+        let mut counter = 1;
+        while let Some(_) = self.next_borrow() {
+            counter += 1;
+        }
+        return counter
+    }
 }

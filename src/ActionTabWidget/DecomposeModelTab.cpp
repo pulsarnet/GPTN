@@ -10,6 +10,11 @@
 #include <QSplitter>
 #include <DockAreaWidget.h>
 #include <QLabel>
+#include <QChart>
+#include <QScatterSeries>
+#include <QChartView>
+#include <unordered_map>
+#include <QValueAxis>
 
 DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) : QWidget(parent)
     , m_netModelingTab(mainTab)
@@ -32,15 +37,52 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     m_primitiveNetView = new DockWidget("Primitive view");
     m_primitiveNetView->setWidget(primitiveNetView);
 
-    auto synthesisTable = new SynthesisTable(m_ctx);
-    connect(synthesisTable, &SynthesisTable::signalSynthesisedProgram, this, &DecomposeModelTab::slotSynthesisedProgram);
-    m_synthesisTable = new DockWidget("Synthesis table");
-    m_synthesisTable->setWidget(synthesisTable);
+    auto lineSeries = new QScatterSeries;
+    lineSeries->setPointLabelsFormat("(@xPoint, @yPoint)");
+    lineSeries->setPointLabelsVisible(true);
 
-    auto synthesisedProgramView = new GraphicsView;
-    synthesisedProgramView->setToolBoxVisibility(false);
-    m_synthesisedProgramView = new DockWidget("Synthesised program");
-    m_synthesisedProgramView->setWidget(synthesisedProgramView);
+    QHash<QPoint, std::size_t> map;
+    for(int i = 0; i < m_ctx->programs(); i++) {
+        auto program = m_ctx->eval_program(i);
+        QPoint point = QPoint(program->positions().size(), program->connections().size());
+        auto it = map.find(point);
+        if (it == map.end()) {
+            map.insert(point , 1);
+        } else {
+            *it += 1;
+        }
+    }
+
+    for (auto i = map.begin(); i != map.end(); ++i) {
+        lineSeries->append(i.key());
+    }
+
+    auto xAxis = new QValueAxis;
+    xAxis->setRange(0, 10);
+    xAxis->setLabelFormat("%d");
+    xAxis->setTickCount(7);
+    xAxis->setTitleText("Positions");
+
+    auto yAxis = new QValueAxis;
+    yAxis->setRange(0, 10);
+    yAxis->setLabelFormat("%d");
+    yAxis->setTickCount(7);
+    yAxis->setTitleText("Connections");
+
+    auto chart = new QChart;
+    chart->legend()->hide();
+    chart->addSeries(lineSeries);
+
+    chart->addAxis(xAxis, Qt::AlignBottom);
+    chart->addAxis(yAxis, Qt::AlignLeft);
+
+    lineSeries->attachAxis(xAxis);
+    lineSeries->attachAxis(yAxis);
+
+    auto plotWidget = new QChartView(chart);
+    plotWidget->setRenderHint(QPainter::Antialiasing);
+    m_plotWidget = new DockWidget("Plot widget");
+    m_plotWidget->setWidget(plotWidget);
 
     auto area = m_dockManager->addDockWidget(ads::LeftDockWidgetArea, m_linearBaseFragmentsView);
     area->setWindowTitle("Линейно-базовые фрагменты");
@@ -50,23 +92,28 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     area->setWindowTitle("Примитивная система");
     area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
 
-    area = m_dockManager->addDockWidget(ads::BottomDockWidgetArea, m_synthesisTable);
-    area->setWindowTitle("Программы синтеза");
+    area = m_dockManager->addDockWidget(ads::RightDockWidgetArea, m_plotWidget, area);
+    area->setWindowTitle("График отношения");
     area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
 
-    area = m_dockManager->addDockWidget(ads::RightDockWidgetArea, m_synthesisedProgramView, area);
-    area->setWindowTitle("Синтезированная структура");
-    area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
+    setMouseTracking(true);
 
     setLayout(new QGridLayout(this));
     layout()->addWidget(m_dockManager);
     layout()->setContentsMargins(0, 0, 0, 0);
 }
 
-void DecomposeModelTab::slotSynthesisedProgram(ffi::PetriNet *net, int index) {
-    auto newScene = new GraphicScene(net);
-    auto oldScene = dynamic_cast<GraphicsView*>(m_synthesisedProgramView->widget())->scene();
+void DecomposeModelTab::wheelEvent(QWheelEvent *event) {
+    if (event->modifiers().testFlag(Qt::ControlModifier)) {
+        qreal factor = event->angleDelta().y() < 0 ? -2: 2;
+        dynamic_cast<QChartView*>(m_plotWidget->widget())->chart()->scroll(factor, 0);
+    } else if (event->modifiers().testFlag(Qt::ShiftModifier)) {
+        qreal factor = event->angleDelta().y() < 0 ? -2: 2;
+        dynamic_cast<QChartView*>(m_plotWidget->widget())->chart()->scroll(0, factor);
+    } else {
+        qreal factor = event->angleDelta().y() < 0 ? 0.75: 1.5;
+        dynamic_cast<QChartView*>(m_plotWidget->widget())->chart()->zoom(factor);
+    }
 
-    dynamic_cast<GraphicsView*>(m_synthesisedProgramView->widget())->setScene(newScene);
-    delete oldScene;
+    event->accept();
 }
