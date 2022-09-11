@@ -10,11 +10,17 @@
 #include <QSplitter>
 #include <DockAreaWidget.h>
 #include <QLabel>
-#include <QChart>
-#include <QScatterSeries>
-#include <QChartView>
 #include <unordered_map>
-#include <QValueAxis>
+
+#include <qwt_plot.h>
+#include <qwt_plot_curve.h>
+#include <qwt_symbol.h>
+#include <qwt_plot_magnifier.h>
+#include <qwt_plot_panner.h>
+#include <qwt_plot_picker.h>
+#include <qwt_picker.h>
+#include <qwt_picker_machine.h>
+#include <qwt_plot_grid.h>
 
 DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) : QWidget(parent)
     , m_netModelingTab(mainTab)
@@ -37,14 +43,21 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     m_primitiveNetView = new DockWidget("Primitive view");
     m_primitiveNetView->setWidget(primitiveNetView);
 
-    auto lineSeries = new QScatterSeries;
-    lineSeries->setPointLabelsFormat("(@xPoint, @yPoint)");
-    lineSeries->setPointLabelsVisible(true);
 
+    // Plot
     QHash<QPoint, std::size_t> map;
     for(int i = 0; i < m_ctx->programs(); i++) {
         auto program = m_ctx->eval_program(i);
-        QPoint point = QPoint(program->positions().size(), program->connections().size());
+
+        auto positions = program->positions();
+        auto parents = 0;
+        for (int i = 0; i < positions.size(); i++) {
+            if (positions[i]->parent() != 0) {
+                parents += 1;
+            }
+        }
+
+        QPoint point = QPoint(positions.size(), parents);
         auto it = map.find(point);
         if (it == map.end()) {
             map.insert(point , 1);
@@ -53,36 +66,47 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
         }
     }
 
-    for (auto i = map.begin(); i != map.end(); ++i) {
-        lineSeries->append(i.key());
+    auto keys = map.keys();
+    QVector<QPointF> points;
+    for (auto p : keys) {
+        points.push_back(QPointF(p));
     }
 
-    auto xAxis = new QValueAxis;
-    xAxis->setRange(0, 10);
-    xAxis->setLabelFormat("%d");
-    xAxis->setTickCount(7);
-    xAxis->setTitleText("Positions");
+    auto symbol = new QwtSymbol(QwtSymbol::Ellipse,
+                                QBrush( Qt::yellow ), QPen( Qt::red, 2 ), QSize( 8, 8 ) );
 
-    auto yAxis = new QValueAxis;
-    yAxis->setRange(0, 10);
-    yAxis->setLabelFormat("%d");
-    yAxis->setTickCount(7);
-    yAxis->setTitleText("Connections");
+    auto qwt_chart = new QwtPlotCurve;
+    qwt_chart->setStyle(QwtPlotCurve::Dots);
+    qwt_chart->setSamples(points);
+    qwt_chart->setSymbol(symbol);
+    qwt_chart->setRenderHint(QwtPlotItem::RenderAntialiased);
 
-    auto chart = new QChart;
-    chart->legend()->hide();
-    chart->addSeries(lineSeries);
+    auto qwt_plot = new QwtPlot;
+    qwt_plot->setAxisTitle(QwtAxis::XBottom, "Positions");
+    qwt_plot->setAxisTitle(QwtAxis::YLeft, "Cut positions");
+    qwt_chart->attach(qwt_plot);
 
-    chart->addAxis(xAxis, Qt::AlignBottom);
-    chart->addAxis(yAxis, Qt::AlignLeft);
+    auto grid = new QwtPlotGrid;
+    grid->setMajorPen(QPen( Qt::gray, 2 ));
+    grid->attach( qwt_plot );
 
-    lineSeries->attachAxis(xAxis);
-    lineSeries->attachAxis(yAxis);
+    auto magnifier = new QwtPlotMagnifier(qwt_plot->canvas());
+    magnifier->setMouseButton(Qt::MiddleButton);
 
-    auto plotWidget = new QChartView(chart);
-    plotWidget->setRenderHint(QPainter::Antialiasing);
-    m_plotWidget = new DockWidget("Plot widget");
-    m_plotWidget->setWidget(plotWidget);
+    auto panner = new QwtPanner(qwt_plot->canvas());
+    panner->setMouseButton(Qt::RightButton);
+
+    auto picker = new QwtPlotPicker(QwtAxis::XBottom,
+                                    QwtAxis::YLeft,
+                                    QwtPicker::CrossRubberBand,
+                                    QwtPicker::AlwaysOn,
+                                    qwt_plot->canvas());
+    picker->setRubberBandPen(QColor(Qt::red));
+    picker->setTrackerPen(QColor(Qt::black));
+    picker->setStateMachine(new QwtPickerDragRectMachine());
+
+    auto qwt_view = new DockWidget("График");
+    qwt_view->setWidget(qwt_plot);
 
     auto area = m_dockManager->addDockWidget(ads::LeftDockWidgetArea, m_linearBaseFragmentsView);
     area->setWindowTitle("Линейно-базовые фрагменты");
@@ -92,7 +116,7 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     area->setWindowTitle("Примитивная система");
     area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
 
-    area = m_dockManager->addDockWidget(ads::RightDockWidgetArea, m_plotWidget, area);
+    area = m_dockManager->addDockWidget(ads::BottomDockWidgetArea, qwt_view, area);
     area->setWindowTitle("График отношения");
     area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
 
@@ -104,16 +128,16 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
 }
 
 void DecomposeModelTab::wheelEvent(QWheelEvent *event) {
-    if (event->modifiers().testFlag(Qt::ControlModifier)) {
-        qreal factor = event->angleDelta().y() < 0 ? -2: 2;
-        dynamic_cast<QChartView*>(m_plotWidget->widget())->chart()->scroll(factor, 0);
-    } else if (event->modifiers().testFlag(Qt::ShiftModifier)) {
-        qreal factor = event->angleDelta().y() < 0 ? -2: 2;
-        dynamic_cast<QChartView*>(m_plotWidget->widget())->chart()->scroll(0, factor);
-    } else {
-        qreal factor = event->angleDelta().y() < 0 ? 0.75: 1.5;
-        dynamic_cast<QChartView*>(m_plotWidget->widget())->chart()->zoom(factor);
-    }
+//    if (event->modifiers().testFlag(Qt::ControlModifier)) {
+//        qreal factor = event->angleDelta().y() < 0 ? -2: 2;
+//        dynamic_cast<QChartView*>(m_plotWidget->widget())->chart()->scroll(factor, 0);
+//    } else if (event->modifiers().testFlag(Qt::ShiftModifier)) {
+//        qreal factor = event->angleDelta().y() < 0 ? -2: 2;
+//        dynamic_cast<QChartView*>(m_plotWidget->widget())->chart()->scroll(0, factor);
+//    } else {
+//        qreal factor = event->angleDelta().y() < 0 ? 0.75: 1.5;
+//        dynamic_cast<QChartView*>(m_plotWidget->widget())->chart()->zoom(factor);
+//    }
 
     event->accept();
 }

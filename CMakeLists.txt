@@ -23,8 +23,15 @@ if (NOT Qt_ADVANCED_DOCKING_SYSTEM_DIR)
     message(FATAL_ERROR "Qt_ADVANCED_DOCKING_SYSTEM_DIR not set")
 endif()
 
+if (NOT QWT_DIR)
+    message(FATAL_ERROR "QWT_DIR not set")
+endif()
+
 include_directories(${GRAPHVIZ_DIR}/include/)
 link_directories(${GRAPHVIZ_DIR}/lib/)
+
+include_directories(${QWT_DIR}/src/)
+link_directories(${QWT_DIR}/lib/)
 
 if(NOT WIN32)
     #set(CMAKE_PREFIX_PATH "/Users/nikolajmuravev/Qt/6.2.1/macos/lib/cmake")
@@ -120,12 +127,12 @@ target_link_libraries(ffi_rust PRIVATE
         Qt6::Core
         Qt6::Gui
         Qt6::OpenGLWidgets
-        Qt6::Charts
         Qt6::Svg
         ads::qtadvanceddocking
         libopenblas
         gvc
         cgraph
+        qwt
         )
 
 qt6_import_plugins(ffi_rust
