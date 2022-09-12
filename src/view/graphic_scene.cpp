@@ -4,6 +4,10 @@
 
 
 #include <QMenu>
+#include <QJsonArray>
+#include <QJsonValue>
+#include <QJsonObject>
+#include <QJsonDocument>
 #include "../ffi/rust.h"
 #include "graphic_scene.h"
 #include "../elements/petri_object.h"
@@ -62,67 +66,6 @@ GraphicScene::GraphicScene(ffi::PetriNet *net, QObject *parent) :
     }
 }
 
-GraphicScene::GraphicScene(const QVariant &data, ffi::PetriNet *net, QObject *parent) : QGraphicsScene(parent)
-    , m_mod(Mode::A_Nothing)
-    , m_allowMods(Mode::A_Nothing)
-    , m_net(net)
-    , m_restore(true)
-{
-    setSceneRect(-12500, -12500, 25000, 25000);
-    auto common_data = data.toHash();
-
-    if (common_data.contains("items")) {
-        auto list = common_data.value("items").toList();
-        for (auto data : list) {
-            QVariantHash hash = data.toHash();
-            if (hash["type"] == ffi::VertexType::Position) {
-                auto vertex = m_net->get_position(hash["id"].toInt());
-                auto object = addPosition(vertex, hash["pos"].toPointF());
-            }
-            else if (hash["type"] == ffi::VertexType::Transition) {
-                auto vertex = m_net->get_transition(hash["id"].toInt());
-                auto object = addTransition(vertex, hash["pos"].toPointF());
-            }
-        }
-    }
-
-    auto connections = m_net->connections();
-    for (int i = 0; i < connections.size(); i++) {
-        auto connection = connections[i];
-        auto from = connection->from();
-        auto to = connection->to();
-
-        auto find_from = [=](PetriObject* object) {
-            return object->vertex()->type() == from.type && object->index() == from.id;
-        };
-
-        auto find_to = [=](PetriObject* object) {
-            return object->vertex()->type() == to.type && object->index() == to.id;
-        };
-
-        PetriObject* point1;
-        PetriObject* point2;
-
-        if (from.type == ffi::VertexType::Position) {
-            auto point1_it = std::find_if(m_positions.begin(), m_positions.end(), find_from);
-            auto point2_it = std::find_if(m_transition.begin(), m_transition.end(), find_to);
-
-            point1 = dynamic_cast<PetriObject*>(*point1_it);
-            point2 = dynamic_cast<PetriObject*>(*point2_it);
-        }
-        else {
-            auto point1_it = std::find_if(m_transition.begin(), m_transition.end(), find_from);
-            auto point2_it = std::find_if(m_positions.begin(), m_positions.end(), find_to);
-
-            point1 = dynamic_cast<PetriObject*>(*point1_it);
-            point2 = dynamic_cast<PetriObject*>(*point2_it);
-        }
-
-        connectItems(point1, point2, true);
-    }
-
-    m_restore = false;
-}
 
 void GraphicScene::setMode(Mode mod) {
     if (m_allowMods & mod) m_mod = mod;
@@ -338,29 +281,166 @@ void GraphicScene::onSceneChanged() {
     emit sceneChanged();
 }
 
-QVariant GraphicScene::toVariant() {
-    QVariantList data_list;
+QJsonDocument GraphicScene::json() const {
+    auto n_positions = positions();
+    auto n_transitions = transitions();
+    auto n_connections = connections();
 
-    for (auto position : m_positions) {
-        QVariantHash data;
-        data["pos"] = QVariant(position->scenePos());
-        data["id"] = QVariant(position->index());
-        data["type"] = position->vertex()->type();
-        data_list << data;
+    QJsonArray positions;
+    for (auto & n_position : n_positions) {
+        auto net_position = n_position->vertex();
+
+        QJsonObject position;
+        position.insert("id", QJsonValue((int)net_position->index().id));
+        position.insert("markers", QJsonValue((int)net_position->markers()));
+        position.insert("parent", QJsonValue((int)net_position->parent()));
+        position.insert("name", QJsonValue(net_position->get_name(false)));
+
+        QPointF pos = n_position->pos();
+        QJsonObject point;
+        point.insert("x", pos.x());
+        point.insert("y", pos.y());
+        position.insert("pos", point);
+
+        positions.push_back(position);
     }
 
-    for (auto transition : m_transition) {
-        QVariantHash data;
-        data["pos"] = QVariant(transition->scenePos());
-        data["id"] = QVariant(transition->index());
-        data["type"] = transition->vertex()->type();
-        data_list << data;
+    QJsonArray transitions;
+    for (auto & n_transition : n_transitions) {
+        auto net_transition = n_transition->vertex();
+
+        QJsonObject transition;
+        transition.insert("id", QJsonValue((int)net_transition->index().id));
+        transition.insert("parent", QJsonValue((int)net_transition->parent()));
+        transition.insert("name", QJsonValue(net_transition->get_name(false)));
+
+        QPointF pos = n_transition->center();
+        QJsonObject point;
+        point.insert("x", pos.x());
+        point.insert("y", pos.y());
+        transition.insert("pos", point);
+
+        transitions.push_back(transition);
     }
 
-    QVariantHash common_data;
-    common_data["items"] = data_list;
+    QJsonArray connections;
+    for (auto & n_connection : n_connections) {
+        auto connection_from = n_connection->from();
+        auto connection_to = n_connection->to();
 
-    return QVariant(common_data);
+        QJsonObject connection;
+        QJsonObject from;
+        from.insert("type", (int)connection_from->vertex()->index().type);
+        from.insert("index", (int)connection_from->vertex()->index().id);
+
+        QJsonObject to;
+        to.insert("type", (int)connection_to->vertex()->index().type);
+        to.insert("index", (int)connection_to->vertex()->index().id);
+
+        connection.insert("from", from);
+        connection.insert("to", to);
+
+        connections.push_back(connection);
+    }
+
+    QJsonObject main;
+    main.insert("positions", positions);
+    main.insert("transitions", transitions);
+    main.insert("connections", connections);
+
+    return QJsonDocument(main);
+}
+
+bool GraphicScene::fromJson(const QJsonDocument& document) {
+    auto main = document.object();
+
+    QJsonArray positions;
+    QJsonArray transitions;
+    QJsonArray connections;
+
+    if (auto it = main.find("positions"); it != main.end()) {
+        positions = it->toArray();
+    } else {
+        return false;
+    }
+
+    if (auto it = main.find("transitions"); it != main.end()) {
+        transitions = it->toArray();
+    } else {
+        return false;
+    }
+
+    if (auto it = main.find("connections"); it != main.end()) {
+        connections = it->toArray();
+    } else {
+        return false;
+    }
+
+    // Reset state
+    this->removeAll();
+
+    for (auto position : positions) {
+        auto obj = position.toObject();
+
+        auto id = obj.value("id").toInt();
+        auto markers = obj.value("markers").toInt();
+        auto parent = obj.value("parent").toInt();
+        auto name = obj.value("name").toString();
+
+        QJsonObject point = obj.value("pos").toObject();
+        auto pos = QPointF(point.value("x").toDouble(), point.value("y").toDouble());
+
+        ffi::Vertex* vertex;
+        if (parent > 0) vertex = m_net->add_position_with_parent(id, parent);
+        else vertex = m_net->add_position_with(id);
+
+        vertex->set_markers(markers);
+        vertex->set_name(name.toUtf8().data());
+
+        addPosition(vertex, pos);
+    }
+
+    for (auto transition : transitions) {
+        auto obj = transition.toObject();
+
+        auto id = obj.value("id").toInt();
+        auto parent = obj.value("parent").toInt();
+        auto name = obj.value("name").toString();
+
+        QJsonObject point = obj.value("pos").toObject();
+        auto pos = QPointF(point.value("x").toDouble(), point.value("y").toDouble());
+
+        ffi::Vertex* vertex;
+        if (parent > 0) vertex = m_net->add_transition_with_parent(id, parent);
+        else vertex = m_net->add_transition_with(id);
+
+        vertex->set_name(name.toUtf8().data());
+
+        addTransition(vertex, pos);
+    }
+
+    for (auto connection : connections) {
+        auto obj = connection.toObject();
+
+        auto fromObj = obj.value("from").toObject();
+        auto fromType = (ffi::VertexType)fromObj.value("type").toInt();
+        auto fromId = fromObj.value("index").toInt();
+
+        auto toObj = obj.value("to").toObject();
+        auto toType = (ffi::VertexType)toObj.value("type").toInt();
+        auto toId = toObj.value("index").toInt();
+
+        PetriObject *from, *to;
+        if (fromType == ffi::VertexType::Position) from = getPosition(fromId);
+        else from = getTransition(fromId);
+
+        if (toType == ffi::VertexType::Position) to = getPosition(toId);
+        else to = getTransition(toId);
+
+        connectItems(from, to);
+    }
+
+    return true;
 }
 
 void GraphicScene::removeAll() {

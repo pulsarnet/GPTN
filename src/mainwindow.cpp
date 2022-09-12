@@ -8,11 +8,13 @@
 #include <QFileDialog>
 #include <QGraphicsDropShadowEffect>
 #include <QDockWidget>
+#include <QJsonDocument>
 #include <QTableView>
 #include <QMessageBox>
 #include "windows_types/close_on_inactive.h"
 #include "ActionTabWidget/ActionTabWidget.h"
 #include "ActionTabWidget/NetModelingTab.h"
+#include "view/graphic_scene.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_changed(false), m_tabWidget(new ActionTabWidget) {
 
@@ -33,7 +35,9 @@ void MainWindow::setFileName(const QString &name) {
 }
 
 bool MainWindow::saveAs() {
-    QString filename = QFileDialog::getSaveFileName(this, tr("Save Petri network file"), tr("Petri network file (*.ptn);;All Files (*)"));
+    QString filename = QFileDialog::getSaveFileName(this,
+                                                    tr("Save Petri network file"),
+                                                    tr("Petri network file (*.json);;All Files (*)"));
 
     if (filename.isEmpty())
         return false;
@@ -56,7 +60,7 @@ bool MainWindow::saveFile(const QString &filename) {
         return false;
     }
 
-    auto data = m_tabWidget->mainTab()->json();
+    auto data = dynamic_cast<GraphicScene*>(m_tabWidget->mainTab()->view()->scene())->json();
     auto array = data.toJson();
     file.write(array);
 
@@ -71,7 +75,7 @@ bool MainWindow::open() {
 
     QString fileName = QFileDialog::getOpenFileName(this,
                                                     tr("Open Address Book"), "",
-                                                    tr("Address Book (*.ptn);;All Files (*)"));
+                                                    tr("Address Book (*.json)"));
 
     if (fileName.isEmpty())
         return false;
@@ -90,12 +94,12 @@ bool MainWindow::open() {
         return false;
     }
 
-    QVariant data;
-    QDataStream in(&file);
-    in.setVersion(QDataStream::Qt_6_0);
-    in >> data;
-
-    //dynamic_cast<RootTreeItem*>(treeModel->root())->fromVariant(data);
+    auto document = QJsonDocument::fromJson(file.readAll());
+    if (!dynamic_cast<GraphicScene*>(m_tabWidget->mainTab()->view()->scene())->fromJson(document)) {
+        QMessageBox::information(this, tr("Unable to open file"),
+                                 file.errorString());
+        return false;
+    }
 
     setFileName(fileName);
     m_changed = false;

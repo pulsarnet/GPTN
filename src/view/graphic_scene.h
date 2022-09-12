@@ -34,11 +34,11 @@ public:
     Q_DECLARE_FLAGS(Modes, Mode);
 
     explicit GraphicScene(ffi::PetriNet* net, QObject* parent = nullptr);
-    explicit GraphicScene(const QVariant&, ffi::PetriNet*, QObject* parent = nullptr);
 
     void setAllowMods(Modes mods);
 
-    QVariant toVariant();
+    QJsonDocument json() const;
+    bool fromJson(const QJsonDocument& document);
 
     void removeAll();
     PetriObject* netItemAt(const QPointF& pos);

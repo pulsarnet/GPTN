@@ -63,9 +63,6 @@ namespace ffi {
         PetriNet* net() const;
         DecomposeContext* decompose_ctx() const;
         void set_decompose_ctx(DecomposeContext* ctx);
-
-        void saveState(QVariant& data) const;
-        void restoreState(const QVariant& data);
     };
 
     struct PetriNet {
@@ -87,11 +84,7 @@ namespace ffi {
         void connect(Vertex*, Vertex*);
         void remove_connection(Vertex*, Vertex*);
 
-
         Vertex* getVertex(VertexIndex index) const;
-
-        QVariant toVariant() const;
-        void fromVariant(const QVariant& data);
 
         std::pair<CNamedMatrix*, CNamedMatrix*> as_matrix() const;
 
@@ -103,20 +96,17 @@ namespace ffi {
         usize markers() const;
         void add_marker();
         void remove_marker();
+        void set_markers(usize markers);
         char* get_name(bool show_parent = true) const;
         void set_name(char* name);
         VertexType type() const;
         void set_parent(VertexIndex);
         usize parent() const;
-
-        QVariant toVariant() const;
     };
 
     struct Connection {
         VertexIndex from() const;
         VertexIndex to() const;
-
-        QVariant toVariant() const;
     };
 
     struct DecomposeContext {
@@ -151,9 +141,6 @@ namespace ffi {
         void set_value(usize, usize, i32);
         usize rows() const;
         usize columns() const;
-
-        QVariant toVariant() const;
-        void fromVariant(const QVariant& data);
     };
 
     struct CNamedMatrix {

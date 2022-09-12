@@ -44,6 +44,7 @@ extern "C" {
     usize vertex_markers(const Vertex&);
     void vertex_add_marker(Vertex&);
     void vertex_remove_marker(Vertex&);
+    void vertex_set_markers(Vertex&, usize);
     char* vertex_label(const Vertex&, bool);
     void vertex_set_label(Vertex&, char*);
     VertexType vertex_type(const Vertex&);
@@ -190,17 +191,6 @@ void PetriNetContext::set_decompose_ctx(DecomposeContext *ctx) {
     ::ctx_set_decompose_context(this, ctx);
 }
 
-void PetriNetContext::saveState(QVariant &data) const {
-    QVariantHash hash;
-    hash["net"] = net()->toVariant();
-    data.setValue(std::move(hash));
-}
-
-void PetriNetContext::restoreState(const QVariant &data) {
-    QVariantHash hash = data.toHash();
-    net()->fromVariant(hash["net"]);
-}
-
 PetriNet *PetriNet::create() {
     return ::create_net();
 }
@@ -275,90 +265,6 @@ Vertex *PetriNet::getVertex(VertexIndex index) const {
     return ::net_get_vertex(*this, index);
 }
 
-QVariant PetriNet::toVariant() const {
-    QVariantHash net;
-    QVariantList vertexes;
-    QVariantList v_connections;
-
-    auto pos = positions();
-    auto trans = transitions();
-    auto conns = connections();
-
-    for (int i = 0; i < pos.size(); i++) {
-        auto position = pos[i];
-        vertexes.push_back(position->toVariant());
-    }
-
-    for (int i = 0; i < trans.size(); i++) {
-        auto transition = trans[i];
-        vertexes.push_back(transition->toVariant());
-    }
-
-    for (int i = 0; i < conns.size(); i++) {
-        auto connection = conns[i];
-
-        v_connections.push_back(connection->toVariant());
-    }
-
-    net["vertex"] = vertexes;
-    net["connections"] = v_connections;
-
-    return net;
-}
-
-void PetriNet::fromVariant(const QVariant &data) {
-    auto net = data.toHash();
-    auto vertexes = net["vertex"].toList();
-    auto connections = net["connections"].toList();
-
-    for (const auto& vertexVariant : vertexes) {
-        auto vertex = vertexVariant.toHash();
-        auto index = vertex["index"].toInt();
-        auto type = vertex["type"].toInt();
-        auto label = vertex["label"].toString();
-        auto parent_index = vertex["parent"].toInt();
-
-        Vertex* added = nullptr;
-
-        if (type == VertexType::Position) {
-            if (!parent_index) {
-                added = add_position_with(index);
-            }
-            else {
-                added = add_position_with_parent(index, parent_index);
-            }
-            // TODO: set markers
-        }
-        else {
-            if (!parent_index) {
-                added = add_transition_with(index);
-            }
-            else {
-                added = add_transition_with_parent(index, parent_index);
-            }
-        }
-
-        added->set_name(label.toUtf8().data());
-
-        if (parent_index > 0)
-            added->set_parent(VertexIndex { (VertexType)type, (ffi::usize)parent_index });
-    }
-
-    for (const auto& connection : connections) {
-        auto conn = connection.toHash();
-        auto from = conn["from"].toHash();
-        auto to = conn["to"].toHash();
-
-        auto from_type = from["type"].toInt();
-        if (from_type == VertexType::Position) {
-            connect(get_position(from["index"].toInt()), get_transition(to["index"].toInt()));
-        }
-        else {
-            connect(get_transition(from["index"].toInt()), get_position(to["index"].toInt()));
-        }
-    }
-}
-
 std::pair<CNamedMatrix*, CNamedMatrix*> PetriNet::as_matrix() const {
     CNamedMatrix* first;
     CNamedMatrix* second;
@@ -386,6 +292,10 @@ void Vertex::remove_marker() {
     ::vertex_remove_marker(*this);
 }
 
+void Vertex::set_markers(ffi::usize markers) {
+    ::vertex_set_markers(*this, markers);
+}
+
 char *Vertex::get_name(bool show_parent) const {
     return ::vertex_label(*this, show_parent);
 }
@@ -406,45 +316,12 @@ usize Vertex::parent() const {
     return ::vertex_parent(*this);
 }
 
-QVariant Vertex::toVariant() const {
-    QVariantHash vertex;
-    vertex["type"] = type();
-    vertex["index"] = index().id;
-    vertex["label"] = get_name(false);
-    vertex["parent"] = parent();
-
-    if (type() == VertexType::Position) {
-        vertex["markers"] = markers();
-    }
-
-    return vertex;
-}
-
 VertexIndex Connection::from() const {
     return ::connection_from(*this);
 }
 
 VertexIndex Connection::to() const {
     return ::connection_to(*this);
-}
-
-QVariant Connection::toVariant() const {
-    auto f = from();
-    auto t = to();
-
-    QVariantHash from;
-    from["type"] = f.type;
-    from["index"] = f.id;
-
-    QVariantHash to;
-    to["type"] = t.type;
-    to["index"] = t.id;
-
-    QVariantHash connection;
-    connection["from"] = from;
-    connection["to"] = to;
-
-    return connection;
 }
 
 DecomposeContext *DecomposeContext::init(PetriNet *net) {
@@ -593,32 +470,6 @@ usize CMatrix::rows() const {
 
 usize CMatrix::columns() const {
     return ::matrix_columns(*this);
-}
-
-QVariant CMatrix::toVariant() const {
-    QVariantHash result;
-    result["rows"] = rows();
-    result["columns"] = columns();
-
-    QVariantList data;
-    for (int i = 0; i < rows(); i++) {
-        for (int j = 0; j < columns(); j++) {
-            data << index(i, j);
-        }
-    }
-    result["data"] = data;
-
-    return result;
-}
-
-void CMatrix::fromVariant(const QVariant &data) {
-    auto map = data.toHash();
-    auto raw = map["data"].toList();
-    for (int i = 0; i < rows(); i++) {
-        for (int j = 0; j < columns(); j++) {
-            set_value(i, j, raw[i * columns() + j].toInt());
-        }
-    }
 }
 
 i32 CNamedMatrix::index(usize row, usize column) const {

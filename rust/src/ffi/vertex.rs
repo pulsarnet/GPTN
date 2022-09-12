@@ -55,3 +55,8 @@ pub extern "C" fn vertex_parent(vertex: &Vertex) -> usize {
 pub extern "C" fn vertex_set_parent(vertex: &mut Vertex, index: VertexIndex) {
     vertex.set_parent(index);
 }
+
+#[no_mangle]
+pub extern "C" fn vertex_set_markers(vertex: &mut Vertex, markers: usize) {
+    vertex.set_markers(markers)
+}
