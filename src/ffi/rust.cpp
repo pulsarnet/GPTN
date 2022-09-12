@@ -19,6 +19,7 @@ extern "C" {
 
     // PetriNet
     PetriNet* create_net();
+    void clear_net(PetriNet& self);
     void delete_net(PetriNet*);
     void net_positions(const PetriNet& self, CVec<Vertex*>* return$);
     void net_transitions(const PetriNet& self, CVec<Vertex*>* return$);
@@ -272,6 +273,10 @@ std::pair<CNamedMatrix*, CNamedMatrix*> PetriNet::as_matrix() const {
     CNamedMatrix* second;
     ::petri_net_as_matrix(*this, &first, &second);
     return {first, second};
+}
+
+void PetriNet::clear() {
+    ::clear_net(*this);
 }
 
 void PetriNet::drop() {

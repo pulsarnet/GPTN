@@ -16,11 +16,12 @@ public:
 
     void drawDots(QPainter *, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &canvasRect, int from, int to) const override;
 
-    void setData(QHash<QPoint, std::size_t>&& data);
+    void setData(QHash<QPoint, QVector<std::size_t>>&& data);
+    const QVector<std::size_t>& getData(int idx) const;
 
 private:
 
-    QHash<QPoint, std::size_t> m_data;
+    QHash<QPoint, QVector<std::size_t>> m_data;
 
 };
 

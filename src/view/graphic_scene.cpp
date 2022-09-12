@@ -446,8 +446,7 @@ bool GraphicScene::fromJson(const QJsonDocument& document) {
 void GraphicScene::removeAll() {
     QGraphicsScene::clear();
 
-    // TODO: Удаление сети
-    m_net = ffi::PetriNet::create(); // TODO: Надо удалить
+    m_net->clear();
     m_transition.clear();
     m_positions.clear();
     m_connections.clear();

@@ -88,6 +88,7 @@ namespace ffi {
 
         std::pair<CNamedMatrix*, CNamedMatrix*> as_matrix() const;
 
+        void clear();
         void drop();
     };
 

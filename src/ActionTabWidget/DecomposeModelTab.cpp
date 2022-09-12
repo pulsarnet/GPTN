@@ -22,6 +22,7 @@
 #include <qwt_picker_machine.h>
 #include <qwt_plot_grid.h>
 #include "../QwtExt/qwt_ext_plot_curve_labels.h"
+#include "../QwtExt/CanvasPicker.h"
 
 DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) : QWidget(parent)
     , m_netModelingTab(mainTab)
@@ -46,7 +47,7 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
 
 
     // Plot
-    QHash<QPoint, std::size_t> map;
+    QHash<QPoint, QVector<std::size_t>> map;
     for(int i = 0; i < m_ctx->programs(); i++) {
         auto program = m_ctx->eval_program(i);
 
@@ -56,28 +57,29 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
         QPoint point = QPoint((int)x_axis, (int)y_axis);
         auto it = map.find(point);
         if (it == map.end()) {
-            map.insert(point , 1);
+            map.insert(point , QVector<std::size_t>({(std::size_t)i}));
         } else {
-            *it += 1;
+            (*it).push_back(i);
         }
     }
 
     auto symbol = new QwtSymbol(QwtSymbol::Ellipse,
-                                QBrush( Qt::yellow ), QPen( Qt::red, 2 ), QSize( 8, 8 ) );
+                                QBrush( Qt::blue ), QPen( Qt::blue, 3 ), QSize( 9, 9 ) );
 
-    auto qwt_chart = new QwtExtPlotCurveLabels;
-    qwt_chart->setStyle(QwtPlotCurve::Dots);
-    qwt_chart->setData(std::move(map));
-    qwt_chart->setSymbol(symbol);
-    qwt_chart->setRenderHint(QwtPlotItem::RenderAntialiased);
+    m_plot = new QwtExtPlotCurveLabels;
+    m_plot->setStyle(QwtPlotCurve::Dots);
+    m_plot->setData(std::move(map));
+    m_plot->setSymbol(symbol);
+    m_plot->setRenderHint(QwtPlotItem::RenderAntialiased);
 
     auto qwt_plot = new QwtPlot;
     qwt_plot->setAxisTitle(QwtAxis::XBottom, "Position United");
     qwt_plot->setAxisTitle(QwtAxis::YLeft, "Connections");
-    qwt_chart->attach(qwt_plot);
+    m_plot->attach(qwt_plot);
 
     auto grid = new QwtPlotGrid;
-    grid->setMajorPen(QPen( Qt::gray, 2 ));
+    grid->setMajorPen(QPen( Qt::gray, 0.5 ));
+    grid->setRenderHint(QwtPlotItem::RenderAntialiased);
     grid->attach( qwt_plot );
 
     auto magnifier = new QwtPlotMagnifier(qwt_plot->canvas());
@@ -94,6 +96,9 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     picker->setRubberBandPen(QColor(Qt::red));
     picker->setTrackerPen(QColor(Qt::black));
     picker->setStateMachine(new QwtPickerDragRectMachine());
+
+    auto canvasPicker = new CanvasPicker(qwt_plot);
+    connect(canvasPicker, &CanvasPicker::selected, this, &DecomposeModelTab::selectedPoint);
 
     auto qwt_view = new DockWidget("График");
     qwt_view->setWidget(qwt_plot);
@@ -117,17 +122,6 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     layout()->setContentsMargins(0, 0, 0, 0);
 }
 
-void DecomposeModelTab::wheelEvent(QWheelEvent *event) {
-//    if (event->modifiers().testFlag(Qt::ControlModifier)) {
-//        qreal factor = event->angleDelta().y() < 0 ? -2: 2;
-//        dynamic_cast<QChartView*>(m_plotWidget->widget())->chart()->scroll(factor, 0);
-//    } else if (event->modifiers().testFlag(Qt::ShiftModifier)) {
-//        qreal factor = event->angleDelta().y() < 0 ? -2: 2;
-//        dynamic_cast<QChartView*>(m_plotWidget->widget())->chart()->scroll(0, factor);
-//    } else {
-//        qreal factor = event->angleDelta().y() < 0 ? 0.75: 1.5;
-//        dynamic_cast<QChartView*>(m_plotWidget->widget())->chart()->zoom(factor);
-//    }
-
-    event->accept();
+void DecomposeModelTab::selectedPoint(int idx) {
+    qDebug() << this->m_plot->getData(idx).length();
 }

@@ -32,6 +32,7 @@ link_directories(${GRAPHVIZ_DIR}/lib/)
 
 include_directories(${QWT_DIR}/src/)
 link_directories(${QWT_DIR}/lib/)
+add_compile_definitions(QWT_DLL)
 
 if(NOT WIN32)
     #set(CMAKE_PREFIX_PATH "/Users/nikolajmuravev/Qt/6.2.1/macos/lib/cmake")
@@ -80,6 +81,7 @@ set(SRC_FILES
         src/DockSystem/DockWidget.cpp
         src/synthesis/synthesis_table.cpp
         src/QwtExt/qwt_ext_plot_curve_labels.cpp
+        src/QwtExt/CanvasPicker.cpp
         )
 
 set(HEADERS
@@ -111,6 +113,7 @@ set(HEADERS
         src/DockSystem/DockToolbar.h
         src/DockSystem/DockWidget.h
         src/QwtExt/qwt_ext_plot_curve_labels.h
+        src/QwtExt/CanvasPicker.h
         )
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")

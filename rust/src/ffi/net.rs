@@ -46,6 +46,13 @@ pub unsafe extern "C" fn net_connections(net: &mut PetriNet, ret: &mut CVec<*con
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn clear_net(v: &mut PetriNet) {
+    v.positions.clear();
+    v.transitions.clear();
+    v.connections.clear();
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn delete_net(v: *mut PetriNet) {
     Box::from_raw(v);
 }

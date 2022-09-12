@@ -10,6 +10,7 @@
 #include "../DockSystem/DockWidget.h"
 #include <DockManager.h>
 
+class QwtExtPlotCurveLabels;
 
 class DecomposeModelTab : public QWidget {
 
@@ -17,7 +18,9 @@ public:
 
     explicit DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent = nullptr);
 
-    void wheelEvent(QWheelEvent *event) override;
+public slots:
+
+    void selectedPoint(int idx);
 
 private:
 
@@ -28,6 +31,8 @@ private:
     DockWidget* m_linearBaseFragmentsView;
     DockWidget* m_primitiveNetView;
     DockWidget* m_plotWidget;
+
+    QwtExtPlotCurveLabels* m_plot;
 };
 
 
