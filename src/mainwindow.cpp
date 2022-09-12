@@ -12,6 +12,7 @@
 #include <QMessageBox>
 #include "windows_types/close_on_inactive.h"
 #include "ActionTabWidget/ActionTabWidget.h"
+#include "ActionTabWidget/NetModelingTab.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_changed(false), m_tabWidget(new ActionTabWidget) {
 
@@ -55,10 +56,9 @@ bool MainWindow::saveFile(const QString &filename) {
         return false;
     }
 
-    auto data = m_tabWidget->saveState();
-    QDataStream out(&file);
-    out.setVersion(QDataStream::Qt_6_0);
-    out << data;
+    auto data = m_tabWidget->mainTab()->json();
+    auto array = data.toJson();
+    file.write(array);
 
     setFileName(filename);
     m_changed = false;

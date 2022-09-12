@@ -90,3 +90,7 @@ void ActionTabWidget::slotDecompose() {
 void ActionTabWidget::slotDDR() {}
 
 void ActionTabWidget::slotSLAE() {}
+
+const NetModelingTab *ActionTabWidget::mainTab() const {
+    return this->m_netModelingTab;
+}

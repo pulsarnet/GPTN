@@ -6,6 +6,7 @@
 #define FFI_RUST_NETMODELINGTAB_H
 
 #include <QWidget>
+#include <QJsonDocument>
 #include "../view/graphics_view.h"
 #include "../ffi/rust.h"
 
@@ -19,6 +20,8 @@ public:
     void restoreState(const QVariant& data);
 
     ffi::PetriNetContext* ctx() const;
+
+    QJsonDocument json() const;
 
 private:
 

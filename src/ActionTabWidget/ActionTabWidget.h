@@ -29,6 +29,8 @@ public slots:
     void slotDDR();
     void slotSLAE();
 
+    const NetModelingTab* mainTab() const;
+
 private:
 
     QMenu *m_newTabMenu;
