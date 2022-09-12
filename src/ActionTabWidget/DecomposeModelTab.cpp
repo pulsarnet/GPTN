@@ -85,7 +85,7 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     auto magnifier = new QwtPlotMagnifier(qwt_plot->canvas());
     magnifier->setMouseButton(Qt::MiddleButton);
 
-    auto panner = new QwtPanner(qwt_plot->canvas());
+    auto panner = new QwtPlotPanner(qwt_plot->canvas());
     panner->setMouseButton(Qt::RightButton);
 
     auto picker = new QwtPlotPicker(QwtAxis::XBottom,
@@ -123,5 +123,8 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
 }
 
 void DecomposeModelTab::selectedPoint(int idx) {
+    if (idx == -1)
+        return;
+
     qDebug() << this->m_plot->getData(idx).length();
 }
