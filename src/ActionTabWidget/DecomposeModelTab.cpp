@@ -21,6 +21,7 @@
 #include <qwt_picker.h>
 #include <qwt_picker_machine.h>
 #include <qwt_plot_grid.h>
+#include "../QwtExt/qwt_ext_plot_curve_labels.h"
 
 DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) : QWidget(parent)
     , m_netModelingTab(mainTab)
@@ -66,18 +67,12 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
         }
     }
 
-    auto keys = map.keys();
-    QVector<QPointF> points;
-    for (auto p : keys) {
-        points.push_back(QPointF(p));
-    }
-
     auto symbol = new QwtSymbol(QwtSymbol::Ellipse,
                                 QBrush( Qt::yellow ), QPen( Qt::red, 2 ), QSize( 8, 8 ) );
 
-    auto qwt_chart = new QwtPlotCurve;
+    auto qwt_chart = new QwtExtPlotCurveLabels;
     qwt_chart->setStyle(QwtPlotCurve::Dots);
-    qwt_chart->setSamples(points);
+    qwt_chart->setData(std::move(map));
     qwt_chart->setSymbol(symbol);
     qwt_chart->setRenderHint(QwtPlotItem::RenderAntialiased);
 

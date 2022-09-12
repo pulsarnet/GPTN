@@ -79,6 +79,7 @@ set(SRC_FILES
         src/DockSystem/DockToolbar.cpp
         src/DockSystem/DockWidget.cpp
         src/synthesis/synthesis_table.cpp
+        src/QwtExt/qwt_ext_plot_curve_labels.cpp
         )
 
 set(HEADERS
@@ -109,6 +110,7 @@ set(HEADERS
         src/DockSystem/SplittableComponentsFactory.h
         src/DockSystem/DockToolbar.h
         src/DockSystem/DockWidget.h
+        src/QwtExt/qwt_ext_plot_curve_labels.h
         )
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
