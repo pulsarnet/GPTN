@@ -50,15 +50,10 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     for(int i = 0; i < m_ctx->programs(); i++) {
         auto program = m_ctx->eval_program(i);
 
-        auto positions = program->positions();
-        auto parents = 0;
-        for (int i = 0; i < positions.size(); i++) {
-            if (positions[i]->parent() != 0) {
-                parents += 1;
-            }
-        }
+        auto x_axis = m_ctx->position_united(i);
+        auto y_axis = program->connections().size();
 
-        QPoint point = QPoint(positions.size(), parents);
+        QPoint point = QPoint((int)x_axis, (int)y_axis);
         auto it = map.find(point);
         if (it == map.end()) {
             map.insert(point , 1);
@@ -77,8 +72,8 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     qwt_chart->setRenderHint(QwtPlotItem::RenderAntialiased);
 
     auto qwt_plot = new QwtPlot;
-    qwt_plot->setAxisTitle(QwtAxis::XBottom, "Positions");
-    qwt_plot->setAxisTitle(QwtAxis::YLeft, "Cut positions");
+    qwt_plot->setAxisTitle(QwtAxis::XBottom, "Position United");
+    qwt_plot->setAxisTitle(QwtAxis::YLeft, "Connections");
     qwt_chart->attach(qwt_plot);
 
     auto grid = new QwtPlotGrid;

@@ -11,6 +11,7 @@ extern crate chrono;
 extern crate indexmap;
 
 use std::cmp::{max_by, min_by};
+use std::collections::HashMap;
 use std::ffi::CString;
 use std::ops::Deref;
 use libc::c_char;
@@ -206,7 +207,7 @@ impl DecomposeContext {
 
         for t_program in t_programs {
             for p_program in p_programs.iter() {
-                let mut program = SynthesisProgram::new(transitions + positions);
+                let mut program = SynthesisProgram::new(transitions + positions, transitions);
                 t_program.iter()
                     .chain(p_program.iter())
                     .enumerate()
@@ -266,7 +267,7 @@ impl DecomposeContext {
     }
 
     pub fn add_program(&mut self) {
-        self.programs.push(SynthesisProgram::new(self.positions().len() + self.transitions().len()))
+        self.programs.push(SynthesisProgram::new(self.positions().len() + self.transitions().len(), self.transitions().len()))
     }
 
     pub fn remove_program(&mut self, index: usize) {
@@ -432,19 +433,34 @@ pub unsafe extern "C" fn decompose_context_delete(ctx: *mut DecomposeContext) {
 pub struct SynthesisProgram {
     data: Vec<usize>,
 
-    #[allow(dead_code)]
-    net_before: Option<PetriNet>,
+    transitions: usize,
 
     net_after: Option<PetriNet>
 }
 
 impl SynthesisProgram {
-    pub fn new(size: usize) -> Self {
+    pub fn new(size: usize, transitions: usize) -> Self {
         SynthesisProgram {
             data: vec![0; size],
-            net_before: None,
+            transitions,
             net_after: None
         }
+    }
+
+    pub fn transitions_united(&self) -> usize {
+        let mut counts = HashMap::with_capacity(self.transitions);
+        self.data.iter().take(self.transitions).for_each(|el| {
+            *counts.entry(*el).or_insert_with(|| 0 as usize) += 1
+        });
+        counts.values().filter(|v| **v > 1).count()
+    }
+
+    pub fn positions_united(&self) -> usize {
+        let mut counts = HashMap::with_capacity(self.data.len() - self.transitions);
+        self.data.iter().skip(self.transitions).for_each(|el| {
+            *counts.entry(*el).or_insert_with(|| 0 as usize) += 1
+        });
+        counts.values().filter(|v| **v > 1).count()
     }
 }
 
@@ -485,6 +501,16 @@ extern "C" fn synthesis_programs(ctx: &DecomposeContext) -> usize {
 #[no_mangle]
 extern "C" fn synthesis_program_size(ctx: &DecomposeContext, index: usize) -> usize {
     ctx.programs()[index].data.len()
+}
+
+#[no_mangle]
+extern "C" fn synthesis_program_transition_united(ctx: &DecomposeContext, index: usize) -> usize {
+    ctx.programs()[index].transitions_united()
+}
+
+#[no_mangle]
+extern "C" fn synthesis_program_position_united(ctx: &DecomposeContext, index: usize) -> usize {
+    ctx.programs()[index].positions_united()
 }
 
 #[no_mangle]

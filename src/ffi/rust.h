@@ -130,6 +130,8 @@ namespace ffi {
         char* program_header_name(usize index, bool label) const;
         CMatrix* c_matrix() const;
         PetriNet* eval_program(usize index);
+        usize transition_united(usize index);
+        usize position_united(usize index);
         PetriNet* program_net_after(usize index) const;
         PetriNet* init_program_after(usize index);
 

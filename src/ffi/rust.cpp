@@ -69,6 +69,8 @@ extern "C" {
     void decompose_context_parts(const DecomposeContext&, CVec<PetriNet*>* return$);
     usize synthesis_programs(const DecomposeContext&);
     usize synthesis_program_size(const DecomposeContext&, usize);
+    usize synthesis_program_transition_united(const DecomposeContext&, usize);
+    usize synthesis_program_position_united(const DecomposeContext&, usize);
     void synthesis_add_program(DecomposeContext&);
     void synthesis_remove_program(DecomposeContext&, usize);
     usize synthesis_program_value(const DecomposeContext&, usize, usize);
@@ -373,6 +375,14 @@ usize DecomposeContext::programs() const {
 
 usize DecomposeContext::program_size(usize index) const {
     return ::synthesis_program_size(*this, index);
+}
+
+usize DecomposeContext::transition_united(ffi::usize index) {
+    return ::synthesis_program_transition_united(*this, index);
+}
+
+usize DecomposeContext::position_united(ffi::usize index) {
+    return ::synthesis_program_position_united(*this, index);
 }
 
 void DecomposeContext::add_program() {
