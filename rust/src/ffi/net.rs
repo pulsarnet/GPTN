@@ -54,7 +54,7 @@ pub unsafe extern "C" fn clear_net(v: &mut PetriNet) {
 
 #[no_mangle]
 pub unsafe extern "C" fn delete_net(v: *mut PetriNet) {
-    Box::from_raw(v);
+    let _ = Box::from_raw(v);
 }
 
 #[no_mangle]

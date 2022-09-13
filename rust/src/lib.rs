@@ -275,11 +275,11 @@ impl DecomposeContext {
     }
 
     pub fn program_value(&self, program: usize, index: usize) -> usize {
-        self.programs()[program].data[index]
+        self.programs()[program].data[index] as usize
     }
 
     pub fn set_program_value(&mut self, program: usize, index: usize, value: usize) {
-        self.programs[program].data[index] = value;
+        self.programs[program].data[index] = value as u16;
     }
 
     pub fn program_header_name(&self, index: usize, label: bool) -> String {
@@ -427,15 +427,15 @@ pub unsafe extern "C" fn decompose_context_transition_index(ctx: &DecomposeConte
 
 #[no_mangle]
 pub unsafe extern "C" fn decompose_context_delete(ctx: *mut DecomposeContext) {
-    Box::from_raw(ctx);
+    let _ = Box::from_raw(ctx);
 }
 
 pub struct SynthesisProgram {
-    data: Vec<usize>,
+    data: Vec<u16>,
 
     transitions: usize,
 
-    net_after: Option<PetriNet>
+    //net_after: Option<PetriNet>
 }
 
 impl SynthesisProgram {
@@ -443,7 +443,7 @@ impl SynthesisProgram {
         SynthesisProgram {
             data: vec![0; size],
             transitions,
-            net_after: None
+            //net_after: None
         }
     }
 
@@ -514,17 +514,6 @@ extern "C" fn synthesis_program_position_united(ctx: &DecomposeContext, index: u
 }
 
 #[no_mangle]
-extern "C" fn synthesis_program_net_after(ctx: &DecomposeContext, index: usize) -> *const PetriNet {
-    ctx.programs()[index].net_after.as_ref().unwrap() as *const PetriNet
-}
-
-#[no_mangle]
-extern "C" fn synthesis_init_program_net_after(ctx: &mut DecomposeContext, index: usize) -> *const PetriNet {
-    ctx.programs[index].net_after = Some(PetriNet::new());
-    ctx.programs[index].net_after.as_ref().unwrap() as *const PetriNet
-}
-
-#[no_mangle]
 extern "C" fn synthesis_c_matrix(ctx: &DecomposeContext) -> *const CMatrix {
     ctx.c_matrix() as *const CMatrix
 }
@@ -552,10 +541,11 @@ extern "C" fn matrix_columns(matrix: &CMatrix) -> usize {
 // Вычисление программ синтеза
 #[no_mangle]
 extern "C" fn synthesis_eval_program(ctx: &mut DecomposeContext, index: usize) -> *const PetriNet {
-    if ctx.programs[index].net_after.is_some() {
-        return ctx.programs[index].net_after.as_ref().unwrap() as *const PetriNet
-    }
+    // TODO: Comment
+    // if ctx.programs[index].net_after.is_some() {
+    //     return ctx.programs[index].net_after.as_ref().unwrap() as *const PetriNet
+    // }
 
-    synthesis_program(ctx, index);
-    ctx.programs[index].net_after.as_ref().unwrap() as *const PetriNet
+    Box::into_raw(Box::new(synthesis_program(ctx, index))) as *const PetriNet
+    //ctx.programs[index].net_after.as_ref().unwrap() as *const PetriNet
 }

@@ -61,10 +61,12 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
         } else {
             (*it).push_back(i);
         }
+
+        program->drop();
     }
 
     auto symbol = new QwtSymbol(QwtSymbol::Ellipse,
-                                QBrush( Qt::blue ), QPen( Qt::blue, 3 ), QSize( 9, 9 ) );
+                                QBrush( Qt::blue ), QPen( Qt::blue, 4 ), QSize( 10, 10 ) );
 
     m_plot = new QwtExtPlotCurveLabels;
     m_plot->setStyle(QwtPlotCurve::Dots);

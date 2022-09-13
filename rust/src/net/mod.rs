@@ -767,7 +767,7 @@ impl PetriNet {
     }
 }
 
-pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) {
+pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> PetriNet {
 
     let positions = programs.positions().len();
     let transitions = programs.transitions().len();
@@ -788,7 +788,7 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) {
     let current_program = &programs.programs[index].data;
     let mut t_sets = vec![];
     let mut p_sets = vec![];
-    let mut searched = vec![].into_iter().collect::<HashSet<usize>>();
+    let mut searched = vec![].into_iter().collect::<HashSet<u16>>();
 
     for index_a in 0..tran_indexes_vec.len() {
         let search_number = current_program[index_a];
@@ -811,7 +811,7 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) {
     }
 
     let offset = tran_indexes_vec.len();
-    let mut searched = vec![].into_iter().collect::<HashSet<usize>>();
+    let mut searched = vec![].into_iter().collect::<HashSet<u16>>();
     for index_a in offset..(offset + pos_indexes_vec.len()) {
         let search_number = current_program[index_a];
         if searched.contains(&search_number) {
@@ -1051,8 +1051,8 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) {
     }
     new_net.connections = connections;
 
-    programs.programs[index].net_after = Some(new_net);
-
+    //programs.programs[index].net_after = Some(new_net);
+    new_net
  }
 
 

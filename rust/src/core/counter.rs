@@ -1,10 +1,8 @@
 use std::cmp::max;
-use std::collections::HashSet;
-use SynthesisProgram;
 
 pub struct Counter {
-    a: Vec<usize>,
-    b: Vec<usize>,
+    a: Vec<u16>,
+    b: Vec<u16>,
     init: bool,
 }
 
@@ -17,10 +15,10 @@ impl Counter {
         }
     }
 
-    pub fn next_borrow(&mut self) -> Option<&[usize]> {
+    pub fn next_borrow(&mut self) -> Option<&[u16]> {
         let length = self.a.len();
         let mut c = length - 1;
-        while self.a[c] == length - 1 || self.a[c] > self.b[c] {
+        while self.a[c] == length as u16 - 1 || self.a[c] > self.b[c] {
             c = c - 1;
         }
 
@@ -41,7 +39,7 @@ impl Counter {
 }
 
 impl Iterator for Counter {
-    type Item = Vec<usize>;
+    type Item = Vec<u16>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.init {

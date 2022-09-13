@@ -79,8 +79,6 @@ extern "C" {
     char* synthesis_program_header_name(const DecomposeContext&, usize, bool);
     CMatrix* synthesis_c_matrix(const DecomposeContext&);
     PetriNet* synthesis_eval_program(DecomposeContext&, usize);
-    PetriNet* synthesis_program_net_after(const DecomposeContext&, usize);
-    PetriNet* synthesis_init_program_net_after(DecomposeContext&, usize);
 
     // CMatrix
     i32 matrix_index(const CMatrix&, usize, usize);
@@ -416,14 +414,6 @@ CMatrix *DecomposeContext::c_matrix() const {
 
 PetriNet *DecomposeContext::eval_program(usize index) {
     return ::synthesis_eval_program(*this, index);
-}
-
-PetriNet* DecomposeContext::program_net_after(usize index) const {
-    return ::synthesis_program_net_after(*this, index);
-}
-
-PetriNet *DecomposeContext::init_program_after(usize index) {
-    return ::synthesis_init_program_net_after(*this, index);
 }
 
 //QVariant SynthesisContext::toVariant() const {
