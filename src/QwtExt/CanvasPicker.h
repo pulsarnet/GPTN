@@ -3,8 +3,6 @@
 //
 
 #pragma once
-
-#include <qwt_global.h>
 #include <QObject>
 
 class QPointF;

@@ -82,7 +82,7 @@ set(SRC_FILES
         src/synthesis/synthesis_table.cpp
         src/QwtExt/qwt_ext_plot_curve_labels.cpp
         src/QwtExt/CanvasPicker.cpp
-        )
+        src/synthesis/synthesis_window.cpp src/synthesis/synthesis_window.h)
 
 set(HEADERS
         src/mainwindow.h
@@ -114,7 +114,7 @@ set(HEADERS
         src/DockSystem/DockWidget.h
         src/QwtExt/qwt_ext_plot_curve_labels.h
         src/QwtExt/CanvasPicker.h
-        )
+        src/synthesis/synthesis_window.cpp src/synthesis/synthesis_window.h)
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 

@@ -10,6 +10,7 @@
 #include "../DockSystem/DockWidget.h"
 #include <DockManager.h>
 
+class SynthesisWindow;
 class QwtExtPlotCurveLabels;
 
 class DecomposeModelTab : public QWidget {
@@ -33,6 +34,8 @@ private:
     DockWidget* m_plotWidget;
 
     QwtExtPlotCurveLabels* m_plot;
+
+    QHash<size_t, SynthesisWindow*> m_synthesisWindows;
 };
 
 

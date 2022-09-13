@@ -12,7 +12,6 @@ namespace ffi {
     struct DecomposeContext;
 }
 
-class QToolBar;
 class QAction;
 class QTableView;
 class Switch;
@@ -24,28 +23,15 @@ class SynthesisTable : public QWidget {
 
 public:
 
-    explicit SynthesisTable(ffi::DecomposeContext* ctx, QWidget* parent = nullptr);
+    explicit SynthesisTable(ffi::DecomposeContext* ctx, QVector<size_t> programs, QWidget* parent = nullptr);
 
     SynthesisModel* model() const;
 
-public slots:
-
-    void slotEvalProgram(bool);
-    void slotAddProgram(bool);
-
-signals:
-
-    void signalSynthesisedProgram(ffi::PetriNet*, int);
-
+    QTableView* table();
+    const QTableView* table() const;
 private:
 
     QTableView* m_table = nullptr;
-    ffi::DecomposeContext* m_context = nullptr;
-
-    QToolBar* m_toolBar = nullptr;
-    QAction* m_evalProgram = nullptr;
-    QAction* m_addProgram = nullptr;
-    Switch* m_enableLabel = nullptr;
 };
 
 #endif //FFI_RUST_SYNTHESIS_TABLE_H

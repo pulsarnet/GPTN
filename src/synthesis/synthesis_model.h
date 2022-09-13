@@ -15,7 +15,7 @@ class SynthesisModel : public QAbstractTableModel {
 
 public:
 
-    explicit SynthesisModel(ffi::DecomposeContext* ctx, QObject* parent = nullptr);
+    explicit SynthesisModel(ffi::DecomposeContext* ctx, QVector<size_t>, QObject* parent = nullptr);
 
     int columnCount(const QModelIndex &parent) const override;
 
@@ -25,24 +25,14 @@ public:
 
     QVariant data(const QModelIndex &index, int role) const override;
 
-    Qt::ItemFlags flags(const QModelIndex &index) const override;
-
-    bool insertRows(int row, int count, const QModelIndex &parent) override;
-
-    bool setData(const QModelIndex &index, const QVariant &value, int role) override;
-
     ffi::DecomposeContext* ctx() {
         return m_ctx;
     }
 
-public slots:
-
-    void slotEnableLabels(bool checked);
-
 private:
 
-    ffi::DecomposeContext* m_ctx = nullptr;
-    bool m_enableLabels = false;
+    ffi::DecomposeContext* m_ctx;
+    QVector<size_t> m_programs;
 
 };
 

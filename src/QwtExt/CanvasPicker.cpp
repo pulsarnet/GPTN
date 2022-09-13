@@ -6,6 +6,7 @@
 #include <qwt_plot.h>
 #include <qwt_plot_curve.h>
 #include <QMouseEvent>
+#include <qwt_global.h>
 
 CanvasPicker::CanvasPicker(QwtPlot *plot)
     : QObject(plot)

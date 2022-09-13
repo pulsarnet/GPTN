@@ -23,6 +23,7 @@
 #include <qwt_plot_grid.h>
 #include "../QwtExt/qwt_ext_plot_curve_labels.h"
 #include "../QwtExt/CanvasPicker.h"
+#include "../synthesis/synthesis_window.h"
 
 DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) : QWidget(parent)
     , m_netModelingTab(mainTab)
@@ -102,8 +103,8 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     auto canvasPicker = new CanvasPicker(qwt_plot);
     connect(canvasPicker, &CanvasPicker::selected, this, &DecomposeModelTab::selectedPoint);
 
-    auto qwt_view = new DockWidget("График");
-    qwt_view->setWidget(qwt_plot);
+    m_plotWidget = new DockWidget("График");
+    m_plotWidget->setWidget(qwt_plot);
 
     auto area = m_dockManager->addDockWidget(ads::LeftDockWidgetArea, m_linearBaseFragmentsView);
     area->setWindowTitle("Линейно-базовые фрагменты");
@@ -113,7 +114,7 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     area->setWindowTitle("Примитивная система");
     area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
 
-    area = m_dockManager->addDockWidget(ads::BottomDockWidgetArea, qwt_view, area);
+    area = m_dockManager->addDockWidget(ads::BottomDockWidgetArea, m_plotWidget, area);
     area->setWindowTitle("График отношения");
     area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
 
@@ -128,5 +129,12 @@ void DecomposeModelTab::selectedPoint(int idx) {
     if (idx == -1)
         return;
 
-    qDebug() << this->m_plot->getData(idx).length();
+    if (auto it = m_synthesisWindows.find((size_t)idx); it != m_synthesisWindows.end()) {
+        auto window = it.value();
+        window->activateWindow();
+    } else {
+        auto window = new SynthesisWindow(m_ctx, m_plot->getData(idx));
+        m_synthesisWindows.insert(idx, window);
+        window->show();
+    }
 }
