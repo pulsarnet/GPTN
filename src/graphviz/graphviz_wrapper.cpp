@@ -65,30 +65,37 @@ void GraphVizWrapper::addEdge(const QString &from, const QString &to) {
 GraphModel GraphVizWrapper::save(char* algorithm) {
     gvLayout(m_context, m_graph, algorithm);
 
-    char* result = nullptr;
-    unsigned int len;
-    gvRenderData(m_context, m_graph, "json", &result, &len);
-
-    auto document = QJsonDocument::fromJson(QString::fromStdString(std::string(result, len)).toUtf8());
-    auto object = document.object();
-    auto map = object.toVariantMap();
-    auto objects = map["objects"].toJsonArray();
-
     GraphModel net;
-
-    for (auto node : objects) {
-
-        auto nodeObject = node.toObject();
-        if (!nodeObject.contains("pos")) continue;
-
-        QString pos_str = nodeObject.value("pos").toString();
-        auto split = pos_str.split(',');
-        QPointF pos(split.value(0).toFloat() * 1.73, split.value(1).toFloat() * 1.73);
-
-        QString name = nodeObject.value("name").toString();
-
-        net.elements.push_back({name, pos});
+    for (Agnode_t* node = agfstnode(m_graph); node != NULL; node = agnxtnode(m_graph, node)) {
+        auto name = QString(((Agnodeinfo_t*)AGDATA(node))->label->text);
+        auto x = ((Agnodeinfo_t*)AGDATA(node))->coord.x * 1.73;
+        auto y = ((Agnodeinfo_t*)AGDATA(node))->coord.y * 1.73;
+        net.elements.push_back({name, QPointF(x, y)});
     }
+//    char* result = nullptr;
+//    unsigned int len;
+//    gvRenderData(m_context, m_graph, "json", &result, &len);
+//
+//    auto document = QJsonDocument::fromJson(QString::fromStdString(std::string(result, len)).toUtf8());
+//    auto object = document.object();
+//    auto map = object.toVariantMap();
+//    auto objects = map["objects"].toJsonArray();
+//
+//    GraphModel net;
+//
+//    for (auto node : objects) {
+//
+//        auto nodeObject = node.toObject();
+//        if (!nodeObject.contains("pos")) continue;
+//
+//        QString pos_str = nodeObject.value("pos").toString();
+//        auto split = pos_str.split(',');
+//        QPointF pos(split.value(0).toFloat() * 1.73, split.value(1).toFloat() * 1.73);
+//
+//        QString name = nodeObject.value("name").toString();
+//
+//        net.elements.push_back({name, pos});
+//    }
 
     gvFreeLayout(m_context, m_graph);
 
