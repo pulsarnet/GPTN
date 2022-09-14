@@ -24,6 +24,8 @@ int main(int argc, char **argv) {
     ffi::init();
 
     QApplication app(argc, argv);
+    auto palette = QApplication::palette();
+    palette.setColor(QPalette::All, QPalette::Base, Qt::white);
 
     QFile qss(":/styles/style.qss");
     qss.open(QIODeviceBase::ReadOnly);
@@ -32,7 +34,6 @@ int main(int argc, char **argv) {
     auto qss_text = stream.readAll();
 
     app.setStyleSheet(qss_text);
-    QApplication::setFont(QFont("Segoe UI", 12, QFont::Medium));
 
     MainWindow window(nullptr);
     window.setMinimumSize(QSize(1280, 720));

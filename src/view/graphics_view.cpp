@@ -210,6 +210,8 @@ void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
 
     auto itemSelected = scene()->selectedItems().length() > 1;
     auto menu = new QMenu;
+    menu->setWindowFlags(menu->windowFlags() | Qt::FramelessWindowHint);
+    menu->setAttribute(Qt::WA_TranslucentBackground);
 
     auto horz = new QAction("Horizontal alignment", this);
     horz->setEnabled(itemSelected);

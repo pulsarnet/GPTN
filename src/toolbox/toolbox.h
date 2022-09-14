@@ -55,6 +55,9 @@ public:
 
     void addTool(QMenu* menu) {
         auto button = new Tool;
+        menu->setWindowFlags(menu->windowFlags() | Qt::FramelessWindowHint);
+        menu->setAttribute(Qt::WA_TranslucentBackground);
+
         dynamic_cast<QVBoxLayout*>(this->layout())->addWidget(button);
         button->setDefaultAction(new QAction);
         button->setMenu(menu);

@@ -20,8 +20,9 @@
 #include <QLabel>
 #include <QMessageBox>
 
-class ActionTabWidget;
+extern "C" void changeTitleBarColor(WId winId, double red, double green, double blue);
 
+class ActionTabWidget;
 
 class MainWindow : public QMainWindow {
 
