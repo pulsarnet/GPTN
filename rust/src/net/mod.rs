@@ -864,6 +864,11 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
              t_set,
              MatrixFormat(&d_input, &tran_indexes_vec, &pos_indexes_vec)
          );
+        log::info!(
+             "D OUTPUT AFTER T => {:?}{}",
+             t_set,
+             MatrixFormat(&d_output, &tran_indexes_vec, &pos_indexes_vec)
+         );
     }
 
     for p_set in p_sets.into_iter() {
@@ -872,6 +877,11 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
              "D INPUT AFTER P => {:?}{}",
              p_set,
              MatrixFormat(&d_input, &tran_indexes_vec, &pos_indexes_vec)
+         );
+        log::info!(
+             "D OUTPUT AFTER P => {:?}{}",
+             p_set,
+             MatrixFormat(&d_output, &tran_indexes_vec, &pos_indexes_vec)
          );
     }
 
@@ -889,7 +899,9 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
         for j in 0..d_matrix.ncols() {
             if (d_input.row(i)[j] + d_output.row(i)[j]) == 0 && d_input.row(i)[j] != 0 {
                 d_matrix.row_mut(i)[j] = 0;
-                save_vec.row_mut(i)[j] = 1;
+
+                // Сохраним реальное значение
+                save_vec.row_mut(i)[j] = d_input.row(i)[j].abs();
             } else {
                 d_matrix.row_mut(i)[j] = d_input.row(i)[j] + d_output.row(i)[j];
             }
@@ -913,7 +925,7 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
 
     for i in 0..d_matrix.nrows() {
         for j in 0..d_matrix.ncols() {
-            if save_vec.row(i)[j] == 1 {
+            if save_vec.row(i)[j] > 0 {
                 d_matrix.row_mut(i)[j] = 0;
             }
         }
@@ -1043,10 +1055,13 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
             if save_vec.row(i)[j] == 0 {
                 continue;
             }
-            let pos = pos_indexes_vec[i].clone();
-            let tran = tran_indexes_vec[j].clone();
-            connections.push(Connection::new(tran.index(), pos.index()));
-            connections.push(Connection::new(pos.index(), tran.index()));
+
+            let pos = &pos_indexes_vec[i];
+            let tran = &tran_indexes_vec[j];
+            for _ in 0..save_vec.row(i)[j] {
+                connections.push(Connection::new(tran.index(), pos.index()));
+                connections.push(Connection::new(pos.index(), tran.index()));
+            }
         }
     }
     new_net.connections = connections;
