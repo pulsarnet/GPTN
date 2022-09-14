@@ -62,7 +62,53 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
         painter->drawEllipse(rect.center(), 3., 3.);
 
         painter->restore();
-    } else if (this->markers() > 3) {
+    } else if (this->markers() == 4) {
+        auto rect = boundingRect();
+        painter->save();
+        painter->setBrush(QBrush(Qt::black));
+
+        rect.setX(rect.x() - 9.);
+        rect.setY(rect.y() + 9.);
+        painter->drawEllipse(rect.center(), 3., 3.);
+
+        rect.setX(rect.x() + 18.);
+        painter->drawEllipse(rect.center(), 3., 3.);
+
+        rect.setX(rect.x());
+        rect.setY(rect.y() - 18.);
+        painter->drawEllipse(rect.center(), 3., 3.);
+
+        rect.setX(rect.x() - 18.);
+        rect.setY(rect.y());
+        painter->drawEllipse(rect.center(), 3., 3.);
+
+        painter->restore();
+    } else if (this->markers() == 5) {
+        auto rect = boundingRect();
+        painter->save();
+        painter->setBrush(QBrush(Qt::black));
+
+        rect.setX(rect.x() - 12.);
+        rect.setY(rect.y() + 12.);
+        painter->drawEllipse(rect.center(), 3., 3.);
+
+        rect.setX(rect.x() + 24.);
+        painter->drawEllipse(rect.center(), 3., 3.);
+
+        rect.setX(rect.x());
+        rect.setY(rect.y() - 24.);
+        painter->drawEllipse(rect.center(), 3., 3.);
+
+        rect.setX(rect.x() - 24.);
+        rect.setY(rect.y());
+        painter->drawEllipse(rect.center(), 3., 3.);
+
+        rect.setX(rect.x() + 12.);
+        rect.setY(rect.y() + 12.);
+        painter->drawEllipse(rect.center(), 3., 3.);
+
+        painter->restore();
+    } else if (this->markers() > 5) {
         painter->drawText(boundingRect(), Qt::AlignCenter, QString("%1").arg(this->markers()));
     }
 
