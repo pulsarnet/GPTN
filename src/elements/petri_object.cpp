@@ -11,7 +11,7 @@
 PetriObject::PetriObject(ffi::PetriNet* net, ffi::VertexIndex _vertex, QGraphicsItem* parent) : QGraphicsItem(parent), m_net(net), m_vertex(_vertex) {
     setFlags(ItemIsMovable | ItemSendsGeometryChanges | ItemIsSelectable | ItemUsesExtendedStyleOption);
 
-    m_labelItem = new QGraphicsTextItem(vertex()->get_name(), this);
+    m_labelItem = new QGraphicsTextItem(vertex()->get_name(false), this);
     m_labelItem->setFlags(m_labelItem->flags() & 0);
     m_labelItem->setCacheMode(DeviceCoordinateCache);
     m_labelItem->setTextInteractionFlags(Qt::TextInteractionFlag::TextEditable);

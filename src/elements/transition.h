@@ -35,10 +35,16 @@ public:
 
     virtual QString name() const override;
 
+    QVariant itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant &value) override;
+
+private:
+
+    void setLabelTransformation();
+
 private:
 
     QPointF m_origin;
-
+    QGraphicsTextItem* m_label;
 };
 
 #endif //FFI_RUST_TRANSITION_H

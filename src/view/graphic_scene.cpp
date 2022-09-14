@@ -578,6 +578,7 @@ void GraphicScene::markPosition(QGraphicsSceneMouseEvent *event) {
 
 void GraphicScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event) {
     if (m_mod == A_Move) QGraphicsScene::mouseDoubleClickEvent(event);
+    else if (m_mod == A_Marker) markPosition(event);
 }
 
 

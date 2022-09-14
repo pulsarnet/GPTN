@@ -2,12 +2,19 @@
 // Created by Николай Муравьев on 10.01.2022.
 //
 
+#include <QGraphicsTextItem>
+#include <QGraphicsScene>
 #include "position.h"
 #include "transition.h"
-#include "../ffi/rust.h"
 
 Transition::Transition(const QPointF& origin, ffi::PetriNet* net, ffi::VertexIndex transition, QGraphicsItem *parent) : PetriObject(net, transition, parent), m_origin(origin) {
     this->setPos(m_origin);
+    auto name = QString("T%1%2")
+            .arg(this->index())
+            .arg(this->vertex()->parent() == 0 ? "" : QString(".%1").arg(this->vertex()->parent()));
+
+    m_label = new QGraphicsTextItem(name, this);
+    itemChange(ItemRotationHasChanged, {});
 }
 
 QRectF Transition::boundingRect() const {
@@ -31,10 +38,6 @@ void Transition::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
     rect.setY(rect.y());
     painter->drawRect(rect);
 
-    painter->setPen(Qt::white);
-    auto name = QString("%1").arg(this->index());
-    painter->rotate(-rotation());
-    painter->drawText(boundingRect(), Qt::AlignCenter, name);
     painter->restore();
 }
 
@@ -72,4 +75,25 @@ QPointF Transition::connectionPos(PetriObject* to, bool reverse) {
 
 QString Transition::name() const {
     return QString("t%1").arg(index());
+}
+
+QVariant Transition::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant &value) {
+    if (change == ItemRotationHasChanged) {
+        setLabelTransformation();
+    }
+    return PetriObject::itemChange(change, value);
+}
+
+void Transition::setLabelTransformation() {
+    qreal angle = rotation();
+
+    QFontMetricsF metrics = QFontMetricsF(scene() ? scene()->font() : QFont());
+    QSizeF nameSize = metrics.size(0, m_label->toPlainText());
+    if (angle != 0) {
+        m_label->setRotation(-angle);
+        m_label->setPos(-32, boundingRect().y() + boundingRect().height() / 2 + nameSize.width() / 2 + 2);
+    } else {
+        m_label->setPos(boundingRect().center().x() - nameSize.width() / 2 - 2, -60);
+        m_label->setRotation(-angle);
+    }
 }
