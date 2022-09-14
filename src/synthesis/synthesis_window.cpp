@@ -22,6 +22,8 @@ SynthesisWindow::SynthesisWindow(ffi::DecomposeContext *ctx, QVector<size_t> pro
     , m_manager(new ads::CDockManager(this))
 {
 
+    setMinimumSize(QSize(800, 600));
+
     auto table = new SynthesisTable(m_ctx, std::move(programs), this);
     connect(
             table->table()->selectionModel(),

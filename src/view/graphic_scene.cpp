@@ -22,21 +22,17 @@ GraphicScene::GraphicScene(ffi::PetriNet *net, QObject *parent) :
     m_net(net)
 {
     setSceneRect(-12500, -12500, 25000, 25000);
-    GraphVizWrapper graph;
-    QString algorithm = "neato";
 
     auto positions = m_net->positions();
     auto transitions = m_net->transitions();
     auto connections = m_net->connections();
 
     for (int i = 0; i < positions.size(); i++) {
-        graph.addCircle(QString("p%1").arg(positions[i]->index().id).toLocal8Bit().data(), QSizeF(80, 80));
         m_positions.push_back(new Position(QPointF(0, 0), m_net, positions[i]->index()));
         addItem(m_positions.last());
     }
 
     for (int i = 0; i < transitions.size(); i++) {
-        graph.addRectangle(QString("t%1").arg(transitions[i]->index().id).toLocal8Bit().data(), QSizeF(120, 60));
         m_transition.push_back(new Transition(QPointF(0, 0), m_net, transitions[i]->index()));
         addItem(m_transition.last());
     }
@@ -48,22 +44,16 @@ GraphicScene::GraphicScene(ffi::PetriNet *net, QObject *parent) :
         if (from.type == ffi::VertexType::Position) {
             auto position = getPosition(from.id);
             auto transition = getTransition(to.id);
-            graph.addEdge(position->name(), transition->name());
             connectItems(position, transition, true);
         }
         else {
             auto transition = getTransition(from.id);
             auto position = getPosition(to.id);
-            graph.addEdge(position->name(), transition->name());
             connectItems(transition, position, true);
         }
     }
 
-    auto result = graph.save(algorithm.isEmpty() ? (char*)"sfdp" : algorithm.toLocal8Bit().data());
-    for (auto& element : result.elements) {
-        auto vertex = getVertex(element.first);
-        vertex->setPos(element.second);
-    }
+    dotVisualization((char*)"dot");
 }
 
 
