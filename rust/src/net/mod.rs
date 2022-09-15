@@ -785,53 +785,7 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
 
     //let mut result = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
     let mut save_vec = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
-    let current_program = &programs.programs[index].data;
-    let mut t_sets = vec![];
-    let mut p_sets = vec![];
-    let mut searched = vec![].into_iter().collect::<HashSet<u16>>();
-
-    for index_a in 0..tran_indexes_vec.len() {
-        let search_number = current_program[index_a];
-        if searched.contains(&search_number) {
-            continue;
-        }
-        let mut indexes = vec![];
-        for index_b in (0..tran_indexes_vec.len()).filter(|e| current_program[*e] == search_number)
-        {
-            if index_a == index_b {
-                continue;
-            }
-            indexes.push(index_b);
-        }
-        if indexes.len() > 0 {
-            indexes.push(index_a);
-            t_sets.push(indexes);
-        }
-        searched.insert(search_number);
-    }
-
-    let offset = tran_indexes_vec.len();
-    let mut searched = vec![].into_iter().collect::<HashSet<u16>>();
-    for index_a in offset..(offset + pos_indexes_vec.len()) {
-        let search_number = current_program[index_a];
-        if searched.contains(&search_number) {
-            continue;
-        }
-        let mut indexes = vec![];
-        for index_b in (offset..(offset + pos_indexes_vec.len()))
-            .filter(|e| current_program[*e] == search_number)
-        {
-            if index_a == index_b {
-                continue;
-            }
-            indexes.push(index_b - offset);
-        }
-        if indexes.len() > 0 {
-            indexes.push(index_a - offset);
-            p_sets.push(indexes);
-        }
-        searched.insert(search_number);
-    }
+    let (t_sets, p_sets) = programs.programs[index].sets(&pos_indexes_vec, &tran_indexes_vec);
 
     log::info!("PSET => {:?}", p_sets);
     log::info!("TSET => {:?}", t_sets);

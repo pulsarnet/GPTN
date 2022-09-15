@@ -44,12 +44,16 @@ SynthesisWindow::SynthesisWindow(ffi::DecomposeContext *ctx, QVector<size_t> pro
     m_program = new DockWidget("Program");
     m_program->setWidget(new QLabel("Empty")); //TODO: добавить текст программы синтеза
 
-    auto area = m_manager->addDockWidget(ads::LeftDockWidgetArea, m_table);
+    auto area = m_manager->addDockWidget(ads::RightDockWidgetArea, m_view);
+    area->setWindowTitle("Графическое представление");
+    area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
+
+    area = m_manager->addDockWidget(ads::LeftDockWidgetArea, m_table, area);
     area->setWindowTitle("Программы");
     area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
 
-    area = m_manager->addDockWidget(ads::RightDockWidgetArea, m_view, area);
-    area->setWindowTitle("Графическое представление");
+    area = m_manager->addDockWidget(ads::BottomDockWidgetArea, m_program, area);
+    area->setWindowTitle("Программа");
     area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
 
     setLayout(new QGridLayout(this));
@@ -77,6 +81,8 @@ void SynthesisWindow::onSelectionChanged(const QItemSelection &selected, const Q
     auto oldScene = view()->scene();
     view()->setScene(newScene);
     delete oldScene;
+
+    label()->setText(m_ctx->program_equations(program));
 }
 
 SynthesisTable *SynthesisWindow::table() {

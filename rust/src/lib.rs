@@ -11,7 +11,7 @@ extern crate chrono;
 extern crate indexmap;
 
 use std::cmp::{max_by, min_by};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::ffi::CString;
 use std::ops::Deref;
 use libc::c_char;
@@ -282,6 +282,49 @@ impl DecomposeContext {
         self.programs[program].data[index] = value as u16;
     }
 
+    pub fn program_equation(&self, index: usize) -> String {
+        let pos_indexes_vec = self.positions();
+        let tran_indexes_vec = self.transitions();
+        let (t_sets, p_sets) = self.programs[index].sets(pos_indexes_vec, tran_indexes_vec);
+        log::error!("{:?}\n{:?}\n{:?}\n{:?}", t_sets, p_sets, pos_indexes_vec, tran_indexes_vec);
+        let mut result = String::new();
+        for set in t_sets {
+            if set.is_empty() {
+                continue
+            }
+
+            result += tran_indexes_vec[*set.last().unwrap()].name().as_str();
+            result += " = ";
+            for i in (0..set.len()).rev() {
+                result += &tran_indexes_vec[set[i]].name();
+                if i > 0 {
+                    result += " + ";
+                }
+            }
+
+            result += "\n";
+        }
+
+        for set in p_sets {
+            if set.is_empty() {
+                continue
+            }
+
+            result += &pos_indexes_vec[*set.last().unwrap()].name().as_str();
+            result += " = ";
+            for i in (0..set.len()).rev() {
+                result += &pos_indexes_vec[set[i]].name();
+                if i > 0 {
+                    result += " + ";
+                }
+            }
+
+            result += "\n";
+        }
+
+        result
+    }
+
     pub fn program_header_name(&self, index: usize, label: bool) -> String {
         if index < self.transitions().len() {
             match label {
@@ -462,6 +505,58 @@ impl SynthesisProgram {
         });
         counts.values().filter(|v| **v > 1).count()
     }
+
+    pub fn sets(&self, pos_indexes_vec: &Vec<Vertex>, tran_indexes_vec: &Vec<Vertex>) -> (Vec<Vec<usize>>, Vec<Vec<usize>>) {
+        let mut t_sets = vec![];
+        let mut p_sets = vec![];
+        let mut searched = vec![].into_iter().collect::<HashSet<u16>>();
+
+        for index_a in 0..tran_indexes_vec.len() {
+            let search_number = self.data[index_a];
+            if searched.contains(&search_number) {
+                continue;
+            }
+            let mut indexes = vec![];
+            for index_b in (0..tran_indexes_vec.len()).filter(|e| self.data[*e] == search_number)
+            {
+                if index_a == index_b {
+                    continue;
+                }
+                indexes.push(index_b);
+            }
+            if indexes.len() > 0 {
+                indexes.push(index_a);
+                t_sets.push(indexes);
+            }
+            searched.insert(search_number);
+        }
+
+        let offset = tran_indexes_vec.len();
+        let mut searched = vec![].into_iter().collect::<HashSet<u16>>();
+        for index_a in offset..(offset + pos_indexes_vec.len()) {
+            let search_number = self.data[index_a];
+            if searched.contains(&search_number) {
+                continue;
+            }
+            let mut indexes = vec![];
+            for index_b in (offset..(offset + pos_indexes_vec.len()))
+                .filter(|e| self.data[*e] == search_number)
+            {
+                if index_a == index_b {
+                    continue;
+                }
+                indexes.push(index_b - offset);
+            }
+            if indexes.len() > 0 {
+                indexes.push(index_a - offset);
+                p_sets.push(indexes);
+            }
+            searched.insert(search_number);
+        }
+
+        (t_sets, p_sets)
+    }
+
 }
 
 #[no_mangle]
@@ -491,6 +586,19 @@ extern "C" fn synthesis_program_header_name(ctx: &mut DecomposeContext, index: u
     let pointer = c_str.as_ptr();
     std::mem::forget(c_str);
     pointer
+}
+
+#[no_mangle]
+extern "C" fn synthesis_program_equations(ctx: &mut DecomposeContext, index: usize) -> *const c_char {
+    match ctx.programs.get(index) {
+        Some(_) => {
+            let c_str = CString::new(ctx.program_equation(index)).unwrap();
+            let pointer = c_str.as_ptr();
+            std::mem::forget(c_str);
+            pointer
+        },
+        None => std::ptr::null()
+    }
 }
 
 #[no_mangle]

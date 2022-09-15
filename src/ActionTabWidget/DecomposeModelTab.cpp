@@ -132,6 +132,7 @@ void DecomposeModelTab::selectedPoint(int idx) {
 
     if (auto it = m_synthesisWindows.find((size_t)idx); it != m_synthesisWindows.end()) {
         auto window = it.value();
+        window->show();
         window->activateWindow();
     } else {
         auto window = new SynthesisWindow(m_ctx, m_plot->getData(idx));

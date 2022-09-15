@@ -131,6 +131,7 @@ namespace ffi {
         char* program_header_name(usize index, bool label) const;
         CMatrix* c_matrix() const;
         PetriNet* eval_program(usize index);
+        QString program_equations(usize index) const;
         usize transition_united(usize index);
         usize position_united(usize index);
 
