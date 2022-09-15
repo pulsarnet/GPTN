@@ -21,6 +21,7 @@ use log4rs::config::{Appender, Root};
 use log4rs::encode::pattern::PatternEncoder;
 use log::{info, LevelFilter};
 use nalgebra::DMatrix;
+use ndarray_linalg::Solve;
 use core::Counter;
 use ffi::vec::CVec;
 
@@ -89,39 +90,56 @@ impl DecomposeContextBuilder {
         }
     }
 
-    pub fn calculate_c_matrix(parts: &PetriNetVec, positions: usize, transitions: usize, linear_base_fragments: &(CMatrix, CMatrix)) -> CMatrix {
-        let (equivalent_input, equivalent_output) = linear_base_fragments;
-
+    pub fn calculate_c_matrix(positions: usize, transitions: usize, linear_base_fragments: &(CMatrix, CMatrix), primitive_matrix: &DMatrix<i32>) -> CMatrix {
         let mut c_matrix = nalgebra::DMatrix::<i32>::zeros(positions, positions);
-
+        let (equivalent_input, equivalent_output) = linear_base_fragments;
         let mut d_matrix = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
         for i in 0..d_matrix.nrows() {
             for j in 0..d_matrix.ncols() {
-                d_matrix.row_mut(i)[j] = equivalent_input.row(i)[j] + equivalent_output.row(i)[j];
+                if (equivalent_input.row(i)[j] + equivalent_output.row(i)[j]) == 0 && equivalent_input.row(i)[j] != 0 {
+                    d_matrix.row_mut(i)[j] = 0;
+                } else {
+                    d_matrix.row_mut(i)[j] = equivalent_input.row(i)[j] + equivalent_output.row(i)[j];
+                }
             }
         }
 
-        let mut offset = 0;
-        for net in parts.0.iter() {
-            let net_positions = net.positions.len();
+        let mut entries = vec![];
+        let mut result_entries = vec![];
+        for i in 0..c_matrix.nrows() {
+            let mut entry = ndarray::Array2::zeros((primitive_matrix.nrows(), c_matrix.nrows()));
+            let mut result_entry = ndarray::Array1::zeros(c_matrix.nrows());
+            for j in 0..primitive_matrix.ncols() {
+                for d in 0..primitive_matrix.nrows() {
+                    entry.row_mut(j)[d] = primitive_matrix.row(d)[j] as f64;
+                }
+                result_entry[j] = d_matrix.row(i)[j] as f64;
+            }
 
-            for i in 0..net_positions {
-                for j in 0..net_positions {
-                    if i == j {
-                        c_matrix.row_mut(i + offset)[j + offset] = 1;
-                    }
-                    else if i > 0 || i < (net_positions - 1) {
-                        if i == (j + 1) && i % 2 == 0 {
-                            c_matrix.row_mut(i + offset)[j + offset] = 1;
-                        }
-                        else if j == (i + 1) && j % 2 == 0 {
-                            c_matrix.row_mut(i + offset)[j + offset] = 1;
-                        }
+            for j in 0..entry.nrows() {
+                for d in 0..entry.ncols() {
+                    if entry.row(j)[d] == -1.0 {
+                        entry.row_mut(j + primitive_matrix.ncols())[d] = 1.0;
+                        result_entry[j + primitive_matrix.ncols()] = 0.0; //(rand::random::<u8>() % 4).into();
+                        //result_entry[j + lbf_matrix.ncols()] = 1.0;//(rand::random::<u8>() % 4).into();
                     }
                 }
             }
 
-            offset += net_positions;
+            entries.push(entry);
+            result_entries.push(result_entry);
+        }
+
+        for (index, (a, b)) in entries
+            .into_iter()
+            .zip(result_entries.into_iter())
+            .enumerate()
+        {
+            let solve = a.solve(&b).unwrap();
+            solve
+                .into_iter()
+                .enumerate()
+                .for_each(|v| c_matrix.row_mut(index)[v.0] = v.1 as i32);
         }
 
         CMatrix::from(c_matrix)
@@ -135,7 +153,7 @@ impl DecomposeContextBuilder {
         let transitions = parts.0.iter().flat_map(|net| net.transitions.values()).cloned().collect::<Vec<_>>();
         let (primitive_net, primitive_matrix) = parts.primitive();
         let linear_base_fragments_matrix = parts.equivalent_matrix();
-        let c_matrix = DecomposeContextBuilder::calculate_c_matrix(&parts, positions.len(), transitions.len(), &linear_base_fragments_matrix);
+        let c_matrix = DecomposeContextBuilder::calculate_common_c_matrix(positions.len(), transitions.len(), &linear_base_fragments_matrix, &primitive_matrix);
 
         DecomposeContext {
             parts,
