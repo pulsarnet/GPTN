@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.17.3)
-project(ffi_rust LANGUAGES C CXX OBJC OBJCXX)
+project(ffi_rust)
 include(ExternalProject)
 
 message(STATUS ${CMAKE_CXX_FLAGS})
@@ -30,17 +30,9 @@ endif()
 include_directories(${GRAPHVIZ_DIR}/include/)
 link_directories(${GRAPHVIZ_DIR}/lib/)
 
-
-find_library(QWT
-        NAMES qwt
-        HINTS ${QWT_DIR}/lib
-        REQUIRED)
-if(QWT)
-    include_directories(${QWT}/Headers)
-    include_directories(${QWT_DIR}/include)
-    add_compile_definitions(QWT_DLL)
-    message("QWT found: ${QWT}")
-endif()
+include_directories(${QWT_DIR}/include/)
+link_directories(${QWT_DIR}/lib/)
+add_compile_definitions(QWT_DLL)
 
 if(NOT WIN32)
     #set(CMAKE_PREFIX_PATH "/Users/nikolajmuravev/Qt/6.2.1/macos/lib/cmake")
@@ -81,7 +73,6 @@ set(SRC_FILES
         src/QwtExt/qwt_ext_plot_curve_labels.cpp
         src/QwtExt/CanvasPicker.cpp
         src/synthesis/synthesis_window.cpp
-        src/macos/titlebar.mm
         )
 
 set(HEADERS
@@ -114,7 +105,8 @@ set(HEADERS
         src/DockSystem/DockWidget.h
         src/QwtExt/qwt_ext_plot_curve_labels.h
         src/QwtExt/CanvasPicker.h
-        src/synthesis/synthesis_window.h)
+        src/synthesis/synthesis_window.h
+        )
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 
@@ -126,18 +118,17 @@ add_executable(ffi_rust
         )
 
 target_link_libraries(ffi_rust PRIVATE
-        "${CMAKE_SOURCE_DIR}/rust/target/$<$<CONFIG:Debug>:debug>$<$<CONFIG:Release>:release>/libhello_world.a"
+        "${CMAKE_SOURCE_DIR}/rust/target/$<$<CONFIG:Debug>:debug>$<$<CONFIG:Release>:release>/hello_world.lib"
         Qt6::Widgets
         Qt6::Core
         Qt6::Gui
         Qt6::OpenGLWidgets
         Qt6::Svg
         ads::qtadvanceddocking
-        openblas
+        libopenblas
         gvc
         cgraph
-        ${QWT}
-        "-framework AppKit"
+        qwt
         )
 
 qt6_import_plugins(ffi_rust

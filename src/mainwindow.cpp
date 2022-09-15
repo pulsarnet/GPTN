@@ -4,7 +4,6 @@
 
 #include "mainwindow.h"
 
-
 #include <QFileDialog>
 #include <QGraphicsDropShadowEffect>
 #include <QDockWidget>
@@ -22,8 +21,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_changed(false),
     createStatusBar();
 
     setCentralWidget(m_tabWidget);
-
-    changeTitleBarColor(winId(), 0.99, 0.99, 0.99);
 }
 
 void MainWindow::setFileName(const QString &name) {
