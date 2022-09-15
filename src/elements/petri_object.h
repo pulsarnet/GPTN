@@ -75,7 +75,6 @@ public:
 
     void addConnectionLine(ArrowLine* line);
     void removeConnectionLine(ArrowLine* line);
-    void updateConnections();
     void updateLabelPosition();
 
     ~PetriObject();

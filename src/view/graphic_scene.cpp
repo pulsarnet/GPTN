@@ -44,12 +44,12 @@ GraphicScene::GraphicScene(ffi::PetriNet *net, QObject *parent) :
         if (from.type == ffi::VertexType::Position) {
             auto position = getPosition(from.id);
             auto transition = getTransition(to.id);
-            connectItems(position, transition, true);
+            connectItems(position, transition, true)->updateConnection();
         }
         else {
             auto transition = getTransition(from.id);
             auto position = getPosition(to.id);
-            connectItems(transition, position, true);
+            connectItems(transition, position, true)->updateConnection();
         }
     }
 
@@ -168,7 +168,7 @@ void GraphicScene::removeObject(QGraphicsSceneMouseEvent *event) {
         onSceneChanged();
     }
     else if (auto connection_line = dynamic_cast<ArrowLine*>(item); connection_line) {
-        connection_line->disconnect(m_net);
+        connection_line->disconnect();
         removeItem(connection_line);
         m_connections.removeAt(m_connections.indexOf(connection_line));
         delete connection_line;
@@ -181,7 +181,7 @@ void GraphicScene::connectionStart(QGraphicsSceneMouseEvent *event) {
 
     auto item = itemAt(event->scenePos(), QTransform());
     if (auto petri = dynamic_cast<PetriObject*>(item); petri) {
-        auto connection = new ArrowLine(petri, QLineF(item->scenePos(), event->scenePos()));
+        auto connection = new ArrowLine(m_net, petri, QLineF(item->scenePos(), event->scenePos()));
         addItem(connection);
         m_currentConnection = connection;
     }
@@ -189,29 +189,20 @@ void GraphicScene::connectionStart(QGraphicsSceneMouseEvent *event) {
 }
 
 void GraphicScene::connectionCommit(QGraphicsSceneMouseEvent *event) {
-
     if (!m_currentConnection) return;
 
     auto item = netItemAt(event->scenePos());
     if (auto petri = dynamic_cast<PetriObject*>(item); petri) {
-        if (m_currentConnection->setTo(petri)) {
-            m_currentConnection->setLine(
-                    QLineF(m_currentConnection->from()->connectionPos(petri, true),
-                           petri->connectionPos(m_currentConnection->from(), false)));
-            m_currentConnection->updateConnection();
-            m_connections.push_back(m_currentConnection);
-
-            m_net->connect(m_currentConnection->from()->vertex(), m_currentConnection->to()->vertex());
-
-            m_currentConnection = nullptr;
+        if (m_currentConnection->from()->allowConnection(item)) {
+            auto conn = connectItems(m_currentConnection->from(), petri);
+            conn->updateConnection();
+            delete m_currentConnection;
         }
-    }
-
-    if (m_currentConnection) {
+    } else {
         removeItem(m_currentConnection);
-        m_currentConnection = nullptr;
     }
 
+    m_currentConnection = nullptr;
 }
 
 void GraphicScene::connectionRollback(QGraphicsSceneMouseEvent *event) {
@@ -229,7 +220,7 @@ void GraphicScene::removeConnectionsAssociatedWith(PetriObject *object) {
         if (connection->from() == object || connection->to() == object) {
             removeItem(connection);
             iter.remove();
-            connection->disconnect(m_net);
+            connection->disconnect();
             delete connection;
         }
     }
@@ -427,7 +418,7 @@ bool GraphicScene::fromJson(const QJsonDocument& document) {
         if (toType == ffi::VertexType::Position) to = getPosition(toId);
         else to = getTransition(toId);
 
-        connectItems(from, to);
+        connectItems(from, to)->updateConnection();
     }
 
     return true;
@@ -471,15 +462,32 @@ Transition *GraphicScene::addTransition(ffi::Vertex *transition, const QPointF &
 
 
 ArrowLine* GraphicScene::connectItems(PetriObject *from, PetriObject *to, bool no_add) {
+    ArrowLine* arrowLine = nullptr;
 
-    auto arrowLine = new ArrowLine(from, QLineF(from->connectionPos(to, false), to->connectionPos(from, true)));
-    arrowLine->setTo(to);
+    auto it = std::find_if(
+            m_connections.begin(),
+            m_connections.end(),
+            [&](ArrowLine* connection) {
+                return (connection->from() == from && connection->to() == to)
+                || (connection->from() == to && connection->to() == from);
+            });
+
+    if (it != m_connections.end()) {
+        arrowLine = (*it);
+        if (arrowLine->from() == to && arrowLine->to() == from) {
+            arrowLine->setBidirectional(true);
+            arrowLine->updateConnection();
+        }
+    } else {
+        arrowLine = new ArrowLine(m_net, from, QLineF(from->connectionPos(to, false), to->connectionPos(from, true)));
+        arrowLine->setTo(to);
+
+        m_connections.push_back(arrowLine);
+        addItem(arrowLine);
+    }
 
     if (!no_add)
         m_net->connect(from->vertex(), to->vertex());
-
-    m_connections.push_back(arrowLine);
-    addItem(arrowLine);
 
     return arrowLine;
 }

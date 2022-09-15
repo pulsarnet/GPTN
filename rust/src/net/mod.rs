@@ -351,7 +351,12 @@ impl PetriNet {
     }
 
     pub fn connect(&mut self, a: VertexIndex, b: VertexIndex) {
-        self.connections.push(Connection::new(a, b));
+        match self.connections.iter_mut()
+            .find(|c| c.first() == a && c.second() == b)
+        {
+            Some(connection) => connection.increment(),
+            None => self.connections.push(Connection::new(a, b)),
+        }
     }
 
     fn get_indexes(positions: &IndexMap<VertexIndex, Vertex>, transitions: &IndexMap<VertexIndex, Vertex>) -> HashMap<VertexIndex, usize> {
@@ -605,8 +610,8 @@ impl PetriNet {
 
         for conn in self.connections.iter() {
             match conn.first().type_ {
-                VertexType::Transition => output.row_mut(*position_indexes.get(&conn.second()).unwrap())[*transition_indexes.get(&conn.first()).unwrap()] = 1,
-                VertexType::Position => input.row_mut(*position_indexes.get(&conn.first()).unwrap())[*transition_indexes.get(&conn.second()).unwrap()] = 1,
+                VertexType::Transition => output.row_mut(*position_indexes.get(&conn.second()).unwrap())[*transition_indexes.get(&conn.first()).unwrap()] = conn.weight() as i32,
+                VertexType::Position => input.row_mut(*position_indexes.get(&conn.first()).unwrap())[*transition_indexes.get(&conn.second()).unwrap()] = conn.weight() as i32,
             }
         }
 
@@ -1022,28 +1027,31 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
         let col = d_matrix.column(*trans_new_indexes.get(&transition.index()).unwrap());
         for (index, el) in col.iter().enumerate().filter(|e| e.1.ne(&0)) {
             let pos = pos_indexes_vec[index].clone();
+
             if *el < 0 {
-                (0..el.abs()).into_iter().for_each(|_| connections.push(Connection::new(pos.index(), transition.index())));
+                connections.push(Connection::new(pos.index(), transition.index()));
+                connections.last_mut().unwrap().set_weight(el.abs() as usize);
             }
             else if *el > 0 {
-                (0..el.abs()).into_iter().for_each(|_| connections.push(Connection::new(transition.index(), pos.index())));
+                connections.push(Connection::new(transition.index(), pos.index()));
+                connections.last_mut().unwrap().set_weight(*el as usize);
             }
         }
     }
-    for i in 0..save_vec.nrows() {
-        for j in 0..save_vec.ncols() {
-            if save_vec.row(i)[j] == 0 {
-                continue;
-            }
-
-            let pos = &pos_indexes_vec[i];
-            let tran = &tran_indexes_vec[j];
-            for _ in 0..save_vec.row(i)[j] {
-                connections.push(Connection::new(tran.index(), pos.index()));
-                connections.push(Connection::new(pos.index(), tran.index()));
-            }
-        }
-    }
+    // for i in 0..save_vec.nrows() {
+    //     for j in 0..save_vec.ncols() {
+    //         if save_vec.row(i)[j] == 0 {
+    //             continue;
+    //         }
+    //
+    //         let pos = &pos_indexes_vec[i];
+    //         let tran = &tran_indexes_vec[j];
+    //         for _ in 0..save_vec.row(i)[j] {
+    //             connections.push(Connection::new(tran.index(), pos.index()));
+    //             connections.push(Connection::new(pos.index(), tran.index()));
+    //         }
+    //     }
+    // }
     new_net.connections = connections;
 
     //programs.programs[index].net_after = Some(new_net);

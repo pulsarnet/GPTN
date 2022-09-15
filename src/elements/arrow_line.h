@@ -16,17 +16,18 @@ namespace ffi {
 
 class PetriObject;
 
-
 class ArrowLine : public QGraphicsLineItem {
 
 public:
-    explicit ArrowLine(PetriObject* from, const QLineF &line, QGraphicsItem* parent = nullptr);
+    explicit ArrowLine(ffi::PetriNet* net, PetriObject* from, const QLineF &line, QGraphicsItem* parent = nullptr);
 
     QRectF boundingRect() const override;
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
 
     bool setTo(PetriObject* to);
+
+    void setBidirectional(bool b);
 
     PetriObject* from() {
         return m_from;
@@ -36,21 +37,25 @@ public:
         return m_to;
     }
 
-    void disconnect(ffi::PetriNet* net);
+    void disconnect();
 
     void updateConnection();
 
-    void setBendFactor(int bf);
+private:
+
+    static QPolygonF arrow(QLineF line);
 
 private:
 
+    bool m_bidirectional = false;
     PetriObject* m_from = nullptr;
     PetriObject* m_to = nullptr;
-
-    int m_bendFactor = 0;
+    ffi::PetriNet* m_net = nullptr;
 
     QPainterPath m_shape;
-    QPolygonF m_arrow;
+    QPolygonF m_arrow1;
+    QPolygonF m_arrow2;
+    QString m_text;
 };
 
 

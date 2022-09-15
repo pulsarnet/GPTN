@@ -93,6 +93,7 @@ namespace ffi {
 
         usize input_positions();
         usize output_positions();
+        usize connection_weight(Vertex*, Vertex*);
     };
 
     struct Vertex {

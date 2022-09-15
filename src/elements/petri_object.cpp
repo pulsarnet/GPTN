@@ -69,37 +69,6 @@ void PetriObject::addConnectionLine(ArrowLine* line) {
     }
 }
 
-void PetriObject::updateConnections() {
-
-    typedef QList<ArrowLine*> LineList;
-    typedef QSet<PetriObject*> Key;
-    QHash<Key, LineList> lineGroups;
-
-    for (auto conn : m_connections) {
-        PetriObject* from = conn->from();
-        PetriObject* to = conn->to();
-        Key key = { from, to };
-        lineGroups[key].append(conn);
-    }
-
-    for (const LineList& value : lineGroups) {
-        if (value.count() == 1) {
-            // Forward line
-            value.first()->setBendFactor(0);
-        }
-        else {
-            int bf = (value.count() & 1) ? 0 : 1;
-            for (auto conn : value) {
-                conn->setBendFactor(bf);
-                qDebug() << "SET bf: " << bf;
-                if (bf > 0) bf = 0 - bf;
-                else bf = 1 - bf;
-            }
-        }
-    }
-
-}
-
 PetriObject::~PetriObject() {
     for (auto connection : m_connections) {
         //connection->disconnect(net());

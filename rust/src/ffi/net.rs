@@ -151,3 +151,11 @@ pub unsafe extern "C" fn petri_net_input_positions(net: &PetriNet) -> usize {
 pub unsafe extern "C" fn petri_net_output_positions(net: &PetriNet) -> usize {
     net.output_positions()
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn petri_net_connection_weight(net: &PetriNet, a: &Vertex, b: &Vertex) -> usize {
+    net.connections
+        .iter()
+        .find(|conn| conn.first() == a.index() && conn.second() == b.index())
+        .map_or(0, |conn| conn.weight())
+}

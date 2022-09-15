@@ -39,6 +39,7 @@ extern "C" {
     void petri_net_as_matrix(const PetriNet&, CNamedMatrix**, CNamedMatrix**);
     usize petri_net_input_positions(const PetriNet&);
     usize petri_net_output_positions(const PetriNet&);
+    usize petri_net_connection_weight(const PetriNet&, Vertex&, Vertex&);
 
     Vertex* net_get_vertex(const PetriNet&, VertexIndex);
 
@@ -290,6 +291,10 @@ usize PetriNet::input_positions() {
 
 usize PetriNet::output_positions() {
     return ::petri_net_output_positions(*this);
+}
+
+usize PetriNet::connection_weight(ffi::Vertex *a, ffi::Vertex *b) {
+    return ::petri_net_connection_weight(*this, *a, *b);
 }
 
 VertexIndex Vertex::index() const {

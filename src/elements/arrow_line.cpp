@@ -3,17 +3,24 @@
 //
 
 #include "arrow_line.h"
-#include "position.h"
 #include "petri_object.h"
 #include "transition.h"
-#include "../ffi/rust.h"
+#include <QMatrix4x4>
+
+ArrowLine::ArrowLine(ffi::PetriNet* net, PetriObject *from, const QLineF &line, QGraphicsItem *parent)
+        : QGraphicsLineItem(line, parent)
+        , m_net(net)
+{
+    this->m_from = from;
+
+    setFlags(ItemIsSelectable);
+}
 
 QRectF ArrowLine::boundingRect() const {
-
     QRectF rect;
 
     if (m_to) {
-        rect = m_shape.boundingRect().adjusted(-10., -10, 10, 10);
+        rect = m_shape.boundingRect().adjusted(-15., -15, 15, 15);
     }
     else {
         rect = QGraphicsLineItem::boundingRect();
@@ -26,23 +33,35 @@ QRectF ArrowLine::boundingRect() const {
 }
 
 void ArrowLine::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
-
     painter->setClipRect(boundingRect());
+    painter->setRenderHints(QPainter::TextAntialiasing | QPainter::Antialiasing);
 
+    painter->save();
     painter->setBrush(Qt::NoBrush);
     painter->setPen(Qt::black);
     painter->drawPath(m_shape);
 
     painter->setBrush(Qt::black);
     painter->setPen(Qt::NoPen);
-    painter->drawPolygon(m_arrow);
-}
+    painter->drawPolygon(m_arrow1);
 
+    if (m_bidirectional) {
+        painter->drawPolygon(m_arrow2);
+    }
+    painter->restore();
 
-ArrowLine::ArrowLine(PetriObject *from, const QLineF &line, QGraphicsItem *parent) : QGraphicsLineItem(line, parent) {
-    this->m_from = from;
-
-    setFlags(ItemIsSelectable);
+    if (!m_text.isEmpty()) {
+        double angle = std::atan2(-line().dy(), line().dx()) * 180/M_PI;
+        painter->save();
+        painter->translate(line().center().x(), line().center().y());
+        painter->rotate(-angle);
+        painter->setBrush(QBrush(Qt::white));
+        QFontMetricsF metrics(painter->font());
+        QSizeF size = metrics.size(0, m_text);
+        painter->drawText(-size.width() / 2, -2, m_text);
+        painter->rotate(+angle);
+        painter->restore();
+    }
 }
 
 bool ArrowLine::setTo(PetriObject *to) {
@@ -53,24 +72,24 @@ bool ArrowLine::setTo(PetriObject *to) {
         m_from->addConnectionLine(this);
         m_to->addConnectionLine(this);
 
-        m_from->updateConnections();
         return true;
     }
 
     return false;
 }
 
-void ArrowLine::disconnect(ffi::PetriNet *net) {
-    net->remove_connection(this->from()->vertex(), this->to()->vertex());
+void ArrowLine::setBidirectional(bool b) {
+    m_bidirectional = b;
+}
+
+void ArrowLine::disconnect() {
+    m_net->remove_connection(this->from()->vertex(), this->to()->vertex());
+    m_net->remove_connection(this->to()->vertex(), this->from()->vertex());
     this->from()->removeConnectionLine(this);
     this->to()->removeConnectionLine(this);
 }
 
 void ArrowLine::updateConnection() {
-
-    qreal arrowSize = 10;
-
-    bool firstPosition = dynamic_cast<Position*>(from());
 
     if (from() && to()) {
         auto point1 = from()->connectionPos(to(), true);
@@ -79,7 +98,47 @@ void ArrowLine::updateConnection() {
         setLine(QLineF(point1, point2));
     }
 
-    QLineF line(this->line().p2(), this->line().p1());
+    QLineF line1(this->line().p2(), this->line().p1());
+    QLineF line2(this->line().p1(), this->line().p2());
+
+    m_arrow1 = ArrowLine::arrow(line1);
+    m_arrow2 = ArrowLine::arrow(line2);
+
+    QPointF arrowLineCenter = QLineF(m_arrow1.data()[1], m_arrow1.data()[2]).center();
+    QPointF endPoint = line1.p1();
+    endPoint.setX(arrowLineCenter.x());
+    endPoint.setY(arrowLineCenter.y());
+
+    QPainterPath curve;
+    curve.moveTo(endPoint);
+
+    if (m_bidirectional) {
+        QPointF arrowLineCenter = QLineF(m_arrow2.data()[1], m_arrow2.data()[2]).center();
+        QPointF beginPoint = line1.p2();
+        beginPoint.setX(arrowLineCenter.x());
+        beginPoint.setY(arrowLineCenter.y());
+        curve.lineTo(beginPoint);
+    } else {
+        curve.lineTo(line1.p2());
+    }
+
+
+    if (to()) {
+        m_text.clear();
+        if (m_bidirectional) {
+            m_text = QString("<- %1 | %2 ->")
+                    .arg(m_net->connection_weight(to()->vertex(), from()->vertex()))
+                    .arg(m_net->connection_weight(from()->vertex(), to()->vertex()));
+        } else if (auto weight = m_net->connection_weight(from()->vertex(), to()->vertex()); weight > 1) {
+            m_text = QString("%1").arg(weight);
+        }
+    }
+
+    m_shape = curve;
+}
+
+QPolygonF ArrowLine::arrow(QLineF line) {
+    static const size_t arrowSize = 10;
 
     double angle = std::atan2(-line.dy(), line.dx());
     QPointF arrowP1 = line.p1() + QPointF(sin(angle + M_PI / 3.) * arrowSize,
@@ -87,42 +146,7 @@ void ArrowLine::updateConnection() {
     QPointF arrowP2 = line.p1() + QPointF(sin(angle + M_PI - M_PI / 3.) * arrowSize,
                                           cos(angle + M_PI - M_PI / 3.) * arrowSize);
 
-    QPointF arrowLineCenter = QLineF(arrowP1, arrowP2).center();
-    QPointF endPoint = line.p1();
-    endPoint.setX(arrowLineCenter.x());
-    endPoint.setY(arrowLineCenter.y());
-
-    m_arrow.clear();
-    m_arrow << line.p1() << arrowP1 << arrowP2;
-
-    QPainterPath curve;
-    if (m_bendFactor) {
-        qreal posFactor = qAbs(m_bendFactor);
-        bool bendDirection = firstPosition;
-        if (m_bendFactor < 0)
-            bendDirection = !bendDirection;
-
-        QLineF f1((endPoint + line.p2()) / 2., line.p2());
-        f1.setAngle(bendDirection ? f1.angle() + 90 : f1.angle() - 90);
-        f1.setLength(f1.length() * 0.2 * posFactor);
-
-        auto m_controlPos = f1.p2();
-        auto m_controlPoint = m_controlPos - ((endPoint + line.p2()) / 2. - m_controlPos) * 0.13;
-
-        curve.moveTo(endPoint);
-        curve.cubicTo(m_controlPoint, m_controlPoint, line.p2());
-    }
-    else {
-        // direction line
-        curve.moveTo(endPoint);
-        curve.lineTo(line.p2());
-    }
-
-    m_shape = curve;
-}
-
-void ArrowLine::setBendFactor(int bf) {
-    m_bendFactor = bf;
-
-    updateConnection();
+    QPolygonF arrow;
+    arrow << line.p1() << arrowP1 << arrowP2;
+    return arrow;
 }
