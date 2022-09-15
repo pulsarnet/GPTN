@@ -29,7 +29,7 @@ QVariant SynthesisModel::data(const QModelIndex &index, int role) const {
     }
 
     if (role == Qt::DisplayRole) {
-        return m_programs[index.row()];
+        return (int)m_programs[index.row()];
     }
 
     return {};

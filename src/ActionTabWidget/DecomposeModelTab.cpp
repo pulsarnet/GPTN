@@ -12,15 +12,15 @@
 #include <QLabel>
 #include <unordered_map>
 
-#include <qwt_plot.h>
-#include <qwt_plot_curve.h>
-#include <qwt_symbol.h>
-#include <qwt_plot_magnifier.h>
-#include <qwt_plot_panner.h>
-#include <qwt_plot_picker.h>
-#include <qwt_picker.h>
-#include <qwt_picker_machine.h>
-#include <qwt_plot_grid.h>
+#include <QwtPlot>
+#include <QwtPlotCurve>
+#include <QwtSymbol>
+#include <QwtPlotMagnifier>
+#include <QwtPlotPanner>
+#include <QwtPlotPicker>
+#include <QwtPicker>
+#include <QwtPickerMachine>
+#include <QwtPlotGrid>
 #include "../QwtExt/qwt_ext_plot_curve_labels.h"
 #include "../QwtExt/CanvasPicker.h"
 #include "../synthesis/synthesis_window.h"
@@ -78,6 +78,7 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     auto qwt_plot = new QwtPlot;
     qwt_plot->setAxisTitle(QwtAxis::XBottom, "Position United");
     qwt_plot->setAxisTitle(QwtAxis::YLeft, "Connections");
+    qwt_plot->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding));
     m_plot->attach(qwt_plot);
 
     auto grid = new QwtPlotGrid;
@@ -131,6 +132,7 @@ void DecomposeModelTab::selectedPoint(int idx) {
 
     if (auto it = m_synthesisWindows.find((size_t)idx); it != m_synthesisWindows.end()) {
         auto window = it.value();
+        window->show();
         window->activateWindow();
     } else {
         auto window = new SynthesisWindow(m_ctx, m_plot->getData(idx));

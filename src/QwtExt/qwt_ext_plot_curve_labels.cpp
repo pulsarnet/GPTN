@@ -5,9 +5,9 @@
 #include <QPainter>
 #include <QFontMetrics>
 #include "qwt_ext_plot_curve_labels.h"
-#include <qwt_painter.h>
-#include <qwt_scale_map.h>
-#include <qwt_plot.h>
+#include <QwtPainter>
+#include <QwtScaleMap>
+#include <QwtPlot>
 
 
 QwtExtPlotCurveLabels::QwtExtPlotCurveLabels(const QString &title) : QwtPlotCurve(title) {

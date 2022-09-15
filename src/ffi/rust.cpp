@@ -79,6 +79,7 @@ extern "C" {
     char* synthesis_program_header_name(const DecomposeContext&, usize, bool);
     CMatrix* synthesis_c_matrix(const DecomposeContext&);
     PetriNet* synthesis_eval_program(DecomposeContext&, usize);
+    char* synthesis_program_equations(const DecomposeContext&, usize);
 
     // CMatrix
     i32 matrix_index(const CMatrix&, usize, usize);
@@ -416,50 +417,12 @@ PetriNet *DecomposeContext::eval_program(usize index) {
     return ::synthesis_eval_program(*this, index);
 }
 
-//QVariant SynthesisContext::toVariant() const {
-//    QVariantHash result;
-//    result["c_matrix"] = c_matrix()->toVariant();
-//
-//    QVariantList programsList;
-//    for (int i = 0; i < programs(); i++) {
-//        QVariantHash programHash;
-//        programHash["net_after"] = program_net_after(i)->toVariant();
-//
-//        QVariantList data;
-//        for (int j = 0; j < program_size(i); j++) {
-//            data.push_back(program_value(i, j));
-//        }
-//        programHash["data"] = data;
-//
-//        programsList << programHash;
-//    }
-//
-//    result["programs"] = programsList;
-//
-//    return result;
-//}
-//
-//void SynthesisContext::fromVariant(const QVariant &data) {
-//    auto map = data.toHash();
-//
-//    // Восстановим тензор преобразования
-//    c_matrix()->fromVariant(map["c_matrix"]);
-//
-//    // Восстановим синтезированные программы
-//    auto programsList = map["programs"].toList();
-//    for (auto& program : programsList) {
-//        add_program();
-//
-//        auto programHash = program.toHash();
-//        auto net = init_program_after(programs() - 1);
-//        net->fromVariant(programHash["net_after"]);
-//
-//        auto programValues = programHash["data"].toList();
-//        for (int i = 0; i < programValues.size(); i++) {
-//            set_program_value(programs() - 1, i, programValues[i].toInt());
-//        }
-//    }
-//}
+QString DecomposeContext::program_equations(ffi::usize index) const {
+    auto name = ::synthesis_program_equations(*this, index);
+    auto result = QString::fromStdString(std::string(name));
+    ::remove_string(name);
+    return result;
+}
 
 i32 CMatrix::index(usize row, usize col) const {
     return ::matrix_index(*this, row, col);

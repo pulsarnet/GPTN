@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.17.3)
-project(ffi_rust)
+project(ffi_rust LANGUAGES C CXX OBJC OBJCXX)
 include(ExternalProject)
 
 message(STATUS ${CMAKE_CXX_FLAGS})
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 set(TARGET_DIR ${CMAKE_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TARGET_DIR})
@@ -30,24 +30,22 @@ endif()
 include_directories(${GRAPHVIZ_DIR}/include/)
 link_directories(${GRAPHVIZ_DIR}/lib/)
 
-include_directories(${QWT_DIR}/src/)
-link_directories(${QWT_DIR}/lib/)
-add_compile_definitions(QWT_DLL)
+
+find_library(QWT
+        NAMES qwt
+        HINTS ${QWT_DIR}/lib
+        REQUIRED)
+if(QWT)
+    include_directories(${QWT}/Headers)
+    include_directories(${QWT_DIR}/include)
+    add_compile_definitions(QWT_DLL)
+    message("QWT found: ${QWT}")
+endif()
 
 if(NOT WIN32)
     #set(CMAKE_PREFIX_PATH "/Users/nikolajmuravev/Qt/6.2.1/macos/lib/cmake")
     add_compile_definitions(__cpp_lib_format=201907L)
 endif()
-
-ExternalProject_Add(
-        rust
-        DOWNLOAD_COMMAND ""
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND cargo build COMMAND cargo build --release
-        BINARY_DIR ${CMAKE_SOURCE_DIR}/rust
-        INSTALL_COMMAND ""
-        LOG_BUILD ON
-)
 
 set(CMAKE_PREFIX_PATH ${Qt6_DIR})
 find_package(Qt6 REQUIRED COMPONENTS Widgets Core Gui OpenGLWidgets Svg Charts)
@@ -82,7 +80,9 @@ set(SRC_FILES
         src/synthesis/synthesis_table.cpp
         src/QwtExt/qwt_ext_plot_curve_labels.cpp
         src/QwtExt/CanvasPicker.cpp
-        src/synthesis/synthesis_window.cpp src/synthesis/synthesis_window.h)
+        src/synthesis/synthesis_window.cpp
+        src/macos/titlebar.mm
+        )
 
 set(HEADERS
         src/mainwindow.h
@@ -114,7 +114,7 @@ set(HEADERS
         src/DockSystem/DockWidget.h
         src/QwtExt/qwt_ext_plot_curve_labels.h
         src/QwtExt/CanvasPicker.h
-        src/synthesis/synthesis_window.cpp src/synthesis/synthesis_window.h)
+        src/synthesis/synthesis_window.h)
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 
@@ -125,19 +125,19 @@ add_executable(ffi_rust
         resources/resources.qrc
         )
 
-add_dependencies(ffi_rust rust)
 target_link_libraries(ffi_rust PRIVATE
-        "${CMAKE_SOURCE_DIR}/rust/target/$<$<CONFIG:Debug>:debug>$<$<CONFIG:Release>:release>/hello_world.lib"
+        "${CMAKE_SOURCE_DIR}/rust/target/$<$<CONFIG:Debug>:debug>$<$<CONFIG:Release>:release>/libhello_world.a"
         Qt6::Widgets
         Qt6::Core
         Qt6::Gui
         Qt6::OpenGLWidgets
         Qt6::Svg
         ads::qtadvanceddocking
-        libopenblas
+        openblas
         gvc
         cgraph
-        qwt
+        ${QWT}
+        "-framework AppKit"
         )
 
 qt6_import_plugins(ffi_rust

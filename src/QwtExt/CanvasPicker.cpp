@@ -3,10 +3,10 @@
 //
 
 #include "CanvasPicker.h"
-#include <qwt_plot.h>
-#include <qwt_plot_curve.h>
+#include <QwtPlot>
+#include <QwtPlotCurve>
 #include <QMouseEvent>
-#include <qwt_global.h>
+#include <QwtGlobal>
 
 CanvasPicker::CanvasPicker(QwtPlot *plot)
     : QObject(plot)

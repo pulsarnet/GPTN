@@ -9,7 +9,13 @@ separatorsColor = #D9D9D9
 highlightColor = #CCCCCC
 */
 
-QToolButton::menu-indicator { image: none; }
+QToolButton::menu-indicator {
+    image: none;
+}
+
+QToolButton {
+    border: none;
+}
 
 QSplitter {
   spacing: 0px;
@@ -28,32 +34,33 @@ QSplitter::handle {
 }
 
 QTabWidget {
-    background: #000000;
+    background: #FFFFFF;
 }
 
 QTabWidget::tab-bar {
     border-bottom: 3px solid black;
-    padding: 0px;
-    margin: 0px;
+    /* padding: 0px; */
+    /* margin: 0px; */
+    left: 0px;
 }
 
 QTabWidget::pane {
     border-top: 1px solid black;
     border-bottom: 1px solid black;
-    background: gray;
+    background-color: white;
 }
 
 GraphicsView {
-    background: #F0F0F0;
+    background: #FFFFFF;
     border: none;
 }
 
-
 QTabBar::tab {
     /* background: #lightgray; */
-    background: #F0F0F0;
+    background: #FFFFFF;
     border: none;
     min-width: 8ex;
+    min-height: 25px;
     padding: 5px;
 }
 
@@ -72,8 +79,11 @@ QTabBar::tab:selected {
     border-bottom: 2px solid #2AA298;
 }
 
+
 QMenu {
     padding: 0;
+    border-radius: 5px;
+    background-color: white;
 }
 
 QMenuBar {
@@ -86,10 +96,14 @@ QMenuBar::item {
 }
 
 QMenuBar::item:selected, QMenu::item:selected {
-    background: #D3E8F8;
+    background: #EEEEEE;
     color: #403F53;
 }
 
 QMenu::item {
     padding: 8px;
+}
+
+QTableView {
+    background: white;
 }

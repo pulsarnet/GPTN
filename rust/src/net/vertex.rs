@@ -82,7 +82,16 @@ impl Display for Vertex {
 impl Vertex {
 
     pub fn name(&self) -> String {
-        format!("{:?}", self)
+        let mut name = match self.type_ {
+            VertexType::Position => format!("P{}", self.id),
+            VertexType::Transition => format!("T{}", self.id)
+        };
+
+        if let Some(parent) = self.parent {
+            name += format!(".{}", parent.id).as_str();
+        }
+
+        name
     }
 
     pub fn full_name(&self) -> String {
