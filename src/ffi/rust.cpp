@@ -37,6 +37,8 @@ extern "C" {
     void connect_vertexes(PetriNet&, Vertex*, Vertex*);
     void remove_connection(PetriNet&, Vertex*, Vertex*);
     void petri_net_as_matrix(const PetriNet&, CNamedMatrix**, CNamedMatrix**);
+    usize petri_net_input_positions(const PetriNet&);
+    usize petri_net_output_positions(const PetriNet&);
 
     Vertex* net_get_vertex(const PetriNet&, VertexIndex);
 
@@ -280,6 +282,14 @@ void PetriNet::clear() {
 
 void PetriNet::drop() {
     ::delete_net(this);
+}
+
+usize PetriNet::input_positions() {
+    return ::petri_net_input_positions(*this);
+}
+
+usize PetriNet::output_positions() {
+    return ::petri_net_output_positions(*this);
 }
 
 VertexIndex Vertex::index() const {

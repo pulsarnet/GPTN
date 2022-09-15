@@ -141,3 +141,13 @@ pub unsafe extern "C" fn petri_net_as_matrix(net: &PetriNet, matrix1: &mut *cons
     *matrix1 = Box::into_raw(Box::new(matrix_1));
     *matrix2 = Box::into_raw(Box::new(matrix_2));
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn petri_net_input_positions(net: &PetriNet) -> usize {
+    net.input_positions()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn petri_net_output_positions(net: &PetriNet) -> usize {
+    net.output_positions()
+}

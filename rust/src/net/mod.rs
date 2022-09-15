@@ -217,6 +217,32 @@ impl PetriNet {
         PetriNet::default()
     }
 
+    pub fn output_positions(&self) -> usize {
+        let mut post_c = 0;
+        for pos in self.positions.keys() {
+            let mut filter = self.connections.iter()
+                .filter(|conn| conn.first() == *pos);
+
+            if filter.next().is_none() {
+                post_c += 1;
+            }
+        }
+        post_c
+    }
+
+    pub fn input_positions(&self) -> usize {
+        let mut pre_c = 0;
+        for pos in self.positions.keys() {
+            let mut  filter = self.connections.iter()
+                .filter(|conn| conn.second() == *pos);
+
+            if filter.next().is_none() {
+                pre_c += 1;
+            }
+        }
+        pre_c
+    }
+
     pub fn get_position(&self, index: usize) -> Option<&Vertex> {
         self.positions.get(&VertexIndex::position(index))
     }

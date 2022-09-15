@@ -90,6 +90,9 @@ namespace ffi {
 
         void clear();
         void drop();
+
+        usize input_positions();
+        usize output_positions();
     };
 
     struct Vertex {

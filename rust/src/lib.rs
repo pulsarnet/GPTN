@@ -153,7 +153,7 @@ impl DecomposeContextBuilder {
         let transitions = parts.0.iter().flat_map(|net| net.transitions.values()).cloned().collect::<Vec<_>>();
         let (primitive_net, primitive_matrix) = parts.primitive();
         let linear_base_fragments_matrix = parts.equivalent_matrix();
-        let c_matrix = DecomposeContextBuilder::calculate_common_c_matrix(positions.len(), transitions.len(), &linear_base_fragments_matrix, &primitive_matrix);
+        let c_matrix = DecomposeContextBuilder::calculate_c_matrix(positions.len(), transitions.len(), &linear_base_fragments_matrix, &primitive_matrix);
 
         DecomposeContext {
             parts,

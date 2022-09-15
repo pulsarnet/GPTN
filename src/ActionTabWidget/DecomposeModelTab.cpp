@@ -52,8 +52,8 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     for(int i = 0; i < m_ctx->programs(); i++) {
         auto program = m_ctx->eval_program(i);
 
-        auto x_axis = m_ctx->position_united(i);
-        auto y_axis = program->connections().size();
+        auto x_axis = program->input_positions() + 2 * program->output_positions();
+        auto y_axis = program->positions().size() + program->transitions().size();
 
         QPoint point = QPoint((int)x_axis, (int)y_axis);
         auto it = map.find(point);
@@ -76,8 +76,8 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     m_plot->setRenderHint(QwtPlotItem::RenderAntialiased);
 
     auto qwt_plot = new QwtPlot;
-    qwt_plot->setAxisTitle(QwtAxis::XBottom, "Position United");
-    qwt_plot->setAxisTitle(QwtAxis::YLeft, "Connections");
+    qwt_plot->setAxisTitle(QwtAxis::XBottom, "I/O positions");
+    qwt_plot->setAxisTitle(QwtAxis::YLeft, "Vertexes");
     qwt_plot->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding));
     m_plot->attach(qwt_plot);
 
