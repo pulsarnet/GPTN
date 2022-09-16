@@ -153,6 +153,10 @@ impl DecomposeContextBuilder {
         let transitions = parts.0.iter().flat_map(|net| net.transitions.values()).cloned().collect::<Vec<_>>();
         let (primitive_net, primitive_matrix) = parts.primitive();
         let linear_base_fragments_matrix = parts.equivalent_matrix();
+
+        let markers = parts.0.iter()
+            .flat_map(|net| net.positions.values()).map(|pos| pos.markers())
+            .collect::<Vec<usize>>();
         let c_matrix = DecomposeContextBuilder::calculate_c_matrix(positions.len(), transitions.len(), &linear_base_fragments_matrix, &primitive_matrix);
 
         DecomposeContext {
@@ -403,10 +407,12 @@ impl DecomposeContext {
         p_set: &Vec<usize>,
         d_input: &mut DMatrix<i32>,
         d_output: &mut DMatrix<i32>,
+        d_markers: &mut DMatrix<i32>,
     ) {
 
         let mut input = DMatrix::<i32>::zeros(1, d_input.ncols());
         let mut output = DMatrix::<i32>::zeros(1, d_input.ncols());
+        let mut markers = 0;
         for p in p_set.iter() {
             d_input.row(*p).iter().enumerate().for_each(|(index, &b)| {
                 let a = input.column(index)[0];
@@ -417,11 +423,14 @@ impl DecomposeContext {
                 let a = output.column(index)[0];
                 output.column_mut(index)[0] = max_by(a, b, |&ra, &rb| ra.cmp(&rb));
             });
+
+            markers += d_markers.row(*p)[0];
         }
 
         for p in p_set.iter() {
             d_input.set_row(*p, &input.row(0));
             d_output.set_row(*p, &output.row(0));
+            d_markers.row_mut(*p)[0] = markers;
         }
 
     }

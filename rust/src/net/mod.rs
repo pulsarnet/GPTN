@@ -99,6 +99,7 @@ impl PetriNetVec {
                         result.insert(net.get_transition(f.first().id).unwrap().clone());
                         result.insert(net.get_position(f.second().id).unwrap().clone());
 
+                        // TODO: Как соединять веса
                         result.connect(t.first(), f.first().clone());
                         result.connect(f.first(), f.second().clone());
                         continue 'brk;
@@ -119,10 +120,10 @@ impl PetriNetVec {
         let primitive_net = self.primitive_net();
         for connection in primitive_net.connections.iter() {
             if connection.first().type_ == VertexType::Position {
-                result.row_mut(*positions.get(&connection.first()).unwrap())[*transitions.get(&connection.second()).unwrap()] = -1;
+                result.row_mut(*positions.get(&connection.first()).unwrap())[*transitions.get(&connection.second()).unwrap()] = -(connection.weight() as i32);
             }
             else {
-                result.column_mut(*transitions.get(&connection.first()).unwrap())[*positions.get(&connection.second()).unwrap()] = 1;
+                result.column_mut(*transitions.get(&connection.first()).unwrap())[*positions.get(&connection.second()).unwrap()] = connection.weight() as i32;
             }
         }
 
@@ -140,7 +141,6 @@ impl PetriNetVec {
     }
 
     pub fn connections(&self) -> Vec<&Connection> {
-
         self.0
             .iter()
             .flat_map(|n| n.connections.iter())
@@ -164,10 +164,10 @@ impl PetriNetVec {
             let second = connection.second();
 
             if first.type_ == VertexType::Transition {
-                d_output.column_mut(*tran_indexes.get(&first).unwrap())[*pos_indexes.get(&second).unwrap()] = 1;
+                d_output.column_mut(*tran_indexes.get(&first).unwrap())[*pos_indexes.get(&second).unwrap()] = connection.weight() as i32;
             }
             else {
-                d_input.row_mut(*pos_indexes.get(&first).unwrap())[*tran_indexes.get(&second).unwrap()] = -1;
+                d_input.row_mut(*pos_indexes.get(&first).unwrap())[*tran_indexes.get(&second).unwrap()] = -(connection.weight() as i32);
             }
         }
 
@@ -185,7 +185,11 @@ impl Clone for PetriNet {
         let new_connections = self
             .connections
             .iter()
-            .map(|conn| Connection::new(conn.first().clone(), conn.second().clone()))
+            .map(|conn| {
+                let mut connect = Connection::new(conn.first().clone(), conn.second().clone());
+                connect.set_weight(conn.weight());
+                connect
+            })
             .collect::<Vec<_>>();
 
         PetriNet {
@@ -587,8 +591,8 @@ impl PetriNet {
 
         for conn in self.connections.iter() {
             match conn.first().type_ {
-                VertexType::Position => d_input.row_mut(*pos_indexes.get(&conn.first()).unwrap())[*tran_indexes.get(&conn.second()).unwrap()] = -1,
-                VertexType::Transition => d_output.column_mut(*tran_indexes.get(&conn.first()).unwrap())[*pos_indexes.get(&conn.second()).unwrap()] = 1
+                VertexType::Position => d_input.row_mut(*pos_indexes.get(&conn.first()).unwrap())[*tran_indexes.get(&conn.second()).unwrap()] = -(conn.weight() as i32),
+                VertexType::Transition => d_output.column_mut(*tran_indexes.get(&conn.first()).unwrap())[*pos_indexes.get(&conn.second()).unwrap()] = conn.weight() as i32
             }
         }
 
@@ -673,6 +677,9 @@ impl PetriNet {
                     VertexType::Transition => conns.push(Connection::new(conn.first().clone(), new_pos.index())),
                     VertexType::Position => conns.push(Connection::new(new_pos.index(), conn.second().clone())),
                 }
+
+                // Установим вес соединения
+                conns.last_mut().unwrap().set_weight(conn.weight());
             }
 
             need -= 1;
@@ -818,9 +825,9 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
     let mut save_vec = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
     let (t_sets, p_sets) = programs.programs[index].sets(&pos_indexes_vec, &tran_indexes_vec);
 
-    log::info!("PSET => {:?}", p_sets);
-    log::info!("TSET => {:?}", t_sets);
-    log::info!("PRIMITIVE => {}", MatrixFormat(&lbf_matrix, &tran_indexes_vec, &pos_indexes_vec));
+    log::error!("PSET => {:?}", p_sets);
+    log::error!("TSET => {:?}", t_sets);
+    log::error!("PRIMITIVE => {}", MatrixFormat(&lbf_matrix, &tran_indexes_vec, &pos_indexes_vec));
 
     let mut d_input = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
     let mut d_output = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
@@ -833,23 +840,23 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
             }
         }
     }
-    log::info!(
+    log::error!(
          "D INPUT START => {}",
          MatrixFormat(&d_input, &tran_indexes_vec, &pos_indexes_vec)
      );
-    log::info!(
+    log::error!(
          "D OUTPUT START => {}",
          MatrixFormat(&d_output, &tran_indexes_vec, &pos_indexes_vec)
      );
 
     for t_set in t_sets.into_iter() {
         programs.transition_synthesis_program(&t_set, &mut d_input, &mut d_output);
-        log::info!(
+        log::error!(
              "D INPUT AFTER T => {:?}{}",
              t_set,
              MatrixFormat(&d_input, &tran_indexes_vec, &pos_indexes_vec)
          );
-        log::info!(
+        log::error!(
              "D OUTPUT AFTER T => {:?}{}",
              t_set,
              MatrixFormat(&d_output, &tran_indexes_vec, &pos_indexes_vec)
@@ -857,24 +864,24 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
     }
 
     for p_set in p_sets.into_iter() {
-        programs.position_synthesis_program(&p_set, &mut d_input, &mut d_output);
-        log::info!(
+        programs.position_synthesis_program(&p_set, &mut d_input, &mut d_output, &mut markers);
+        log::error!(
              "D INPUT AFTER P => {:?}{}",
              p_set,
              MatrixFormat(&d_input, &tran_indexes_vec, &pos_indexes_vec)
          );
-        log::info!(
+        log::error!(
              "D OUTPUT AFTER P => {:?}{}",
              p_set,
              MatrixFormat(&d_output, &tran_indexes_vec, &pos_indexes_vec)
          );
     }
 
-    log::info!(
+    log::error!(
          "D_INPUT => {}",
          MatrixFormat(&d_input, &tran_indexes_vec, &pos_indexes_vec)
      );
-    log::info!(
+    log::error!(
          "D_OUTPUT => {}",
          MatrixFormat(&d_output, &tran_indexes_vec, &pos_indexes_vec)
      );
@@ -893,15 +900,15 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
         }
     }
 
-    log::info!(
+    log::error!(
          "D_MATRIX BEFORE => {}",
          MatrixFormat(&d_matrix, &tran_indexes_vec, &pos_indexes_vec)
      );
 
     d_matrix = c_matrix.clone() * d_matrix;
-    markers = c_matrix.clone() * markers;
+    //markers = c_matrix.clone() * markers;
 
-    log::info!(
+    log::error!(
          "D_MATRIX CMAT => {}",
          MatrixFormat(&d_matrix, &tran_indexes_vec, &pos_indexes_vec)
      );
@@ -916,12 +923,12 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
         }
     }
 
-    log::info!(
+    log::error!(
          "D MATRIX => {}",
          MatrixFormat(&d_matrix, &tran_indexes_vec, &pos_indexes_vec)
      );
 
-    log::info!(
+    log::error!(
          "SAVE => {}",
          MatrixFormat(&save_vec, &tran_indexes_vec, &pos_indexes_vec)
      );
@@ -939,12 +946,15 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
             if index_a == index_b {
                 continue;
             }
-            if row_a == row_b && save_vec.row(index_a) == save_vec.row(index_b) {
+            if row_a == row_b
+                && save_vec.row(index_a) == save_vec.row(index_b)
+                && markers.row(index_a) == markers.row(index_b)
+            {
                 remove_rows.push(index_b);
                 // При объединении эквивалентных позиций выбирается максимальное количество маркеров
                 markers.row_mut(index_a)[0] = max(
-                    pos_indexes_vec[index_a].markers(),
-                    pos_indexes_vec[index_b].markers(),
+                    markers.row_mut(index_a)[0],
+                    markers.row_mut(index_b)[0],
                 ) as i32;
             }
         }
@@ -987,11 +997,11 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
         .map(|i| i.1.clone())
         .collect();
 
-    log::info!(
+    log::error!(
          "SAVE 2 => {}",
          MatrixFormat(&save_vec, &tran_indexes_vec, &pos_indexes_vec)
      );
-    log::info!(
+    log::error!(
          "RESULT 2 => {}",
          MatrixFormat(&d_matrix, &tran_indexes_vec, &pos_indexes_vec)
      );
@@ -1008,7 +1018,7 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
         .enumerate()
     {
         log::info!("SET MARKERS: {} <= {}", index, markers.row(index)[0]);
-        position.set_markers(markers.row(index)[0] as usize);
+        position.set_markers(markers.row(index)[0].max(0) as usize);
         pos_new_indexes.insert(position.index(), index);
     }
 
@@ -1038,20 +1048,20 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
             }
         }
     }
-    // for i in 0..save_vec.nrows() {
-    //     for j in 0..save_vec.ncols() {
-    //         if save_vec.row(i)[j] == 0 {
-    //             continue;
-    //         }
-    //
-    //         let pos = &pos_indexes_vec[i];
-    //         let tran = &tran_indexes_vec[j];
-    //         for _ in 0..save_vec.row(i)[j] {
-    //             connections.push(Connection::new(tran.index(), pos.index()));
-    //             connections.push(Connection::new(pos.index(), tran.index()));
-    //         }
-    //     }
-    // }
+    for i in 0..save_vec.nrows() {
+        for j in 0..save_vec.ncols() {
+            if save_vec.row(i)[j] == 0 {
+                continue;
+            }
+
+            let pos = &pos_indexes_vec[i];
+            let tran = &tran_indexes_vec[j];
+            connections.push(Connection::new(tran.index(), pos.index()));
+            connections.last_mut().unwrap().set_weight(save_vec.row(i)[j] as usize);
+            connections.push(Connection::new(pos.index(), tran.index()));
+            connections.last_mut().unwrap().set_weight(save_vec.row(i)[j] as usize);
+        }
+    }
     new_net.connections = connections;
 
     //programs.programs[index].net_after = Some(new_net);
