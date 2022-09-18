@@ -27,6 +27,7 @@ use ffi::vec::CVec;
 
 
 pub mod ffi;
+mod modules;
 mod net;
 
 mod core;

@@ -20,3 +20,4 @@ log4rs = "1.0.0"
 log = "0.4.14"
 chrono = "0.4.19"
 indexmap = { version = "1.8.0", features = ["std"] }
+num-traits = "0.2.15"
