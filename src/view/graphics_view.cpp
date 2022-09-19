@@ -32,44 +32,6 @@ GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
 
     setTransformationAnchor(QGraphicsView::NoAnchor);
 
-    m_toolBar = new ToolBox;
-    m_toolBar->setVisible(true);
-    m_toolBar->setParent(this);
-    m_toolBar->setToolArea(ToolBox::TopRight);
-    m_toolBar->setButtonSize(QSize(20, 20));
-
-    auto graphViz = new QMenu("GraphViz visualization");
-    m_toolBar->addTool(graphViz);
-
-    auto dot = new QAction("dot algorithm");
-    auto neato = new QAction("neato algorithm");
-    auto twopi = new QAction("twopi algorithm");
-    auto circo = new QAction("circo algorithm");
-    auto fdp = new QAction("fdp algorithm");
-    auto osage = new QAction("osage algorithm");
-    auto patchwork = new QAction("patchwork algorithm");
-    auto sfdp = new QAction("sfdp algorithm");
-
-
-    connect(dot, &QAction::triggered, this, &GraphicsView::slotDotVisualization);
-    connect(neato, &QAction::triggered, this, &GraphicsView::slotNeatoVisualization);
-    connect(twopi, &QAction::triggered, this, &GraphicsView::slotTwopiVisualization);
-    connect(circo, &QAction::triggered, this, &GraphicsView::slotCircoVisualization);
-    connect(fdp, &QAction::triggered, this, &GraphicsView::slotFDPVisualization);
-    connect(osage, &QAction::triggered, this, &GraphicsView::slotOsageVisualization);
-    connect(patchwork, &QAction::triggered, this, &GraphicsView::slotPatchworkVisualization);
-    connect(sfdp, &QAction::triggered, this, &GraphicsView::slotSFDPpVisualization);
-
-
-    graphViz->addAction(dot);
-    graphViz->addAction(neato);
-    graphViz->addAction(twopi);
-    graphViz->addAction(circo);
-    graphViz->addAction(fdp);
-    graphViz->addAction(osage);
-    graphViz->addAction(patchwork);
-    graphViz->addAction(sfdp);
-
     m_mainToolBar = new ToolBox;
     m_mainToolBar->setParent(this);
     m_mainToolBar->setVisible(true);
@@ -101,7 +63,6 @@ GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
     m_mainToolBar->addTool(transition_action);
     m_mainToolBar->addTool(connect_action);
     m_mainToolBar->addTool(remove_action);
-
     m_mainToolBar->addTool(move_action);
     m_mainToolBar->addTool(rotation_action);
 
@@ -190,7 +151,7 @@ void GraphicsView::mouseReleaseEvent(QMouseEvent *event) {
 }
 
 void GraphicsView::resizeEvent(QResizeEvent *event) {
-    m_toolBar->resizeEvent(event);
+    //m_toolBar->resizeEvent(event);
     m_mainToolBar->resizeEvent(event);
     QGraphicsView::resizeEvent(event);
 }
@@ -212,6 +173,7 @@ void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
     auto menu = new QMenu;
     menu->setWindowFlags(menu->windowFlags() | Qt::FramelessWindowHint);
     menu->setAttribute(Qt::WA_TranslucentBackground);
+    menu->setAttribute(Qt::WA_DeleteOnClose);
 
     auto horz = new QAction("Horizontal alignment", this);
     horz->setEnabled(itemSelected);
@@ -224,9 +186,41 @@ void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
     auto matrix = new QAction("I/O matrix view", this);
     connect(matrix, &QAction::triggered, this, &GraphicsView::slotMatrixView);
 
+    auto graphViz = new QMenu("GraphViz visualization");
+
+    auto dot = new QAction("dot");
+    auto neato = new QAction("neato");
+    auto twopi = new QAction("twopi");
+    auto circo = new QAction("circo");
+    auto fdp = new QAction("fdp");
+    auto osage = new QAction("osage");
+    auto patchwork = new QAction("patchwork");
+    auto sfdp = new QAction("sfdp");
+
+
+    connect(dot, &QAction::triggered, this, &GraphicsView::slotDotVisualization);
+    connect(neato, &QAction::triggered, this, &GraphicsView::slotNeatoVisualization);
+    connect(twopi, &QAction::triggered, this, &GraphicsView::slotTwopiVisualization);
+    connect(circo, &QAction::triggered, this, &GraphicsView::slotCircoVisualization);
+    connect(fdp, &QAction::triggered, this, &GraphicsView::slotFDPVisualization);
+    connect(osage, &QAction::triggered, this, &GraphicsView::slotOsageVisualization);
+    connect(patchwork, &QAction::triggered, this, &GraphicsView::slotPatchworkVisualization);
+    connect(sfdp, &QAction::triggered, this, &GraphicsView::slotSFDPpVisualization);
+
+
+    graphViz->addAction(dot);
+    graphViz->addAction(neato);
+    graphViz->addAction(twopi);
+    graphViz->addAction(circo);
+    graphViz->addAction(fdp);
+    graphViz->addAction(osage);
+    graphViz->addAction(patchwork);
+    graphViz->addAction(sfdp);
+
     menu->addAction(horz);
     menu->addAction(vert);
     menu->addAction(matrix);
+    menu->addMenu(graphViz);
     menu->popup(event->globalPos());
 
     QGraphicsView::contextMenuEvent(event);

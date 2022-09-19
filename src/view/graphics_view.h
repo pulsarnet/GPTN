@@ -65,7 +65,6 @@ private:
 
     GraphicsViewZoom* zoom = nullptr;
     QPointF m_origin;
-    ToolBox* m_toolBar = nullptr;
     ToolBox* m_mainToolBar = nullptr;
 
     QAction* position_action = nullptr;
