@@ -175,27 +175,27 @@ void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
     menu->setAttribute(Qt::WA_TranslucentBackground);
     menu->setAttribute(Qt::WA_DeleteOnClose);
 
-    auto horz = new QAction("Horizontal alignment", this);
+    auto horz = new QAction("Horizontal alignment", menu);
     horz->setEnabled(itemSelected);
     connect(horz, &QAction::triggered, gScene, &GraphicScene::slotHorizontalAlignment);
 
-    auto vert = new QAction("Vertical alignment", this);
+    auto vert = new QAction("Vertical alignment", menu);
     vert->setEnabled(itemSelected);
     connect(vert, &QAction::triggered, gScene, &GraphicScene::slotVerticalAlignment);
 
-    auto matrix = new QAction("I/O matrix view", this);
+    auto matrix = new QAction("I/O matrix view", menu);
     connect(matrix, &QAction::triggered, this, &GraphicsView::slotMatrixView);
 
-    auto graphViz = new QMenu("GraphViz visualization");
+    auto graphViz = new QMenu("GraphViz visualization", menu);
 
-    auto dot = new QAction("dot");
-    auto neato = new QAction("neato");
-    auto twopi = new QAction("twopi");
-    auto circo = new QAction("circo");
-    auto fdp = new QAction("fdp");
-    auto osage = new QAction("osage");
-    auto patchwork = new QAction("patchwork");
-    auto sfdp = new QAction("sfdp");
+    auto dot = new QAction("dot", menu);
+    auto neato = new QAction("neato", menu);
+    auto twopi = new QAction("twopi", menu);
+    auto circo = new QAction("circo", menu);
+    auto fdp = new QAction("fdp", menu);
+    auto osage = new QAction("osage", menu);
+    auto patchwork = new QAction("patchwork", menu);
+    auto sfdp = new QAction("sfdp", menu);
 
 
     connect(dot, &QAction::triggered, this, &GraphicsView::slotDotVisualization);
