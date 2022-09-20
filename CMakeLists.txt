@@ -118,8 +118,8 @@ add_executable(ffi_rust
         )
 
 target_link_libraries(ffi_rust PRIVATE
-        #"${CMAKE_SOURCE_DIR}/rust/target/$<$<CONFIG:Debug>:debug>$<$<CONFIG:Release>:release>/hello_world.lib"
-        "${CMAKE_SOURCE_DIR}/rust/target/debug/hello_world.lib"
+        "${CMAKE_SOURCE_DIR}/rust/target/$<$<CONFIG:Debug>:debug>$<$<CONFIG:Release>:release>/hello_world.lib"
+        #"${CMAKE_SOURCE_DIR}/rust/target/debug/hello_world.lib"
         Qt6::Widgets
         Qt6::Core
         Qt6::Gui
