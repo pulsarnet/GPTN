@@ -120,7 +120,6 @@ namespace ffi {
         static DecomposeContext* fromNets(const QVector<PetriNet*>&);
         usize positions();
         usize transitions();
-        CMatrix* primitive_matrix();
         PetriNet* primitive_net();
         usize position_index(usize);
         usize transition_index(usize);
@@ -133,7 +132,6 @@ namespace ffi {
         usize program_value(usize program, usize index) const;
         void set_program_value(usize program, usize index, usize value);
         char* program_header_name(usize index, bool label) const;
-        CMatrix* c_matrix() const;
         PetriNet* eval_program(usize index);
         QString program_equations(usize index) const;
         usize transition_united(usize index);

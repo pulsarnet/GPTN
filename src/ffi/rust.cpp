@@ -65,7 +65,6 @@ extern "C" {
     void decompose_context_delete(DecomposeContext*);
     usize decompose_context_positions(DecomposeContext&);
     usize decompose_context_transitions(DecomposeContext&);
-    CMatrix* decompose_context_primitive_matrix(DecomposeContext&);
     PetriNet* decompose_context_primitive_net(DecomposeContext&);
     usize decompose_context_position_index(DecomposeContext&, usize);
     usize decompose_context_transition_index(DecomposeContext&, usize);
@@ -80,7 +79,6 @@ extern "C" {
     usize synthesis_program_value(const DecomposeContext&, usize, usize);
     void synthesis_set_program_value(DecomposeContext&, usize, usize, usize);
     char* synthesis_program_header_name(const DecomposeContext&, usize, bool);
-    CMatrix* synthesis_c_matrix(const DecomposeContext&);
     PetriNet* synthesis_eval_program(DecomposeContext&, usize);
     char* synthesis_program_equations(const DecomposeContext&, usize);
 
@@ -361,10 +359,6 @@ usize DecomposeContext::transitions() {
     return ::decompose_context_transitions(*this);
 }
 
-CMatrix *DecomposeContext::primitive_matrix() {
-    return ::decompose_context_primitive_matrix(*this);
-}
-
 PetriNet *DecomposeContext::primitive_net() {
     return ::decompose_context_primitive_net(*this);
 }
@@ -422,10 +416,6 @@ void DecomposeContext::set_program_value(usize program, usize index, usize value
 
 char *DecomposeContext::program_header_name(usize index, bool label) const {
     return ::synthesis_program_header_name(*this, index, label);
-}
-
-CMatrix *DecomposeContext::c_matrix() const {
-    return ::synthesis_c_matrix(*this);
 }
 
 PetriNet *DecomposeContext::eval_program(usize index) {

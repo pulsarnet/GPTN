@@ -146,27 +146,50 @@ impl DecomposeContextBuilder {
         CMatrix::from(c_matrix)
     }
 
+    pub fn calculate_c_matrix2(parts: &PetriNetVec) -> (CMatrix, CMatrix) {
+        let (equivalent_input, equivalent_output) = parts.equivalent_matrix();
+        let (primitive_input, primitive_output) = parts.primitive_matrix();
+
+        let mut c_input_matrix = DMatrix::<i32>::zeros(equivalent_input.nrows(), equivalent_input.nrows());
+        let mut c_output_matrix = DMatrix::<i32>::zeros(equivalent_input.nrows(), equivalent_input.nrows());
+
+        let fix_input_matrix = equivalent_input - primitive_input;
+        for (index, column) in fix_input_matrix.column_iter().enumerate() {
+            c_input_matrix.set_column(index * 2, &column);
+        }
+        c_input_matrix.fill_diagonal(1);
+
+        let fix_output_matrix = equivalent_output - primitive_output;
+        for (index, column) in fix_output_matrix.column_iter().enumerate() {
+            c_output_matrix.set_column(index * 2 + 1, &column);
+        }
+        c_output_matrix.fill_diagonal(1);
+
+        (CMatrix::from(c_input_matrix), CMatrix::from(c_output_matrix))
+    }
+
     pub fn build(mut self) -> DecomposeContext {
         self.parts.sort();
 
         let parts = self.parts;
         let positions = parts.0.iter().flat_map(|net| net.positions.values()).cloned().collect::<Vec<_>>();
         let transitions = parts.0.iter().flat_map(|net| net.transitions.values()).cloned().collect::<Vec<_>>();
-        let (primitive_net, primitive_matrix) = parts.primitive();
+        let primitive_net = parts.primitive_net();
+        let (primitive_input, primitive_output) = parts.primitive_matrix();
         let linear_base_fragments_matrix = parts.equivalent_matrix();
 
         let markers = parts.0.iter()
             .flat_map(|net| net.positions.values()).map(|pos| pos.markers())
             .collect::<Vec<usize>>();
-        let c_matrix = DecomposeContextBuilder::calculate_c_matrix(positions.len(), transitions.len(), &linear_base_fragments_matrix, &primitive_matrix);
+        let c_matrix = DecomposeContextBuilder::calculate_c_matrix2(&parts);
 
         DecomposeContext {
             parts,
             positions,
             transitions,
             primitive_net,
-            primitive_matrix: CMatrix::from(primitive_matrix),
-            linear_base_fragments_matrix,
+            primitive_matrix: (CMatrix::from(primitive_input), CMatrix::from(primitive_output)),
+            linear_base_fragments_matrix: (CMatrix::from(linear_base_fragments_matrix.0), CMatrix::from(linear_base_fragments_matrix.1)),
             c_matrix,
             programs: vec![]
         }
@@ -179,11 +202,13 @@ pub struct DecomposeContext {
     pub positions: Vec<Vertex>,
     pub transitions: Vec<Vertex>,
     pub primitive_net: PetriNet,
-    pub primitive_matrix: CMatrix,
+    pub primitive_matrix: (CMatrix, CMatrix),
     pub linear_base_fragments_matrix: (CMatrix, CMatrix),
 
     pub programs: Vec<SynthesisProgram>,
-    pub c_matrix: crate::CMatrix,
+
+    /// C(I) и C(O)
+    pub c_matrix: (CMatrix, CMatrix),
 }
 
 impl DecomposeContext {
@@ -257,7 +282,7 @@ impl DecomposeContext {
         for row in 0..d_input.nrows() {
             for column in 0..d_input.ncols() {
 
-                if d_input.row(row)[column] < 0 {
+                if d_input.row(row)[column] > 0 {
                     result.connect(
                         self.positions.iter().enumerate().find(|(k, _)| *k == row).map(|(_, k)| k.index()).unwrap(),
                         self.transitions.iter().enumerate().find(|(k, _)| *k == column).map(|(_, k)| k.index()).unwrap(),
@@ -363,14 +388,6 @@ impl DecomposeContext {
         }
     }
 
-    pub fn c_matrix(&self) -> &crate::CMatrix {
-        &self.c_matrix
-    }
-
-    pub fn primitive_matrix(&self) -> &crate::CMatrix {
-        &self.primitive_matrix
-    }
-
     pub fn primitive_net(&self) -> &PetriNet {
         &self.primitive_net
     }
@@ -387,7 +404,7 @@ impl DecomposeContext {
         for t in t_set.iter() {
             d_input.column(*t).iter().enumerate().for_each(|(index, &b)| {
                 let a = input.row(index)[0];
-                input.row_mut(index)[0] = min_by(a, b, |&ra, &rb| ra.cmp(&rb));
+                input.row_mut(index)[0] = max_by(a, b, |&ra, &rb| ra.cmp(&rb));
             });
 
             d_output.column(*t).iter().enumerate().for_each(|(index, &b)| {
@@ -417,7 +434,7 @@ impl DecomposeContext {
         for p in p_set.iter() {
             d_input.row(*p).iter().enumerate().for_each(|(index, &b)| {
                 let a = input.column(index)[0];
-                input.column_mut(index)[0] = min_by(a, b, |&ra, &rb| ra.cmp(&rb));
+                input.column_mut(index)[0] = max_by(a, b, |&ra, &rb| ra.cmp(&rb));
             });
 
             d_output.row(*p).iter().enumerate().for_each(|(index, &b)| {
@@ -469,11 +486,6 @@ pub extern "C" fn decompose_context_positions(ctx: &DecomposeContext) -> usize {
 #[no_mangle]
 pub extern "C" fn decompose_context_transitions(ctx: &DecomposeContext) -> usize {
     ctx.transitions.len()
-}
-
-#[no_mangle]
-pub extern "C" fn decompose_context_primitive_matrix(ctx: &DecomposeContext) -> *const CMatrix {
-    &ctx.primitive_matrix as *const CMatrix
 }
 
 #[no_mangle]
@@ -647,11 +659,6 @@ extern "C" fn synthesis_program_transition_united(ctx: &DecomposeContext, index:
 #[no_mangle]
 extern "C" fn synthesis_program_position_united(ctx: &DecomposeContext, index: usize) -> usize {
     ctx.programs()[index].positions_united()
-}
-
-#[no_mangle]
-extern "C" fn synthesis_c_matrix(ctx: &DecomposeContext) -> *const CMatrix {
-    ctx.c_matrix() as *const CMatrix
 }
 
 #[no_mangle]
