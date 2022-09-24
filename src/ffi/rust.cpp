@@ -95,80 +95,9 @@ extern "C" {
     usize named_matrix_rows(const CNamedMatrix&);
     usize named_matrix_columns(const CNamedMatrix&);
 
-    // CVec<u64>
-    usize vec_len_u64(const CVec<usize>* self);
-    const usize* vec_data_u64(const CVec<usize>* self);
-
-    // CVec<Vertex>
-    usize vec_len_vertex(const CVec<Vertex*>* self);
-    Vertex* const* vec_data_vertex(const CVec<Vertex*>* self);
-
-    // CVec<Connection>
-    usize vec_len_connection(const CVec<Connection*>* self);
-    Connection* const* vec_data_connection(const CVec<Connection*>* self);
-
-    // CVec<PetriNet>
-    usize vec_len_nets(const CVec<PetriNet*>* self);
-    PetriNet* const* vec_data_nets(const CVec<PetriNet*>* self);
-
     //Helpers
     void remove_string(char*);
 };
-
-template<>
-usize CVec<usize>::size() const noexcept {
-    return ::vec_len_u64(this);
-}
-
-template<>
-const usize* CVec<usize>::data() const noexcept {
-    return ::vec_data_u64(this);
-}
-
-template<>
-usize CVec<Vertex*>::size() const noexcept {
-    return ::vec_len_vertex(this);
-}
-
-template<>
-Vertex* const* CVec<Vertex*>::data() const noexcept {
-    return ::vec_data_vertex(this);
-}
-
-template<>
-const std::size_t CVec<Vertex *>::size_of() const noexcept {
-    return sizeof(Vertex*);
-}
-
-template<>
-usize CVec<Connection*>::size() const noexcept {
-    return ::vec_len_connection(this);
-}
-
-template<>
-Connection* const* CVec<Connection*>::data() const noexcept {
-    return ::vec_data_connection(this);
-}
-
-template<>
-const std::size_t CVec<Connection *>::size_of() const noexcept {
-    return sizeof(Connection*);
-}
-
-template<>
-usize CVec<PetriNet*>::size() const noexcept {
-    return ::vec_len_nets(this);
-}
-
-template<>
-PetriNet* const* CVec<PetriNet*>::data() const noexcept {
-    return ::vec_data_nets(this);
-}
-
-template<>
-const std::size_t CVec<PetriNet *>::size_of() const noexcept {
-    return sizeof(PetriNet*);
-}
 
 PetriNetContext *PetriNetContext::create() {
     return ::new_context();

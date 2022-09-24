@@ -3,6 +3,8 @@
 
 #include <array>
 #include <qvariant.h>
+#include "vec.h"
+#include "types.h"
 
 namespace ffi {
 
@@ -21,33 +23,6 @@ namespace ffi {
     extern "C" struct Connection;
     extern "C" struct PetriNetContext;
     extern "C" struct DecomposeContext;
-
-    typedef uint64_t usize;
-    typedef int i32;
-
-    template<typename T>
-    class CVec final {
-
-        typedef T value_type;
-        typedef T* pointer_type;
-
-    public:
-
-        [[nodiscard]] usize size() const noexcept;
-        value_type const* data() const noexcept;
-        pointer_type data() noexcept;
-
-        const T &index(std::size_t n) const noexcept;
-        const T &operator[](std::size_t n) const noexcept;
-        T &operator[](std::size_t n) noexcept;
-
-        [[nodiscard]] const std::size_t size_of() const noexcept;
-
-    private:
-
-        std::array<std::uintptr_t, 3> repr;
-
-    };
 
     struct VertexIndex {
         VertexType type;
@@ -154,29 +129,6 @@ namespace ffi {
         usize rows() const;
         usize columns() const;
     };
-
-    template<typename T>
-    T *CVec<T>::data() noexcept {
-        return const_cast<T*>(const_cast<const CVec<T>*>(this)->data());
-    }
-
-    template<typename T>
-    const T &CVec<T>::index(std::size_t n) const noexcept {
-        auto data = reinterpret_cast<const char*>(this->data());
-        return *reinterpret_cast<const T*>(data + n * size_of());
-    }
-
-    template<typename T>
-    T& CVec<T>::operator[](std::size_t n) noexcept  {
-        auto data = reinterpret_cast<char*>(this->data());
-        return *reinterpret_cast<T*>(data + n * size_of());
-    }
-
-    template<typename T>
-    const T& CVec<T>::operator[](std::size_t n) const noexcept  {
-        auto data = reinterpret_cast<const char*>(this->data());
-        return *reinterpret_cast<const T*>(data + n * size_of());
-    }
 }
 
 

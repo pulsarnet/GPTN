@@ -104,7 +104,7 @@ set(HEADERS
         src/QwtExt/qwt_ext_plot_curve_labels.h
         src/QwtExt/CanvasPicker.h
         src/synthesis/synthesis_window.h
-        )
+        src/ffi/vec.cpp)
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 

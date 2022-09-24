@@ -27,19 +27,20 @@ GraphicScene::GraphicScene(ffi::PetriNet *net, QObject *parent) :
     auto transitions = m_net->transitions();
     auto connections = m_net->connections();
 
-    for (int i = 0; i < positions.size(); i++) {
-        m_positions.push_back(new Position(QPointF(0, 0), m_net, positions[i]->index()));
+    qDebug() << "HEllo";
+    for (auto position : positions) {
+        m_positions.push_back(new Position(QPointF(0, 0), m_net, position->index()));
         addItem(m_positions.last());
     }
 
-    for (int i = 0; i < transitions.size(); i++) {
-        m_transition.push_back(new Transition(QPointF(0, 0), m_net, transitions[i]->index()));
+    for (auto transition : transitions) {
+        m_transition.push_back(new Transition(QPointF(0, 0), m_net, transition->index()));
         addItem(m_transition.last());
     }
 
-    for (int i = 0; i < connections.size(); i++) {
-        auto from = connections[i]->from();
-        auto to = connections[i]->to();
+    for (auto connection : connections) {
+        auto from = connection->from();
+        auto to = connection->to();
 
         if (from.type == ffi::VertexType::Position) {
             auto position = getPosition(from.id);
