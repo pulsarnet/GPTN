@@ -27,7 +27,6 @@ GraphicScene::GraphicScene(ffi::PetriNet *net, QObject *parent) :
     auto transitions = m_net->transitions();
     auto connections = m_net->connections();
 
-    qDebug() << "HEllo";
     for (auto position : positions) {
         m_positions.push_back(new Position(QPointF(0, 0), m_net, position->index()));
         addItem(m_positions.last());
