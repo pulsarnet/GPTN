@@ -3,6 +3,7 @@ use std::fmt::{Display, Formatter};
 use std::ops::{Add, AddAssign, Index, IndexMut, SubAssign};
 use std::slice::Iter;
 use nalgebra::DMatrix;
+use CVec;
 
 #[derive(PartialEq, Clone, Debug, Copy)]
 enum CovType {
@@ -16,6 +17,15 @@ enum CovType {
 enum MarkerValue {
     Value(i32),
     Infinity
+}
+
+impl MarkerValue {
+    fn as_number(&self) -> i32 {
+        match self {
+            MarkerValue::Value(v) => *v,
+            MarkerValue::Infinity => -1
+        }
+    }
 }
 
 impl PartialEq for MarkerValue {
@@ -263,7 +273,7 @@ impl ReachabilityTree {
     }
 
     fn has_boundary(&self) -> bool {
-        self.markings.iter().find(|mark| mark.type_ != CovType::Boundary).is_some()
+        self.markings.iter().find(|mark| mark.type_ == CovType::Boundary).is_some()
     }
 
     fn count(&self) -> usize {
@@ -292,6 +302,40 @@ impl IndexMut<usize> for ReachabilityTree {
         &mut self.markings[index]
     }
 }
+
+#[no_mangle]
+extern "C" fn reachability_marking(this: &ReachabilityTree, vec: &mut CVec<*const Marking>) {
+    let result = this.markings.iter()
+        .map(|marking| marking as *const _)
+        .collect::<Vec<_>>();
+
+    unsafe { core::ptr::write_unaligned(vec, CVec::from(result)) };
+}
+
+#[no_mangle]
+unsafe extern "C" fn reachability_drop(this: *mut ReachabilityTree) {
+    let _ = Box::from_raw(this);
+}
+
+#[no_mangle]
+extern "C" fn marking_values(this: *const Marking, vec: &mut CVec<i32>) {
+    let this = unsafe { &*this };
+    *vec = this.data.row(0).iter()
+        .map(MarkerValue::as_number)
+        .collect::<Vec<_>>()
+        .into();
+}
+
+#[no_mangle]
+extern "C" fn marking_previous(this: &Marking) -> i32 {
+    this.prev.map(|v| v.1 as i32).unwrap_or(-1)
+}
+
+#[no_mangle]
+extern "C" fn marking_transition(this: &Marking) -> i32 {
+    this.prev.map(|v| v.0 as i32).unwrap_or(-1)
+}
+
 
 #[cfg(test)]
 mod tests {

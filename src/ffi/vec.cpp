@@ -10,75 +10,82 @@ namespace ffi {
     struct PetriNet;
 }
 
+namespace rust {
+    struct Marking;
+}
+
 using namespace ffi;
+using namespace rust;
 
-// CVec<u64>
-extern "C" usize vec_len_u64(const CVec<usize>* self);
-extern "C" const usize* vec_data_u64(const CVec<usize>* self);
-
-// CVec<Vertex>
-extern "C" usize vec_len_vertex(const CVec<Vertex*>* self);
-extern "C" Vertex* const* vec_data_vertex(const CVec<Vertex*>* self);
-
-// CVec<Connection>
-extern "C" usize vec_len_connection(const CVec<Connection*>* self);
-extern "C" Connection* const* vec_data_connection(const CVec<Connection*>* self);
-
-// CVec<PetriNet>
-extern "C" usize vec_len_nets(const CVec<PetriNet*>* self);
-extern "C" PetriNet* const* vec_data_nets(const CVec<PetriNet*>* self);
+extern "C" void vec_drop_i8(CVec<int8_t>);
+extern "C" void vec_drop_i16(CVec<int16_t>);
+extern "C" void vec_drop_i32(CVec<int32_t>);
+extern "C" void vec_drop_i64(CVec<int64_t>);
+extern "C" void vec_drop_u8(CVec<uint8_t>);
+extern "C" void vec_drop_u16(CVec<uint16_t>);
+extern "C" void vec_drop_u32(CVec<uint32_t>);
+extern "C" void vec_drop_u64(CVec<uint64_t>);
+extern "C" void vec_drop_Connection(CVec<Connection*>);
+extern "C" void vec_drop_PetriNet(CVec<PetriNet*>);
+extern "C" void vec_drop_Vertex(CVec<Vertex*>);
+extern "C" void vec_drop_Marking(CVec<Marking*>);
 
 template<>
-usize CVec<usize>::size() const noexcept {
-    return ::vec_len_u64(this);
+CVec<int8_t>::~CVec() {
+    vec_drop_i8(std::move(*this));
 }
 
 template<>
-const usize* CVec<usize>::data() const noexcept {
-    return ::vec_data_u64(this);
+CVec<int16_t>::~CVec() {
+    vec_drop_i16(std::move(*this));
 }
 
 template<>
-usize CVec<Vertex*>::size() const noexcept {
-    return ::vec_len_vertex(this);
+CVec<int32_t>::~CVec() {
+    vec_drop_i32(std::move(*this));
 }
 
 template<>
-Vertex* const* CVec<Vertex*>::data() const noexcept {
-    return ::vec_data_vertex(this);
+CVec<int64_t>::~CVec() {
+    vec_drop_i64(std::move(*this));
 }
 
 template<>
-const std::size_t CVec<Vertex *>::size_of() const noexcept {
-    return sizeof(Vertex*);
+CVec<uint8_t>::~CVec() {
+    vec_drop_u8(std::move(*this));
 }
 
 template<>
-usize CVec<Connection*>::size() const noexcept {
-    return ::vec_len_connection(this);
+CVec<uint16_t>::~CVec() {
+    vec_drop_u16(std::move(*this));
 }
 
 template<>
-Connection* const* CVec<Connection*>::data() const noexcept {
-    return ::vec_data_connection(this);
+CVec<uint32_t>::~CVec() {
+    vec_drop_u32(std::move(*this));
 }
 
 template<>
-const std::size_t CVec<Connection *>::size_of() const noexcept {
-    return sizeof(Connection*);
+CVec<uint64_t>::~CVec() {
+    vec_drop_u64(std::move(*this));
 }
 
 template<>
-usize CVec<PetriNet*>::size() const noexcept {
-    return ::vec_len_nets(this);
+CVec<PetriNet*>::~CVec() {
+    vec_drop_PetriNet(std::move(*this));
 }
 
 template<>
-PetriNet* const* CVec<PetriNet*>::data() const noexcept {
-    return ::vec_data_nets(this);
+CVec<Connection*>::~CVec() {
+    vec_drop_Connection(std::move(*this));
 }
 
 template<>
-const std::size_t CVec<PetriNet *>::size_of() const noexcept {
-    return sizeof(PetriNet*);
+CVec<Vertex*>::~CVec() {
+    vec_drop_Vertex(std::move(*this));
+}
+
+template<>
+CVec<Marking*>::~CVec() {
+    vec_drop_Marking(std::move(*this));
 }

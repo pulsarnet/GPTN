@@ -3,9 +3,11 @@
 // extern "C" unsigned long position_index(FFIPosition*);
 // extern "C" void remove_position(FFIPosition*);
 
+use nalgebra::DMatrix;
 use ffi::vec::CVec;
 use ::{PetriNet, Vertex};
 use ffi::matrix::CNamedMatrix;
+use modules::reachability::{Reachability, ReachabilityTree};
 use net::Connection;
 use net::vertex::{VertexIndex, VertexType};
 
@@ -158,4 +160,18 @@ pub unsafe extern "C" fn petri_net_connection_weight(net: &PetriNet, a: &Vertex,
         .iter()
         .find(|conn| conn.first() == a.index() && conn.second() == b.index())
         .map_or(0, |conn| conn.weight())
+}
+
+#[no_mangle]
+pub extern "C" fn petri_net_reachability(net: &PetriNet) -> *mut ReachabilityTree {
+    let (input, output) = net.incidence_matrix();
+    let marking = net.positions.values()
+        .enumerate()
+        .fold(DMatrix::zeros(1, net.positions.len()), |mut acc, (i, vert)| {
+            acc.row_mut(0)[i] = vert.markers() as i32;
+            acc
+        });
+
+    let mut reachability = Reachability::new(input.matrix, output.matrix, marking);
+    Box::into_raw(Box::new(reachability.compute()))
 }

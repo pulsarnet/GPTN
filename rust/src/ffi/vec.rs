@@ -1,76 +1,75 @@
-use std::marker::PhantomData;
-use std::mem;
-use std::mem::MaybeUninit;
-use libc::c_void;
+use std::{mem, ptr};
 use net::Connection;
 use ::{PetriNet, Vertex};
+use crate::modules::reachability::Marking;
 
 #[repr(C)]
 pub struct CVec<T> {
-    repr: [MaybeUninit<usize>; mem::size_of::<Vec<c_void>>() / mem::size_of::<usize>()],
-    marker: PhantomData<Vec<T>>,
-}
-
-impl<T> CVec<T> {
-    pub fn new() -> Self {
-        Self::from(vec![])
-    }
-
-    pub fn as_vec(&self) -> &Vec<T> {
-        unsafe { &*(self as *const CVec<T> as *mut Vec<T>) }
-    }
-
-    pub fn len(&self) -> usize {
-        self.as_vec().len()
-    }
-
-    pub fn raw(&self) -> *const T {
-        self.as_vec().as_ptr()
-    }
+    ptr: std::ptr::NonNull<T>,
+    len: usize,
+    cap: usize,
 }
 
 impl<T> From<Vec<T>> for CVec<T> {
     fn from(v: Vec<T>) -> Self {
-        unsafe { std::mem::transmute::<Vec<T>, CVec<T>>(v) }
+        let mut v = std::mem::ManuallyDrop::new(v);
+        Self {
+            ptr: unsafe { ptr::NonNull::new_unchecked(v.as_mut_ptr()).into() },
+            len: v.len(),
+            cap: v.capacity(),
+        }
     }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn vec_len_u64(vec: *mut CVec<u64>) -> usize {
-    (&mut *vec).len()
+impl<T> Into<Vec<T>> for CVec<T> {
+    fn into(self) -> Vec<T> {
+        let mut this = mem::ManuallyDrop::new(self);
+        unsafe {
+            Vec::from_raw_parts(
+                this.ptr.as_mut(),
+                this.len,
+                this.cap
+            )
+        }
+    }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn vec_data_u64(vec: *mut CVec<u64>) -> *const u64 {
-    (&mut *vec).raw()
+impl<T> Drop for CVec<T> {
+    fn drop(&mut self) {
+        unsafe {
+            drop::<Vec<T>>(ptr::read(self).into())
+        }
+    }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn vec_len_vertex(vec: *mut CVec<*const Vertex>) -> usize {
-    (&mut *vec).len()
+macro_rules! generate_vec_type {
+    ($t:ty) => {
+        generate_vec_type!($t, $t);
+    };
+    ($t:ty, *const) => {
+        generate_vec_type!($t, *const $t);
+    };
+    ($t:ty, $spec:ty) => {
+        paste::item! {
+            #[no_mangle]
+            pub unsafe extern "C" fn [<vec_drop_ $t>](vec: CVec<$spec>) {
+                drop(vec)
+            }
+        }
+    };
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn vec_data_vertex(vec: *mut CVec<*const Vertex>) -> *const *const Vertex {
-    (&mut *vec).raw()
-}
+generate_vec_type!(i8);
+generate_vec_type!(i16);
+generate_vec_type!(i32);
+generate_vec_type!(i64);
 
-#[no_mangle]
-pub unsafe extern "C" fn vec_len_connection(vec: *mut CVec<*const Connection>) -> usize {
-    (&mut *vec).len()
-}
+generate_vec_type!(u8);
+generate_vec_type!(u16);
+generate_vec_type!(u32);
+generate_vec_type!(u64);
 
-#[no_mangle]
-pub unsafe extern "C" fn vec_data_connection(vec: *mut CVec<*const Connection>) -> *const *const Connection {
-    (&mut *vec).raw()
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn vec_len_nets(vec: *mut CVec<*const PetriNet>) -> usize {
-    (&mut *vec).len()
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn vec_data_nets(vec: *mut CVec<*const PetriNet>) -> *const *const PetriNet {
-    (&mut *vec).raw()
-}
+generate_vec_type!(Vertex, *const);
+generate_vec_type!(Connection, *const);
+generate_vec_type!(PetriNet, *const);
+generate_vec_type!(Marking, *const);

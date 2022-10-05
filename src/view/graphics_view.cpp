@@ -13,6 +13,7 @@
 #include "graphic_scene.h"
 #include "../toolbox/toolbox.h"
 #include "../overrides/MatrixWindow.h"
+#include "../modules/reachability/reachability_tree_scene.h"
 
 GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
 
@@ -186,6 +187,9 @@ void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
     auto matrix = new QAction("I/O matrix view", menu);
     connect(matrix, &QAction::triggered, this, &GraphicsView::slotMatrixView);
 
+    auto reachability = new QAction("Reachability", menu);
+    connect(reachability, &QAction::triggered, this, &GraphicsView::slotReachability);
+
     auto graphViz = new QMenu("GraphViz visualization", menu);
 
     auto dot = new QAction("dot", menu);
@@ -220,6 +224,7 @@ void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
     menu->addAction(horz);
     menu->addAction(vert);
     menu->addAction(matrix);
+    menu->addAction(reachability);
     menu->addMenu(graphViz);
     menu->popup(event->globalPos());
 
@@ -237,6 +242,26 @@ void GraphicsView::slotMatrixView(bool checked) {
         connect(m_IOMatrixWindow, &MatrixWindow::onWindowClose, this, &GraphicsView::slotIOWindowClose);
         m_IOMatrixWindow->show();
     }
+}
+
+void GraphicsView::slotReachability(bool checked) {
+    Q_UNUSED(checked)
+
+    auto view = new QGraphicsView;
+    view->setViewportUpdateMode(QGraphicsView::BoundingRectViewportUpdate);
+    view->setWindowFlag(Qt::BypassGraphicsProxyWidget);
+    view->setRubberBandSelectionMode(Qt::ContainsItemBoundingRect);
+    view->setDragMode(QGraphicsView::RubberBandDrag);
+    view->setOptimizationFlags(DontAdjustForAntialiasing);
+    view->setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
+
+    auto zoom_view = new GraphicsViewZoom(view);
+    zoom_view->set_modifier(Qt::NoModifier);
+
+    auto reach_scene = new ReachabilityTreeScene(dynamic_cast<GraphicScene*>(scene())->net()->reachability());
+
+    view->setScene(reach_scene);
+    view->show();
 }
 
 void GraphicsView::slotIOWindowClose(QWidget *window) {

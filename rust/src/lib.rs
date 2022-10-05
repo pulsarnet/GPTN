@@ -10,7 +10,7 @@ extern crate log;
 extern crate chrono;
 extern crate indexmap;
 
-use std::cmp::{max_by, min_by};
+use std::cmp::max_by;
 use std::collections::{HashMap, HashSet};
 use std::ffi::CString;
 use std::ops::Deref;
@@ -177,10 +177,6 @@ impl DecomposeContextBuilder {
         let primitive_net = parts.primitive_net();
         let (primitive_input, primitive_output) = parts.primitive_matrix();
         let linear_base_fragments_matrix = parts.equivalent_matrix();
-
-        let markers = parts.0.iter()
-            .flat_map(|net| net.positions.values()).map(|pos| pos.markers())
-            .collect::<Vec<usize>>();
         let c_matrix = DecomposeContextBuilder::calculate_c_matrix2(&parts);
 
         DecomposeContext {

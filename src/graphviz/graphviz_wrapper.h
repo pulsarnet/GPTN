@@ -18,13 +18,24 @@ struct GraphModel {
 class GraphVizWrapper {
 
 public:
+
+    enum RankDir {
+        TopToBottom,
+        BottomToTop,
+        LeftToRight,
+        RightToLeft,
+    };
+
     explicit GraphVizWrapper();
 
     Agnode_s* addCircle(char* name, const QSizeF& size, const QPointF &point = QPointF(0, 0));
     Agnode_s* addRectangle(char* name, const QSizeF& size, const QPointF &point = QPointF(0, 0));
 
-    void addEdge(const QString& from, const QString& to);
-    void addEdge(Agnode_s* from, Agnode_s* to);
+    Agedge_s* addEdge(const QString& from, const QString& to);
+    Agedge_s* addEdge(Agnode_s* from, Agnode_s* to);
+    void setEdgeLabel(Agedge_s*, char* label);
+
+    void setRankDir(RankDir dir);
 
     GraphVizWrapper subGraph(char* name);
     GraphModel save(char* algorithm);

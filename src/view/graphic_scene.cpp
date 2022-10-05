@@ -196,12 +196,11 @@ void GraphicScene::connectionCommit(QGraphicsSceneMouseEvent *event) {
         if (m_currentConnection->from()->allowConnection(item)) {
             auto conn = connectItems(m_currentConnection->from(), petri);
             conn->updateConnection();
-            delete m_currentConnection;
         }
-    } else {
-        removeItem(m_currentConnection);
     }
 
+    removeItem(m_currentConnection);
+    delete m_currentConnection;
     m_currentConnection = nullptr;
 }
 

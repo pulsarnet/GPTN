@@ -8,7 +8,7 @@ namespace ffi {
     class RustRandomAccessIterator {
     public:
 
-        using iterator_category = std::random_access_iterator_tag;
+        using iterator_category = std::forward_iterator_tag;
         using value_type = T;
         using difference_type = std::ptrdiff_t;
         using pointer = T*;
@@ -108,6 +108,18 @@ namespace ffi {
 
     public:
 
+        CVec() = default;
+        CVec(const CVec<T>&) = delete;
+        CVec(CVec<T>&& other) noexcept
+            : m_data(other.m_data)
+            , len(other.len)
+            , cap(other.cap)
+        {
+            other.m_data = nullptr;
+            other.len = 0;
+            other.cap = 0;
+        }
+
         [[nodiscard]] usize size() const noexcept;
         value_type const* data() const noexcept;
         pointer_type data() noexcept;
@@ -119,38 +131,43 @@ namespace ffi {
         [[nodiscard]] const std::size_t size_of() const noexcept;
 
         iterator begin() { return iterator(data()); }
-        iterator end(){return iterator(data() + size());}
+        iterator end() { return iterator(data() + size()); }
 
         const_iterator cbegin() { return const_iterator(data()); }
         const_iterator cend() { return const_iterator(data() + size()); }
 
+        ~CVec();
 
     private:
 
-        std::array<std::uintptr_t, 3> repr;
+        pointer_type m_data = nullptr;
+        size_t len = 0;
+        size_t cap = 0;
 
     };
 
     template<typename T>
+    size_t CVec<T>::size() const noexcept {
+        return this->len;
+    }
+
+    template<typename T>
     T *CVec<T>::data() noexcept {
-        return const_cast<T*>(const_cast<const CVec<T>*>(this)->data());
+        return this->m_data;
     }
 
     template<typename T>
     const T &CVec<T>::index(std::size_t n) const noexcept {
-        auto data = reinterpret_cast<const char*>(this->data());
-        return *reinterpret_cast<const T*>(data + n * size_of());
+        return this->m_data + n * size_of();
     }
 
     template<typename T>
     T& CVec<T>::operator[](std::size_t n) noexcept  {
-        auto data = reinterpret_cast<char*>(this->data());
-        return *reinterpret_cast<T*>(data + n * size_of());
+        return this->m_data + n * size_of();
     }
 
     template<typename T>
     const T& CVec<T>::operator[](std::size_t n) const noexcept  {
-        auto data = reinterpret_cast<const char*>(this->data());
-        return *reinterpret_cast<const T*>(data + n * size_of());
+        return *reinterpret_cast<const T*>(this->m_data + n * size_of());
     }
 }

@@ -12,7 +12,6 @@ use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 use ::{DecomposeContext};
-use CMatrix;
 use net::vertex::{VertexIndex, VertexType};
 use indexmap::map::IndexMap;
 use crate::ffi::matrix::CNamedMatrix;
@@ -811,7 +810,6 @@ impl PetriNet {
 pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> PetriNet {
 
     let positions = programs.positions().len();
-    let transitions = programs.transitions().len();
     let mut pos_indexes_vec = programs.positions().clone();
     let mut tran_indexes_vec = programs.transitions().clone();
 
@@ -828,8 +826,6 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
         .enumerate()
         .for_each(|e| markers.row_mut(e.0)[0] = e.1 as i32);
 
-    //let mut result = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
-    let mut save_vec = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
     let (t_sets, p_sets) = programs.programs[index].sets(&pos_indexes_vec, &tran_indexes_vec);
 
     log::error!("PSET => {:?}", p_sets);

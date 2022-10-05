@@ -57,6 +57,8 @@ protected slots:
     void markerChecked(bool checked);
 
     void slotMatrixView(bool checked);
+    void slotReachability(bool checked);
+
     void slotIOWindowClose(QWidget*);
 
 private:

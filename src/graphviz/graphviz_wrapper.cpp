@@ -16,8 +16,7 @@ GraphVizWrapper::GraphVizWrapper() {
     m_graph = agopen((char*)"g", Agdirected, 0);
     agsafeset(m_graph, (char*)"splines", "line", "");
     agsafeset(m_graph, (char*)"overlap", "scalexy", "");
-    agsafeset(m_graph, (char*)"rankdir", "LR", "");
-
+    setRankDir(LeftToRight);
 }
 
 GraphVizWrapper::GraphVizWrapper(GVC_t *context, Agraph_t *graph) {
@@ -58,8 +57,33 @@ Agnode_s *GraphVizWrapper::addRectangle(char *name, const QSizeF &size, const QP
     return transition;
 }
 
-void GraphVizWrapper::addEdge(const QString &from, const QString &to) {
-    addEdge(*m_elements.find(from), *m_elements.find(to));
+Agedge_s* GraphVizWrapper::addEdge(const QString &from, const QString &to) {
+    return addEdge(*m_elements.find(from), *m_elements.find(to));
+}
+
+Agedge_s* GraphVizWrapper::addEdge(Agnode_s *from, Agnode_s *to) {
+    return agedge(m_graph, from, to, 0, 1);
+}
+
+void GraphVizWrapper::setEdgeLabel(Agedge_s *node, char *label) {
+    agsafeset(node, (char*)"label", label, "");
+}
+
+void GraphVizWrapper::setRankDir(GraphVizWrapper::RankDir dir) {
+    switch (dir) {
+        case TopToBottom:
+            agsafeset(m_graph, (char*)"rankdir", "TB", "");
+            break;
+        case BottomToTop:
+            agsafeset(m_graph, (char*)"rankdir", "BT", "");
+            break;
+        case LeftToRight:
+            agsafeset(m_graph, (char*)"rankdir", "LR", "");
+            break;
+        case RightToLeft:
+            agsafeset(m_graph, (char*)"rankdir", "RL", "");
+            break;
+    }
 }
 
 GraphModel GraphVizWrapper::save(char* algorithm) {
@@ -72,43 +96,13 @@ GraphModel GraphVizWrapper::save(char* algorithm) {
         auto y = ((Agnodeinfo_t*)AGDATA(node))->coord.y * 1.73;
         net.elements.push_back({name, QPointF(x, y)});
     }
-//    char* result = nullptr;
-//    unsigned int len;
-//    gvRenderData(m_context, m_graph, "json", &result, &len);
-//
-//    auto document = QJsonDocument::fromJson(QString::fromStdString(std::string(result, len)).toUtf8());
-//    auto object = document.object();
-//    auto map = object.toVariantMap();
-//    auto objects = map["objects"].toJsonArray();
-//
-//    GraphModel net;
-//
-//    for (auto node : objects) {
-//
-//        auto nodeObject = node.toObject();
-//        if (!nodeObject.contains("pos")) continue;
-//
-//        QString pos_str = nodeObject.value("pos").toString();
-//        auto split = pos_str.split(',');
-//        QPointF pos(split.value(0).toFloat() * 1.73, split.value(1).toFloat() * 1.73);
-//
-//        QString name = nodeObject.value("name").toString();
-//
-//        net.elements.push_back({name, pos});
-//    }
-
-    gvFreeLayout(m_context, m_graph);
 
     return net;
 }
 
-void GraphVizWrapper::addEdge(Agnode_s *from, Agnode_s *to) {
-    agedge(m_graph, from, to, 0, 1);
-    //agsafeset(edge, (char*)"len", "1.", "");
-}
-
 GraphVizWrapper::~GraphVizWrapper() {
     if (!m_sub) {
+        gvFreeLayout(m_context, m_graph);
         agclose(m_graph);
         gvFreeContext(m_context);
     }

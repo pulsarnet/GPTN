@@ -6,6 +6,10 @@
 #include "vec.h"
 #include "types.h"
 
+namespace rust {
+    struct Reachability;
+}
+
 namespace ffi {
 
     struct CNamedMatrix;
@@ -58,6 +62,7 @@ namespace ffi {
         void remove_transition(Vertex*);
         void connect(Vertex*, Vertex*);
         void remove_connection(Vertex*, Vertex*);
+        rust::Reachability* reachability() const;
 
         Vertex* getVertex(VertexIndex index) const;
 
