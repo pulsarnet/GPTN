@@ -13,8 +13,7 @@
 #include "graphic_scene.h"
 #include "../toolbox/toolbox.h"
 #include "../overrides/MatrixWindow.h"
-#include "../modules/reachability/reachability_tree_scene.h"
-#include "../modules/reachability/reachability_view.h"
+#include "../modules/reachability/reachability_window.h"
 
 GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
 
@@ -247,12 +246,10 @@ void GraphicsView::slotMatrixView(bool checked) {
 
 void GraphicsView::slotReachability(bool checked) {
     Q_UNUSED(checked)
-
-    auto reach_scene = new ReachabilityTreeScene(dynamic_cast<GraphicScene*>(scene())->net()->reachability());
-
-    auto view = new ReachabilityView;
-    view->setScene(reach_scene);
-    view->show();
+    auto net = dynamic_cast<GraphicScene*>(scene())->net();
+    auto reachability = net->reachability();
+    auto reachabilityWindow = new ReachabilityWindow(net, reachability);
+    reachabilityWindow->show();
 }
 
 void GraphicsView::slotIOWindowClose(QWidget *window) {
