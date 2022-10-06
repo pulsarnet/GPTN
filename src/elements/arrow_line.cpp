@@ -139,13 +139,11 @@ void ArrowLine::updateConnection() {
 
 QPolygonF ArrowLine::arrow(QLineF line) {
     static const size_t arrowSize = 10;
-
     double angle = std::atan2(-line.dy(), line.dx());
     QPointF arrowP1 = line.p1() + QPointF(sin(angle + M_PI / 3.) * arrowSize,
                                           cos(angle + M_PI / 3.) * arrowSize);
     QPointF arrowP2 = line.p1() + QPointF(sin(angle + M_PI - M_PI / 3.) * arrowSize,
                                           cos(angle + M_PI - M_PI / 3.) * arrowSize);
-
     QPolygonF arrow;
     arrow << line.p1() << arrowP1 << arrowP2;
     return arrow;

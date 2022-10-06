@@ -39,8 +39,25 @@ void ReachabilityLine::paint(QPainter *painter, const QStyleOptionGraphicsItem *
     for (int i = 1; i < points_count; i++) {
         line.lineTo(points[i].x, points[i].y);
     }
-    line.lineTo(info->spl->list->ep.x, info->spl->list->ep.y);
-
     painter->drawPath(line);
+
+    static const size_t arrowSize = 10;
+
+    QLineF directLine(
+            QPointF(info->spl->list->list[points_count - 1].x, info->spl->list->list[points_count - 1].y),
+            QPointF(info->spl->list->ep.x, info->spl->list->ep.y)
+            );
+
+    QLineF normal = directLine.normalVector();
+    QPointF o(normal.dx() / 3.0, normal.dy() / 3.0);
+
+    QPolygonF arrow;
+    painter->save();
+    painter->setPen(Qt::NoPen);
+    painter->setBrush(QBrush(Qt::black));
+    arrow << directLine.p1() + o << directLine.p2() << directLine.p1() - o;
+    painter->drawPolygon(arrow);
+    painter->restore();
+
     //QGraphicsLineItem::paint(painter, option, widget);
 }

@@ -50,20 +50,21 @@ void ReachabilityNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *
 
     auto info = (Agnodeinfo_t*)AGDATA(m_node);
     auto [x, y] = info->coord;
-    qreal w = info->width * 72;
-    qreal h = info->height * 72;
 
     auto rect = boundingRect();
     auto center = rect.center();
     painter->drawRect(rect);
 
     auto label = info->label;
-    QFontMetricsF metrics(QFont(label->fontname, (int)label->fontsize));
+    QFontMetricsF metrics(QFont(label->fontname, (int)10));
     QSizeF text_size = metrics.size(0, label->text);
-    qreal x_label = center.x() - text_size.width() / 2;
-    qreal y_label = center.y();
+    qreal x_label = center.x() - text_size.width() / 2.;
+    qreal y_label = center.y() + text_size.height() / 2.;
 
+    painter->save();
+    painter->setFont(QFont(info->label->fontname, 10));
     painter->drawText((int)x_label, (int)y_label, label->text);
+    painter->restore();
 
 }
 
@@ -75,8 +76,8 @@ void ReachabilityNode::updateLayout() {
 
     setPos(x, y);
 
-    qreal w = info->width * 72;
-    qreal h = info->height * 72;
+    qreal w = info->width * 72.;
+    qreal h = info->height * 72.;
 
     m_boundingRect =  { - w / 2., - h / 2., w, h };
 
