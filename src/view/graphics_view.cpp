@@ -14,6 +14,7 @@
 #include "../toolbox/toolbox.h"
 #include "../overrides/MatrixWindow.h"
 #include "../modules/reachability/reachability_tree_scene.h"
+#include "../modules/reachability/reachability_view.h"
 
 GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
 
@@ -247,19 +248,9 @@ void GraphicsView::slotMatrixView(bool checked) {
 void GraphicsView::slotReachability(bool checked) {
     Q_UNUSED(checked)
 
-    auto view = new QGraphicsView;
-    view->setViewportUpdateMode(QGraphicsView::BoundingRectViewportUpdate);
-    view->setWindowFlag(Qt::BypassGraphicsProxyWidget);
-    view->setRubberBandSelectionMode(Qt::ContainsItemBoundingRect);
-    view->setDragMode(QGraphicsView::RubberBandDrag);
-    view->setOptimizationFlags(DontAdjustForAntialiasing);
-    view->setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
-
-    auto zoom_view = new GraphicsViewZoom(view);
-    zoom_view->set_modifier(Qt::NoModifier);
-
     auto reach_scene = new ReachabilityTreeScene(dynamic_cast<GraphicScene*>(scene())->net()->reachability());
 
+    auto view = new ReachabilityView;
     view->setScene(reach_scene);
     view->show();
 }

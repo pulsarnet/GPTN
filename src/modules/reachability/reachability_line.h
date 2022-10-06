@@ -13,6 +13,8 @@ class ReachabilityLine: public QGraphicsLineItem {
 public:
     explicit ReachabilityLine(Agedge_s* edge, QGraphicsItem* parent = nullptr);
 
+    QRectF boundingRect() const override;
+
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
 
 private:

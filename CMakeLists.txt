@@ -104,7 +104,7 @@ set(HEADERS
         src/QwtExt/qwt_ext_plot_curve_labels.h
         src/QwtExt/CanvasPicker.h
         src/synthesis/synthesis_window.h
-        src/ffi/vec.cpp src/modules/reachability/reachability_tree_scene.h src/ffi/reachability.cpp src/ffi/reachability.h src/modules/reachability/reachability_node.cpp src/modules/reachability/reachability_node.h src/modules/reachability/reachability_line.cpp src/modules/reachability/reachability_line.h)
+        src/ffi/vec.cpp src/modules/reachability/reachability_tree_scene.h src/ffi/reachability.cpp src/ffi/reachability.h src/modules/reachability/reachability_node.cpp src/modules/reachability/reachability_node.h src/modules/reachability/reachability_line.cpp src/modules/reachability/reachability_line.h src/modules/reachability/reachability_view.cpp src/modules/reachability/reachability_view.h)
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 

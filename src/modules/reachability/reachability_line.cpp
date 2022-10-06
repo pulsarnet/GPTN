@@ -12,6 +12,22 @@ ReachabilityLine::ReachabilityLine(Agedge_s *edge, QGraphicsItem *parent)
     Q_ASSERT(edge != nullptr);
 }
 
+QRectF ReachabilityLine::boundingRect() const {
+    auto info = (Agedgeinfo_t*)AGDATA(m_edge);
+
+    auto points_count = info->spl->list->size;
+    auto points = info->spl->list->list;
+
+    QPolygonF polygon;
+    for (int i = 0; i < points_count; i++) {
+        polygon << QPointF(points[i].x, points[i].y);
+    }
+
+    polygon << QPointF(info->spl->list->ep.x, info->spl->list->ep.y);
+
+    return polygon.boundingRect();
+}
+
 void ReachabilityLine::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     auto info = (Agedgeinfo_t*)AGDATA(m_edge);
 

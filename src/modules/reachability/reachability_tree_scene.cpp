@@ -10,6 +10,9 @@
 ReachabilityTreeScene::ReachabilityTreeScene(rust::Reachability *tree, QObject *parent)
     : QGraphicsScene(parent)
 {
+
+    setSceneRect(-12500, -12500, 25000, 25000);
+
     auto markings = tree->marking();
     for (auto marking : markings) {
         auto prev = marking->prev();

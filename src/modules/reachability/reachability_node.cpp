@@ -36,10 +36,11 @@ QRectF ReachabilityNode::boundingRect() const {
     if (!m_node) return QGraphicsRectItem::boundingRect();
 
     auto info = (Agnodeinfo_t*)AGDATA(m_node);
-    return QRectF(
-            QPointF(info->bb.LL.x, info->bb.LL.y),
-            QPointF(info->bb.UR.x, info->bb.UR.y)
-            );
+    auto [x, y] = info->coord;
+    qreal w = info->width * 72;
+    qreal h = info->height * 72;
+
+    return { x - w / 2, y - h / 2, w, h };
 }
 
 
@@ -54,9 +55,7 @@ void ReachabilityNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *
     qreal w = info->width * 72;
     qreal h = info->height * 72;
 
-    painter->drawRect(
-            QRectF(x - w / 2, y - h / 2, w, h)
-            );
+    painter->drawRect(boundingRect());
 
     auto label = info->label;
     QFontMetricsF metrics(QFont(label->fontname, (int)label->fontsize));
