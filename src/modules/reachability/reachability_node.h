@@ -8,10 +8,10 @@
 #include <graphviz/gvc.h>
 #include <QGraphicsRectItem>
 
-class ReachabilityNode : public QGraphicsRectItem {
+class ReachabilityNode : public QGraphicsItem {
 
 public:
-    explicit ReachabilityNode(QList<int32_t> values, QObject* parent = nullptr);
+    explicit ReachabilityNode(QList<int32_t> values, QGraphicsItem* parent = nullptr);
 
     [[nodiscard]] const QString& text() const;
 
@@ -22,10 +22,14 @@ public:
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
 
+    void updateLayout();
+
 private:
 
     QList<int32_t> m_values;
     QString m_text;
+    QRectF m_boundingRect;
+
     Agnode_s* m_node;
 };
 

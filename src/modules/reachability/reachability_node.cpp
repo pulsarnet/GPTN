@@ -3,6 +3,8 @@
 //
 
 #include <QPainter>
+#include <QToolTip>
+#include <QStyleOptionGraphicsItem>
 #include "reachability_node.h"
 
 QString text_from_list(const QList<int32_t>& values) {
@@ -14,10 +16,13 @@ QString text_from_list(const QList<int32_t>& values) {
     return result;
 }
 
-ReachabilityNode::ReachabilityNode(QList<int32_t> values, QObject *parent) {
+ReachabilityNode::ReachabilityNode(QList<int32_t> values, QGraphicsItem *parent): QGraphicsItem(parent) {
     m_node = nullptr;
     m_values = std::move(values);
     m_text = text_from_list(m_values);
+
+    setToolTip(m_text);
+    setAcceptHoverEvents(true);
 }
 
 const QString &ReachabilityNode::text() const {
@@ -33,20 +38,13 @@ Agnode_s* ReachabilityNode::graphVizNode() {
 }
 
 QRectF ReachabilityNode::boundingRect() const {
-    if (!m_node) return QGraphicsRectItem::boundingRect();
-
-    auto info = (Agnodeinfo_t*)AGDATA(m_node);
-    auto [x, y] = info->coord;
-    qreal w = info->width * 72;
-    qreal h = info->height * 72;
-
-    return { x - w / 2, y - h / 2, w, h };
+    return m_boundingRect;
 }
 
 
 void ReachabilityNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     if (!m_node) {
-        QGraphicsRectItem::paint(painter, option, widget);
+        //QGraphicsItem::paint(painter, option, widget);
         return;
     }
 
@@ -55,14 +53,32 @@ void ReachabilityNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *
     qreal w = info->width * 72;
     qreal h = info->height * 72;
 
-    painter->drawRect(boundingRect());
+    auto rect = boundingRect();
+    auto center = rect.center();
+    painter->drawRect(rect);
 
     auto label = info->label;
     QFontMetricsF metrics(QFont(label->fontname, (int)label->fontsize));
     QSizeF text_size = metrics.size(0, label->text);
-    qreal x_label = x - text_size.width() / 2;
-    qreal y_label = y;
+    qreal x_label = center.x() - text_size.width() / 2;
+    qreal y_label = center.y();
 
     painter->drawText((int)x_label, (int)y_label, label->text);
 
+}
+
+void ReachabilityNode::updateLayout() {
+    if (!m_node) return;
+
+    auto info = (Agnodeinfo_t*)AGDATA(m_node);
+    auto [x, y] = info->coord;
+
+    setPos(x, y);
+
+    qreal w = info->width * 72;
+    qreal h = info->height * 72;
+
+    m_boundingRect =  { - w / 2., - h / 2., w, h };
+
+    update();
 }
