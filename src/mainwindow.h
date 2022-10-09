@@ -56,7 +56,7 @@ public slots:
 
     void onDocumentChanged();
 
-    void treeSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
+    void treeItemAction(const QModelIndex& index);
 
 protected:
 

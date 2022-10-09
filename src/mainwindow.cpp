@@ -21,6 +21,7 @@
 #include "MainTree/MainTreeModel.h"
 #include "MainTree/ProjectTreeItem.h"
 #include "MainTree/ModelTreeItem.h"
+#include "MainTree/MainTreeView.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_changed(false), m_tabWidget(new ActionTabWidget) {
     createMenuBar();
@@ -36,14 +37,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_changed(false),
     treeModel->addChild(new ProjectTreeItem(std::filesystem::path("/tmp")));
 #endif
 
-    auto treeView = new QTreeView(this);
-    treeView->setHeaderHidden(true);
-    treeView->setModel(treeModel);
-
-    connect(treeView->selectionModel(),
-            &QItemSelectionModel::selectionChanged,
+    auto treeView = new MainTreeView(treeModel, this);
+    connect(treeView,
+            &MainTreeView::elementAction,
             this,
-            &MainWindow::treeSelectionChanged);
+            &MainWindow::treeItemAction);
 
     m_mainTreeView = new ads::CDockWidget("Tree");
     m_mainTreeView->setWidget(treeView);
@@ -204,10 +202,8 @@ void MainWindow::onDocumentChanged() {
     m_changed = true;
 }
 
-void MainWindow::treeSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected) {
-    if (selected.indexes().isEmpty()) return;
-
-    auto treeItem = static_cast<MainTreeItem*>(selected.indexes()[0].internalPointer());
+void MainWindow::treeItemAction(const QModelIndex& index) {
+    auto treeItem = static_cast<MainTreeItem*>(index.internalPointer());
     if (auto model = dynamic_cast<ModelTreeItem*>(treeItem); model) {
         auto tab = model->netModelingTab();
 
