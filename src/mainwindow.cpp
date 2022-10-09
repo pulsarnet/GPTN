@@ -29,7 +29,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_changed(false),
     m_dockManager = new ads::CDockManager(this);
 
     auto treeModel = new MainTreeModel();
+
+#ifdef _WIN32
     treeModel->addChild(new ProjectTreeItem(std::filesystem::path("G:/tmp")));
+#else
+    treeModel->addChild(new ProjectTreeItem(std::filesystem::path("/tmp")));
+#endif
 
     auto treeView = new QTreeView(this);
     treeView->setHeaderHidden(true);

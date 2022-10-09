@@ -30,9 +30,16 @@ endif()
 include_directories(${GRAPHVIZ_DIR}/include/)
 link_directories(${GRAPHVIZ_DIR}/lib/)
 
-include_directories(${QWT_DIR}/include/)
-link_directories(${QWT_DIR}/lib/)
 add_compile_definitions(QWT_DLL)
+find_library(QWT_LIBRARY
+        NAMES qwt
+        HINTS ${QWT_DIR}/lib
+        REQUIRED)
+
+if(QWT_LIBRARY)
+    include_directories(${QWT_DIR}/include)
+    message("QWT found:${QWT_LIBRARY}")
+endif()
 
 if(NOT WIN32)
     #set(CMAKE_PREFIX_PATH "/Users/nikolajmuravev/Qt/6.2.1/macos/lib/cmake")
@@ -108,15 +115,30 @@ set(HEADERS
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 
-add_executable(ffi_rust
-        ${SRC_FILES}
-        ${HEADERS}
-        mainwindow.ui
-        resources/resources.qrc
-        )
+if (APPLE)
+    add_executable(ffi_rust
+            ${SRC_FILES}
+            ${HEADERS}
+            mainwindow.ui
+            resources/resources.qrc
+            )
+else()
+    add_executable(ffi_rust
+            ${SRC_FILES}
+            ${HEADERS}
+            mainwindow.ui
+            resources/resources.qrc
+            )
+endif()
+
+if (APPLE)
+    set(FFI_LIBRARY_PATH "${CMAKE_SOURCE_DIR}/rust/target/release/libhello_world.a")
+else()
+    set(FFI_LIBRARY_PATH "${CMAKE_SOURCE_DIR}/rust/target/$<$<CONFIG:Debug>:debug>$<$<CONFIG:Release>:release>/hello_world.lib")
+endif()
 
 target_link_libraries(ffi_rust PRIVATE
-        "${CMAKE_SOURCE_DIR}/rust/target/$<$<CONFIG:Debug>:debug>$<$<CONFIG:Release>:release>/hello_world.lib"
+        ${FFI_LIBRARY_PATH}
         #"${CMAKE_SOURCE_DIR}/rust/target/debug/hello_world.lib"
         Qt6::Widgets
         Qt6::Core
@@ -124,10 +146,10 @@ target_link_libraries(ffi_rust PRIVATE
         Qt6::OpenGLWidgets
         Qt6::Svg
         ads::qtadvanceddocking
-        libopenblas
+        openblas
         gvc
         cgraph
-        qwt
+        ${QWT_LIBRARY}
         )
 
 qt6_import_plugins(ffi_rust
@@ -142,3 +164,21 @@ set_target_properties(ffi_rust PROPERTIES
         CXX_STANDART_REQUIRED ON
         CXX_EXTENSIONS OFF
         )
+
+if (APPLE)
+    set(APPS ${CMAKE_INSTALL_PREFIX_DIR}/${PROJECT_NAME}.app)
+
+    if(CMAKE_PREFIX_PATH)
+        foreach(dir ${CMAKE_PREFIX_PATH})
+            list(APPEND DIRS "${dir}/bin" "${dir}/lib")
+        endforeach()
+    endif()
+    set_target_properties(ffi_rust PROPERTIES
+            BUNDLE True
+            )
+
+    install(CODE "
+        include(BundleUtilites)
+        fixup_bundle(\"\" \"${QWT_LIBRARY}\" \"${QWT_LIBRARY}\")
+    ")
+endif()

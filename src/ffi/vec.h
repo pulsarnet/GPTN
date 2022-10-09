@@ -147,7 +147,7 @@ namespace ffi {
     };
 
     template<typename T>
-    size_t CVec<T>::size() const noexcept {
+    usize CVec<T>::size() const noexcept {
         return this->len;
     }
 

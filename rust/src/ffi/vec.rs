@@ -52,7 +52,8 @@ macro_rules! generate_vec_type {
     ($t:ty, $spec:ty) => {
         paste::item! {
             #[no_mangle]
-            pub unsafe extern "C" fn [<vec_drop_ $t>](vec: CVec<$spec>) {
+            pub unsafe extern "C" fn [<vec_drop_ $t>](vec: *mut CVec<$spec>) {
+                let vec = &mut *vec;
                 drop(vec)
             }
         }
