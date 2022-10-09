@@ -63,7 +63,6 @@ void ActionTabWidget::slotTabChanged(int index) {
 }
 
 void ActionTabWidget::slotDecompose() {
-
     // Сначала создадим декомпозицию
     m_netModelingTab->ctx()->decompose();
 

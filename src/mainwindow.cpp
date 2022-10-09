@@ -10,17 +10,50 @@
 #include <QJsonDocument>
 #include <QTableView>
 #include <QMessageBox>
+#include <QTreeView>
+#include <DockAreaWidget.h>
+#include <DockAreaTitleBar.h>
+#include <DockWidget.h>
 #include "windows_types/close_on_inactive.h"
 #include "ActionTabWidget/ActionTabWidget.h"
 #include "ActionTabWidget/NetModelingTab.h"
 #include "view/graphic_scene.h"
+#include "MainTree/MainTreeModel.h"
+#include "MainTree/ProjectTreeItem.h"
+#include "MainTree/ModelTreeItem.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_changed(false), m_tabWidget(new ActionTabWidget) {
-
     createMenuBar();
     createStatusBar();
 
-    setCentralWidget(m_tabWidget);
+    m_dockManager = new ads::CDockManager(this);
+
+    auto treeModel = new MainTreeModel();
+    treeModel->addChild(new ProjectTreeItem(std::filesystem::path("G:/tmp")));
+
+    auto treeView = new QTreeView(this);
+    treeView->setHeaderHidden(true);
+    treeView->setModel(treeModel);
+
+    connect(treeView->selectionModel(),
+            &QItemSelectionModel::selectionChanged,
+            this,
+            &MainWindow::treeSelectionChanged);
+
+    m_mainTreeView = new ads::CDockWidget("Tree");
+    m_mainTreeView->setWidget(treeView);
+    m_mainTreeView->setFeature(ads::CDockWidget::DockWidgetClosable, false);
+
+    m_dockTabWidget = new ads::CDockWidget("Tab widget");
+    m_dockTabWidget->setWidget(m_tabWidget);
+
+    auto area = m_dockManager->setCentralWidget(m_dockTabWidget);
+    area->titleBar()->hide();
+
+    m_dockManager->addDockWidget(ads::LeftDockWidgetArea, m_mainTreeView);
+
+    setCentralWidget(m_dockManager);
+    //setCentralWidget(m_tabWidget);
 }
 
 void MainWindow::setFileName(const QString &name) {
@@ -164,6 +197,33 @@ void MainWindow::slotOpenFile(bool checked) {
 
 void MainWindow::onDocumentChanged() {
     m_changed = true;
+}
+
+void MainWindow::treeSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected) {
+    if (selected.indexes().isEmpty()) return;
+
+    auto treeItem = static_cast<MainTreeItem*>(selected.indexes()[0].internalPointer());
+    if (auto model = dynamic_cast<ModelTreeItem*>(treeItem); model) {
+        auto tab = model->netModelingTab();
+
+        int index = -1;
+        for (int i = 0; i < m_tabWidget->count(); i++) {
+            auto it = m_tabWidget->widget(i);
+            if (it == tab) {
+                index = i;
+                break;
+            }
+        }
+
+        if (index < 0) {
+            index = m_tabWidget->insertTab(m_tabWidget->count() - 1,
+                                   tab,
+                                   dynamic_cast<ProjectTreeItem*>(model->parentItem())->data(0).toString());
+            m_tabWidget->setTabIcon(index, model->icon());
+        }
+
+        m_tabWidget->setCurrentIndex(index);
+    }
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {

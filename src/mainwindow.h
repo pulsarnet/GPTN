@@ -19,7 +19,9 @@
 #include <QToolButton>
 #include <QLabel>
 #include <QMessageBox>
+#include <DockManager.h>
 
+class QTreeView;
 class ActionTabWidget;
 
 class MainWindow : public QMainWindow {
@@ -53,6 +55,9 @@ public slots:
     void slotOpenFile(bool checked);
 
     void onDocumentChanged();
+
+    void treeSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
+
 protected:
 
     void closeEvent(QCloseEvent* event) override;
@@ -67,11 +72,13 @@ private:
 
 private:
 
-
-
     QStatusBar* statusBar = nullptr;
     QMenuBar* menuBar = nullptr;
     ActionTabWidget* m_tabWidget = nullptr;
+
+    ads::CDockManager* m_dockManager = nullptr;
+    ads::CDockWidget* m_mainTreeView = nullptr;
+    ads::CDockWidget* m_dockTabWidget = nullptr;
 
     QString m_filename;
     bool m_changed;
