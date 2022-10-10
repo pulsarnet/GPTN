@@ -46,6 +46,10 @@ QIcon MainTreeItem::icon() const noexcept {
     return {};
 }
 
+QMenu *MainTreeItem::contextMenu() noexcept {
+    return nullptr;
+}
+
 MainTreeItem::~MainTreeItem() {
     for (auto item : m_childItems) {
         delete item;

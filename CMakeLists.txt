@@ -111,7 +111,7 @@ set(HEADERS
         src/QwtExt/qwt_ext_plot_curve_labels.h
         src/QwtExt/CanvasPicker.h
         src/synthesis/synthesis_window.h
-        src/ffi/vec.cpp src/modules/reachability/reachability_tree_scene.h src/ffi/reachability.cpp src/ffi/reachability.h src/modules/reachability/reachability_node.cpp src/modules/reachability/reachability_node.h src/modules/reachability/reachability_line.cpp src/modules/reachability/reachability_line.h src/modules/reachability/reachability_view.cpp src/modules/reachability/reachability_view.h src/modules/reachability/reachability_window.cpp src/modules/reachability/reachability_window.h src/MainTree/MainTreeItem.cpp src/MainTree/MainTreeItem.h src/MainTree/MainTreeModel.cpp src/MainTree/MainTreeModel.h src/MainTree/ProjectTreeItem.cpp src/MainTree/ProjectTreeItem.h src/MainTree/AnalysisTreeItem.cpp src/MainTree/AnalysisTreeItem.h src/MainTree/ModelTreeItem.cpp src/MainTree/ModelTreeItem.h src/MainTree/MainTreeView.cpp src/MainTree/MainTreeView.h)
+        src/ffi/vec.cpp src/modules/reachability/reachability_tree_scene.h src/ffi/reachability.cpp src/ffi/reachability.h src/modules/reachability/reachability_node.cpp src/modules/reachability/reachability_node.h src/modules/reachability/reachability_line.cpp src/modules/reachability/reachability_line.h src/modules/reachability/reachability_view.cpp src/modules/reachability/reachability_view.h src/modules/reachability/reachability_window.cpp src/modules/reachability/reachability_window.h src/MainTree/MainTreeItem.cpp src/MainTree/MainTreeItem.h src/MainTree/MainTreeModel.cpp src/MainTree/MainTreeModel.h src/MainTree/ProjectTreeItem.cpp src/MainTree/ProjectTreeItem.h src/MainTree/AnalysisTreeItem.cpp src/MainTree/AnalysisTreeItem.h src/MainTree/ModelTreeItem.cpp src/MainTree/ModelTreeItem.h src/MainTree/MainTreeView.cpp src/MainTree/MainTreeView.h src/MainTree/DecomposeTreeItem.cpp src/MainTree/DecomposeTreeItem.h src/MainTree/ReachabilityTreeItem.cpp src/MainTree/ReachabilityTreeItem.h)
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 
@@ -146,7 +146,7 @@ target_link_libraries(ffi_rust PRIVATE
         Qt6::OpenGLWidgets
         Qt6::Svg
         ads::qtadvanceddocking
-        openblas
+        libopenblas
         gvc
         cgraph
         ${QWT_LIBRARY}

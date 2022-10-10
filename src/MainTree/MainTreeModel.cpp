@@ -30,6 +30,10 @@ bool MainTreeModel::addChild(MainTreeItem* child, const QModelIndex &parent) {
     return success;
 }
 
+QModelIndex MainTreeModel::indexForTreeItem(MainTreeItem *item) const {
+    return createIndex(item->childCount(), 0, item);
+}
+
 QModelIndex MainTreeModel::index(int row, int column, const QModelIndex &parent) const {
     if (!hasIndex(row, column, parent)) return {};
 

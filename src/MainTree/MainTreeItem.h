@@ -7,7 +7,11 @@
 
 #include <QVariant>
 
-class MainTreeItem {
+class QMenu;
+
+class MainTreeItem : public QObject{
+
+    Q_OBJECT
 
 public:
 
@@ -24,8 +28,13 @@ public:
 
     [[nodiscard]] virtual QVariant data(int column) const noexcept;
     [[nodiscard]] virtual QIcon icon() const noexcept;
+    [[nodiscard]] virtual QMenu* contextMenu() noexcept;
 
     virtual ~MainTreeItem();
+
+signals:
+
+    void onChildAdd();
 
 private:
 

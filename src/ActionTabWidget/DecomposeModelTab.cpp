@@ -28,6 +28,7 @@
 DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) : QWidget(parent)
     , m_netModelingTab(mainTab)
 {
+    mainTab->ctx()->decompose();
     m_ctx = mainTab->ctx()->decompose_ctx();
 
     m_dockManager = new ads::CDockManager(this);

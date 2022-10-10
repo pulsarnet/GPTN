@@ -16,8 +16,9 @@ public:
 
     explicit ProjectTreeItem(const std::filesystem::path& path);
 
-    QVariant data(int column) const noexcept override;
+    ModelTreeItem* modelItem() { return m_modelItem; }
 
+    QVariant data(int column) const noexcept override;
 
 private:
 

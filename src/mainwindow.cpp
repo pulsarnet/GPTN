@@ -10,18 +10,20 @@
 #include <QJsonDocument>
 #include <QTableView>
 #include <QMessageBox>
-#include <QTreeView>
 #include <DockAreaWidget.h>
 #include <DockAreaTitleBar.h>
 #include <DockWidget.h>
 #include "windows_types/close_on_inactive.h"
 #include "ActionTabWidget/ActionTabWidget.h"
-#include "ActionTabWidget/NetModelingTab.h"
+#include "ActionTabWidget/DecomposeModelTab.h"
+#include "ActionTabWidget/WrappedLayoutWidget.h"
 #include "view/graphic_scene.h"
 #include "MainTree/MainTreeModel.h"
 #include "MainTree/ProjectTreeItem.h"
 #include "MainTree/ModelTreeItem.h"
 #include "MainTree/MainTreeView.h"
+#include "MainTree/DecomposeTreeItem.h"
+#include "MainTree/ReachabilityTreeItem.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_changed(false), m_tabWidget(new ActionTabWidget) {
     createMenuBar();
@@ -30,18 +32,16 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_changed(false),
     m_dockManager = new ads::CDockManager(this);
 
     auto treeModel = new MainTreeModel();
-
-#ifdef _WIN32
-    treeModel->addChild(new ProjectTreeItem(std::filesystem::path("G:/tmp")));
-#else
-    treeModel->addChild(new ProjectTreeItem(std::filesystem::path("/tmp")));
-#endif
-
     auto treeView = new MainTreeView(treeModel, this);
     connect(treeView,
             &MainTreeView::elementAction,
             this,
             &MainWindow::treeItemAction);
+
+    connect(treeView,
+            &QTreeView::customContextMenuRequested,
+            this,
+            &MainWindow::treeItemContextMenuRequested);
 
     m_mainTreeView = new ads::CDockWidget("Tree");
     m_mainTreeView->setWidget(treeView);
@@ -88,25 +88,25 @@ bool MainWindow::save() {
 
 bool MainWindow::saveFile(const QString &filename) {
 
-    QFile file(filename);
-    if (!file.open(QFile::WriteOnly)) {
-        QMessageBox::critical(this, tr("Unable to save file"), file.errorString());
-        return false;
-    }
-
-    auto data = dynamic_cast<GraphicScene*>(m_tabWidget->mainTab()->view()->scene())->json();
-    auto array = data.toJson();
-    file.write(array);
-
-    setFileName(filename);
-    m_changed = false;
-
+//    QFile file(filename);
+//    if (!file.open(QFile::WriteOnly)) {
+//        QMessageBox::critical(this, tr("Unable to save file"), file.errorString());
+//        return false;
+//    }
+//
+//    auto model = dynamic_cast<MainTreeModel*>(dynamic_cast<MainTreeView*>(m_mainTreeView->widget())->model());
+//    auto data = dynamic_cast<GraphicScene*>()->json();
+//    auto array = data.toJson();
+//    file.write(array);
+//
+//    setFileName(filename);
+//    m_changed = false;
+//
     return true;
 
 }
 
 bool MainWindow::open() {
-
     QString fileName = QFileDialog::getOpenFileName(this,
                                                     tr("Open Address Book"), "",
                                                     tr("Address Book (*.json)"));
@@ -129,11 +129,21 @@ bool MainWindow::open() {
     }
 
     auto document = QJsonDocument::fromJson(file.readAll());
-    if (!dynamic_cast<GraphicScene*>(m_tabWidget->mainTab()->view()->scene())->fromJson(document)) {
+
+    auto projectItem = new ProjectTreeItem(file.filesystemFileName());
+    auto modelItem = projectItem->modelItem();
+    if (!dynamic_cast<GraphicScene*>(modelItem->netModelingTab()->view()->scene())->fromJson(document)) {
         QMessageBox::information(this, tr("Unable to open file"),
                                  file.errorString());
         return false;
     }
+
+    auto treeModel = qobject_cast<MainTreeModel*>(
+            qobject_cast<MainTreeView*>(m_mainTreeView->widget())->model()
+    );
+
+    treeModel->addChild(projectItem);
+
 
     setFileName(fileName);
     m_changed = false;
@@ -224,7 +234,80 @@ void MainWindow::treeItemAction(const QModelIndex& index) {
         }
 
         m_tabWidget->setCurrentIndex(index);
+    } else if (auto model = dynamic_cast<ReachabilityTreeItem*>(treeItem); model) {
+        auto tab = model->reachabilityTab();
+
+        int index = -1;
+        for (int i = 0; i < m_tabWidget->count(); i++) {
+            auto it = m_tabWidget->widget(i);
+            if (it == tab) {
+                index = i;
+                break;
+            }
+        }
+
+        if (index < 0) {
+            QString name = QString("Reachability Tree of %1")
+                    .arg(dynamic_cast<ProjectTreeItem*>(model->parentItem()->parentItem()->parentItem())->data(0).toString());
+
+            index = m_tabWidget->insertTab(m_tabWidget->count() - 1,
+                                           tab,
+                                           name);
+            m_tabWidget->setTabIcon(index, model->icon());
+        }
+
+        m_tabWidget->setCurrentIndex(index);
+    } else if (auto model = dynamic_cast<DecomposeTreeItem*>(treeItem); model) {
+        auto tab = model->decomposeModelTab();
+
+        int index = -1;
+        for (int i = 0; i < m_tabWidget->count(); i++) {
+            auto it = m_tabWidget->widget(i);
+            if (it == tab) {
+                index = i;
+                break;
+            }
+        }
+
+        if (index < 0) {
+            QString name = QString("Decompose of %1")
+                    .arg(dynamic_cast<ProjectTreeItem*>(model->parentItem()->parentItem()->parentItem())->data(0).toString());
+
+            index = m_tabWidget->insertTab(m_tabWidget->count() - 1,
+                                           tab,
+                                           name);
+            m_tabWidget->setTabIcon(index, model->icon());
+        }
+
+        m_tabWidget->setCurrentIndex(index);
     }
+}
+
+void MainWindow::treeItemContextMenuRequested(const QPoint &point) {
+    auto treeView = qobject_cast<MainTreeView*>(m_mainTreeView->widget());
+    auto index = treeView->indexAt(point);
+    if (!index.isValid()) {
+        return;
+    }
+
+    auto item = static_cast<MainTreeItem*>(index.internalPointer());
+    auto menu = item->contextMenu();
+    if (menu) {
+        connect(item,
+                &MainTreeItem::onChildAdd,
+                this,
+                &MainWindow::slotNeedUpdateTreeView);
+
+        menu->exec(treeView->viewport()->mapToGlobal(point));
+    }
+}
+
+void MainWindow::slotNeedUpdateTreeView() {
+    auto treeView = qobject_cast<MainTreeView*>(m_mainTreeView->widget());
+    auto treeModel = qobject_cast<MainTreeModel*>(treeView->model());
+
+    treeView->expand(treeView->currentIndex());
+    treeModel->layoutChanged();
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {

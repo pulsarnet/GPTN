@@ -10,6 +10,7 @@ MainTreeView::MainTreeView(MainTreeModel *model, QWidget *parent)
     : QTreeView(parent)
 {
     setHeaderHidden(true);
+    setContextMenuPolicy(Qt::CustomContextMenu);
 
     this->setModel(model);
 }

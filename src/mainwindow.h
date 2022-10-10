@@ -23,6 +23,7 @@
 
 class QTreeView;
 class ActionTabWidget;
+class MainTreeItem;
 
 class MainWindow : public QMainWindow {
 
@@ -57,6 +58,10 @@ public slots:
     void onDocumentChanged();
 
     void treeItemAction(const QModelIndex& index);
+
+    void treeItemContextMenuRequested(const QPoint& point);
+
+    void slotNeedUpdateTreeView();
 
 protected:
 

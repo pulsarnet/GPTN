@@ -101,7 +101,7 @@ QMenuBar::item:selected, QMenu::item:selected {
 }
 
 QMenu::item {
-    padding: 8px;
+    padding: 3px 20px;
 }
 
 QTableView {

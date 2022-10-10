@@ -11,12 +11,15 @@ class MainTreeItem;
 
 class MainTreeModel : public QAbstractItemModel {
 
+    Q_OBJECT
+
 public:
 
     MainTreeModel();
 
     MainTreeItem* getItem(const QModelIndex& parent) const;
     bool addChild(MainTreeItem* child, const QModelIndex &parent = QModelIndex());
+    QModelIndex indexForTreeItem(MainTreeItem*) const;
 
     /// Overrides
     QModelIndex index(int row, int column, const QModelIndex &parent) const override;
