@@ -20,6 +20,8 @@ public:
 
     QVariant data(int column) const noexcept override;
 
+    QIcon icon() const noexcept override;
+
 private:
 
     DecomposeModelTab* m_decomposeTab;

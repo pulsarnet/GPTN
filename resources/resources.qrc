@@ -17,5 +17,6 @@
         <file>images/play.svg</file>
         <file>images/modeling.svg</file>
         <file>images/decompose.svg</file>
+        <file>images/tree.svg</file>
     </qresource>
 </RCC>

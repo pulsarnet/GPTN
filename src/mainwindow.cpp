@@ -25,7 +25,11 @@
 #include "MainTree/DecomposeTreeItem.h"
 #include "MainTree/ReachabilityTreeItem.h"
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_changed(false), m_tabWidget(new ActionTabWidget) {
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent)
+    , m_changed(false)
+    , m_tabWidget(new ActionTabWidget)
+{
     createMenuBar();
     createStatusBar();
 
@@ -114,12 +118,6 @@ bool MainWindow::open() {
     if (fileName.isEmpty())
         return false;
 
-    if (m_changed) {
-        auto ret = onSaveFileAsk();
-        if (ret == QMessageBox::Cancel || (ret == QMessageBox::Save && !save()))
-            return false;
-    }
-
     QFile file(fileName);
 
     if (!file.open(QIODevice::ReadOnly)) {
@@ -140,7 +138,7 @@ bool MainWindow::open() {
 
     auto treeModel = qobject_cast<MainTreeModel*>(
             qobject_cast<MainTreeView*>(m_mainTreeView->widget())->model()
-    );
+            );
 
     treeModel->addChild(projectItem);
 
@@ -180,8 +178,18 @@ void MainWindow::createMenuBar() {
     file_menu->addAction(save_action);
     file_menu->addAction(save_as_action);
 
+    auto edit_menu = new QMenu("&Edit");
+    auto undo_action = new QAction("&Undo");
+    undo_action->setShortcut(tr("Ctrl+Z"));
+
+    auto redo_action = new QAction("&Redo");
+    redo_action->setShortcut(tr("Ctrl+Y"));
+
+    edit_menu->addAction(undo_action);
+    edit_menu->addAction(redo_action);
+
     menuBar->addMenu(file_menu);
-    menuBar->addMenu(new QMenu("&Edit"));
+    menuBar->addMenu(edit_menu);
     menuBar->addMenu(new QMenu("&Tools"));
     menuBar->addMenu(new QMenu("&Window"));
     menuBar->addMenu(new QMenu("&Help"));
@@ -293,6 +301,11 @@ void MainWindow::treeItemContextMenuRequested(const QPoint &point) {
     auto item = static_cast<MainTreeItem*>(index.internalPointer());
     auto menu = item->contextMenu();
     if (menu) {
+        disconnect(item,
+                   &MainTreeItem::onChildAdd,
+                   this,
+                   &MainWindow::slotNeedUpdateTreeView);
+
         connect(item,
                 &MainTreeItem::onChildAdd,
                 this,

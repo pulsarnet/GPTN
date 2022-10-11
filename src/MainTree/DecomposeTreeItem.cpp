@@ -22,3 +22,7 @@ DecomposeModelTab *DecomposeTreeItem::decomposeModelTab() {
 QVariant DecomposeTreeItem::data(int column) const noexcept {
     return "Decomposition";
 }
+
+QIcon DecomposeTreeItem::icon() const noexcept {
+    return QIcon(":/images/decompose.svg");
+}

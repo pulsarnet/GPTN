@@ -24,3 +24,7 @@ WrappedLayoutWidget *ReachabilityTreeItem::reachabilityTab() {
 QVariant ReachabilityTreeItem::data(int column) const noexcept {
     return "Reachability Tree";
 }
+
+QIcon ReachabilityTreeItem::icon() const noexcept {
+    return QIcon(":/images/tree.svg");
+}
