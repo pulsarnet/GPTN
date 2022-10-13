@@ -24,6 +24,7 @@
 class QTreeView;
 class ActionTabWidget;
 class MainTreeItem;
+class MainTreeView;
 
 class MainWindow : public QMainWindow {
 
@@ -80,10 +81,7 @@ private:
     QStatusBar* statusBar = nullptr;
     QMenuBar* menuBar = nullptr;
     ActionTabWidget* m_tabWidget = nullptr;
-
-    ads::CDockManager* m_dockManager = nullptr;
-    ads::CDockWidget* m_mainTreeView = nullptr;
-    ads::CDockWidget* m_dockTabWidget = nullptr;
+    MainTreeView* m_treeView = nullptr;
 
     QString m_filename;
     bool m_changed;

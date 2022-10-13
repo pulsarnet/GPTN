@@ -33,34 +33,24 @@ MainWindow::MainWindow(QWidget *parent)
     createMenuBar();
     createStatusBar();
 
-    m_dockManager = new ads::CDockManager(this);
+    auto treeWidget = new QDockWidget(tr("Tree"), this);
+    treeWidget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
 
     auto treeModel = new MainTreeModel();
-    auto treeView = new MainTreeView(treeModel, this);
-    connect(treeView,
+    m_treeView = new MainTreeView(treeModel, this);
+    treeWidget->setWidget(m_treeView);
+    connect(m_treeView,
             &MainTreeView::elementAction,
             this,
             &MainWindow::treeItemAction);
 
-    connect(treeView,
+    connect(m_treeView,
             &QTreeView::customContextMenuRequested,
             this,
             &MainWindow::treeItemContextMenuRequested);
 
-    m_mainTreeView = new ads::CDockWidget("Tree");
-    m_mainTreeView->setWidget(treeView);
-    m_mainTreeView->setFeature(ads::CDockWidget::DockWidgetClosable, false);
-
-    m_dockTabWidget = new ads::CDockWidget("Tab widget");
-    m_dockTabWidget->setWidget(m_tabWidget);
-
-    auto area = m_dockManager->setCentralWidget(m_dockTabWidget);
-    area->titleBar()->hide();
-
-    m_dockManager->addDockWidget(ads::LeftDockWidgetArea, m_mainTreeView);
-
-    setCentralWidget(m_dockManager);
-    //setCentralWidget(m_tabWidget);
+    addDockWidget(Qt::LeftDockWidgetArea, treeWidget);
+    setCentralWidget(m_tabWidget);
 }
 
 void MainWindow::setFileName(const QString &name) {
@@ -137,7 +127,7 @@ bool MainWindow::open() {
     }
 
     auto treeModel = qobject_cast<MainTreeModel*>(
-            qobject_cast<MainTreeView*>(m_mainTreeView->widget())->model()
+            qobject_cast<MainTreeView*>(m_treeView)->model()
             );
 
     treeModel->addChild(projectItem);
@@ -292,8 +282,7 @@ void MainWindow::treeItemAction(const QModelIndex& index) {
 }
 
 void MainWindow::treeItemContextMenuRequested(const QPoint &point) {
-    auto treeView = qobject_cast<MainTreeView*>(m_mainTreeView->widget());
-    auto index = treeView->indexAt(point);
+    auto index = m_treeView->indexAt(point);
     if (!index.isValid()) {
         return;
     }
@@ -311,15 +300,14 @@ void MainWindow::treeItemContextMenuRequested(const QPoint &point) {
                 this,
                 &MainWindow::slotNeedUpdateTreeView);
 
-        menu->exec(treeView->viewport()->mapToGlobal(point));
+        menu->exec(m_treeView->viewport()->mapToGlobal(point));
     }
 }
 
 void MainWindow::slotNeedUpdateTreeView() {
-    auto treeView = qobject_cast<MainTreeView*>(m_mainTreeView->widget());
-    auto treeModel = qobject_cast<MainTreeModel*>(treeView->model());
+    auto treeModel = qobject_cast<MainTreeModel*>(m_treeView->model());
 
-    treeView->expand(treeView->currentIndex());
+    m_treeView->expand(m_treeView->currentIndex());
     treeModel->layoutChanged();
 }
 
