@@ -17,6 +17,8 @@
 
 GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
 
+    setBackgroundBrush(Qt::NoBrush);
+
     this->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     this->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 

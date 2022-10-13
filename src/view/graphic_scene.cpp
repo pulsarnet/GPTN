@@ -607,3 +607,33 @@ void GraphicScene::dotVisualization(char* algorithm) {
     }
 
 }
+
+void GraphicScene::drawBackground(QPainter *painter, const QRectF &rect) {
+    const int gridSize = 50.;
+
+    QPen pen(QColor(0, 0, 0, 150));
+    painter->setPen(pen);
+    painter->setOpacity(0.5);
+    painter->setRenderHint(QPainter::Antialiasing);
+
+    qreal left = int(rect.left()) - (int(rect.left()) % gridSize);
+    qreal top = int(rect.top()) - (int(rect.top()) % gridSize);
+
+    QVector<QLineF> lines;
+    for (qreal x = left; x <= rect.right(); x += gridSize) {
+        lines.append(QLineF(
+                QPointF(x, rect.top()),
+                QPointF(x, rect.bottom())
+                ));
+    }
+
+    for (qreal y = top; y <= rect.bottom(); y += gridSize) {
+        lines.append(QLineF(
+                QPointF(rect.left(), y),
+                QPointF(rect.right(), y)
+        ));
+    }
+
+    painter->drawLines(lines);
+
+}
