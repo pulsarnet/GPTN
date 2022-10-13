@@ -7,3 +7,5 @@ cmake-build-*
 lib
 3dparty
 build_*
+.vscode
+log

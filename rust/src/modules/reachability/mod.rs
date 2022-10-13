@@ -5,6 +5,8 @@ use std::slice::Iter;
 use nalgebra::DMatrix;
 use CVec;
 
+mod decompose;
+
 #[derive(PartialEq, Clone, Debug, Copy)]
 enum CovType {
     DeadEnd,
