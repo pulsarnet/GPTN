@@ -12,8 +12,8 @@
 #include "synthesis_table.h"
 #include "synthesis_model.h"
 #include "../DockSystem/DockWidget.h"
-#include "../view/graphic_scene.h"
-#include "../view/graphics_view.h"
+#include "../view/GraphicScene.h"
+#include "../view/GraphicsView.h"
 #include "../ffi/rust.h"
 
 SynthesisWindow::SynthesisWindow(ffi::DecomposeContext *ctx, QVector<size_t> programs, QWidget* parent)

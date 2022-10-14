@@ -17,7 +17,7 @@
 #include "ActionTabWidget/ActionTabWidget.h"
 #include "ActionTabWidget/DecomposeModelTab.h"
 #include "ActionTabWidget/WrappedLayoutWidget.h"
-#include "view/graphic_scene.h"
+#include "view/GraphicScene.h"
 #include "MainTree/MainTreeModel.h"
 #include "MainTree/ProjectTreeItem.h"
 #include "MainTree/ModelTreeItem.h"

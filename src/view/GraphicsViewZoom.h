@@ -2,8 +2,8 @@
 // Created by nmuravev on 12/15/2021.
 //
 
-#ifndef FFI_RUST_GRAPHICS_VIEW_ZOOM_H
-#define FFI_RUST_GRAPHICS_VIEW_ZOOM_H
+#ifndef FFI_RUST_GRAPHICSVIEWZOOM_H
+#define FFI_RUST_GRAPHICSVIEWZOOM_H
 
 #include <QObject>
 #include <QMouseEvent>
@@ -40,4 +40,4 @@ signals:
 };
 
 
-#endif //FFI_RUST_GRAPHICS_VIEW_ZOOM_H
+#endif //FFI_RUST_GRAPHICSVIEWZOOM_H

@@ -3,7 +3,7 @@
 //
 
 #include "reachability_view.h"
-#include "../../view/graphics_view_zoom.h"
+#include "../../view/GraphicsViewZoom.h"
 
 ReachabilityView::ReachabilityView(QWidget* parent): QGraphicsView(parent) {
 

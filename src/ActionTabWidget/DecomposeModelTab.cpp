@@ -3,7 +3,7 @@
 //
 
 #include "DecomposeModelTab.h"
-#include "../view/graphic_scene.h"
+#include "../view/GraphicScene.h"
 #include "../synthesis/synthesis_table.h"
 #include "../DockSystem/DockToolbar.h"
 #include <QGridLayout>

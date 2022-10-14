@@ -4,7 +4,7 @@
 
 #include <QBoxLayout>
 #include "NetModelingTab.h"
-#include "../view/graphic_scene.h"
+#include "../view/GraphicScene.h"
 #include "../elements/position.h"
 #include "../elements/transition.h"
 #include "../elements/arrow_line.h"

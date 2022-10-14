@@ -9,7 +9,7 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include "../ffi/rust.h"
-#include "graphic_scene.h"
+#include "GraphicScene.h"
 #include "../elements/petri_object.h"
 #include "../elements/position.h"
 #include "../elements/transition.h"

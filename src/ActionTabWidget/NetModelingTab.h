@@ -6,7 +6,7 @@
 #define FFI_RUST_NETMODELINGTAB_H
 
 #include <QWidget>
-#include "../view/graphics_view.h"
+#include "../view/GraphicsView.h"
 #include "../ffi/rust.h"
 
 class NetModelingTab : public QWidget {

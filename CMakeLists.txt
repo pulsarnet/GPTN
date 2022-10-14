@@ -61,9 +61,9 @@ set(SRC_FILES
         src/elements/transition.cpp
         src/elements/petri_object.cpp
         src/ffi/rust.cpp
-        src/view/graphics_view.cpp
-        src/view/graphics_view_zoom.cpp
-        src/view/graphic_scene.cpp
+        src/view/GraphicsView.cpp
+        src/view/GraphicsViewZoom.cpp
+        src/view/GraphicScene.cpp
         src/graphviz/graphviz_wrapper.cpp
         src/synthesis/synthesis_model.cpp
         src/synthesis/synthesis_item_delegate.cpp
@@ -88,12 +88,12 @@ set(HEADERS
         src/elements/position.h
         src/elements/transition.h
         src/elements/petri_object.h
-        src/view/graphics_view.h
-        src/view/graphics_view_zoom.h
+        src/view/GraphicsView.h
+        src/view/GraphicsViewZoom.h
         src/toolbox/toolbox.h
         src/toolbox/tool.h
         src/ffi/rust.h
-        src/view/graphic_scene.h
+        src/view/GraphicScene.h
         src/graphviz/graphviz_wrapper.h
         src/synthesis/synthesis_table.h
         src/synthesis/synthesis_model.h

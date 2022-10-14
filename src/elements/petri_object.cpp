@@ -4,7 +4,7 @@
 
 #include <QTextDocument>
 #include <QApplication>
-#include "../view/graphic_scene.h"
+#include "../view/GraphicScene.h"
 #include "petri_object.h"
 #include "arrow_line.h"
 #include "../ffi/rust.h"

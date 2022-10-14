@@ -2,8 +2,8 @@
 // Created by nmuravev on 12/13/2021.
 //
 
-#ifndef FFI_RUST_GRAPHICS_VIEW_H
-#define FFI_RUST_GRAPHICS_VIEW_H
+#ifndef FFI_RUST_GRAPHICSVIEW_H
+#define FFI_RUST_GRAPHICSVIEW_H
 
 #include <QGraphicsView>
 #include <QMouseEvent>
@@ -83,4 +83,4 @@ private:
 };
 
 
-#endif //FFI_RUST_GRAPHICS_VIEW_H
+#endif //FFI_RUST_GRAPHICSVIEW_H

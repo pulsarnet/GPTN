@@ -8,9 +8,9 @@
 
 #include "../elements/position.h"
 #include "../elements/arrow_line.h"
-#include "graphics_view.h"
-#include "graphics_view_zoom.h"
-#include "graphic_scene.h"
+#include "GraphicsView.h"
+#include "GraphicsViewZoom.h"
+#include "GraphicScene.h"
 #include "../toolbox/toolbox.h"
 #include "../overrides/MatrixWindow.h"
 #include "../modules/reachability/reachability_window.h"

@@ -1,6 +1,6 @@
 
-#ifndef FFI_RUST_GRAPHIC_SCENE_H
-#define FFI_RUST_GRAPHIC_SCENE_H
+#ifndef FFI_RUST_GRAPHICSCENE_H
+#define FFI_RUST_GRAPHICSCENE_H
 
 #include <QGraphicsScene>
 
@@ -118,4 +118,4 @@ private:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(GraphicScene::Modes);
 
-#endif //FFI_RUST_GRAPHIC_SCENE_H
+#endif //FFI_RUST_GRAPHICSCENE_H
