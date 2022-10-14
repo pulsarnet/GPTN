@@ -13,12 +13,15 @@ class AnalysisTreeItem;
 
 class ProjectTreeItem : public MainTreeItem {
 
+    Q_OBJECT
+
 public:
 
     explicit ProjectTreeItem(const std::filesystem::path& path);
 
     ModelTreeItem* modelItem() { return m_modelItem; }
     AnalysisTreeItem* analysisItem() { return m_analysisItem; }
+    std::filesystem::path folder() const { return m_folder; }
 
     QVariant data(int column) const noexcept override;
 

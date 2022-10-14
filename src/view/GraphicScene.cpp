@@ -611,7 +611,7 @@ void GraphicScene::dotVisualization(char* algorithm) {
 void GraphicScene::drawBackground(QPainter *painter, const QRectF &rect) {
     const int gridSize = 50.;
 
-    QPen pen(QColor(0, 0, 0, 150));
+    QPen pen(QColor(0, 0, 0, 150), 0, Qt::DotLine);
     painter->setPen(pen);
     painter->setOpacity(0.5);
     painter->setRenderHint(QPainter::Antialiasing);

@@ -25,6 +25,7 @@ class QTreeView;
 class ActionTabWidget;
 class MainTreeItem;
 class MainTreeView;
+class ProjectTreeItem;
 
 class MainWindow : public QMainWindow {
 
@@ -45,7 +46,7 @@ public:
     bool save();
     bool open();
 
-    bool saveFile(const QString& filename);
+    bool saveFile();
     QMessageBox::StandardButton onSaveFileAsk();
 
 public slots:
@@ -66,6 +67,8 @@ public slots:
 
     void slotQuit(bool checked);
 
+    void treeViewSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
+
 protected:
 
     void closeEvent(QCloseEvent* event) override;
@@ -84,6 +87,7 @@ private:
     QMenuBar* menuBar = nullptr;
     ActionTabWidget* m_tabWidget = nullptr;
     MainTreeView* m_treeView = nullptr;
+    ProjectTreeItem* m_currentProject = nullptr;
 
     QString m_filename;
     bool m_changed;

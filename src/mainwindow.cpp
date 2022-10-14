@@ -24,6 +24,7 @@
 #include "MainTree/MainTreeView.h"
 #include "MainTree/DecomposeTreeItem.h"
 #include "MainTree/ReachabilityTreeItem.h"
+#include "MainTree/AnalysisTreeItem.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -49,6 +50,11 @@ MainWindow::MainWindow(QWidget *parent)
             this,
             &MainWindow::treeItemContextMenuRequested);
 
+    connect(m_treeView->selectionModel(),
+            &QItemSelectionModel::selectionChanged,
+            this,
+            &MainWindow::treeViewSelectionChanged);
+
     addDockWidget(Qt::LeftDockWidgetArea, treeWidget);
     setCentralWidget(m_tabWidget);
 }
@@ -70,32 +76,36 @@ bool MainWindow::saveAs() {
     if (filename.isEmpty())
         return false;
 
-    return saveFile(filename);
+    return saveFile();
 }
 
 bool MainWindow::save() {
     if (m_filename.isEmpty())
         return saveAs();
 
-    return saveFile(m_filename);
+    return saveFile();
 }
 
-bool MainWindow::saveFile(const QString &filename) {
+bool MainWindow::saveFile() {
 
-//    QFile file(filename);
-//    if (!file.open(QFile::WriteOnly)) {
-//        QMessageBox::critical(this, tr("Unable to save file"), file.errorString());
-//        return false;
-//    }
-//
-//    auto model = dynamic_cast<MainTreeModel*>(dynamic_cast<MainTreeView*>(m_mainTreeView->widget())->model());
-//    auto data = dynamic_cast<GraphicScene*>()->json();
-//    auto array = data.toJson();
-//    file.write(array);
-//
-//    setFileName(filename);
-//    m_changed = false;
-//
+    // Get current tree project item
+    // Get filepath and save it
+    if (!m_currentProject)
+        return false;
+
+    auto path = QString::fromStdString(m_currentProject->folder().string());
+    auto json =
+            qobject_cast<GraphicScene*>(m_currentProject->modelItem()->netModelingTab()->view()->scene())->json();
+
+    QFile file(path);
+    if (!file.open(QFile::WriteOnly)) {
+        QMessageBox::warning(this, tr("Petri Net Editor"),
+                             tr("Cannot write file %1:\n%2.")
+                             .arg(QDir::toNativeSeparators(path), file.errorString()));
+    }
+
+    file.write(json.toJson());
+
     return true;
 
 }
@@ -347,4 +357,28 @@ bool MainWindow::saveOnExit() {
 void MainWindow::slotQuit(bool checked) {
     Q_UNUSED(checked)
     QApplication::quit();
+}
+
+void MainWindow::treeViewSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected) {
+    Q_UNUSED(selected)
+    Q_UNUSED(deselected)
+    auto index = m_treeView->currentIndex();
+    if (!index.isValid()) {
+        // set null
+        m_currentProject = nullptr;
+        return;
+    }
+
+    auto item = static_cast<MainTreeItem*>(index.internalPointer());
+
+    // set current project item
+    if (auto project = dynamic_cast<ProjectTreeItem*>(item); project) {
+        m_currentProject = project;
+    } else if (auto project = dynamic_cast<ProjectTreeItem*>(item->parentItem()); project) {
+        m_currentProject = project;
+    } else if (auto project = dynamic_cast<ProjectTreeItem*>(item->parentItem()->parentItem()); project) {
+        m_currentProject = project;
+    }
+
+    qDebug() << "Current project: " << m_currentProject->data(0).toString();
 }
