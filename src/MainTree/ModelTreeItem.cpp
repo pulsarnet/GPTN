@@ -3,11 +3,9 @@
 //
 
 #include "ModelTreeItem.h"
-#include "AnalysisTreeItem.h"
 
 ModelTreeItem::ModelTreeItem(ProjectTreeItem *parent)
     : MainTreeItem(parent)
-    , m_analysisItem(new AnalysisTreeItem(this))
     , m_modelingTab(new NetModelingTab)
 {
 

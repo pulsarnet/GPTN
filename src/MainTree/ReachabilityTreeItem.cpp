@@ -11,7 +11,7 @@
 ReachabilityTreeItem::ReachabilityTreeItem(AnalysisTreeItem *parent)
         : MainTreeItem(parent)
 {
-    auto modelItem = dynamic_cast<ModelTreeItem*>(parent->parentItem());
+    auto modelItem = dynamic_cast<ProjectTreeItem*>(parent->parentItem())->modelItem();
     auto netModelingTab = modelItem->netModelingTab();
     auto reachabilityTree = new ReachabilityWindow(netModelingTab->ctx()->net(), netModelingTab->ctx()->net()->reachability());
     m_reachabilityTab = new WrappedLayoutWidget(reachabilityTree);

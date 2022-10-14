@@ -7,7 +7,7 @@
 
 #include "MainTreeItem.h"
 
-class ModelTreeItem;
+class ProjectTreeItem;
 class DecomposeTreeItem;
 class ReachabilityTreeItem;
 
@@ -17,7 +17,7 @@ class AnalysisTreeItem : public MainTreeItem {
 
 public:
 
-    explicit AnalysisTreeItem(ModelTreeItem* parent);
+    explicit AnalysisTreeItem(ProjectTreeItem* parent);
 
     QVariant data(int column) const noexcept override;
 

@@ -10,7 +10,7 @@
 DecomposeTreeItem::DecomposeTreeItem(AnalysisTreeItem *parent)
     : MainTreeItem(parent)
 {
-    auto modelItem = dynamic_cast<ModelTreeItem*>(parent->parentItem());
+    auto modelItem = dynamic_cast<ProjectTreeItem*>(parent->parentItem())->modelItem();
     auto netModelingTab = modelItem->netModelingTab();
     m_decomposeTab = new DecomposeModelTab(netModelingTab);
 }

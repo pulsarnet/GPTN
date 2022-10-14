@@ -8,7 +8,6 @@
 #include "ProjectTreeItem.h"
 #include "../ActionTabWidget/NetModelingTab.h"
 
-class AnalysisTreeItem;
 
 class ModelTreeItem : public MainTreeItem {
 
@@ -22,8 +21,7 @@ public:
     NetModelingTab* netModelingTab();
 
 private:
-    // children
-    AnalysisTreeItem* m_analysisItem;
+
     NetModelingTab* m_modelingTab;
 };
 

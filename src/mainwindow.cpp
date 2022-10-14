@@ -251,7 +251,7 @@ void MainWindow::treeItemAction(const QModelIndex& index) {
 
         if (index < 0) {
             QString name = QString("Reachability Tree of %1")
-                    .arg(dynamic_cast<ProjectTreeItem*>(model->parentItem()->parentItem()->parentItem())->data(0).toString());
+                    .arg(dynamic_cast<ProjectTreeItem*>(model->parentItem()->parentItem())->data(0).toString());
 
             index = m_tabWidget->insertTab(m_tabWidget->count() - 1,
                                            tab,
@@ -274,7 +274,7 @@ void MainWindow::treeItemAction(const QModelIndex& index) {
 
         if (index < 0) {
             QString name = QString("Decompose of %1")
-                    .arg(dynamic_cast<ProjectTreeItem*>(model->parentItem()->parentItem()->parentItem())->data(0).toString());
+                    .arg(dynamic_cast<ProjectTreeItem*>(model->parentItem()->parentItem())->data(0).toString());
 
             index = m_tabWidget->insertTab(m_tabWidget->count() - 1,
                                            tab,

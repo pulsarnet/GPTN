@@ -4,11 +4,11 @@
 
 #include <QMenu>
 #include "AnalysisTreeItem.h"
-#include "ModelTreeItem.h"
+#include "ProjectTreeItem.h"
 #include "DecomposeTreeItem.h"
 #include "ReachabilityTreeItem.h"
 
-AnalysisTreeItem::AnalysisTreeItem(ModelTreeItem *parent)
+AnalysisTreeItem::AnalysisTreeItem(ProjectTreeItem *parent)
     : MainTreeItem(parent)
     , m_decomposeTreeItem(nullptr)
     , m_reachabilityTreeItem(nullptr)
