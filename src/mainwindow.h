@@ -64,6 +64,8 @@ public slots:
 
     void slotNeedUpdateTreeView();
 
+    void slotQuit(bool checked);
+
 protected:
 
     void closeEvent(QCloseEvent* event) override;

@@ -4,6 +4,7 @@
 
 #include "mainwindow.h"
 
+#include <QApplication>
 #include <QFileDialog>
 #include <QGraphicsDropShadowEffect>
 #include <QDockWidget>
@@ -12,7 +13,6 @@
 #include <QMessageBox>
 #include <DockAreaWidget.h>
 #include <DockAreaTitleBar.h>
-#include <DockWidget.h>
 #include "windows_types/close_on_inactive.h"
 #include "ActionTabWidget/ActionTabWidget.h"
 #include "ActionTabWidget/DecomposeModelTab.h"
@@ -164,9 +164,14 @@ void MainWindow::createMenuBar() {
     open_action->setShortcut(tr("Ctrl+O"));
     connect(open_action, &QAction::triggered, this, &MainWindow::slotOpenFile);
 
+    auto quit_action = new QAction("&Quit");
+    quit_action->setShortcut(tr("Ctrl+Q"));
+    connect(quit_action, &QAction::triggered, this, &MainWindow::slotQuit);
+
     file_menu->addAction(open_action);
     file_menu->addAction(save_action);
     file_menu->addAction(save_as_action);
+    file_menu->addAction(quit_action);
 
     auto edit_menu = new QMenu("&Edit");
     auto undo_action = new QAction("&Undo");
@@ -337,4 +342,9 @@ bool MainWindow::saveOnExit() {
     }
 
     return true;
+}
+
+void MainWindow::slotQuit(bool checked) {
+    Q_UNUSED(checked)
+    QApplication::quit();
 }
