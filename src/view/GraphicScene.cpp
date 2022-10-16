@@ -45,16 +45,12 @@ GraphicScene::GraphicScene(ffi::PetriNet *net, QObject *parent)
         if (from.type == ffi::VertexType::Position) {
             auto position = getPosition((int)from.id);
             auto transition = getTransition((int)to.id);
-            auto line = new ArrowLine(position, transition);
-            m_connections.append(line);
-            addItem(line);
+            addConnection(new ArrowLine(position, transition), true);
         }
         else {
             auto transition = getTransition((int)from.id);
             auto position = getPosition((int)to.id);
-            auto line = new ArrowLine(transition, position);
-            m_connections.append(line);
-            addItem(line);
+            addConnection(new ArrowLine(transition, position), false);
         }
     }
 
@@ -183,7 +179,7 @@ void GraphicScene::removeObject(QGraphicsSceneMouseEvent *event) {
         onSceneChanged();
     }
     else if (auto connection_line = dynamic_cast<ArrowLine*>(item); connection_line) {
-        m_undoStack->push(new ConnectCommand(connection_line, ConnectCommand::Disconnect, this));
+        m_undoStack->push(ConnectCommand::disconnect(connection_line, this));
     }
 
 }
@@ -205,8 +201,28 @@ void GraphicScene::connectionCommit(QGraphicsSceneMouseEvent *event) {
     auto item = netItemAt(event->scenePos());
     if (auto petri = dynamic_cast<PetriObject*>(item); petri) {
         if (m_currentConnection->from()->allowConnection(item)) {
-            auto conn = connectItems(m_currentConnection->from(), petri);
-            conn->updateConnection();
+            auto existing = getConnection(m_currentConnection->from(), petri);
+            if (existing) {
+                if (existing->from() == petri) {
+                    if (existing->isBidirectional()) {
+                        m_undoStack->push(ConnectCommand::setWeight(existing,
+                                                                    (int)existing->netItem(true)->weight() + 1,
+                                                                    true,
+                                                                    this));
+                    } else {
+                        m_undoStack->push(ConnectCommand::setBidirectional(existing, this));
+                    }
+
+                } else {
+                    m_undoStack->push(ConnectCommand::setWeight(existing,
+                                                                (int)existing->netItem()->weight() + 1,
+                                                                false,
+                                                                this));
+                }
+            } else {
+                // create new connection
+                m_undoStack->push(ConnectCommand::connect(m_currentConnection->from(), petri, this));
+            }
         }
     }
 
@@ -431,10 +447,12 @@ bool GraphicScene::fromJson(const QJsonDocument& document) {
         if (toType == ffi::VertexType::Position) to = getPosition(toId);
         else to = getTransition(toId);
 
-        connectItems(from, to)->updateConnection();
+        auto existing = getConnection(from, to);
+        if (existing)
+            existing->setBidirectional(true);
+        else
+            addConnection(new ArrowLine(from, to));
     }
-
-    m_undoStack->clear();
 
     return true;
 }
@@ -448,32 +466,37 @@ void GraphicScene::removeAll() {
     m_connections.clear();
 }
 
-ArrowLine* GraphicScene::connectItems(PetriObject *from, PetriObject *to) {
-    ArrowLine* arrowLine;
+void GraphicScene::addConnection(ArrowLine* connection, bool onlyScene) {
+    addItem(connection);
+    m_connections.push_back(connection);
+    connection->updateConnection();
 
+    if (!onlyScene)
+        m_net->connect(connection->from()->vertex(), connection->to()->vertex());
+}
+
+void GraphicScene::setConnectionWeight(ArrowLine *connection, int weight, bool reverse) {
+    connection->netItem(reverse)->setWeight(weight);
+    connection->updateConnection();
+}
+
+ArrowLine* GraphicScene::getConnection(PetriObject *from, PetriObject *to) {
     auto it = std::find_if(
             m_connections.begin(),
             m_connections.end(),
             [&](ArrowLine* connection) {
                 return (connection->from() == from && connection->to() == to)
-                || (connection->from() == to && connection->to() == from);
+                       || (connection->from() == to && connection->to() == from);
             });
 
-    // New command ConnectCommand(arrowLine, this)
+    return it != m_connections.end() ? *it : nullptr;
+}
 
-    if (it != m_connections.end()) {
-        arrowLine = (*it);
-        if (arrowLine->from() == to && arrowLine->to() == from) {
-            m_undoStack->push(new ConnectCommand(arrowLine, ConnectCommand::Bidirectional, this));
-        } else {
-            m_undoStack->push(new ConnectCommand(arrowLine, ConnectCommand::IncrementWeight, this));
-        }
-    } else {
-        arrowLine = new ArrowLine(from, to);
-        m_undoStack->push(new ConnectCommand(arrowLine, ConnectCommand::Connect, this));
-    }
-
-    return arrowLine;
+void GraphicScene::removeConnection(ArrowLine *connection) {
+    m_net->remove_connection(connection->from()->vertex(), connection->to()->vertex());
+    m_net->remove_connection(connection->to()->vertex(), connection->from()->vertex());
+    m_connections.remove(m_connections.indexOf(connection));
+    removeItem(connection);
 }
 
 void GraphicScene::slotHorizontalAlignment(bool triggered) {

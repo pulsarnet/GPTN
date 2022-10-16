@@ -12,6 +12,7 @@
 
 namespace ffi {
     struct PetriNet;
+    struct Connection;
 }
 
 class PetriObject;
@@ -29,6 +30,9 @@ public:
     bool setTo(PetriObject* to);
 
     void setBidirectional(bool b);
+    bool isBidirectional() const { return m_bidirectional; }
+
+    ffi::Connection* netItem(bool reverse = false);
 
     PetriObject* from() {
         return m_from;

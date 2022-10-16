@@ -9,16 +9,14 @@
 
 class GraphicScene;
 class ArrowLine;
+class PetriObject;
 
 class ConnectCommand : public QUndoCommand {
-
-public:
 
     enum ConnectionType {
         Connect,
         Disconnect,
-        IncrementWeight,
-        DicrementWeight,
+        SetWeight,
         Bidirectional
     };
 
@@ -26,6 +24,21 @@ public:
                             ConnectionType type,
                             GraphicScene* scene,
                             QUndoCommand* parent = nullptr);
+
+    explicit ConnectCommand(ArrowLine* connection,
+                            ConnectionType type,
+                            int newWeight,
+                            int oldWeight,
+                            bool reverse,
+                            GraphicScene* scene,
+                            QUndoCommand* parent = nullptr);
+
+public:
+
+    static ConnectCommand* connect(PetriObject* from, PetriObject* to, GraphicScene* scene);
+    static ConnectCommand* disconnect(ArrowLine* connection, GraphicScene* scene);
+    static ConnectCommand* setWeight(ArrowLine* connection, int newWeight, bool reverse, GraphicScene* scene);
+    static ConnectCommand* setBidirectional(ArrowLine* connection, GraphicScene* scene);
 
     void redo() override;
     void undo() override;
@@ -35,7 +48,9 @@ private:
     GraphicScene* m_scene;
     ArrowLine* m_connection;
     ConnectionType m_type;
+    int m_newWeight;
+    int m_oldWeight;
+    bool m_reverse;
 };
-
 
 #endif //FFI_RUST_CONNECTCOMMAND_H

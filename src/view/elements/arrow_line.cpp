@@ -86,6 +86,15 @@ bool ArrowLine::setTo(PetriObject *to) {
 
 void ArrowLine::setBidirectional(bool b) {
     m_bidirectional = b;
+    updateConnection();
+}
+
+ffi::Connection *ArrowLine::netItem(bool reverse) {
+    auto scene = dynamic_cast<GraphicScene*>(this->scene());
+    if (reverse)
+        return scene->net()->get_connection(m_to->vertex(), m_from->vertex());
+    else
+        return scene->net()->get_connection(m_from->vertex(), m_to->vertex());
 }
 
 void ArrowLine::disconnect() {
@@ -145,6 +154,7 @@ void ArrowLine::updateConnection() {
     }
 
     m_shape = curve;
+    update();
 }
 
 QPolygonF ArrowLine::arrow(QLineF line) {

@@ -16,44 +16,79 @@ ConnectCommand::ConnectCommand(ArrowLine* connection, ConnectionType type, Graph
 
 }
 
+ConnectCommand::ConnectCommand(ArrowLine* connection,
+                               ConnectionType type,
+                               int newWeight,
+                               int oldWeight,
+                               bool reverse,
+                               GraphicScene *scene,
+                               QUndoCommand *parent)
+        : QUndoCommand(parent)
+        , m_scene(scene)
+        , m_connection(connection)
+        , m_type(type)
+        , m_newWeight(newWeight)
+        , m_oldWeight(oldWeight)
+        , m_reverse(reverse)
+{
+
+}
+
 void ConnectCommand::redo() {
-    auto net = m_scene->net();
-    if (m_type == Connect) {
-        net->connect(m_connection->from()->vertex(), m_connection->to()->vertex());
-        m_scene->addItem(m_connection);
-    } else if (m_type == Disconnect) {
-        net->remove_connection(m_connection->from()->vertex(), m_connection->to()->vertex());
-        m_scene->removeItem(m_connection);
-    } else if (m_type == IncrementWeight) {
-        auto connection = net->get_connection(m_connection->from()->vertex(), m_connection->to()->vertex());
-        connection->setWeight(connection->weight() + 1);
-    } else if (m_type == DicrementWeight) {
-        auto connection = net->get_connection(m_connection->from()->vertex(), m_connection->to()->vertex());
-        connection->setWeight(connection->weight() - 1);
-    } else if (m_type == Bidirectional) {
-        // set bidirectional
-        net->connect(m_connection->to()->vertex(), m_connection->from()->vertex());
-        m_connection->setBidirectional(true);
+    switch (m_type) {
+        case Connect:
+            m_scene->addConnection(m_connection);
+            break;
+        case Disconnect:
+            m_scene->removeConnection(m_connection);
+            break;
+        case SetWeight:
+            m_scene->setConnectionWeight(m_connection, m_newWeight, m_reverse);
+            break;
+        case Bidirectional:
+            // Добавить обратное соединение в объект net, для правильного отображения
+            m_scene->net()->connect(m_connection->to()->vertex(), m_connection->from()->vertex());
+            m_connection->setBidirectional(true);
+            break;
     }
 }
 
 void ConnectCommand::undo() {
-    auto net = m_scene->net();
-    if (m_type == Connect) {
-        net->remove_connection(m_connection->from()->vertex(), m_connection->to()->vertex());
-        m_scene->removeItem(m_connection);
-    } else if (m_type == Disconnect) {
-        net->connect(m_connection->from()->vertex(), m_connection->to()->vertex());
-        m_scene->addItem(m_connection);
-    } else if (m_type == IncrementWeight) {
-        auto connection = net->get_connection(m_connection->from()->vertex(), m_connection->to()->vertex());
-        connection->setWeight(connection->weight() - 1);
-    } else if (m_type == DicrementWeight) {
-        auto connection = net->get_connection(m_connection->from()->vertex(), m_connection->to()->vertex());
-        connection->setWeight(connection->weight() + 1);
-    } else if (m_type == Bidirectional) {
-        // set directional
-        net->remove_connection(m_connection->to()->vertex(), m_connection->from()->vertex());
-        m_connection->setBidirectional(false);
+    switch (m_type) {
+        case Connect:
+            m_scene->removeConnection(m_connection);
+            break;
+        case Disconnect:
+            m_scene->addConnection(m_connection);
+            break;
+        case SetWeight:
+            m_scene->setConnectionWeight(m_connection, m_oldWeight, m_reverse);
+            break;
+        case Bidirectional:
+            // Сначала удалить обратное соединение из объекта net, для правильного отображения
+            m_scene->net()->remove_connection(m_connection->to()->vertex(), m_connection->from()->vertex());
+            m_connection->setBidirectional(false);
+            break;
     }
+}
+
+ConnectCommand *ConnectCommand::connect(PetriObject *from, PetriObject *to, GraphicScene *scene) {
+    return new ConnectCommand(new ArrowLine(from, to), Connect, scene);
+}
+
+ConnectCommand *ConnectCommand::disconnect(ArrowLine *connection, GraphicScene *scene) {
+    return new ConnectCommand(connection, Disconnect, scene);
+}
+
+ConnectCommand *ConnectCommand::setBidirectional(ArrowLine *connection, GraphicScene *scene) {
+    return new ConnectCommand(connection, Bidirectional, scene);
+}
+
+ConnectCommand *ConnectCommand::setWeight(ArrowLine *connection, int newWeight, bool reverse, GraphicScene *scene) {
+    return new ConnectCommand(connection,
+                              SetWeight,
+                              newWeight,
+                              (int)connection->netItem(reverse)->weight(),
+                              reverse,
+                              scene);
 }

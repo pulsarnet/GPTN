@@ -44,13 +44,19 @@ public:
     bool fromJson(const QJsonDocument& document);
 
     void removeAll();
+
+    // Operations with items
     PetriObject* netItemAt(const QPointF& pos);
     void addPetriItem(PetriObject* item, bool onlyScene = false);
     void removePetriItem(PetriObject* item);
+    Transition* getTransition(int index);
+    Position* getPosition(int index);
 
-    // connect
-    ArrowLine* connectItems(PetriObject* from, PetriObject* to); // connect
-    void removeConnection(ArrowLine* line);
+    // Operations with connections
+    void addConnection(ArrowLine* connection, bool onlyScene = false); // connect
+    void setConnectionWeight(ArrowLine* connection, int weight, bool reverse);
+    void removeConnection(ArrowLine* connection);
+    ArrowLine* getConnection(PetriObject* from, PetriObject* to);
 
     QAction* undoAction();
     QAction* redoAction();
@@ -58,9 +64,6 @@ public:
     [[nodiscard]] const QList<Position*>& positions() const { return m_positions; }
     [[nodiscard]] const QList<Transition*>& transitions() const { return m_transition; }
     [[nodiscard]] const QList<ArrowLine*>& connections() const { return m_connections; }
-
-    Transition* getTransition(int index);
-    Position* getPosition(int index);
 
     void dotVisualization(char* algorithm);
 
