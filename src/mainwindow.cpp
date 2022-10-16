@@ -30,6 +30,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , m_changed(false)
     , m_tabWidget(new ActionTabWidget)
+    , m_editMenu(new QMenu(tr("&Edit")))
 {
     createMenuBar();
     createStatusBar();
@@ -56,6 +57,13 @@ MainWindow::MainWindow(QWidget *parent)
             &MainWindow::treeViewSelectionChanged);
 
     addDockWidget(Qt::LeftDockWidgetArea, treeWidget);
+
+    // Tab widget
+    connect(m_tabWidget
+            , &ActionTabWidget::currentChanged
+            , this
+            , &MainWindow::tabWidgetCurrentChanged);
+
     setCentralWidget(m_tabWidget);
 }
 
@@ -183,18 +191,11 @@ void MainWindow::createMenuBar() {
     file_menu->addAction(save_as_action);
     file_menu->addAction(quit_action);
 
-    auto edit_menu = new QMenu("&Edit");
-    auto undo_action = new QAction("&Undo");
-    undo_action->setShortcut(tr("Ctrl+Z"));
-
-    auto redo_action = new QAction("&Redo");
-    redo_action->setShortcut(tr("Ctrl+Y"));
-
-    edit_menu->addAction(undo_action);
-    edit_menu->addAction(redo_action);
+    m_editMenu->addAction(m_undoAction);
+    m_editMenu->addAction(m_redoAction);
 
     menuBar->addMenu(file_menu);
-    menuBar->addMenu(edit_menu);
+    menuBar->addMenu(m_editMenu);
     menuBar->addMenu(new QMenu("&Tools"));
     menuBar->addMenu(new QMenu("&Window"));
     menuBar->addMenu(new QMenu("&Help"));
@@ -214,7 +215,6 @@ void MainWindow::slotSaveFile(bool checked) {
 void MainWindow::slotSaveAsFile(bool checked) {
     auto window = new CloseOnInActive;
     window->show();
-    //saveAs();
 }
 
 void MainWindow::slotOpenFile(bool checked) {
@@ -381,4 +381,32 @@ void MainWindow::treeViewSelectionChanged(const QItemSelection &selected, const 
     }
 
     qDebug() << "Current project: " << m_currentProject->data(0).toString();
+}
+
+void MainWindow::tabWidgetCurrentChanged(int index) {
+    // set undo redo scene action for NetModelingTab scene only
+    auto tab = m_tabWidget->widget(index);
+
+    // First: delete actions
+    m_editMenu->removeAction(m_undoAction);
+    m_editMenu->removeAction(m_redoAction);
+    delete m_undoAction;
+    delete m_redoAction;
+
+    if (auto netModelingTab = dynamic_cast<NetModelingTab*>(tab); netModelingTab) {
+        auto scene = dynamic_cast<GraphicScene*>(netModelingTab->view()->scene());
+        m_undoAction = scene->undoAction();
+        m_redoAction = scene->redoAction();
+    } else {
+        m_undoAction = new QAction("Undo", this);
+        m_undoAction->setShortcut(QKeySequence::Undo);
+        m_undoAction->setEnabled(false);
+
+        m_redoAction = new QAction("Redo", this);
+        m_redoAction->setShortcut(QKeySequence::Redo);
+        m_redoAction->setEnabled(false);
+    }
+
+    m_editMenu->addAction(m_undoAction);
+    m_editMenu->addAction(m_redoAction);
 }

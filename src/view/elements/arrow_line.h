@@ -19,7 +19,8 @@ class PetriObject;
 class ArrowLine : public QGraphicsLineItem {
 
 public:
-    explicit ArrowLine(ffi::PetriNet* net, PetriObject* from, const QLineF &line, QGraphicsItem* parent = nullptr);
+    explicit ArrowLine(PetriObject* from, const QLineF &line, QGraphicsItem* parent = nullptr);
+    explicit ArrowLine(PetriObject* from, PetriObject* to, QGraphicsItem* parent = nullptr);
 
     QRectF boundingRect() const override;
 
@@ -50,7 +51,6 @@ private:
     bool m_bidirectional = false;
     PetriObject* m_from = nullptr;
     PetriObject* m_to = nullptr;
-    ffi::PetriNet* m_net = nullptr;
 
     QPainterPath m_shape;
     QPolygonF m_arrow1;

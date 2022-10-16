@@ -6,8 +6,8 @@
 #include <QOpenGLWidget>
 #include <QActionGroup>
 
-#include "../elements/position.h"
-#include "../elements/arrow_line.h"
+#include "elements/position.h"
+#include "elements/arrow_line.h"
 #include "GraphicsView.h"
 #include "GraphicsViewZoom.h"
 #include "GraphicScene.h"

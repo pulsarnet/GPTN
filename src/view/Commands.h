@@ -1,0 +1,5 @@
+#include "Commands/AddCommand.h"
+#include "Commands/MarkCommand.h"
+#include "Commands/MoveCommand.h"
+#include "Commands/RotateCommand.h"
+#include "Commands/ConnectCommand.h"

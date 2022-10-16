@@ -69,6 +69,8 @@ public slots:
 
     void treeViewSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
 
+    void tabWidgetCurrentChanged(int index);
+
 protected:
 
     void closeEvent(QCloseEvent* event) override;
@@ -88,6 +90,10 @@ private:
     ActionTabWidget* m_tabWidget = nullptr;
     MainTreeView* m_treeView = nullptr;
     ProjectTreeItem* m_currentProject = nullptr;
+
+    QMenu* m_editMenu = nullptr;
+    QAction* m_redoAction = nullptr;
+    QAction* m_undoAction = nullptr;
 
     QString m_filename;
     bool m_changed;

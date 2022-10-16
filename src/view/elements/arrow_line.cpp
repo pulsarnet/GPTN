@@ -5,15 +5,21 @@
 #include "arrow_line.h"
 #include "petri_object.h"
 #include "transition.h"
+#include "../GraphicScene.h"
 #include <QMatrix4x4>
 
-ArrowLine::ArrowLine(ffi::PetriNet* net, PetriObject *from, const QLineF &line, QGraphicsItem *parent)
-        : QGraphicsLineItem(line, parent)
-        , m_net(net)
+ArrowLine::ArrowLine(PetriObject* from, const QLineF &line, QGraphicsItem* parent)
+    : QGraphicsLineItem(line, parent)
+    , m_from(from)
 {
-    this->m_from = from;
-
     setFlags(ItemIsSelectable);
+}
+
+ArrowLine::ArrowLine(PetriObject *from, PetriObject *to, QGraphicsItem *parent)
+    : QGraphicsLineItem(parent)
+    , m_from(from)
+{
+    setTo(to);
 }
 
 QRectF ArrowLine::boundingRect() const {
@@ -83,8 +89,10 @@ void ArrowLine::setBidirectional(bool b) {
 }
 
 void ArrowLine::disconnect() {
-    m_net->remove_connection(this->from()->vertex(), this->to()->vertex());
-    m_net->remove_connection(this->to()->vertex(), this->from()->vertex());
+    auto net = dynamic_cast<GraphicScene*>(this->scene())->net();
+
+    net->remove_connection(this->from()->vertex(), this->to()->vertex());
+    net->remove_connection(this->to()->vertex(), this->from()->vertex());
     this->from()->removeConnectionLine(this);
     this->to()->removeConnectionLine(this);
 }
@@ -124,12 +132,14 @@ void ArrowLine::updateConnection() {
 
 
     if (to()) {
+        auto net = dynamic_cast<GraphicScene*>(this->scene())->net();
+
         m_text.clear();
         if (m_bidirectional) {
             m_text = QString("<- %1 | %2 ->")
-                    .arg(m_net->connection_weight(to()->vertex(), from()->vertex()))
-                    .arg(m_net->connection_weight(from()->vertex(), to()->vertex()));
-        } else if (auto weight = m_net->connection_weight(from()->vertex(), to()->vertex()); weight > 1) {
+                    .arg(net->connection_weight(to()->vertex(), from()->vertex()))
+                    .arg(net->connection_weight(from()->vertex(), to()->vertex()));
+        } else if (auto weight = net->connection_weight(from()->vertex(), to()->vertex()); weight > 1) {
             m_text = QString("%1").arg(weight);
         }
     }

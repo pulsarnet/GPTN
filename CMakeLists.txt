@@ -56,10 +56,10 @@ set(SRC_FILES
         main.cpp
         src/mainwindow.cpp
         src/matrix_model.cpp
-        src/elements/arrow_line.cpp
-        src/elements/position.cpp
-        src/elements/transition.cpp
-        src/elements/petri_object.cpp
+        src/view/elements/arrow_line.cpp
+        src/view/elements/position.cpp
+        src/view/elements/transition.cpp
+        src/view/elements/petri_object.cpp
         src/ffi/rust.cpp
         src/view/GraphicsView.cpp
         src/view/GraphicsViewZoom.cpp
@@ -84,10 +84,10 @@ set(SRC_FILES
 set(HEADERS
         src/mainwindow.h
         src/matrix_model.h
-        src/elements/arrow_line.h
-        src/elements/position.h
-        src/elements/transition.h
-        src/elements/petri_object.h
+        src/view/elements/arrow_line.h
+        src/view/elements/position.h
+        src/view/elements/transition.h
+        src/view/elements/petri_object.h
         src/view/GraphicsView.h
         src/view/GraphicsViewZoom.h
         src/toolbox/toolbox.h
@@ -111,7 +111,8 @@ set(HEADERS
         src/QwtExt/qwt_ext_plot_curve_labels.h
         src/QwtExt/CanvasPicker.h
         src/synthesis/synthesis_window.h
-        src/ffi/vec.cpp src/modules/reachability/reachability_tree_scene.h src/ffi/reachability.cpp src/ffi/reachability.h src/modules/reachability/reachability_node.cpp src/modules/reachability/reachability_node.h src/modules/reachability/reachability_line.cpp src/modules/reachability/reachability_line.h src/modules/reachability/reachability_view.cpp src/modules/reachability/reachability_view.h src/modules/reachability/reachability_window.cpp src/modules/reachability/reachability_window.h src/MainTree/MainTreeItem.cpp src/MainTree/MainTreeItem.h src/MainTree/MainTreeModel.cpp src/MainTree/MainTreeModel.h src/MainTree/ProjectTreeItem.cpp src/MainTree/ProjectTreeItem.h src/MainTree/AnalysisTreeItem.cpp src/MainTree/AnalysisTreeItem.h src/MainTree/ModelTreeItem.cpp src/MainTree/ModelTreeItem.h src/MainTree/MainTreeView.cpp src/MainTree/MainTreeView.h src/MainTree/DecomposeTreeItem.cpp src/MainTree/DecomposeTreeItem.h src/MainTree/ReachabilityTreeItem.cpp src/MainTree/ReachabilityTreeItem.h)
+        src/view/Commands.h
+        src/ffi/vec.cpp src/modules/reachability/reachability_tree_scene.h src/ffi/reachability.cpp src/ffi/reachability.h src/modules/reachability/reachability_node.cpp src/modules/reachability/reachability_node.h src/modules/reachability/reachability_line.cpp src/modules/reachability/reachability_line.h src/modules/reachability/reachability_view.cpp src/modules/reachability/reachability_view.h src/modules/reachability/reachability_window.cpp src/modules/reachability/reachability_window.h src/MainTree/MainTreeItem.cpp src/MainTree/MainTreeItem.h src/MainTree/MainTreeModel.cpp src/MainTree/MainTreeModel.h src/MainTree/ProjectTreeItem.cpp src/MainTree/ProjectTreeItem.h src/MainTree/AnalysisTreeItem.cpp src/MainTree/AnalysisTreeItem.h src/MainTree/ModelTreeItem.cpp src/MainTree/ModelTreeItem.h src/MainTree/MainTreeView.cpp src/MainTree/MainTreeView.h src/MainTree/DecomposeTreeItem.cpp src/MainTree/DecomposeTreeItem.h src/MainTree/ReachabilityTreeItem.cpp src/MainTree/ReachabilityTreeItem.h src/view/Commands/AddCommand.cpp src/view/Commands/AddCommand.h src/view/Commands/MarkCommand.cpp src/view/Commands/MarkCommand.h src/view/Commands/MoveCommand.cpp src/view/Commands/MoveCommand.h src/view/Commands/RotateCommand.cpp src/view/Commands/RotateCommand.h src/view/Commands/ConnectCommand.cpp src/view/Commands/ConnectCommand.h)
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 

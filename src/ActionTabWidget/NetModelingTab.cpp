@@ -5,9 +5,9 @@
 #include <QBoxLayout>
 #include "NetModelingTab.h"
 #include "../view/GraphicScene.h"
-#include "../elements/position.h"
-#include "../elements/transition.h"
-#include "../elements/arrow_line.h"
+#include "../view/elements/position.h"
+#include "../view/elements/transition.h"
+#include "../view/elements/arrow_line.h"
 
 NetModelingTab::NetModelingTab(QWidget *parent) : QWidget(parent) {
     setLayout(new QBoxLayout(QBoxLayout::TopToBottom));

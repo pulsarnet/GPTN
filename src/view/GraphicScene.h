@@ -8,6 +8,8 @@ class PetriObject;
 class Position;
 class Transition;
 class ArrowLine;
+class QUndoCommand;
+class QUndoStack;
 
 namespace ffi {
     struct Vertex;
@@ -43,22 +45,22 @@ public:
 
     void removeAll();
     PetriObject* netItemAt(const QPointF& pos);
+    void addPetriItem(PetriObject* item, bool onlyScene = false);
+    void removePetriItem(PetriObject* item);
 
-    Position* addPosition(int index, const QPointF& point);
-    Position* addPosition(ffi::Vertex* position, const QPointF& point);
-    Transition* addTransition(int index, const QPointF& point);
-    Transition* addTransition(ffi::Vertex* transition, const QPointF& point);
-    ArrowLine* connectItems(PetriObject* from, PetriObject* to, bool no_add = false);
+    // connect
+    ArrowLine* connectItems(PetriObject* from, PetriObject* to); // connect
+    void removeConnection(ArrowLine* line);
+
+    QAction* undoAction();
+    QAction* redoAction();
 
     [[nodiscard]] const QList<Position*>& positions() const { return m_positions; }
     [[nodiscard]] const QList<Transition*>& transitions() const { return m_transition; }
     [[nodiscard]] const QList<ArrowLine*>& connections() const { return m_connections; }
 
-    PetriObject* getVertex(const QString& name);
     Transition* getTransition(int index);
     Position* getPosition(int index);
-    QPointF getTransitionPos(int index);
-    QPointF getPositionPos(int index);
 
     void dotVisualization(char* algorithm);
 
@@ -99,6 +101,8 @@ protected:
 
 private:
 
+    QUndoStack* m_undoStack;
+
     QList<Position*> m_positions;
     QList<Transition*> m_transition;
     QList<ArrowLine*> m_connections;
@@ -113,6 +117,8 @@ private:
 
     bool m_restore = false;
     bool m_dragInProgress = false;
+    PetriObject* m_draggedItem = nullptr;
+    QPointF m_dragItemPos;
 
 };
 

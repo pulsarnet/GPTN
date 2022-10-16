@@ -63,6 +63,7 @@ namespace ffi {
         void connect(Vertex*, Vertex*);
         void remove_connection(Vertex*, Vertex*);
         rust::Reachability* reachability() const;
+        Connection* get_connection(Vertex*, Vertex*);
 
         Vertex* getVertex(VertexIndex index) const;
 
@@ -92,6 +93,9 @@ namespace ffi {
     struct Connection {
         VertexIndex from() const;
         VertexIndex to() const;
+        
+        usize weight() const;
+        void setWeight(usize weight);
     };
 
     struct DecomposeContext {

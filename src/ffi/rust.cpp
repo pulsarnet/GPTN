@@ -41,6 +41,7 @@ extern "C" {
     usize petri_net_output_positions(const PetriNet&);
     usize petri_net_connection_weight(const PetriNet&, Vertex&, Vertex&);
     rust::Reachability* petri_net_reachability(const PetriNet&);
+    Connection* petri_net_get_connection(PetriNet&, Vertex*, Vertex*);
 
     Vertex* net_get_vertex(const PetriNet&, VertexIndex);
 
@@ -59,6 +60,8 @@ extern "C" {
     // Connection
     VertexIndex connection_from(const Connection& self);
     VertexIndex connection_to(const Connection& self);
+    void connection_set_weight(Connection&, usize);
+    usize connection_weight(const Connection&);
 
     // DecomposeContext
     DecomposeContext* decompose_context_init(PetriNet&);
@@ -229,6 +232,10 @@ rust::Reachability *PetriNet::reachability() const {
     return ::petri_net_reachability(*this);
 }
 
+Connection *PetriNet::get_connection(Vertex* from, Vertex* to) {
+    return ::petri_net_get_connection(*this, from, to);
+}
+
 VertexIndex Vertex::index() const {
     return ::vertex_index(*this);
 }
@@ -275,6 +282,14 @@ VertexIndex Connection::from() const {
 
 VertexIndex Connection::to() const {
     return ::connection_to(*this);
+}
+
+usize Connection::weight() const {
+    return ::connection_weight(*this);
+}
+
+void Connection::setWeight(usize weight) {
+    ::connection_set_weight(*this, weight);
 }
 
 DecomposeContext *DecomposeContext::init(PetriNet *net) {

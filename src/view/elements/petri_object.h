@@ -10,7 +10,7 @@
 #include <QStyleOptionGraphicsItem>
 #include <QtMath>
 #include <QGraphicsSceneMouseEvent>
-#include "../ffi/rust.h"
+#include "../../ffi/rust.h"
 
 class ArrowLine;
 
@@ -61,6 +61,7 @@ public:
     void connectTo(ffi::PetriNet* net, PetriObject* other);
 
     ffi::Vertex* vertex() const;
+    ffi::VertexIndex vertexIndex() const;
 
     void setColored(bool colored) {
         m_colored = colored;
@@ -76,6 +77,7 @@ public:
     void addConnectionLine(ArrowLine* line);
     void removeConnectionLine(ArrowLine* line);
     void updateLabelPosition();
+    void updateConnections();
 
     ~PetriObject();
 

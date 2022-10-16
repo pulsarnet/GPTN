@@ -4,10 +4,10 @@
 
 #include <QTextDocument>
 #include <QApplication>
-#include "../view/GraphicScene.h"
+#include "../GraphicScene.h"
 #include "petri_object.h"
 #include "arrow_line.h"
-#include "../ffi/rust.h"
+#include "../../ffi/rust.h"
 
 
 PetriObject::PetriObject(ffi::PetriNet* net, ffi::VertexIndex _vertex, QGraphicsItem* parent) : QGraphicsItem(parent), m_net(net), m_vertex(_vertex) {
@@ -80,10 +80,7 @@ PetriObject::~PetriObject() {
 
 QVariant PetriObject::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant &value) {
     if (change == ItemPositionHasChanged) {
-        for (auto connection : m_connections) {
-            connection->updateConnection();
-        }
-
+        updateConnections();
         return value;
     } else if (change == ItemSceneHasChanged) {
         updateLabelPosition();
@@ -123,6 +120,13 @@ void PetriObject::updateLabelPosition() {
     m_labelItem->setPos(-w - rect.width() / 2 - 8, -h);
 }
 
+void PetriObject::updateConnections() {
+    for (auto connection : m_connections) {
+        connection->updateConnection();
+    }
+}
+
+
 void PetriObject::labelChanged() {
     this->vertex()->set_name(m_labelItem->document()->toRawText().toLocal8Bit().data());
     updateLabelPosition();
@@ -141,4 +145,8 @@ void PetriObject::setLabel(const QString& label) {
     vertex()->set_name(label.toLocal8Bit().data());
     m_labelItem->document()->setPlainText(label);
     updateLabelPosition();
+}
+
+ffi::VertexIndex PetriObject::vertexIndex() const {
+    return m_vertex;
 }

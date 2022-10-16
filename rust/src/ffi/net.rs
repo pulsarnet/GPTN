@@ -145,6 +145,20 @@ pub unsafe extern "C" fn petri_net_as_matrix(net: &PetriNet, matrix1: &mut *cons
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn petri_net_get_connection(net: &mut PetriNet, from: *const Vertex, to: *const Vertex) -> *mut Connection {
+    let from = &*from;
+    let to = &*to;
+    let result = net.connections
+        .iter()
+        .find(|c| c.first().eq(&from.index()) && c.second().eq(&to.index()));
+
+    match result {
+        Some(c) => c as *const Connection as *mut Connection,
+        None => std::ptr::null_mut()
+    }
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn petri_net_input_positions(net: &PetriNet) -> usize {
     net.input_positions()
 }
