@@ -162,21 +162,8 @@ void GraphicScene::insertTransition(QGraphicsSceneMouseEvent *event) {
 void GraphicScene::removeObject(QGraphicsSceneMouseEvent *event) {
 
     auto item = itemAt(event->scenePos(), QTransform());
-    if (auto position = dynamic_cast<Position*>(item); position) {
-        auto index = m_positions.indexOf(position);
-        m_positions.removeAt(index);
-        removeConnectionsAssociatedWith(position);
-        m_net->remove_position(position->vertex());
-        delete position;
-        onSceneChanged();
-    }
-    else if (auto transition = dynamic_cast<Transition*>(item); transition) {
-        auto index = m_transition.indexOf(transition);
-        m_transition.removeAt(index);
-        removeConnectionsAssociatedWith(transition);
-        m_net->remove_transition(transition->vertex());
-        delete transition;
-        onSceneChanged();
+    if (auto scenePetriObject = dynamic_cast<PetriObject*>(item); scenePetriObject) {
+        m_undoStack->push(new RemoveCommand(scenePetriObject, this));
     }
     else if (auto connection_line = dynamic_cast<ArrowLine*>(item); connection_line) {
         m_undoStack->push(ConnectCommand::disconnect(connection_line, this));
@@ -469,10 +456,14 @@ void GraphicScene::removeAll() {
 void GraphicScene::addConnection(ArrowLine* connection, bool onlyScene) {
     addItem(connection);
     m_connections.push_back(connection);
-    connection->updateConnection();
+    connection->from()->addConnectionLine(connection);
+    connection->to()->addConnectionLine(connection);
 
     if (!onlyScene)
         m_net->connect(connection->from()->vertex(), connection->to()->vertex());
+
+    // Update after register in net
+    connection->updateConnection();
 }
 
 void GraphicScene::setConnectionWeight(ArrowLine *connection, int weight, bool reverse) {
@@ -495,6 +486,8 @@ ArrowLine* GraphicScene::getConnection(PetriObject *from, PetriObject *to) {
 void GraphicScene::removeConnection(ArrowLine *connection) {
     m_net->remove_connection(connection->from()->vertex(), connection->to()->vertex());
     m_net->remove_connection(connection->to()->vertex(), connection->from()->vertex());
+    connection->from()->removeConnectionLine(connection);
+    connection->to()->removeConnectionLine(connection);
     m_connections.remove(m_connections.indexOf(connection));
     removeItem(connection);
 }

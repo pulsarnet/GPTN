@@ -1,0 +1,59 @@
+//
+// Created by darkp on 16.10.2022.
+//
+
+#include "RemoveCommand.h"
+#include "../GraphicScene.h"
+#include "../elements/petri_object.h"
+#include "../elements/arrow_line.h"
+
+RemoveCommand::RemoveCommand(PetriObject *item, GraphicScene *scene, QUndoCommand *parent)
+    : QUndoCommand(parent)
+    , m_scene(scene)
+    , m_item(item)
+{
+
+}
+
+void RemoveCommand::redo() {
+    // Get connections for item
+    auto connections = m_item->connections();
+    for (auto& connection : connections) {
+        // Save connection info
+        ConnectionInfo info;
+        info.bidirectional = connection->isBidirectional();
+        if (info.bidirectional)
+            info.weights = {connection->netItem()->weight(), connection->netItem(true)->weight()};
+        else
+            info.weights = {connection->netItem()->weight(), 0};
+
+        m_connections.append({connection, info});
+
+        // Remove connection from scene
+        m_scene->removeConnection(connection);
+    }
+
+    // Remove item
+    m_scene->removePetriItem(m_item);
+}
+
+void RemoveCommand::undo() {
+
+    // First: Restore item
+    m_scene->addPetriItem(m_item);
+
+    // Restore connections
+    for (auto& connection : m_connections) {
+        // Restore connection
+        m_scene->addConnection(connection.first);
+
+        // Restore weights
+        connection.first->netItem()->setWeight(connection.second.weights.first);
+        if (connection.second.bidirectional) {
+            m_scene->net()->connect(connection.first->to()->vertex(), connection.first->from()->vertex());
+            connection.first->netItem(true)->setWeight(connection.second.weights.second);
+        }
+
+        connection.first->updateConnection();
+    }
+}

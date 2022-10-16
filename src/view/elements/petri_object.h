@@ -78,6 +78,7 @@ public:
     void removeConnectionLine(ArrowLine* line);
     void updateLabelPosition();
     void updateConnections();
+    const QList<ArrowLine*>& connections() const { return m_connections; };
 
     ~PetriObject();
 

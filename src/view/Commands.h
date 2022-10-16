@@ -3,3 +3,4 @@
 #include "Commands/MoveCommand.h"
 #include "Commands/RotateCommand.h"
 #include "Commands/ConnectCommand.h"
+#include "Commands/RemoveCommand.h"
