@@ -13,11 +13,6 @@ class ArrowLine;
 
 class RemoveCommand : public QUndoCommand {
 
-    struct ConnectionInfo {
-        std::pair<int, int> weights;
-        bool bidirectional;
-    };
-
 public:
     explicit RemoveCommand(PetriObject* item, GraphicScene* scene, QUndoCommand* parent = nullptr);
 
@@ -29,7 +24,7 @@ private:
 
     GraphicScene* m_scene;
     PetriObject* m_item;
-    QList<std::pair<ArrowLine*, ConnectionInfo>> m_connections;
+    QList<ArrowLine*> m_connections;
 
 };
 

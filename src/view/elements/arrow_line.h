@@ -16,12 +16,19 @@ namespace ffi {
 }
 
 class PetriObject;
+class GraphicScene;
 
 class ArrowLine : public QGraphicsLineItem {
 
 public:
+
+    struct ConnectionState {
+        int weight;
+    };
+
     explicit ArrowLine(PetriObject* from, const QLineF &line, QGraphicsItem* parent = nullptr);
     explicit ArrowLine(PetriObject* from, PetriObject* to, QGraphicsItem* parent = nullptr);
+    explicit ArrowLine(PetriObject* from, PetriObject* to, ConnectionState* state, QGraphicsItem* parent = nullptr);
 
     QRectF boundingRect() const override;
 
@@ -42,9 +49,14 @@ public:
         return m_to;
     }
 
-    void disconnect();
-
     void updateConnection();
+
+protected:
+
+    QVariant itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant &value) override;
+
+    void onAddToScene(GraphicScene* scene);
+    void onRemoveFromScene();
 
 private:
 
@@ -55,6 +67,7 @@ private:
     bool m_bidirectional = false;
     PetriObject* m_from = nullptr;
     PetriObject* m_to = nullptr;
+    ConnectionState* m_state = nullptr;
 
     QPainterPath m_shape;
     QPolygonF m_arrow1;

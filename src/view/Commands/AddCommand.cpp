@@ -15,11 +15,11 @@ AddCommand::AddCommand(PetriObject* item, GraphicScene *scene, QUndoCommand *par
 { }
 
 void AddCommand::redo() {
-    m_scene->addPetriItem(m_item);
+    m_scene->addItem(m_item);
 }
 
 void AddCommand::undo() {
-    m_scene->removePetriItem(m_item);
+    m_scene->removeItem(m_item);
 }
 
 AddCommand::~AddCommand() {

@@ -31,11 +31,11 @@ GraphicScene::GraphicScene(ffi::PetriNet *net, QObject *parent)
     auto connections = m_net->connections();
 
     for (auto position : positions) {
-        addPetriItem(new Position(QPointF(0, 0), m_net, position->index()));
+        addItem(new Position(QPointF(0, 0), m_net, position->index()));
     }
 
     for (auto transition : transitions) {
-        addPetriItem(new Transition(QPointF(0, 0), m_net, transition->index()));
+        addItem(new Transition(QPointF(0, 0), m_net, transition->index()));
     }
 
     for (auto connection : connections) {
@@ -45,12 +45,12 @@ GraphicScene::GraphicScene(ffi::PetriNet *net, QObject *parent)
         if (from.type == ffi::VertexType::Position) {
             auto position = getPosition((int)from.id);
             auto transition = getTransition((int)to.id);
-            addConnection(new ArrowLine(position, transition), true);
+            addItem(new ArrowLine(position, transition));
         }
         else {
             auto transition = getTransition((int)from.id);
             auto position = getPosition((int)to.id);
-            addConnection(new ArrowLine(transition, position), false);
+            addItem(new ArrowLine(transition, position));
         }
     }
 
@@ -227,21 +227,6 @@ void GraphicScene::connectionRollback(QGraphicsSceneMouseEvent *event) {
     }
 }
 
-void GraphicScene::removeConnectionsAssociatedWith(PetriObject *object) {
-
-    QMutableListIterator iter(m_connections);
-    while (iter.hasNext()) {
-        auto connection = iter.next();
-        if (connection->from() == object || connection->to() == object) {
-            removeItem(connection);
-            iter.remove();
-            connection->disconnect();
-            delete connection;
-        }
-    }
-
-}
-
 PetriObject *GraphicScene::netItemAt(const QPointF &pos) {
     auto it = std::find_if(m_positions.begin(), m_positions.end(), [&](Position* item) {
        return item->sceneBoundingRect().contains(pos);
@@ -394,7 +379,7 @@ bool GraphicScene::fromJson(const QJsonDocument& document) {
         vertex->set_markers(markers);
         vertex->set_name(name.toUtf8().data());
 
-        addPetriItem(new Position(pos, m_net, vertex->index()));
+        addItem(new Position(pos, m_net, vertex->index()));
     }
 
     for (auto transition : transitions) {
@@ -413,7 +398,7 @@ bool GraphicScene::fromJson(const QJsonDocument& document) {
 
         vertex->set_name(name.toUtf8().data());
 
-        addPetriItem(new Transition(pos, m_net, vertex->index()));
+        addItem(new Transition(pos, m_net, vertex->index()));
     }
 
     for (auto connection : connections) {
@@ -438,7 +423,7 @@ bool GraphicScene::fromJson(const QJsonDocument& document) {
         if (existing)
             existing->setBidirectional(true);
         else
-            addConnection(new ArrowLine(from, to));
+            addItem(new ArrowLine(from, to, new ArrowLine::ConnectionState { 1 }));
     }
 
     return true;
@@ -451,19 +436,6 @@ void GraphicScene::removeAll() {
     m_transition.clear();
     m_positions.clear();
     m_connections.clear();
-}
-
-void GraphicScene::addConnection(ArrowLine* connection, bool onlyScene) {
-    addItem(connection);
-    m_connections.push_back(connection);
-    connection->from()->addConnectionLine(connection);
-    connection->to()->addConnectionLine(connection);
-
-    if (!onlyScene)
-        m_net->connect(connection->from()->vertex(), connection->to()->vertex());
-
-    // Update after register in net
-    connection->updateConnection();
 }
 
 void GraphicScene::setConnectionWeight(ArrowLine *connection, int weight, bool reverse) {
@@ -481,15 +453,6 @@ ArrowLine* GraphicScene::getConnection(PetriObject *from, PetriObject *to) {
             });
 
     return it != m_connections.end() ? *it : nullptr;
-}
-
-void GraphicScene::removeConnection(ArrowLine *connection) {
-    m_net->remove_connection(connection->from()->vertex(), connection->to()->vertex());
-    m_net->remove_connection(connection->to()->vertex(), connection->from()->vertex());
-    connection->from()->removeConnectionLine(connection);
-    connection->to()->removeConnectionLine(connection);
-    m_connections.remove(m_connections.indexOf(connection));
-    removeItem(connection);
 }
 
 void GraphicScene::slotHorizontalAlignment(bool triggered) {
@@ -640,34 +603,6 @@ void GraphicScene::drawBackground(QPainter *painter, const QRectF &rect) {
 
 }
 
-void GraphicScene::addPetriItem(PetriObject* item, bool onlyScene) {
-    if (auto transition = dynamic_cast<Transition*>(item); transition) {
-        m_transition.push_back(transition);
-        if (!onlyScene)
-            m_net->add_transition_with(transition->vertexIndex().id);
-    } else if (auto position = dynamic_cast<Position*>(item); position) {
-        m_positions.push_back(position);
-        if (!onlyScene)
-            m_net->add_position_with(position->vertexIndex().id);
-    }
-
-    addItem(item);
-}
-
-void GraphicScene::removePetriItem(PetriObject *item) {
-    Q_ASSERT(item);
-
-    if (auto transition = dynamic_cast<Transition*>(item); transition) {
-        m_transition.removeAt(m_transition.indexOf(transition));
-        m_net->remove_transition(transition->vertex());
-    } else {
-        m_positions.removeAt(m_positions.indexOf(dynamic_cast<Position*>(item)));
-        m_net->remove_position(dynamic_cast<Position*>(item)->vertex());
-    }
-
-    removeItem(item);
-}
-
 QAction *GraphicScene::undoAction() {
     auto action = m_undoStack->createUndoAction(this, tr("&Undo"));
     action->setShortcuts(QKeySequence::Undo);
@@ -678,4 +613,26 @@ QAction *GraphicScene::redoAction() {
     auto action = m_undoStack->createRedoAction(this, tr("&Redo"));
     action->setShortcuts(QKeySequence::Redo);
     return action;
+}
+
+void GraphicScene::registerItem(QGraphicsItem *item) {
+    if (auto position = dynamic_cast<Position*>(item); position) {
+        m_positions.push_back(position);
+    }
+    else if (auto transition = dynamic_cast<Transition*>(item); transition) {
+        m_transition.push_back(transition);
+    } else if (auto connection = dynamic_cast<ArrowLine*>(item); connection) {
+        m_connections.push_back(connection);
+    }
+}
+
+void GraphicScene::unregisterItem(QGraphicsItem *item) {
+    if (auto position = dynamic_cast<Position*>(item); position) {
+        m_positions.remove(m_positions.indexOf(position));
+    }
+    else if (auto transition = dynamic_cast<Transition*>(item); transition) {
+        m_transition.remove(m_transition.indexOf(transition));
+    } else if (auto connection = dynamic_cast<ArrowLine*>(item); connection) {
+        m_connections.remove(m_connections.indexOf(connection));
+    }
 }

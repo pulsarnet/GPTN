@@ -82,8 +82,15 @@ QVariant PetriObject::itemChange(QGraphicsItem::GraphicsItemChange change, const
     if (change == ItemPositionHasChanged) {
         updateConnections();
         return value;
-    } else if (change == ItemSceneHasChanged) {
-        updateLabelPosition();
+    } else if (change == ItemSceneChange) {
+        auto scene = value.value<GraphicScene*>();
+        if (scene) {
+            scene->registerItem(this);
+            this->onAddToScene(scene);
+        } else {
+            dynamic_cast<GraphicScene*>(this->scene())->unregisterItem(this);
+            this->onRemoveFromScene();
+        }
     } else if (change == ItemPositionChange && scene()) {
         auto newPosition = value.toPointF();
         //qDebug() << QApplication::keyboardModifiers();

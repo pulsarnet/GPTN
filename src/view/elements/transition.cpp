@@ -6,8 +6,15 @@
 #include <QGraphicsScene>
 #include "position.h"
 #include "transition.h"
+#include "../GraphicScene.h"
 
-Transition::Transition(const QPointF& origin, ffi::PetriNet* net, ffi::VertexIndex transition, QGraphicsItem *parent) : PetriObject(net, transition, parent), m_origin(origin) {
+Transition::Transition(const QPointF& origin,
+                       ffi::PetriNet* net,
+                       ffi::VertexIndex transition,
+                       QGraphicsItem *parent)
+    : PetriObject(net, transition, parent)
+    , m_origin(origin)
+{
     this->setPos(m_origin);
     auto name = QString("T%1%2")
             .arg(this->index())
@@ -16,6 +23,25 @@ Transition::Transition(const QPointF& origin, ffi::PetriNet* net, ffi::VertexInd
     m_label = new QGraphicsTextItem(name, this);
     itemChange(ItemRotationHasChanged, {});
 }
+
+Transition::Transition(const QPointF& origin,
+                       ffi::PetriNet* net,
+                       ffi::VertexIndex transition,
+                       TransitionState* state,
+                       QGraphicsItem *parent)
+        : PetriObject(net, transition, parent)
+        , m_origin(origin)
+        , m_state(state)
+{
+    this->setPos(m_origin);
+    auto name = QString("T%1%2")
+            .arg(this->index())
+            .arg(this->vertex()->parent() == 0 ? "" : QString(".%1").arg(this->vertex()->parent()));
+
+    m_label = new QGraphicsTextItem(name, this);
+    itemChange(ItemRotationHasChanged, {});
+}
+
 
 QRectF Transition::boundingRect() const {
     return {-10, -30, 20, 60};
@@ -96,4 +122,24 @@ void Transition::setLabelTransformation() {
         m_label->setPos(boundingRect().center().x() - nameSize.width() / 2 - 2, -60);
         m_label->setRotation(-angle);
     }
+}
+
+void Transition::onAddToScene(GraphicScene* scene) {
+    auto net = scene->net();
+
+    if (m_state) {
+        auto transition = net->add_transition_with(m_vertex.id);
+        transition->set_parent({ffi::VertexType::Transition, (ffi::usize)m_state->parent});
+    }
+}
+
+void Transition::onRemoveFromScene() {
+    auto scene = dynamic_cast<GraphicScene*>(this->scene());
+    auto net = scene->net();
+    auto vertex = net->getVertex(m_vertex);
+
+    m_state = new TransitionState();
+    m_state->parent = (int)vertex->parent();
+
+    net->remove_transition(vertex);
 }

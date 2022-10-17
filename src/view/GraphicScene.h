@@ -47,15 +47,13 @@ public:
 
     // Operations with items
     PetriObject* netItemAt(const QPointF& pos);
-    void addPetriItem(PetriObject* item, bool onlyScene = false);
-    void removePetriItem(PetriObject* item);
     Transition* getTransition(int index);
     Position* getPosition(int index);
+    void registerItem(QGraphicsItem* item);
+    void unregisterItem(QGraphicsItem* item);
 
     // Operations with connections
-    void addConnection(ArrowLine* connection, bool onlyScene = false); // connect
     void setConnectionWeight(ArrowLine* connection, int weight, bool reverse);
-    void removeConnection(ArrowLine* connection);
     ArrowLine* getConnection(PetriObject* from, PetriObject* to);
 
     QAction* undoAction();
@@ -95,7 +93,6 @@ protected:
     void rotateObject(QGraphicsSceneMouseEvent *);
     void removeObject(QGraphicsSceneMouseEvent *event);
 
-    void removeConnectionsAssociatedWith(PetriObject*);
     void connectionStart(QGraphicsSceneMouseEvent *);
     void connectionCommit(QGraphicsSceneMouseEvent *event);
     void connectionRollback(QGraphicsSceneMouseEvent* event);

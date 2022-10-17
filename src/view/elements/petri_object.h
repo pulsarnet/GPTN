@@ -13,7 +13,7 @@
 #include "../../ffi/rust.h"
 
 class ArrowLine;
-
+class GraphicScene;
 
 class PetriObject : public QObject, public QGraphicsItem {
 
@@ -89,6 +89,11 @@ public slots:
 protected:
 
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
+
+    virtual void onAddToScene(GraphicScene*) = 0;
+    virtual void onRemoveFromScene() = 0;
+
+protected:
 
     bool m_colored = false;
     QList<ArrowLine*> m_connections;

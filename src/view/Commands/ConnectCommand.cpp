@@ -37,10 +37,10 @@ ConnectCommand::ConnectCommand(ArrowLine* connection,
 void ConnectCommand::redo() {
     switch (m_type) {
         case Connect:
-            m_scene->addConnection(m_connection);
+            m_scene->addItem(m_connection);
             break;
         case Disconnect:
-            m_scene->removeConnection(m_connection);
+            m_scene->removeItem(m_connection);
             break;
         case SetWeight:
             m_scene->setConnectionWeight(m_connection, m_newWeight, m_reverse);
@@ -56,10 +56,10 @@ void ConnectCommand::redo() {
 void ConnectCommand::undo() {
     switch (m_type) {
         case Connect:
-            m_scene->removeConnection(m_connection);
+            m_scene->removeItem(m_connection);
             break;
         case Disconnect:
-            m_scene->addConnection(m_connection);
+            m_scene->addItem(m_connection);
             break;
         case SetWeight:
             m_scene->setConnectionWeight(m_connection, m_oldWeight, m_reverse);

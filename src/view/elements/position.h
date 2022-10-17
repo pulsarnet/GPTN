@@ -17,7 +17,14 @@ class Position : public PetriObject {
 
 public:
 
+    struct PositionState {
+        int markers;
+        int parent;
+    };
+
     explicit Position(const QPointF& origin, ffi::PetriNet* net, ffi::VertexIndex position, QGraphicsItem* parent = nullptr);
+
+    explicit Position(const QPointF& origin, ffi::PetriNet* net, ffi::VertexIndex position, PositionState* state, QGraphicsItem* parent = nullptr);
 
     [[nodiscard]] QRectF boundingRect() const override;
 
@@ -47,9 +54,15 @@ public:
 
     virtual QString name() const override;
 
+protected:
+
+    void onAddToScene(GraphicScene* scene) override;
+    void onRemoveFromScene() override;
+
 private:
 
     qreal radius = 25.0;
+    PositionState* m_state = nullptr;
 };
 
 

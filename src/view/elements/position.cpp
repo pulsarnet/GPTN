@@ -1,8 +1,20 @@
 #include "position.h"
 #include "transition.h"
+#include "../GraphicScene.h"
 #include <QFontMetrics>
 
 Position::Position(const QPointF& origin, ffi::PetriNet* net, ffi::VertexIndex position, QGraphicsItem* parent) : PetriObject(net, position, parent) {
+    this->setPos(origin);
+}
+
+Position::Position(const QPointF &origin,
+                   ffi::PetriNet* net,
+                   ffi::VertexIndex position,
+                   PositionState* state,
+                   QGraphicsItem *parent)
+    : PetriObject(net, position, parent)
+    , m_state(state)
+{
     this->setPos(origin);
 }
 
@@ -157,5 +169,26 @@ QPainterPath Position::shape() const {
     QPainterPath path;
     path.addEllipse({0, 0}, radius, radius);
     return path;
+}
+
+void Position::onAddToScene(GraphicScene* scene) {
+    if (m_state) {
+        auto net = scene->net();
+        auto position = net->add_position_with(m_vertex.id);
+        position->set_markers(m_state->markers);
+        position->set_parent({ffi::VertexType::Position, (ffi::usize)m_state->parent});
+    }
+}
+
+void Position::onRemoveFromScene() {
+    auto scene = dynamic_cast<GraphicScene*>(this->scene());
+    auto net = scene->net();
+    auto vertex = net->getVertex(m_vertex);
+
+    m_state = new PositionState();
+    m_state->markers = (int)vertex->markers();
+    m_state->parent = (int)vertex->parent();
+
+    net->remove_position(vertex);
 }
 

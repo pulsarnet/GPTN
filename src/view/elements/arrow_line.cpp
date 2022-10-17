@@ -22,6 +22,14 @@ ArrowLine::ArrowLine(PetriObject *from, PetriObject *to, QGraphicsItem *parent)
     setTo(to);
 }
 
+ArrowLine::ArrowLine(PetriObject *from, PetriObject *to, ArrowLine::ConnectionState *state, QGraphicsItem *parent)
+    : QGraphicsLineItem(parent)
+    , m_from(from)
+    , m_state(state)
+{
+    setTo(to);
+}
+
 QRectF ArrowLine::boundingRect() const {
     QRectF rect;
 
@@ -97,15 +105,6 @@ ffi::Connection *ArrowLine::netItem(bool reverse) {
         return scene->net()->get_connection(m_from->vertex(), m_to->vertex());
 }
 
-void ArrowLine::disconnect() {
-    auto net = dynamic_cast<GraphicScene*>(this->scene())->net();
-
-    net->remove_connection(this->from()->vertex(), this->to()->vertex());
-    net->remove_connection(this->to()->vertex(), this->from()->vertex());
-    this->from()->removeConnectionLine(this);
-    this->to()->removeConnectionLine(this);
-}
-
 void ArrowLine::updateConnection() {
 
     if (from() && to()) {
@@ -167,4 +166,51 @@ QPolygonF ArrowLine::arrow(QLineF line) {
     QPolygonF arrow;
     arrow << line.p1() << arrowP1 << arrowP2;
     return arrow;
+}
+
+QVariant ArrowLine::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant &value) {
+    if (change == ItemSceneChange) {
+        auto scene = value.value<GraphicScene*>();
+        if (scene) {
+            scene->registerItem(this);
+            this->onAddToScene(scene);
+        } else {
+            dynamic_cast<GraphicScene*>(this->scene())->unregisterItem(this);
+            this->onRemoveFromScene();
+        }
+    } else if (change == ItemSceneHasChanged) {
+        if (scene()) updateConnection();
+    }
+
+    return QGraphicsItem::itemChange(change, value);
+}
+
+void ArrowLine::onAddToScene(GraphicScene *scene) {
+    if (!m_state)
+        return;
+
+    auto net = scene->net();
+
+    net->connect(m_from->vertex(), m_to->vertex());
+    net->get_connection(m_from->vertex(), m_to->vertex())->setWeight(m_state->weight);
+
+    if (m_bidirectional) {
+        net->connect(m_to->vertex(), m_from->vertex());
+        net->get_connection(m_to->vertex(), m_from->vertex())->setWeight(m_state->weight);
+    }
+
+    delete m_state;
+    m_state = nullptr;
+}
+
+void ArrowLine::onRemoveFromScene() {
+    Q_ASSERT(m_state);
+
+    // Save state
+    m_state = new ConnectionState();
+    m_state->weight = (int)netItem()->weight();
+
+    // Remove from objects
+    m_from->removeConnectionLine(this);
+    m_to->removeConnectionLine(this);
 }
