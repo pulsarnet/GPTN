@@ -18,5 +18,12 @@
         <file>images/modeling.svg</file>
         <file>images/decompose.svg</file>
         <file>images/tree.svg</file>
+        <!-- simulation -->
+        <file>images/simulation/stop.svg</file>
+        <file>images/simulation/run.svg</file>
+        <file>images/simulation/pause.svg</file>
+        <file>images/simulation/step.svg</file>
+        <file>images/simulation/speeddown.svg</file>
+        <file>images/simulation/speedup.svg</file>
     </qresource>
 </RCC>

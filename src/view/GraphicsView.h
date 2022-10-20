@@ -15,6 +15,7 @@
 class ToolBox;
 class GraphicsViewZoom;
 class MatrixWindow;
+class SimulationWidget;
 
 class GraphicsView : public QGraphicsView {
 
@@ -79,6 +80,7 @@ private:
     QActionGroup* actionGroup = nullptr;
 
     MatrixWindow* m_IOMatrixWindow = nullptr;
+    SimulationWidget* m_simulationWidget = nullptr;
 
 };
 

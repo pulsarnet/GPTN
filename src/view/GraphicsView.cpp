@@ -6,6 +6,7 @@
 #include <QOpenGLWidget>
 #include <QActionGroup>
 
+#include "Simulation/SimulationWidget.h"
 #include "elements/position.h"
 #include "elements/arrow_line.h"
 #include "GraphicsView.h"
@@ -68,6 +69,16 @@ GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
     m_mainToolBar->addTool(remove_action);
     m_mainToolBar->addTool(move_action);
     m_mainToolBar->addTool(rotation_action);
+
+    m_simulationWidget = new SimulationWidget(this);
+    auto geometry = m_simulationWidget->geometry();
+    // centered bottom
+    m_simulationWidget->setGeometry(
+            (this->width() - geometry.width()) / 2,
+            this->height() - geometry.height() - 5,
+            geometry.width(),
+            geometry.height()
+            );
 
     setContentsMargins(0, 0, 0, 0);
 
@@ -156,6 +167,15 @@ void GraphicsView::mouseReleaseEvent(QMouseEvent *event) {
 void GraphicsView::resizeEvent(QResizeEvent *event) {
     //m_toolBar->resizeEvent(event);
     m_mainToolBar->resizeEvent(event);
+    auto geometry = m_simulationWidget->geometry();
+    // centered bottom
+    m_simulationWidget->setGeometry(
+            (this->width() - geometry.width()) / 2,
+            this->height() - geometry.height() - 10,
+            geometry.width(),
+            geometry.height()
+    );
+
     QGraphicsView::resizeEvent(event);
 }
 
