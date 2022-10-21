@@ -73,8 +73,8 @@ public:
 
     void onSceneChanged();
 
-    void setSimulation(bool simulation) { m_simulation = simulation; }
-    bool isSimulation() const { return m_simulation; }
+    void setSimulation(bool simulation);
+    bool isSimulation() const;
 
 public slots:
 
@@ -117,8 +117,10 @@ private:
     ArrowLine* m_currentConnection = nullptr;
 
     Mode m_mod;
+    Mode m_restoreMode;
 
     Modes m_allowMods;
+    Modes m_restoreMods;
 
     ffi::PetriNet* m_net;
 

@@ -263,6 +263,23 @@ void GraphicScene::onSceneChanged() {
     emit sceneChanged();
 }
 
+void GraphicScene::setSimulation(bool simulation) {
+    m_simulation = simulation;
+    if (m_simulation) {
+        m_restoreMods = m_allowMods;
+        m_restoreMode = m_mod;
+        this->setAllowMods(Mode::A_Nothing);
+        this->m_mod = Mode::A_Nothing;
+    } else {
+        this->setAllowMods(m_restoreMods);
+        this->m_mod = m_restoreMode;
+    }
+}
+
+bool GraphicScene::isSimulation() const {
+    return m_simulation;
+}
+
 QJsonDocument GraphicScene::json() const {
     auto n_positions = positions();
     auto n_transitions = transitions();
