@@ -17,6 +17,7 @@ SimulationWidget::SimulationWidget(GraphicsView *parent)
 {
 
     setSizePolicy(QSizePolicy::Policy::Preferred, QSizePolicy::Policy::Preferred);
+    setMinimumSize(315, 48);
     setStyleSheet("SimulationWidget {"
                   "background: #FFFFFF;"
                   "border-radius: 16px;"

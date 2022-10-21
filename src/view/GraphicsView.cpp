@@ -167,11 +167,12 @@ void GraphicsView::mouseReleaseEvent(QMouseEvent *event) {
 void GraphicsView::resizeEvent(QResizeEvent *event) {
     //m_toolBar->resizeEvent(event);
     m_mainToolBar->resizeEvent(event);
+
     auto geometry = m_simulationWidget->geometry();
     // centered bottom
     m_simulationWidget->setGeometry(
-            (this->width() - geometry.width()) / 2,
-            this->height() - geometry.height() - 10,
+            (rect().width() - geometry.width()) / 2,
+            rect().height() - geometry.height() - 10,
             geometry.width(),
             geometry.height()
     );
