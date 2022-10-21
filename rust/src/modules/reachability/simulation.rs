@@ -20,6 +20,8 @@ pub struct FiredTransition {
 pub struct Simulation {
     net: *const PetriNet,
     marking: IndexMap<VertexIndex, usize>,
+    // Cycles
+    cycles: usize,
 }
 
 impl Simulation {
@@ -33,7 +35,8 @@ impl Simulation {
                     marking.insert(*index, vertex.markers());
                 }
                 marking
-            }
+            },
+            cycles: 0,
         }
     }
 
@@ -41,12 +44,15 @@ impl Simulation {
         unsafe { &*self.net }
     }
 
-    fn simulate(&mut self) {
+    /// Возвращает количество сработавших переходов
+    fn simulate(&mut self) -> i32 {
         // Для каждого перехода
         //   Получить входящие соединения
         //   Получить исходящие соединения
         //   Проверить, что все входящие соединения активны по весу
         //   Если да, то активировать переход
+
+        let mut fired = 0;
         let mut new_marking = self.marking.clone();
 
         for (index, transition) in self.net().transitions.iter() {
@@ -79,10 +85,18 @@ impl Simulation {
                     let value = self.marking.get(&connection.second()).unwrap();
                     *new_marking.get_mut(&connection.second()).unwrap() = value + connection.weight();
                 }
+
+                fired += 1;
             }
         }
 
         self.marking = new_marking;
+
+        if fired > 0 {
+            self.cycles += 1;
+        }
+
+        fired
     }
 }
 
@@ -98,15 +112,21 @@ pub extern "C" fn create_simulation(net: *const PetriNet) -> *mut Simulation {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn simulation_simulate(simulation: *mut Simulation) {
+pub unsafe extern "C" fn simulation_simulate(simulation: *mut Simulation) -> i32 {
     let simulation = &mut *simulation;
-    simulation.simulate();
+    simulation.simulate()
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn simulation_markers(simulation: *const Simulation, index: VertexIndex) -> usize {
     let simulation = &*simulation;
     *simulation.marking.get(&index).unwrap()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn simulation_cycles(simulation: *const Simulation) -> usize {
+    let simulation = &*simulation;
+    simulation.cycles
 }
 
 #[no_mangle]

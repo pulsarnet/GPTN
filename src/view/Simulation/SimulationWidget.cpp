@@ -12,7 +12,6 @@
 SimulationWidget::SimulationWidget(GraphicsView *parent)
     : QFrame(parent)
     , m_timer(new QTimer(this))
-    , m_cycles(0)
     , m_state(State::Stopped)
     , m_simulation(nullptr)
 {
@@ -202,7 +201,8 @@ void SimulationWidget::updateButtonState() {
 }
 
 void SimulationWidget::updateLabel() {
-    m_cycleCounterLabel->setText("Cycles: " + QString::number(m_cycles));
+    int cycles = m_simulation ? m_simulation->cycles() : 0;
+    m_cycleCounterLabel->setText("Cycles: " + QString::number(cycles));
 }
 
 void SimulationWidget::initSimulation() {
@@ -214,13 +214,16 @@ void SimulationWidget::initSimulation() {
 
     m_simulation = ffi::Simulation::create(scene->net());
 
-    m_cycles = 0;
     updateLabel();
 }
 
 void SimulationWidget::simulate() {
     // Выполнение одного цикла симуляции
-    m_simulation->simulate();
+    int fired = m_simulation->simulate();
+    if (fired == 0) {
+        this->pauseSimulation();
+        return;
+    }
 
     auto parent = qobject_cast<GraphicsView*>(this->parent());
     auto scene = qobject_cast<GraphicScene*>(parent->scene());
@@ -229,7 +232,6 @@ void SimulationWidget::simulate() {
         position->setMarkers(m_simulation->markers(position->vertexIndex()));
     }
 
-    m_cycles++;
     updateLabel();
 
     scene->update();
@@ -245,7 +247,6 @@ void SimulationWidget::cancelSimulation() {
     // simulation
     m_simulation->destroy();
     m_simulation = nullptr;
-    m_cycles = 0;
     updateLabel();
 
     scene->update();

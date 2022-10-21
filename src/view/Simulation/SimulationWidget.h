@@ -72,7 +72,6 @@ private:
     QPushButton* m_speedUpButton;
     QPushButton* m_speedDownButton;
 
-    int m_cycles;
     QLabel* m_cycleCounterLabel;
 
     State m_state;

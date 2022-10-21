@@ -139,8 +139,8 @@ else()
 endif()
 
 target_link_libraries(ffi_rust PRIVATE
-        #${FFI_LIBRARY_PATH}
-        "${CMAKE_SOURCE_DIR}/rust/target/debug/hello_world.lib"
+        ${FFI_LIBRARY_PATH}
+        #"${CMAKE_SOURCE_DIR}/rust/target/debug/hello_world.lib"
         Qt6::Widgets
         Qt6::Core
         Qt6::Gui

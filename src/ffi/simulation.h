@@ -21,8 +21,9 @@ namespace ffi {
 
     struct Simulation {
         static Simulation* create(PetriNet* net);
-        void simulate();
+        int simulate();
         int markers(VertexIndex index);
+        int cycles() const;
         void destroy();
     };
 }
