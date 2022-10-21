@@ -170,6 +170,8 @@ QPolygonF ArrowLine::arrow(QLineF line) {
 
 QVariant ArrowLine::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant &value) {
     if (change == ItemSceneChange) {
+        if (!m_from || !m_to) return value;
+
         auto scene = value.value<GraphicScene*>();
         if (scene) {
             scene->registerItem(this);
@@ -186,17 +188,18 @@ QVariant ArrowLine::itemChange(QGraphicsItem::GraphicsItemChange change, const Q
 }
 
 void ArrowLine::onAddToScene(GraphicScene *scene) {
-    if (!m_state)
-        return;
-
     auto net = scene->net();
 
     net->connect(m_from->vertex(), m_to->vertex());
-    net->get_connection(m_from->vertex(), m_to->vertex())->setWeight(m_state->weight);
+
+    if (m_state)
+        net->get_connection(m_from->vertex(), m_to->vertex())->setWeight(m_state->weight);
 
     if (m_bidirectional) {
         net->connect(m_to->vertex(), m_from->vertex());
-        net->get_connection(m_to->vertex(), m_from->vertex())->setWeight(m_state->weight);
+
+        if (m_state)
+            net->get_connection(m_to->vertex(), m_from->vertex())->setWeight(m_state->weight);
     }
 
     delete m_state;

@@ -6,6 +6,9 @@ use nalgebra::DMatrix;
 use CVec;
 
 mod decompose;
+mod simulation;
+
+pub use self::simulation::FiredTransition;
 
 #[derive(PartialEq, Clone, Debug, Copy)]
 enum CovType {

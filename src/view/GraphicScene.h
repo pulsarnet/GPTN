@@ -63,11 +63,18 @@ public:
     [[nodiscard]] const QList<Transition*>& transitions() const { return m_transition; }
     [[nodiscard]] const QList<ArrowLine*>& connections() const { return m_connections; }
 
+    QList<Position*>& positions() { return m_positions; }
+    QList<Transition*>& transitions() { return m_transition; }
+    QList<ArrowLine*>& connections() { return m_connections; }
+
     void dotVisualization(char* algorithm);
 
     ffi::PetriNet* net();
 
     void onSceneChanged();
+
+    void setSimulation(bool simulation) { m_simulation = simulation; }
+    bool isSimulation() const { return m_simulation; }
 
 public slots:
 
@@ -119,6 +126,8 @@ private:
     bool m_dragInProgress = false;
     PetriObject* m_draggedItem = nullptr;
     QPointF m_dragItemPos;
+
+    bool m_simulation = false;
 
 };
 

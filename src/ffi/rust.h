@@ -31,6 +31,14 @@ namespace ffi {
     struct VertexIndex {
         VertexType type;
         usize id;
+
+        bool operator==(const VertexIndex& other) const {
+            return type == other.type && id == other.id;
+        }
+
+        bool operator!=(const VertexIndex& other) const {
+            return !(*this == other);
+        }
     };
 
     struct PetriNetContext {

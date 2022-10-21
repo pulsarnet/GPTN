@@ -3,6 +3,7 @@
 //
 
 #include "vec.h"
+#include "simulation.h"
 
 namespace ffi {
     struct Vertex;
@@ -29,6 +30,7 @@ extern "C" void vec_drop_Connection(CVec<Connection*>*);
 extern "C" void vec_drop_PetriNet(CVec<PetriNet*>*);
 extern "C" void vec_drop_Vertex(CVec<Vertex*>*);
 extern "C" void vec_drop_Marking(CVec<Marking*>*);
+extern "C" void vec_drop_FiredTransition(CVec<FiredTransition>*);
 
 template<>
 CVec<int8_t>::~CVec() {
@@ -88,4 +90,9 @@ CVec<Vertex*>::~CVec() {
 template<>
 CVec<Marking*>::~CVec() {
     vec_drop_Marking(this);
+}
+
+template<>
+CVec<FiredTransition>::~CVec() {
+    vec_drop_FiredTransition(this);
 }

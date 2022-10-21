@@ -19,9 +19,15 @@ class QLabel;
 class QPushButton;
 class GraphicsView;
 
+namespace ffi {
+    struct Simulation;
+}
+
 class SimulationWidget : public QFrame {
 
     Q_OBJECT
+
+public:
 
     enum State {
         Running = 0,
@@ -35,6 +41,8 @@ public:
 
     void paintEvent(QPaintEvent *event) override;
 
+    State state() const;
+
 public slots:
 
     void runSimulation();
@@ -47,8 +55,15 @@ public slots:
 private:
 
     void updateButtonState();
+    void updateLabel();
+
+    void initSimulation();
+    void simulate();
+    void cancelSimulation();
 
 private:
+
+    QTimer* m_timer;
 
     QPushButton* m_runButton;
     QPushButton* m_pauseButton;
@@ -57,9 +72,12 @@ private:
     QPushButton* m_speedUpButton;
     QPushButton* m_speedDownButton;
 
+    int m_cycles;
     QLabel* m_cycleCounterLabel;
 
     State m_state;
+
+    ffi::Simulation* m_simulation;
 
 };
 

@@ -44,13 +44,9 @@ public:
         return other->objectType() == PetriObject::Transition;
     }
 
-    void add_marker();
-
-    void remove_marker();
-
-    unsigned long markers();
-
-    void setMarkers(unsigned long count);
+    GraphicScene* graphicScene() const;
+    int markers() const;
+    void setMarkers(int markers);
 
     virtual QString name() const override;
 
@@ -63,6 +59,9 @@ private:
 
     qreal radius = 25.0;
     PositionState* m_state = nullptr;
+
+
+    int m_simulationMarking = 0;
 };
 
 

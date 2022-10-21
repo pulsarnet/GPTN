@@ -112,7 +112,7 @@ set(HEADERS
         src/QwtExt/CanvasPicker.h
         src/synthesis/synthesis_window.h
         src/view/Commands.h
-        src/ffi/vec.cpp src/modules/reachability/reachability_tree_scene.h src/ffi/reachability.cpp src/ffi/reachability.h src/modules/reachability/reachability_node.cpp src/modules/reachability/reachability_node.h src/modules/reachability/reachability_line.cpp src/modules/reachability/reachability_line.h src/modules/reachability/reachability_view.cpp src/modules/reachability/reachability_view.h src/modules/reachability/reachability_window.cpp src/modules/reachability/reachability_window.h src/MainTree/MainTreeItem.cpp src/MainTree/MainTreeItem.h src/MainTree/MainTreeModel.cpp src/MainTree/MainTreeModel.h src/MainTree/ProjectTreeItem.cpp src/MainTree/ProjectTreeItem.h src/MainTree/AnalysisTreeItem.cpp src/MainTree/AnalysisTreeItem.h src/MainTree/ModelTreeItem.cpp src/MainTree/ModelTreeItem.h src/MainTree/MainTreeView.cpp src/MainTree/MainTreeView.h src/MainTree/DecomposeTreeItem.cpp src/MainTree/DecomposeTreeItem.h src/MainTree/ReachabilityTreeItem.cpp src/MainTree/ReachabilityTreeItem.h src/view/Commands/AddCommand.cpp src/view/Commands/AddCommand.h src/view/Commands/MarkCommand.cpp src/view/Commands/MarkCommand.h src/view/Commands/MoveCommand.cpp src/view/Commands/MoveCommand.h src/view/Commands/RotateCommand.cpp src/view/Commands/RotateCommand.h src/view/Commands/ConnectCommand.cpp src/view/Commands/ConnectCommand.h src/view/Commands/RemoveCommand.cpp src/view/Commands/RemoveCommand.h src/view/Simulation/SimulationWidget.cpp src/view/Simulation/SimulationWidget.h)
+        src/ffi/vec.cpp src/modules/reachability/reachability_tree_scene.h src/ffi/reachability.cpp src/ffi/reachability.h src/modules/reachability/reachability_node.cpp src/modules/reachability/reachability_node.h src/modules/reachability/reachability_line.cpp src/modules/reachability/reachability_line.h src/modules/reachability/reachability_view.cpp src/modules/reachability/reachability_view.h src/modules/reachability/reachability_window.cpp src/modules/reachability/reachability_window.h src/MainTree/MainTreeItem.cpp src/MainTree/MainTreeItem.h src/MainTree/MainTreeModel.cpp src/MainTree/MainTreeModel.h src/MainTree/ProjectTreeItem.cpp src/MainTree/ProjectTreeItem.h src/MainTree/AnalysisTreeItem.cpp src/MainTree/AnalysisTreeItem.h src/MainTree/ModelTreeItem.cpp src/MainTree/ModelTreeItem.h src/MainTree/MainTreeView.cpp src/MainTree/MainTreeView.h src/MainTree/DecomposeTreeItem.cpp src/MainTree/DecomposeTreeItem.h src/MainTree/ReachabilityTreeItem.cpp src/MainTree/ReachabilityTreeItem.h src/view/Commands/AddCommand.cpp src/view/Commands/AddCommand.h src/view/Commands/MarkCommand.cpp src/view/Commands/MarkCommand.h src/view/Commands/MoveCommand.cpp src/view/Commands/MoveCommand.h src/view/Commands/RotateCommand.cpp src/view/Commands/RotateCommand.h src/view/Commands/ConnectCommand.cpp src/view/Commands/ConnectCommand.h src/view/Commands/RemoveCommand.cpp src/view/Commands/RemoveCommand.h src/view/Simulation/SimulationWidget.cpp src/view/Simulation/SimulationWidget.h src/ffi/simulation.cpp src/ffi/simulation.h)
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 
@@ -139,8 +139,8 @@ else()
 endif()
 
 target_link_libraries(ffi_rust PRIVATE
-        ${FFI_LIBRARY_PATH}
-        #"${CMAKE_SOURCE_DIR}/rust/target/debug/hello_world.lib"
+        #${FFI_LIBRARY_PATH}
+        "${CMAKE_SOURCE_DIR}/rust/target/debug/hello_world.lib"
         Qt6::Widgets
         Qt6::Core
         Qt6::Gui

@@ -145,20 +145,20 @@ QPointF Position::connectionPos(PetriObject* to, bool reverse) {
     return {xPosy, yPosy};
 }
 
-void Position::add_marker() {
-    vertex()->add_marker();
+GraphicScene *Position::graphicScene() const {
+    return qobject_cast<GraphicScene*>(scene());
 }
 
-void Position::remove_marker() {
-    vertex()->remove_marker();
+int Position::markers() const {
+    return graphicScene()->isSimulation() ? m_simulationMarking : vertex()->markers();
 }
 
-unsigned long Position::markers() {
-    return vertex()->markers();
-}
-
-void Position::setMarkers(unsigned long count) {
-    //TODO: m_position->set_markers(count);
+void Position::setMarkers(int markers) {
+    if (graphicScene()->isSimulation()) {
+        m_simulationMarking = markers;
+    } else {
+        vertex()->set_markers(markers);
+    }
 }
 
 QString Position::name() const {
