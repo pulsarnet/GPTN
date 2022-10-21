@@ -10,6 +10,7 @@
 #include <QPainter>
 #include <QCursor>
 #include <QToolTip>
+#include <QStyleOptionToolButton>
 
 class Tool : public QToolButton {
 

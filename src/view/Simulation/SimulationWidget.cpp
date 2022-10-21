@@ -15,7 +15,6 @@ SimulationWidget::SimulationWidget(GraphicsView *parent)
     , m_state(State::Stopped)
     , m_simulation(nullptr)
 {
-
     setSizePolicy(QSizePolicy::Policy::Preferred, QSizePolicy::Policy::Preferred);
     setMinimumSize(315, 48);
     setStyleSheet("SimulationWidget {"

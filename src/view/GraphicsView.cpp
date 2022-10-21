@@ -12,7 +12,7 @@
 #include "GraphicsView.h"
 #include "GraphicsViewZoom.h"
 #include "GraphicScene.h"
-#include "../toolbox/toolbox.h"
+#include "toolbox/toolbox.h"
 #include "../overrides/MatrixWindow.h"
 #include "../modules/reachability/reachability_window.h"
 

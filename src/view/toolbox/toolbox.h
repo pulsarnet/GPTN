@@ -5,23 +5,26 @@
 #ifndef FFI_RUST_TOOLBOX_H
 #define FFI_RUST_TOOLBOX_H
 
-#include <QWidget>
+#include <QFrame>
 #include <QToolButton>
 #include <QVBoxLayout>
+#include <QMenu>
 #include "tool.h"
 
-class ToolBox : public QWidget {
+class ToolBox : public QFrame {
+
+    Q_OBJECT
 
 public:
 
     enum ToolArea {
-        TopLeft,
+        TopLeft = 0,
         TopRight,
         BottomLeft,
         BottomRight
     };
 
-    explicit ToolBox(QWidget* parent = nullptr) : QWidget(parent) {
+    explicit ToolBox(QWidget* parent = nullptr) : QFrame(parent) {
         setWindowFlags(Qt::FramelessWindowHint | Qt::Tool | Qt::WindowStaysOnTopHint);
 
         setAttribute(Qt::WA_MacAlwaysShowToolWindow, true);

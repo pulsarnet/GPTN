@@ -90,8 +90,8 @@ set(HEADERS
         src/view/elements/petri_object.h
         src/view/GraphicsView.h
         src/view/GraphicsViewZoom.h
-        src/toolbox/toolbox.h
-        src/toolbox/tool.h
+        src/view/toolbox/toolbox.h
+        src/view/toolbox/tool.h
         src/ffi/rust.h
         src/view/GraphicScene.h
         src/graphviz/graphviz_wrapper.h
