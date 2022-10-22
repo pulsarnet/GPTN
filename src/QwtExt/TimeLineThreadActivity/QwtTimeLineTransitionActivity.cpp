@@ -4,7 +4,6 @@
 
 #include "QwtTimeLineTransitionActivity.h"
 #include "../../ffi/simulation.h"
-#include "QwtCyclesScaleDraw.h"
 #include "QwtVertexScaleDraw.h"
 #include <QTimer>
 #include <QwtPlotShapeItem>
@@ -26,7 +25,7 @@ QwtTimeLineTransitionActivity::QwtTimeLineTransitionActivity(QWidget* parent)
     this->setMinimumWidth(400);
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    this->setAxisScaleDraw(QwtPlot::xBottom, new QwtCyclesScaleDraw);
+    this->setAxisScaleDraw(QwtPlot::xBottom, new QwtScaleDraw);
     this->setAxisScaleDraw(QwtPlot::yLeft, new QwtVertexScaleDraw);
 
     this->setFrameShape(QFrame::NoFrame);

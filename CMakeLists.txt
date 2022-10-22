@@ -150,7 +150,7 @@ set(HEADERS
         src/view/Commands/ConnectCommand.h
         src/view/Commands/RemoveCommand.h
         src/view/Simulation/SimulationWidget.h
-        src/ffi/simulation.h src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.cpp src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.h src/QwtExt/TimeLineThreadActivity/QwtCyclesScaleDraw.cpp src/QwtExt/TimeLineThreadActivity/QwtCyclesScaleDraw.h src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.cpp src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.h)
+        src/ffi/simulation.h src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.cpp src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.h src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.cpp src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.h)
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 
