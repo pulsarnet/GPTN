@@ -24,6 +24,8 @@ namespace ffi {
         int simulate();
         int markers(VertexIndex index);
         int cycles() const;
+        CVec<VertexIndex> fired() const;
+        ffi::PetriNet* net() const;
         void destroy();
     };
 }

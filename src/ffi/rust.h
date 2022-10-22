@@ -148,5 +148,11 @@ namespace ffi {
     };
 }
 
+template<>
+struct std::hash<ffi::VertexIndex> {
+    std::size_t operator()(const ffi::VertexIndex& index) const {
+        return std::hash<int>()(index.type) ^ std::hash<ffi::usize>()(index.id);
+    }
+};
 
 #endif //FFI_RUST_RUST_H

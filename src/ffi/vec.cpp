@@ -30,7 +30,7 @@ extern "C" void vec_drop_Connection(CVec<Connection*>*);
 extern "C" void vec_drop_PetriNet(CVec<PetriNet*>*);
 extern "C" void vec_drop_Vertex(CVec<Vertex*>*);
 extern "C" void vec_drop_Marking(CVec<Marking*>*);
-extern "C" void vec_drop_FiredTransition(CVec<FiredTransition>*);
+extern "C" void vec_drop_VertexIndex(CVec<VertexIndex>*);
 
 template<>
 CVec<int8_t>::~CVec() {
@@ -93,6 +93,6 @@ CVec<Marking*>::~CVec() {
 }
 
 template<>
-CVec<FiredTransition>::~CVec() {
-    vec_drop_FiredTransition(this);
+CVec<VertexIndex>::~CVec() {
+    vec_drop_VertexIndex(this);
 }

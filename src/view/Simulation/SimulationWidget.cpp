@@ -8,6 +8,8 @@
 #include <QHBoxLayout>
 #include <QGraphicsDropShadowEffect>
 #include <QStyleOptionFrame>
+#include "../elements/transition.h"
+#include "../../QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.h"
 
 SimulationWidget::SimulationWidget(GraphicsView *parent)
     : QFrame(parent)
@@ -89,6 +91,9 @@ SimulationWidget::SimulationWidget(GraphicsView *parent)
 
     m_timer->setInterval(1000);
     connect(m_timer, &QTimer::timeout, this, &SimulationWidget::simulate);
+
+    m_plot = new QwtTimeLineTransitionActivity();
+
 }
 
 void SimulationWidget::paintEvent(QPaintEvent *event) {
@@ -110,10 +115,10 @@ void SimulationWidget::runSimulation() {
     // Создание объекта ffi симуляции сети
     if (m_state != State::Paused) {
         this->initSimulation();
+        this->openPlot();
     }
 
     m_timer->start();
-
     m_state = State::Running;
     updateButtonState();
 }
@@ -121,7 +126,6 @@ void SimulationWidget::runSimulation() {
 void SimulationWidget::pauseSimulation() {
     // Пауза симуляции
     // Остановка симуляции
-
     m_timer->stop();
 
     m_state = State::Paused;
@@ -144,6 +148,7 @@ void SimulationWidget::stepSimulation() {
     // Выполнение одного цикла симуляции
     if (m_state != State::Paused) {
         this->initSimulation();
+        this->openPlot();
     }
     this->simulate();
 
@@ -214,6 +219,8 @@ void SimulationWidget::initSimulation() {
 
     m_simulation = ffi::Simulation::create(scene->net());
 
+    m_plot->setSimulation(m_simulation);
+
     updateLabel();
 }
 
@@ -232,6 +239,7 @@ void SimulationWidget::simulate() {
         position->setMarkers(m_simulation->markers(position->vertexIndex()));
     }
 
+    updatePlot();
     updateLabel();
 
     scene->update();
@@ -244,10 +252,34 @@ void SimulationWidget::cancelSimulation() {
     auto scene = qobject_cast<GraphicScene*>(parent->scene());
     scene->setSimulation(false);
 
+    // plot
+    m_plot->setSimulation(nullptr);
+
     // simulation
     m_simulation->destroy();
     m_simulation = nullptr;
     updateLabel();
+    closePlot();
 
     scene->update();
+}
+
+void SimulationWidget::updatePlot() {
+    // Обновление графика
+    if (m_simulation) {
+        auto firedTransitions = m_simulation->fired();
+        for (auto transition : firedTransitions) {
+            m_plot->registerFire(transition, m_simulation->cycles());
+        }
+    }
+}
+
+void SimulationWidget::openPlot() {
+    // Открытие графика
+    m_plot->show();
+}
+
+void SimulationWidget::closePlot() {
+    // Закрытие графика
+    m_plot->hide();
 }

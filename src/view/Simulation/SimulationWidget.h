@@ -14,10 +14,12 @@
 #define FFI_RUST_SIMULATIONWIDGET_H
 
 #include <QFrame>
+#include "../../ffi/rust.h"
 
 class QLabel;
 class QPushButton;
 class GraphicsView;
+class QwtTimeLineTransitionActivity;
 
 namespace ffi {
     struct Simulation;
@@ -61,6 +63,10 @@ private:
     void simulate();
     void cancelSimulation();
 
+    void updatePlot();
+    void openPlot();
+    void closePlot();
+
 private:
 
     QTimer* m_timer;
@@ -77,6 +83,8 @@ private:
     State m_state;
 
     ffi::Simulation* m_simulation;
+
+    QwtTimeLineTransitionActivity* m_plot;
 
 };
 

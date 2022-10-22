@@ -20,6 +20,7 @@ pub struct FiredTransition {
 pub struct Simulation {
     net: *const PetriNet,
     marking: IndexMap<VertexIndex, usize>,
+    fired: Vec<VertexIndex>,
     // Cycles
     cycles: usize,
 }
@@ -36,6 +37,7 @@ impl Simulation {
                 }
                 marking
             },
+            fired: vec![],
             cycles: 0,
         }
     }
@@ -53,6 +55,7 @@ impl Simulation {
         //   Если да, то активировать переход
 
         let mut fired = 0;
+        let mut fired_transitions = Vec::new();
         let mut new_marking = self.marking.clone();
 
         for (index, transition) in self.net().transitions.iter() {
@@ -86,11 +89,13 @@ impl Simulation {
                     *new_marking.get_mut(&connection.second()).unwrap() = value + connection.weight();
                 }
 
+                fired_transitions.push(*index);
                 fired += 1;
             }
         }
 
         self.marking = new_marking;
+        self.fired = fired_transitions;
 
         if fired > 0 {
             self.cycles += 1;
@@ -127,6 +132,18 @@ pub unsafe extern "C" fn simulation_markers(simulation: *const Simulation, index
 pub unsafe extern "C" fn simulation_cycles(simulation: *const Simulation) -> usize {
     let simulation = &*simulation;
     simulation.cycles
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn simulation_fired(simulation: *const Simulation, fired: *mut CVec<VertexIndex>) {
+    let simulation = &*simulation;
+    std::ptr::write_unaligned(fired, CVec::from(simulation.fired.clone()));
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn simulation_net(simulation: *const Simulation) -> *const PetriNet {
+    let simulation = &*simulation;
+    simulation.net
 }
 
 #[no_mangle]

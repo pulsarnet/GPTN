@@ -2,7 +2,7 @@ use std::{mem, ptr};
 use net::Connection;
 use ::{PetriNet, Vertex};
 use crate::modules::reachability::Marking;
-use crate::modules::reachability::FiredTransition;
+use net::vertex::VertexIndex;
 
 #[repr(C)]
 pub struct CVec<T> {
@@ -75,4 +75,4 @@ generate_vec_type!(Vertex, *const);
 generate_vec_type!(Connection, *const);
 generate_vec_type!(PetriNet, *const);
 generate_vec_type!(Marking, *const);
-generate_vec_type!(FiredTransition);
+generate_vec_type!(VertexIndex);
