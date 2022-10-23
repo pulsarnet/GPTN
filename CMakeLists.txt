@@ -14,7 +14,7 @@ set(CMAKE_AUTORCC ON)
 if (NOT GRAPHVIZ_DIR)
     message(FATAL_ERROR "Graphviz dir not set")
 endif()
-#
+
 if (NOT Qt6_DIR)
     message(FATAL_ERROR "Qt6_DIR not set")
 endif()
@@ -26,6 +26,12 @@ endif()
 if (NOT QWT_DIR)
     message(FATAL_ERROR "QWT_DIR not set")
 endif()
+
+set(QT6_MAIN_DIR ${Qt6_DIR})
+set(QT6_BIN_DIR "${Qt6_DIR}/bin")
+set(GRAPHVIZ_BIN_DIR "${GRAPHVIZ_DIR}/bin")
+set(QWT_BIN_DIR "${QWT_DIR}/lib")
+set(Qt_ADVANCED_DOCKING_SYSTEM_BIN_DIR "${Qt_ADVANCED_DOCKING_SYSTEM_DIR}/bin")
 
 include_directories(${GRAPHVIZ_DIR}/include/)
 link_directories(${GRAPHVIZ_DIR}/lib/)
@@ -163,6 +169,7 @@ if (APPLE)
             )
 else()
     add_executable(ffi_rust
+            WIN32
             ${SRC_FILES}
             ${HEADERS}
             mainwindow.ui
@@ -220,4 +227,43 @@ if (APPLE)
         include(BundleUtilites)
         fixup_bundle(\"\" \"${QWT_LIBRARY}\" \"${QWT_LIBRARY}\")
     ")
+endif()
+
+if (WIN32)
+    include(InstallRequiredSystemLibraries)
+    install(FILES
+            # Copy Qt6 dlls
+            "${QT6_BIN_DIR}/Qt6Core.dll"
+            "${QT6_BIN_DIR}/Qt6Gui.dll"
+            "${QT6_BIN_DIR}/Qt6Widgets.dll"
+            "${QT6_BIN_DIR}/Qt6Svg.dll"
+
+            # Copy Graphviz
+            "${GRAPHVIZ_BIN_DIR}/cgraph.dll"
+            "${GRAPHVIZ_BIN_DIR}/gvc.dll"
+            "${GRAPHVIZ_BIN_DIR}/gvplugin_core.dll"
+            "${GRAPHVIZ_BIN_DIR}/gvplugin_dot_layout.dll"
+            "${GRAPHVIZ_BIN_DIR}/gvplugin_neato_layout.dll"
+            "${GRAPHVIZ_BIN_DIR}/gvplugin_pango.dll"
+            "${GRAPHVIZ_BIN_DIR}/xdot.dll"
+            "${GRAPHVIZ_BIN_DIR}/config6"
+
+            # Copy Qwt
+            "${QWT_BIN_DIR}/qwt.dll"
+
+            # Copy QtAdvancedDockingSystem
+            "${Qt_ADVANCED_DOCKING_SYSTEM_BIN_DIR}/qtadvanceddocking.dll"
+            DESTINATION bin)
+
+    # Copy Qt6 platform plugins
+    install(FILES "${QT6_MAIN_DIR}/plugins/platforms/qwindows.dll" DESTINATION bin/plugins/platforms)
+    # Copy imageformats Qt
+    install(FILES "${QT6_MAIN_DIR}/plugins/imageformats/qsvg.dll" DESTINATION bin/plugins/imageformats)
+    # Copy Qt6 styles
+    install(FILES "${QT6_MAIN_DIR}/plugins/styles/qwindowsvistastyle.dll" DESTINATION bin/plugins/styles)
+
+    set(CPACK_PACKAGE_VERSION_MAJOR "0")
+    set(CPACK_PACKAGE_VERSION_MINOR "1")
+    install(TARGETS ffi_rust RUNTIME DESTINATION bin)
+    include(CPack)
 endif()
