@@ -39,6 +39,8 @@ public:
     void setBidirectional(bool b);
     bool isBidirectional() const { return m_bidirectional; }
 
+    void createInNet(bool create = true) { m_createInNet = create; }
+
     ffi::Connection* netItem(bool reverse = false);
 
     PetriObject* from() {
@@ -65,6 +67,8 @@ private:
 private:
 
     bool m_bidirectional = false;
+    bool m_createInNet = true;
+
     PetriObject* m_from = nullptr;
     PetriObject* m_to = nullptr;
     ConnectionState* m_state = nullptr;

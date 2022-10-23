@@ -45,12 +45,16 @@ GraphicScene::GraphicScene(ffi::PetriNet *net, QObject *parent)
         if (from.type == ffi::VertexType::Position) {
             auto position = getPosition((int)from.id);
             auto transition = getTransition((int)to.id);
-            addItem(new ArrowLine(position, transition));
+            auto connectionLine = new ArrowLine(position, transition);
+            connectionLine->createInNet(false);
+            addItem(connectionLine);
         }
         else {
             auto transition = getTransition((int)from.id);
             auto position = getPosition((int)to.id);
-            addItem(new ArrowLine(transition, position));
+            auto connectionLine = new ArrowLine(transition, position);
+            connectionLine->createInNet(false);
+            addItem(connectionLine);
         }
     }
 

@@ -175,7 +175,8 @@ QVariant ArrowLine::itemChange(QGraphicsItem::GraphicsItemChange change, const Q
         auto scene = value.value<GraphicScene*>();
         if (scene) {
             scene->registerItem(this);
-            this->onAddToScene(scene);
+            if (m_createInNet)
+                this->onAddToScene(scene);
         } else {
             dynamic_cast<GraphicScene*>(this->scene())->unregisterItem(this);
             this->onRemoveFromScene();
