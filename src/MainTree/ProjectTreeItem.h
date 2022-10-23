@@ -21,14 +21,14 @@ public:
 
     ModelTreeItem* modelItem() { return m_modelItem; }
     AnalysisTreeItem* analysisItem() { return m_analysisItem; }
-    std::filesystem::path folder() const { return m_folder; }
+    std::filesystem::path folder() const { return m_path; }
 
     QVariant data(int column) const noexcept override;
 
 private:
 
     QString m_projectName;
-    std::filesystem::path m_folder;
+    std::filesystem::path m_path;
 
     ModelTreeItem* m_modelItem;
     AnalysisTreeItem* m_analysisItem;

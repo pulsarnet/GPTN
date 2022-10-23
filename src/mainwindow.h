@@ -20,6 +20,7 @@
 #include <QLabel>
 #include <QMessageBox>
 #include <DockManager.h>
+#include <QDir>
 
 class QTreeView;
 class ActionTabWidget;
@@ -57,7 +58,8 @@ public slots:
 
     void slotOpenFile(bool checked);
 
-    void onDocumentChanged();
+    void onNewProject(bool checked);
+    void onNewProjectCreate(const QDir& dir, const QString& name);
 
     void treeItemAction(const QModelIndex& index);
 

@@ -25,5 +25,8 @@
         <file>images/simulation/step.svg</file>
         <file>images/simulation/speeddown.svg</file>
         <file>images/simulation/speedup.svg</file>
+
+        <!-- icons -->
+        <file>images/icons/folder-open.svg</file>
     </qresource>
 </RCC>

@@ -4,6 +4,7 @@
 #include <QApplication>
 #include <QFontDatabase>
 #include <QFile>
+#include <QSettings>
 #include "src/mainwindow.h"
 #include "src/ffi/rust.h"
 #include "src/DockSystem/SplittableComponentsFactory.h"
@@ -26,6 +27,12 @@ int main(int argc, char **argv) {
     QApplication app(argc, argv);
     auto palette = QApplication::palette();
     palette.setColor(QPalette::All, QPalette::Base, Qt::white);
+
+    // Settings INI
+    QSettings::setDefaultFormat(QSettings::IniFormat);
+    QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, QCoreApplication::applicationDirPath());
+    QSettings settings;
+    qDebug() << settings.value("FS/LastOpenedPath", "").toString();
 
     QFile qss(":/styles/style.qss");
     qss.open(QIODeviceBase::ReadOnly);

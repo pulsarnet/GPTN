@@ -25,6 +25,7 @@
 #include "MainTree/DecomposeTreeItem.h"
 #include "MainTree/ReachabilityTreeItem.h"
 #include "MainTree/AnalysisTreeItem.h"
+#include "WindowWidgets/NewProjectWindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -88,9 +89,6 @@ bool MainWindow::saveAs() {
 }
 
 bool MainWindow::save() {
-    if (m_filename.isEmpty())
-        return saveAs();
-
     return saveFile();
 }
 
@@ -170,22 +168,28 @@ void MainWindow::createMenuBar() {
     menuBar = new QMenuBar;
 
     auto file_menu = new QMenu("&File");
+
+    auto new_action = new QAction("&New", this);
+    new_action->setShortcut(QKeySequence::New);
+    connect(new_action, &QAction::triggered, this, &MainWindow::onNewProject);
+
+    auto open_action = new QAction("&Open");
+    open_action->setShortcut(QKeySequence::Open);
+    connect(open_action, &QAction::triggered, this, &MainWindow::slotOpenFile);
+
     auto save_action = new QAction("Save");
-    save_action->setShortcut(tr("Ctrl+S"));
+    save_action->setShortcut(QKeySequence::Save);
     connect(save_action, &QAction::triggered, this, &MainWindow::slotSaveFile);
 
     auto save_as_action = new QAction("Save as...");
-    save_as_action->setShortcut(tr("Ctrl+Shift+S"));
+    save_as_action->setShortcut(QKeySequence::SaveAs);
     connect(save_as_action, &QAction::triggered, this, &MainWindow::slotSaveAsFile);
 
-    auto open_action = new QAction("&Open");
-    open_action->setShortcut(tr("Ctrl+O"));
-    connect(open_action, &QAction::triggered, this, &MainWindow::slotOpenFile);
-
     auto quit_action = new QAction("&Quit");
-    quit_action->setShortcut(tr("Ctrl+Q"));
+    quit_action->setShortcut(QKeySequence::Quit);
     connect(quit_action, &QAction::triggered, this, &MainWindow::slotQuit);
 
+    file_menu->addAction(new_action);
     file_menu->addAction(open_action);
     file_menu->addAction(save_action);
     file_menu->addAction(save_as_action);
@@ -221,8 +225,35 @@ void MainWindow::slotOpenFile(bool checked) {
     open();
 }
 
-void MainWindow::onDocumentChanged() {
-    m_changed = true;
+void MainWindow::onNewProject(bool checked) {
+    Q_UNUSED(checked);
+
+    // Open window of project creation
+    auto window = new NewProjectWindow(this);
+    connect(window, &NewProjectWindow::createProject, this, &MainWindow::onNewProjectCreate);
+    window->show();
+}
+
+void MainWindow::onNewProjectCreate(const QDir& dir, const QString& name) {
+    auto path = dir.absolutePath() + "/" + name + ".json";
+    if (!dir.exists())
+        dir.mkpath(dir.absolutePath());
+
+    QFile file(path);
+    if (!file.open(QFile::WriteOnly)) {
+        QMessageBox::warning(this, tr("Petri Net Editor"),
+                             tr("Cannot create file %1:\n%2.")
+                             .arg(QDir::toNativeSeparators(path), file.errorString()));
+
+        return;
+    }
+
+    auto projectItem = new ProjectTreeItem(std::filesystem::path(path.toStdString()));
+    auto treeModel = qobject_cast<MainTreeModel*>(
+            qobject_cast<MainTreeView*>(m_treeView)->model()
+            );
+
+    treeModel->addChild(projectItem);
 }
 
 void MainWindow::treeItemAction(const QModelIndex& index) {

@@ -11,10 +11,8 @@ ProjectTreeItem::ProjectTreeItem(const std::filesystem::path& path)
     , m_modelItem(new ModelTreeItem(this))
     , m_analysisItem(new AnalysisTreeItem(this))
 {
-    Q_ASSERT(is_directory(path));
-
-    m_projectName = QString::fromStdString(path.filename().string());
-    m_folder = path;
+    m_projectName = QString::fromStdString(path.filename().string()).left(m_projectName.lastIndexOf('.'));
+    m_path = path;
 }
 
 QVariant ProjectTreeItem::data(int column) const noexcept {

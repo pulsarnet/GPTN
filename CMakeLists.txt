@@ -160,7 +160,7 @@ set(HEADERS
         src/view/Simulation/SimulationWidget.h
         src/ffi/simulation.h
         src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.h
-        src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.h)
+        src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.h src/WindowWidgets/NewProjectWindow.cpp src/WindowWidgets/NewProjectWindow.h)
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 
