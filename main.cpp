@@ -13,6 +13,10 @@
 
 int main(int argc, char **argv) {
 
+    QCoreApplication::setOrganizationName("GPTN");
+    QCoreApplication::setOrganizationDomain("lamas.tech");
+    QCoreApplication::setApplicationName("GPTN");
+
     ads::CDockManager::setConfigFlag(ads::CDockManager::DockAreaHasTabsMenuButton, false);
     ads::CDockManager::setConfigFlag(ads::CDockManager::DockAreaHasUndockButton, false);
     ads::CDockManager::setConfigFlag(ads::CDockManager::AlwaysShowTabs, true);
@@ -22,7 +26,10 @@ int main(int argc, char **argv) {
 
     ads::CDockComponentsFactory::setFactory(new SplittableComponentsFactory);
 
-    ffi::init();
+    // Если NDEBUG, тогда включаем логирование
+    #ifdef QT_DEBUG
+        ffi::init();
+    #endif
 
     QApplication app(argc, argv);
     auto palette = QApplication::palette();
@@ -30,9 +37,7 @@ int main(int argc, char **argv) {
 
     // Settings INI
     QSettings::setDefaultFormat(QSettings::IniFormat);
-    QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, QCoreApplication::applicationDirPath());
     QSettings settings;
-    qDebug() << settings.value("FS/LastOpenedPath", "").toString();
 
     QFile qss(":/styles/style.qss");
     qss.open(QIODeviceBase::ReadOnly);

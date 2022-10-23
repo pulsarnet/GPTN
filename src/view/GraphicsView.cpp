@@ -3,7 +3,6 @@
 //
 
 #include <QMenu>
-#include <QOpenGLWidget>
 #include <QActionGroup>
 
 #include "Simulation/SimulationWidget.h"

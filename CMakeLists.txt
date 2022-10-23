@@ -53,7 +53,7 @@ if(NOT WIN32)
 endif()
 
 set(CMAKE_PREFIX_PATH ${Qt6_DIR})
-find_package(Qt6 REQUIRED COMPONENTS Widgets Core Gui OpenGLWidgets Svg Charts)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Core Gui Svg Charts)
 
 set(CMAKE_PREFIX_PATH ${Qt_ADVANCED_DOCKING_SYSTEM_DIR})
 find_package(qtadvanceddocking)
@@ -193,7 +193,6 @@ target_link_libraries(ffi_rust PRIVATE
         Qt6::Widgets
         Qt6::Core
         Qt6::Gui
-        Qt6::OpenGLWidgets
         Qt6::Svg
         ads::qtadvanceddocking
         libopenblas
@@ -241,6 +240,8 @@ if (WIN32)
             "${QT6_BIN_DIR}/Qt6Gui.dll"
             "${QT6_BIN_DIR}/Qt6Widgets.dll"
             "${QT6_BIN_DIR}/Qt6Svg.dll"
+            "${QT6_BIN_DIR}/Qt6OpenGLWidgets.dll"
+            "${QT6_BIN_DIR}/Qt6OpenGL.dll"
 
             # Copy Graphviz
             "${GRAPHVIZ_BIN_DIR}/cgraph.dll"

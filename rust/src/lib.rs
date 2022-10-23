@@ -52,8 +52,6 @@ extern "C" fn init() {
 
     log4rs::init_config(config).unwrap();
 
-    info!("GOOD");
-
 }
 
 pub struct CMatrix {
