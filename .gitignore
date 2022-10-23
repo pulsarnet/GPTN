@@ -9,3 +9,4 @@ lib
 build_*
 .vscode
 log
+packages

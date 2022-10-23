@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.17.3)
-project(ffi_rust)
+project(ffi_rust VERSION 0.1)
 include(ExternalProject)
 
 message(STATUS ${CMAKE_CXX_FLAGS})
@@ -266,6 +266,9 @@ if (WIN32)
     # Copy Qt6 styles
     install(FILES "${QT6_MAIN_DIR}/plugins/styles/qwindowsvistastyle.dll" DESTINATION bin/plugins/styles)
 
+    set(CPACK_PACKAGE_NAME "GPTN")
+    set(CPACK_PACKAGE_DIRECTORY "packages")
+    set(CPACK_PACKAGE_VENDOR "Nickolay Muraviev")
     set(CPACK_PACKAGE_VERSION_MAJOR "0")
     set(CPACK_PACKAGE_VERSION_MINOR "1")
     install(TARGETS ffi_rust RUNTIME DESTINATION bin)
