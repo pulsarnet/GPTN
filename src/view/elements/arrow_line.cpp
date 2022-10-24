@@ -217,4 +217,10 @@ void ArrowLine::onRemoveFromScene() {
     // Remove from objects
     m_from->removeConnectionLine(this);
     m_to->removeConnectionLine(this);
+
+    // Remove from net
+    auto net = dynamic_cast<GraphicScene*>(this->scene())->net();
+    net->remove_connection(m_from->vertex(), m_to->vertex());
+    if (m_bidirectional)
+        net->remove_connection(m_to->vertex(), m_from->vertex());
 }
