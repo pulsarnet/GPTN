@@ -33,7 +33,36 @@ int main(int argc, char **argv) {
 
     QApplication app(argc, argv);
     auto palette = QApplication::palette();
-    palette.setColor(QPalette::All, QPalette::Base, Qt::white);
+    // Light theme
+    palette.setColor(QPalette::Window, Qt::white);
+    palette.setColor(QPalette::WindowText, Qt::black);
+    palette.setColor(QPalette::Base, Qt::white);
+    palette.setColor(QPalette::AlternateBase, QColor(0xf0, 0xf0, 0xf0));
+    palette.setColor(QPalette::ToolTipBase, Qt::white);
+    palette.setColor(QPalette::ToolTipText, Qt::black);
+    palette.setColor(QPalette::Text, Qt::black);
+    palette.setColor(QPalette::Button, Qt::white);
+    palette.setColor(QPalette::ButtonText, Qt::black);
+    palette.setColor(QPalette::BrightText, Qt::red);
+    palette.setColor(QPalette::Link, QColor(0x42, 0x85, 0xf4));
+    palette.setColor(QPalette::Highlight, QColor(0x42, 0x85, 0xf4));
+    palette.setColor(QPalette::HighlightedText, Qt::white);
+    palette.setColor(QPalette::Disabled, QPalette::Text, QColor(0x80, 0x80, 0x80));
+    palette.setColor(QPalette::Disabled, QPalette::ButtonText, QColor(0x80, 0x80, 0x80));
+    palette.setColor(QPalette::Disabled, QPalette::Highlight, QColor(0x80, 0x80, 0x80));
+    palette.setColor(QPalette::Disabled, QPalette::HighlightedText, QColor(0x80, 0x80, 0x80));
+    palette.setColor(QPalette::Disabled, QPalette::WindowText, QColor(0x80, 0x80, 0x80));
+    palette.setColor(QPalette::Disabled, QPalette::Base, QColor(0x80, 0x80, 0x80));
+    palette.setColor(QPalette::Disabled, QPalette::Window, QColor(0x80, 0x80, 0x80));
+    palette.setColor(QPalette::Disabled, QPalette::Button, QColor(0x80, 0x80, 0x80));
+    palette.setColor(QPalette::Disabled, QPalette::Light, QColor(0x80, 0x80, 0x80));
+    palette.setColor(QPalette::Disabled, QPalette::Midlight, QColor(0x80, 0x80, 0x80));
+    palette.setColor(QPalette::Disabled, QPalette::Dark, QColor(0x80, 0x80, 0x80));
+    palette.setColor(QPalette::Disabled, QPalette::Mid, QColor(0x80, 0x80, 0x80));
+    palette.setColor(QPalette::Disabled, QPalette::Shadow, QColor(0x80, 0x80, 0x80));
+    palette.setColor(QPalette::Disabled, QPalette::Text, QColor(0x80, 0x80, 0x80));
+    palette.setColor(QPalette::Disabled, QPalette::BrightText, QColor(0x80, 0x80, 0x80));
+    QApplication::setPalette(palette);
 
     // Settings INI
     QSettings::setDefaultFormat(QSettings::IniFormat);
