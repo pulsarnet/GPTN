@@ -13,6 +13,7 @@ extern "C" int simulation_cycles(Simulation* simulation);
 extern "C" void simulation_fired(const Simulation* simulation, CVec<VertexIndex>*);
 extern "C" PetriNet* simulation_net(const Simulation* simulation);
 extern "C" void drop_simulation(Simulation* simulation);
+extern "C" bool simulation_is_fired(const Simulation* simulation, VertexIndex);
 
 Simulation *Simulation::create(PetriNet *net) {
     return ::create_simulation(net);
@@ -25,6 +26,10 @@ int Simulation::simulate() {
 
 int Simulation::markers(VertexIndex index) {
     return ::simulation_markers(this, index);
+}
+
+bool Simulation::isFired(ffi::VertexIndex index) const {
+    return ::simulation_is_fired(this, index);
 }
 
 int Simulation::cycles() const {

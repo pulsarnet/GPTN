@@ -2,6 +2,7 @@
 #include "transition.h"
 #include "../GraphicScene.h"
 #include <QFontMetrics>
+#include "../../ffi/simulation.h"
 
 Position::Position(const QPointF& origin, ffi::PetriNet* net, ffi::VertexIndex position, QGraphicsItem* parent) : PetriObject(net, position, parent) {
     this->setPos(origin);
@@ -26,6 +27,9 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 
     qreal penWidth = 2;
 
+    auto scene = graphicScene();
+    auto simulation = scene->simulation();
+
     painter->save();
     painter->setPen(QPen(isSelected() ? Qt::green : painter->pen().color(), penWidth));
     painter->drawEllipse(boundingRect().center(), radius - penWidth / 2., radius - penWidth / 2.);
@@ -40,12 +44,19 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
                       , boundingRect().center().y() - radius - 5
                       , name);
 
-    if (this->markers() == 1) {
+    int markers = 0;
+    if (simulation) {
+        markers = simulation->markers(this->vertexIndex());
+    } else {
+        markers = this->markers();
+    }
+
+    if (markers == 1) {
         painter->save();
         painter->setBrush(QBrush(Qt::black));
         painter->drawEllipse(boundingRect().center(), 3., 3.);
         painter->restore();
-    } else if (this->markers() == 2) {
+    } else if (markers == 2) {
         auto rect = boundingRect();
         painter->save();
         painter->setBrush(QBrush(Qt::black));
@@ -57,7 +68,7 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
         painter->drawEllipse(rect.center(), 3., 3.);
 
         painter->restore();
-    } else if (this->markers() == 3) {
+    } else if (markers == 3) {
         auto rect = boundingRect();
         painter->save();
         painter->setBrush(QBrush(Qt::black));
@@ -74,7 +85,7 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
         painter->drawEllipse(rect.center(), 3., 3.);
 
         painter->restore();
-    } else if (this->markers() == 4) {
+    } else if (markers == 4) {
         auto rect = boundingRect();
         painter->save();
         painter->setBrush(QBrush(Qt::black));
@@ -95,7 +106,7 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
         painter->drawEllipse(rect.center(), 3., 3.);
 
         painter->restore();
-    } else if (this->markers() == 5) {
+    } else if (markers == 5) {
         auto rect = boundingRect();
         painter->save();
         painter->setBrush(QBrush(Qt::black));
@@ -120,7 +131,7 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
         painter->drawEllipse(rect.center(), 3., 3.);
 
         painter->restore();
-    } else if (this->markers() > 5) {
+    } else if (markers > 5) {
         painter->drawText(boundingRect(), Qt::AlignCenter, QString("%1").arg(this->markers()));
     }
 
@@ -145,20 +156,12 @@ QPointF Position::connectionPos(PetriObject* to, bool reverse) {
     return {xPosy, yPosy};
 }
 
-GraphicScene *Position::graphicScene() const {
-    return qobject_cast<GraphicScene*>(scene());
-}
-
 int Position::markers() const {
-    return graphicScene()->isSimulation() ? m_simulationMarking : vertex()->markers();
+    return vertex()->markers();
 }
 
 void Position::setMarkers(int markers) {
-    if (graphicScene()->isSimulation()) {
-        m_simulationMarking = markers;
-    } else {
-        vertex()->set_markers(markers);
-    }
+    vertex()->set_markers(markers);
 }
 
 QString Position::name() const {

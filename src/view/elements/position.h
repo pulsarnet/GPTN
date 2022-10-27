@@ -44,7 +44,6 @@ public:
         return other->objectType() == PetriObject::Transition;
     }
 
-    GraphicScene* graphicScene() const;
     int markers() const;
     void setMarkers(int markers);
 
@@ -59,9 +58,6 @@ private:
 
     qreal radius = 25.0;
     PositionState* m_state = nullptr;
-
-
-    int m_simulationMarking = 0;
 };
 
 

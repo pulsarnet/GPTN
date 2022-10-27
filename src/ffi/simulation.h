@@ -23,6 +23,7 @@ namespace ffi {
         static Simulation* create(PetriNet* net);
         int simulate();
         int markers(VertexIndex index);
+        bool isFired(VertexIndex index) const;
         int cycles() const;
         CVec<VertexIndex> fired() const;
         ffi::PetriNet* net() const;

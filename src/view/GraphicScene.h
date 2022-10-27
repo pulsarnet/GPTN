@@ -14,6 +14,7 @@ class QUndoStack;
 namespace ffi {
     struct Vertex;
     struct PetriNet;
+    struct Simulation;
 }
 
 class GraphicScene : public QGraphicsScene {
@@ -73,8 +74,8 @@ public:
 
     void onSceneChanged();
 
-    void setSimulation(bool simulation);
-    bool isSimulation() const;
+    void setSimulation(ffi::Simulation*);
+    ffi::Simulation* simulation() const;
 
 public slots:
 
@@ -129,7 +130,7 @@ private:
     PetriObject* m_draggedItem = nullptr;
     QPointF m_dragItemPos;
 
-    bool m_simulation = false;
+    ffi::Simulation* m_simulation = nullptr;
 
 };
 

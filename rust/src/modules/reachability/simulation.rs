@@ -1,3 +1,4 @@
+use std::cmp::max;
 use indexmap::IndexMap;
 use net::vertex::VertexIndex;
 use ::{CVec, PetriNet};
@@ -56,7 +57,11 @@ impl Simulation {
 
         let mut fired = 0;
         let mut fired_transitions = Vec::new();
-        let mut new_marking = self.marking.clone();
+        let mut take_marking = self.marking.clone();
+        take_marking.iter_mut().for_each(|(_, v)| *v = 0);
+
+        let mut put_marking = self.marking.clone();
+        put_marking.iter_mut().for_each(|(_, v)| *v = 0);
 
         for (index, transition) in self.net().transitions.iter() {
             let input = self.net().connections
@@ -71,22 +76,26 @@ impl Simulation {
 
             let mut can_fire = true;
             for connection in input.iter() {
-                if *self.marking.get(&connection.first()).unwrap() < connection.weight() {
+                let marking_at = *self.marking.get(&connection.first()).unwrap();
+                let take_marking_at = *take_marking.get(&connection.first()).unwrap();
+                if (marking_at - take_marking_at) < connection.weight() {
                     can_fire = false;
                     break;
                 }
             }
 
             if can_fire {
-                // Change self.marking
+                let max_take = input.iter()
+                    .map(|c| c.weight())
+                    .max()
+                    .unwrap_or(0);
+
                 for connection in input.iter() {
-                    let value = self.marking.get(&connection.first()).unwrap();
-                    *new_marking.get_mut(&connection.first()).unwrap() = value - connection.weight();
+                    *take_marking.get_mut(&connection.first()).unwrap() += max_take;
                 }
 
                 for connection in output.iter() {
-                    let value = self.marking.get(&connection.second()).unwrap();
-                    *new_marking.get_mut(&connection.second()).unwrap() = value + connection.weight();
+                    *put_marking.get_mut(&connection.second()).unwrap() += connection.weight();
                 }
 
                 fired_transitions.push(*index);
@@ -94,7 +103,12 @@ impl Simulation {
             }
         }
 
-        self.marking = new_marking;
+        // take and put in self.marking
+        for (index, take) in take_marking.iter() {
+            let put = *put_marking.get(index).unwrap();
+            let mark = *self.marking.get(index).unwrap();
+            *self.marking.get_mut(index).unwrap() = mark - take + put;
+        }
         self.fired = fired_transitions;
 
         if fired > 0 {
@@ -138,6 +152,12 @@ pub unsafe extern "C" fn simulation_cycles(simulation: *const Simulation) -> usi
 pub unsafe extern "C" fn simulation_fired(simulation: *const Simulation, fired: *mut CVec<VertexIndex>) {
     let simulation = &*simulation;
     std::ptr::write_unaligned(fired, CVec::from(simulation.fired.clone()));
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn simulation_is_fired(simulation: *const Simulation, transition: VertexIndex) -> bool {
+    let simulation = &*simulation;
+    simulation.fired.contains(&transition)
 }
 
 #[no_mangle]

@@ -132,7 +132,8 @@ bool MainWindow::open() {
         return false;
     }
 
-    auto document = QJsonDocument::fromJson(file.readAll());
+    auto buffer = file.readAll();
+    auto document = buffer.isEmpty() ? QJsonDocument() : QJsonDocument::fromJson(buffer);
 
     auto projectItem = new ProjectTreeItem(file.filesystemFileName());
     auto modelItem = projectItem->modelItem();

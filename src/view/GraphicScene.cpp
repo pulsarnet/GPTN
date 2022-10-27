@@ -267,20 +267,11 @@ void GraphicScene::onSceneChanged() {
     emit sceneChanged();
 }
 
-void GraphicScene::setSimulation(bool simulation) {
+void GraphicScene::setSimulation(ffi::Simulation* simulation) {
     m_simulation = simulation;
-    if (m_simulation) {
-        m_restoreMods = m_allowMods;
-        m_restoreMode = m_mod;
-        this->setAllowMods(Mode::A_Nothing);
-        this->m_mod = Mode::A_Nothing;
-    } else {
-        this->setAllowMods(m_restoreMods);
-        this->m_mod = m_restoreMode;
-    }
 }
 
-bool GraphicScene::isSimulation() const {
+ffi::Simulation* GraphicScene::simulation() const {
     return m_simulation;
 }
 
@@ -363,20 +354,14 @@ bool GraphicScene::fromJson(const QJsonDocument& document) {
 
     if (auto it = main.find("positions"); it != main.end()) {
         positions = it->toArray();
-    } else {
-        return false;
     }
 
     if (auto it = main.find("transitions"); it != main.end()) {
         transitions = it->toArray();
-    } else {
-        return false;
     }
 
     if (auto it = main.find("connections"); it != main.end()) {
         connections = it->toArray();
-    } else {
-        return false;
     }
 
     // Reset state

@@ -80,6 +80,8 @@ public:
     void updateConnections();
     const QList<ArrowLine*>& connections() const { return m_connections; };
 
+    GraphicScene* graphicScene() const;
+
     ~PetriObject();
 
 public slots:

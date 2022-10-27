@@ -130,6 +130,7 @@ void SimulationWidget::pauseSimulation() {
 
     m_state = State::Paused;
     updateButtonState();
+    updateScene();
 }
 
 void SimulationWidget::stopSimulation() {
@@ -210,15 +211,27 @@ void SimulationWidget::updateLabel() {
     m_cycleCounterLabel->setText("Cycles: " + QString::number(cycles));
 }
 
+void SimulationWidget::updateScene() {
+    auto parent = qobject_cast<GraphicsView*>(this->parent());
+    auto scene = qobject_cast<GraphicScene*>(parent->scene());
+    // Перерисуем позиции
+    for (auto position : scene->positions()) {
+        position->update();
+    }
+
+    for (auto transition : scene->transitions()) {
+        transition->update();
+    }
+}
+
 void SimulationWidget::initSimulation() {
     // Инициализация симуляции
     // Создание объекта ffi симуляции сети
     auto parent = qobject_cast<GraphicsView*>(this->parent());
     auto scene = qobject_cast<GraphicScene*>(parent->scene());
-    scene->setSimulation(true);
 
     m_simulation = ffi::Simulation::create(scene->net());
-
+    scene->setSimulation(m_simulation);
     m_plot->setSimulation(m_simulation);
 
     updateLabel();
@@ -234,11 +247,8 @@ void SimulationWidget::simulate() {
 
     auto parent = qobject_cast<GraphicsView*>(this->parent());
     auto scene = qobject_cast<GraphicScene*>(parent->scene());
-    // Установит маркеры позиций
-    for (auto position : scene->positions()) {
-        position->setMarkers(m_simulation->markers(position->vertexIndex()));
-    }
 
+    updateScene();
     updatePlot();
     updateLabel();
 
@@ -250,7 +260,7 @@ void SimulationWidget::cancelSimulation() {
     // scene
     auto parent = qobject_cast<GraphicsView*>(this->parent());
     auto scene = qobject_cast<GraphicScene*>(parent->scene());
-    scene->setSimulation(false);
+    scene->setSimulation(nullptr);
 
     // plot
     m_plot->setSimulation(nullptr);
@@ -258,6 +268,8 @@ void SimulationWidget::cancelSimulation() {
     // simulation
     m_simulation->destroy();
     m_simulation = nullptr;
+
+    updateScene();
     updateLabel();
     closePlot();
 

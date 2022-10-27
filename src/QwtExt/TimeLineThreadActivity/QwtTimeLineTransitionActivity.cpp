@@ -21,7 +21,7 @@ QwtTimeLineTransitionActivity::QwtTimeLineTransitionActivity(QWidget* parent)
     this->setWindowFlags(Qt::WindowStaysOnTopHint);
     this->setAxisTitle(QwtPlot::xBottom, "Cycles");
     this->setAxisTitle(QwtPlot::yLeft, "Transitions");
-    this->setMinimumHeight(300);
+    this->setMinimumHeight(100);
     this->setMinimumWidth(400);
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
@@ -30,6 +30,8 @@ QwtTimeLineTransitionActivity::QwtTimeLineTransitionActivity(QWidget* parent)
 
     this->setFrameShape(QFrame::NoFrame);
     this->setFrameShadow(QFrame::Shadow::Raised);
+
+    this->canvas()->setAttribute(Qt::WA_StyledBackground);
 
     auto grid = new QwtPlotGrid;
     grid->enableY(true);
@@ -77,7 +79,7 @@ void QwtTimeLineTransitionActivity::resetPlot() {
         auto transitions = m_simulation->net()->transitions();
         for (auto transition : transitions) {
             auto shape = new QwtPlotShapeItem();
-            shape->setPen(QPen(Qt::NoPen));
+            shape->setPen(QPen(Qt::black, 1, Qt::SolidLine));
             shape->setBrush(QBrush(QColor("#349eeb")));
             shape->attach(this);
             m_shapes[transition->index()] = shape;

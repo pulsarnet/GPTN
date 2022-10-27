@@ -58,6 +58,7 @@ private:
 
     void updateButtonState();
     void updateLabel();
+    void updateScene();
 
     void initSimulation();
     void simulate();

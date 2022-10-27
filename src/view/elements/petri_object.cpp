@@ -157,3 +157,7 @@ void PetriObject::setLabel(const QString& label) {
 ffi::VertexIndex PetriObject::vertexIndex() const {
     return m_vertex;
 }
+
+GraphicScene *PetriObject::graphicScene() const {
+    return qobject_cast<GraphicScene*>(scene());
+}

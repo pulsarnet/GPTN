@@ -7,6 +7,7 @@
 #include "position.h"
 #include "transition.h"
 #include "../GraphicScene.h"
+#include "../../ffi/simulation.h"
 
 Transition::Transition(const QPointF& origin,
                        ffi::PetriNet* net,
@@ -56,7 +57,15 @@ void Transition::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
     painter->save();
 
     painter->setPen(isSelected() ? QPen(Qt::red) : Qt::NoPen);
-    painter->setBrush(Qt::black);
+
+    // scene
+    auto scene = graphicScene();
+    auto simulation = scene->simulation();
+    if (simulation && simulation->isFired(this->vertexIndex())) {
+        painter->setBrush(QBrush(Qt::green));
+    } else {
+        painter->setBrush(QBrush(Qt::black));
+    }
 
     auto rect = boundingRect();
     rect.setSize(QSize(rect.size().width(), rect.size().height()));

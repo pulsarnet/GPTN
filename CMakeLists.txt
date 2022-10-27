@@ -173,7 +173,7 @@ if (APPLE)
             )
 else()
     add_executable(ffi_rust
-            WIN32
+            #WIN32
             ${SRC_FILES}
             ${HEADERS}
             mainwindow.ui
