@@ -1,6 +1,8 @@
-use nalgebra::{DMatrix, Dynamic, MatrixSlice, U1};
+use std::collections::HashMap;
+use nalgebra::{Const, DMatrix, Dynamic, MatrixSlice, SliceStorage, U1};
 use ::{PetriNet, Vertex};
 use ::{DecomposeContextBuilder, PetriNetVec};
+use std::collections::VecDeque;
 
 pub struct PrimitiveDecomposition {
     net: PetriNet,
@@ -106,25 +108,27 @@ impl PrimitiveDecomposition {
         // Создадим матрицы примитивной системы DP(I) и DP(O)
         let (primitive_input, primitive_output) = primitive_net.incidence_matrix();
 
+        let c_input = DMatrix::<i32>::zeros(net.positions.len(), net.positions.len());
+        let c_output = DMatrix::<i32>::zeros(net.positions.len(), net.positions.len());
         // Вычислим тензоры C(I) и C(O)
-        let (c_input, c_output) = DecomposeContextBuilder::calculate_c_matrix2(
-            &PetriNetVec(vec![primitive_net.clone()])
-        );
+        // let (c_input, c_output) = DecomposeContextBuilder::calculate_c_matrix2(
+        //     &PetriNetVec(vec![primitive_net.clone()])
+        // );
 
         // Вычислим тензоры E(I) и E(O)
-        let Some(e_input) = c_input.inner.map(|i| i as f64).try_inverse()
+        let Some(e_input) = c_input.map(|i| i as f64).try_inverse()
             .map(|matrix| matrix.map(|i| i as i32))
             else { return Err(()); };
 
-        let Some(e_output) = c_output.inner.map(|i| i as f64).try_inverse()
+        let Some(e_output) = c_output.map(|i| i as f64).try_inverse()
             .map(|matrix| matrix.map(|i| i as i32))
             else { return Err(()); };
 
         Ok(Self {
             net,
             primitive_net,
-            input_tensor: c_input.inner,
-            output_tensor: c_output.inner,
+            input_tensor: c_input,
+            output_tensor: c_output,
             inverse_input_tensor: e_input,
             inverse_output_tensor: e_output
         })
@@ -148,6 +152,21 @@ fn column_condition(slice: &MatrixSlice<i32, Dynamic, U1>) -> bool {
         && slice.iter().filter(|element| **element == 1).count() > 0
 }
 
+// Функция проверяет, что в колонке либо одна 1, либо одна -1
+fn row_condition(matrix: &DMatrix<i32>, row: usize) -> bool {
+    let slice = matrix.row(row);
+    let neg_count = slice.iter().filter(|element| **element == -1).count();
+    let pos_count = slice.iter().filter(|element| **element == 1).count();
+
+    (pos_count == 1 && neg_count == 0) || (pos_count == 0 && neg_count == 1)
+}
+
+// Функция проверяет, что в колонке есть ТОЛЬКО ОДНА -1 и ТОЛЬКО ОДНА 1
+fn full_column_condition(slice: &MatrixSlice<i32, Dynamic, U1>) -> bool {
+    slice.iter().filter(|element| **element == -1).count() == 1
+        && slice.iter().filter(|element| **element == 1).count() == 1
+}
+
 // Функция выбирает колонки, которые удовлетворяют итоговому условию:
 // каждый столбец должен содержать только ОДНУ -1 И ОДНУ 1
 fn deny_cols(matrix: &DMatrix<i32>) -> Vec<usize> {
@@ -160,78 +179,141 @@ fn deny_cols(matrix: &DMatrix<i32>) -> Vec<usize> {
         .collect::<Vec<_>>()
 }
 
+fn recursive_choice_not_in_choice(candidates: &mut Vec<Vec<usize>>, choice: &mut Vec<usize>, level: usize, counter: &mut usize) {
+    if level >= candidates.len() {
+        return;
+    }
+
+    for idx in 0..candidates[level].len() {
+        *counter += 1;
+        if !choice.contains(&candidates[level][idx]) {
+            choice.push(candidates[level][idx]);
+            recursive_choice_not_in_choice(candidates, choice, level + 1, counter);
+            if choice.len() == candidates.len() {
+                return;
+            } else {
+                choice.pop();
+            }
+        }
+    }
+}
+
+fn khun_algorithnm(graph: &Vec<Vec<usize>>, mt: &mut Vec<i32>, used: &mut Vec<bool>, vertex: usize) -> bool {
+    if used[vertex] {
+        return false;
+    }
+
+    used[vertex] = true;
+    for i in 0..graph[vertex].len() {
+        let to = graph[vertex][i];
+        if mt[to] == -1 || khun_algorithnm(graph, mt, used, mt[to] as usize) {
+            mt[to] = vertex as i32;
+            return true;
+        }
+    }
+
+    return false;
+}
+
 fn simplify_matrix(mut matrix: DMatrix<i32>) -> Option<DMatrix<i32>> {
 
-    let mut deny_cells = vec![];
+    // // Объявляем правильную матрицу с -1 и 1
+    // let mut correct_matrix = DMatrix::from_element(matrix.nrows(), matrix.ncols(), 0);
+    // for row in 0..correct_matrix.nrows() {
+    //     for col in 0..correct_matrix.ncols() {
+    //         if row == col * 2 + 1 {
+    //             correct_matrix[(row, col)] = 1;
+    //         } else if row == col * 2 {
+    //             correct_matrix[(row, col)] = -1;
+    //         }
+    //     }
+    // }
 
-    'main: loop {
+    // Объявить двумерный массив candidates[n][]
+    //
 
-        // Получаем строки и колонки, которые удовлетворяют итоговому условию
-        // И запрещаем их обработку
-        let deny_rows = deny_rows(&matrix);
-        let deny_cols = deny_cols(&matrix);
-
-        // Если все колонки и строки удовлетворяют итоговому условию, то решение найдено
-        if deny_rows.len() == 8 || deny_cols.len() == 4 {
-            break;
-        }
-
-        for row_index in 0..matrix.nrows() {
-            if deny_rows.contains(&row_index) {
-                // Строка запрещена для обработки:
-                // 1) Если это последняя, то нет решения
-                // 2) Иначе пропускаем
-                if row_index == matrix.nrows() - 1 {
-                    return None
-                }
-
-                continue
-            }
-
-            for column_index in 0..matrix.ncols() {
-                if deny_cols.contains(&column_index) {
-                    // Колонка запрещена для обработки, пропускаем
-                    continue
-                }
-
-                // Проверим, что ячейка не заблокирована (посещена)
-                if deny_cells.contains(&(row_index, column_index)) {
-                    continue;
-                }
-
-                // Проверим, что значение не равно нулю
-                if matrix.row(row_index)[column_index] == 0 {
-                    continue;
-                }
-
-                // Заменим значение на 0
-                let value = matrix.row(row_index)[column_index];
-                matrix.row_mut(row_index)[column_index] = 0;
-
-                // Проверим, можем ли мы заменить значение.
-                // В колонке должно остаться ХОТЯ БЫ ОДНА 1 и ОДНА -1
-                if !column_condition(&matrix.column(column_index)) {
-                    // Условие не выполнено
-                    // Возвращаем старое значение
-                    matrix.row_mut(row_index)[column_index] = value;
-
-                    // Отметим ячейку как посещенную, чтобы не обрабатывать её повторно
-                    deny_cells.push((row_index, column_index));
-
-                    // Продолжим обрабатывать ячейки
-                    continue
-                }
-
-                // Если это последняя ячейка, то можно сказать, что решение найдено ????
-                if row_index == matrix.nrows() - 1 && column_index == matrix.ncols() - 1 {
-                    break 'main
-                }
-
-                // В случае изменения значения надо начать цикл заново
-                continue 'main
+    let mut candidate_rows = vec![Vec::new(); matrix.nrows()];
+    for row in 0..matrix.nrows() {
+        for col in 0..matrix.ncols() {
+            if matrix[(row, col)] == 1 {
+                candidate_rows[row].push(2 * col + 1)
+            } else if matrix[(row, col)] == -1 {
+                candidate_rows[row].push(2 * col)
             }
         }
     }
 
-    Some(matrix)
+    // let mut candidate_rows = vec![Vec::new(); matrix.nrows()];
+    // for row in 0..matrix.nrows() {
+    //     for candidate_row in 0..correct_matrix.nrows() {
+    //         for col in 0..matrix.ncols() {
+    //             if correct_matrix[(candidate_row, col)] != 0 && matrix[(row, col)] == correct_matrix[(candidate_row, col)] {
+    //                 candidate_rows[row].push(candidate_row);
+    //
+    //                 break;
+    //             }
+    //         }
+    //     }
+    // }
+    //
+    // println!("Matrix: {}", correct_matrix);
+    println!("Candidate rows: {:?}", candidate_rows);
+
+    // let mut result_rows = vec![];
+    // let mut counter = 0;
+    // recursive_choice_not_in_choice(&mut candidate_rows, &mut result_rows, 0, &mut counter);
+
+
+    // Khun solution
+    let mut mt = vec![-1; matrix.nrows()];
+    let mut used = vec![false; matrix.nrows()];
+    for i in 0..matrix.nrows() {
+        used.fill(false);
+        khun_algorithnm(&candidate_rows, &mut mt, &mut used, i);
+    }
+
+    // println!("Count: {}", counter);
+
+    if mt.iter().any(|&x| x == -1) {
+        println!("Bad mt: {:?}", mt);
+        return None;
+    }
+
+    println!("Result rows: {:?}", mt);
+
+    // i = 2 * j + 1 => j = (i - 1) / 2
+    // i = 2 * j => j = i / 2
+    let mut result_matrix = DMatrix::zeros(matrix.nrows(), matrix.ncols());
+    for (index, row) in mt.iter().enumerate() {
+        if index % 2 == 0 {
+            result_matrix[(*row as usize, index / 2)] = -1;
+        } else {
+            result_matrix[(*row as usize, (index - 1) / 2)] = 1;
+        }
+        //result_matrix.set_row(*row as usize, &correct_matrix.row(index));
+    }
+
+    Some(result_matrix)
+
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_simplify_matrix() {
+        let matrix = DMatrix::from_row_slice(6, 3, &[
+            -1,  0,  0,
+             1,  1,  1,
+             1, -1,  0,
+             0, -1, -1,
+             0,  1,  0,
+             0,  0,  1,
+        ]);
+
+        let result = simplify_matrix(matrix);
+        println!("{}", result.clone().unwrap());
+        assert!(result.is_some());
+    }
 }

@@ -10,7 +10,7 @@ crate-type = ["staticlib"]
 cc = "1.0.72"
 
 [dependencies]
-nalgebra = "0.30.0"
+nalgebra = "0.31.4"
 libc = "0.2.112"
 sparse21 = "0.2.1"
 ndarray-linalg = { version = "0.14.1"}

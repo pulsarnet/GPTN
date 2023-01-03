@@ -9,18 +9,20 @@ extern crate log4rs;
 extern crate log;
 extern crate chrono;
 extern crate indexmap;
+extern crate ndarray;
 
 use std::cmp::max_by;
 use std::collections::{HashMap, HashSet};
 use std::ffi::CString;
-use std::ops::Deref;
+use std::ops::{AddAssign, Deref};
 use libc::c_char;
 use log4rs::append::file::FileAppender;
 use log4rs::{Config, config::Logger};
 use log4rs::config::{Appender, Root};
 use log4rs::encode::pattern::PatternEncoder;
 use log::{info, LevelFilter};
-use nalgebra::DMatrix;
+use nalgebra::{DMatrix, RowVector, Vector};
+use ndarray::{Array1, Array2, ArrayBase, AssignElem};
 use ndarray_linalg::Solve;
 use core::Counter;
 use ffi::vec::CVec;
@@ -89,81 +91,117 @@ impl DecomposeContextBuilder {
         }
     }
 
-    pub fn calculate_c_matrix(positions: usize, transitions: usize, linear_base_fragments: &(CMatrix, CMatrix), primitive_matrix: &DMatrix<i32>) -> CMatrix {
-        let mut c_matrix = nalgebra::DMatrix::<i32>::zeros(positions, positions);
-        let (equivalent_input, equivalent_output) = linear_base_fragments;
-        let mut d_matrix = nalgebra::DMatrix::<i32>::zeros(positions, transitions);
-        for i in 0..d_matrix.nrows() {
-            for j in 0..d_matrix.ncols() {
-                if (equivalent_input.row(i)[j] + equivalent_output.row(i)[j]) == 0 && equivalent_input.row(i)[j] != 0 {
-                    d_matrix.row_mut(i)[j] = 0;
-                } else {
-                    d_matrix.row_mut(i)[j] = equivalent_input.row(i)[j] + equivalent_output.row(i)[j];
-                }
-            }
-        }
-
-        let mut entries = vec![];
-        let mut result_entries = vec![];
-        for i in 0..c_matrix.nrows() {
-            let mut entry = ndarray::Array2::zeros((primitive_matrix.nrows(), c_matrix.nrows()));
-            let mut result_entry = ndarray::Array1::zeros(c_matrix.nrows());
-            for j in 0..primitive_matrix.ncols() {
-                for d in 0..primitive_matrix.nrows() {
-                    entry.row_mut(j)[d] = primitive_matrix.row(d)[j] as f64;
-                }
-                result_entry[j] = d_matrix.row(i)[j] as f64;
-            }
-
-            for j in 0..entry.nrows() {
-                for d in 0..entry.ncols() {
-                    if entry.row(j)[d] == -1.0 {
-                        entry.row_mut(j + primitive_matrix.ncols())[d] = 1.0;
-                        result_entry[j + primitive_matrix.ncols()] = 0.0; //(rand::random::<u8>() % 4).into();
-                        //result_entry[j + lbf_matrix.ncols()] = 1.0;//(rand::random::<u8>() % 4).into();
+    fn solve_with_mu(mut a: Array2<f64>, mut b: Array1<f64>) -> Array1<f64> {
+        // find all negative in n/2 eqution
+        let mu_equation_index = a.nrows() / 2;
+        for i in 0..mu_equation_index {
+            for j in 0..a.ncols() {
+                if a[(i, j)] == -1. && a[(mu_equation_index, j)] != 0. {
+                    a[(mu_equation_index, j)] = 0.;
+                    for k in 0..a.ncols() {
+                        if a[(i, k)] == 1. {
+                            a[(mu_equation_index, k)] += 1.;
+                            b[mu_equation_index] += b[i];
+                        }
                     }
                 }
             }
-
-            entries.push(entry);
-            result_entries.push(result_entry);
         }
 
-        for (index, (a, b)) in entries
-            .into_iter()
-            .zip(result_entries.into_iter())
-            .enumerate()
-        {
-            let solve = a.solve(&b).unwrap();
-            solve
-                .into_iter()
-                .enumerate()
-                .for_each(|v| c_matrix.row_mut(index)[v.0] = v.1 as i32);
+        // Set free variable
+        let mut free_variable = 0;
+        for j in 0..a.ncols() {
+            if a[(mu_equation_index, j)] > 0. {
+                free_variable = j;
+                break;
+            }
         }
 
-        CMatrix::from(c_matrix)
+
+        // Set other negative to zero
+        let mut next_equation_index = mu_equation_index + 1;
+        'outer: for i in 0..mu_equation_index {
+            for j in 0..a.ncols() {
+                if a[(i, j)] == 1. && j == free_variable {
+                    continue 'outer;
+                }
+            }
+
+            for j in 0..a.ncols() {
+                if a[(i, j)] == -1.{
+                    a[(next_equation_index, j)] = 1.;
+                    next_equation_index += 1;
+                }
+            }
+        }
+
+        println!("a: {}", a);
+        // solve
+        a.solve(&b).unwrap()
     }
 
-    pub fn calculate_c_matrix2(parts: &PetriNetVec) -> (CMatrix, CMatrix) {
-        let (equivalent_input, equivalent_output) = parts.equivalent_matrix();
-        let (primitive_input, primitive_output) = parts.primitive_matrix();
-
-        let mut c_input_matrix = DMatrix::<i32>::zeros(equivalent_input.nrows(), equivalent_input.nrows());
-        let mut c_output_matrix = DMatrix::<i32>::zeros(equivalent_input.nrows(), equivalent_input.nrows());
-
-        let fix_input_matrix = equivalent_input - primitive_input;
-        for (index, column) in fix_input_matrix.column_iter().enumerate() {
-            c_input_matrix.set_column(index * 2, &column);
+    fn solve_without_mu(mut a: Array2<f64>, b: Array1<f64>) -> Array1<f64> {
+        let mut mu_equation_index = a.nrows() / 2;
+        for i in 0..mu_equation_index {
+            for j in 0..a.ncols() {
+                if a[(i, j)] == -1. {
+                    a[(mu_equation_index, j)] = 1.;
+                    mu_equation_index += 1;
+                }
+            }
         }
-        c_input_matrix.fill_diagonal(1);
 
-        let fix_output_matrix = equivalent_output - primitive_output;
-        for (index, column) in fix_output_matrix.column_iter().enumerate() {
-            c_output_matrix.set_column(index * 2 + 1, &column);
+        a.solve(&b).unwrap()
+    }
+
+    fn solve(a: Array2<f64>, b: Array1<f64>) -> Array1<f64> {
+        let mu_equation_index = a.nrows() / 2;
+        let mu_equation = a.row(mu_equation_index);
+        if mu_equation.iter().any(|&x| x != 0.) {
+            DecomposeContextBuilder::solve_with_mu(a, b)
+        } else {
+            DecomposeContextBuilder::solve_without_mu(a, b)
         }
-        c_output_matrix.fill_diagonal(1);
+    }
 
-        (CMatrix::from(c_input_matrix), CMatrix::from(c_output_matrix))
+    pub fn calculate_c_matrix(positions: usize,
+                              transitions: usize,
+                              linear_base_fragments: &(DMatrix<i32>, DMatrix<i32>),
+                              primitive_matrix: DMatrix<i32>,
+                              mu: &DMatrix<i32>) -> DMatrix<f64>
+    {
+        let mut c_matrix = nalgebra::DMatrix::<f64>::zeros(positions, positions);
+        let d_matrix =
+            linear_base_fragments.1.clone() - linear_base_fragments.0.clone();
+
+        for row in 0..positions {
+            let mut array_a = Array2::<f64>::zeros((positions, positions));
+            let mut array_b = Array1::<f64>::zeros(positions);
+
+            for col in 0..transitions {
+                array_a.row_mut(col).assign(
+                    &primitive_matrix.column(col)
+                        .iter()
+                        .map(|&x| x as f64)
+                        .collect::<Array1<f64>>()
+                );
+                array_b[col] = d_matrix[(row, col)] as f64;
+            }
+
+            // set mu equation
+            array_a.row_mut(transitions).assign(
+                &mu.row(0)
+                    .iter()
+                    .map(|&x| x as f64)
+                    .collect::<Array1<f64>>()
+            );
+            array_b[transitions] = mu[(0, row)] as f64;
+
+            let solution = DecomposeContextBuilder::solve(array_a, array_b);
+            c_matrix.row_mut(row).copy_from_slice(solution.as_slice().unwrap());
+        }
+
+        c_matrix
     }
 
     pub fn build(mut self) -> DecomposeContext {
@@ -172,17 +210,27 @@ impl DecomposeContextBuilder {
         let parts = self.parts;
         let positions = parts.0.iter().flat_map(|net| net.positions.values()).cloned().collect::<Vec<_>>();
         let transitions = parts.0.iter().flat_map(|net| net.transitions.values()).cloned().collect::<Vec<_>>();
+
         let primitive_net = parts.primitive_net();
+        let adjacency_primitive = primitive_net.adjacency_matrix();
+
         let (primitive_input, primitive_output) = parts.primitive_matrix();
         let linear_base_fragments_matrix = parts.equivalent_matrix();
-        let c_matrix = DecomposeContextBuilder::calculate_c_matrix2(&parts);
+        let mu = DMatrix::from_row_slice(1, positions.len(), &positions.iter().map(|x| x.markers() as i32).collect::<Vec<_>>());
+        let c_matrix = DecomposeContextBuilder::calculate_c_matrix(
+            positions.len(),
+            transitions.len(),
+            &linear_base_fragments_matrix,
+            primitive_output.clone() - primitive_input.clone(),
+            &mu
+        );
 
         DecomposeContext {
             parts,
             positions,
             transitions,
             primitive_net,
-            primitive_matrix: (CMatrix::from(primitive_input), CMatrix::from(primitive_output)),
+            primitive_matrix: adjacency_primitive,
             linear_base_fragments_matrix: (CMatrix::from(linear_base_fragments_matrix.0), CMatrix::from(linear_base_fragments_matrix.1)),
             c_matrix,
             programs: vec![]
@@ -196,13 +244,12 @@ pub struct DecomposeContext {
     pub positions: Vec<Vertex>,
     pub transitions: Vec<Vertex>,
     pub primitive_net: PetriNet,
-    pub primitive_matrix: (CMatrix, CMatrix),
+    pub primitive_matrix: DMatrix<f64>,
     pub linear_base_fragments_matrix: (CMatrix, CMatrix),
 
     pub programs: Vec<SynthesisProgram>,
 
-    /// C(I) и C(O)
-    pub c_matrix: (CMatrix, CMatrix),
+    pub c_matrix: DMatrix<f64>,
 }
 
 impl DecomposeContext {
@@ -259,6 +306,15 @@ impl DecomposeContext {
                 synthesis_program(self, self.programs.len() - 1);
             }
         }
+    }
+
+    pub fn marking(&self) -> DMatrix<f64> {
+        let mut marking = DMatrix::zeros(self.positions.len(), 1);
+        for (i, p) in self.positions.iter().enumerate() {
+            marking[(i, 0)] = p.markers() as f64;
+        }
+
+        marking
     }
 
     pub fn linear_base_fragments(&self) -> PetriNet {
@@ -386,63 +442,39 @@ impl DecomposeContext {
         &self.primitive_net
     }
 
-    pub fn transition_synthesis_program(
-        &self,
-        t_set: &Vec<usize>,
-        d_input: &mut DMatrix<i32>,
-        d_output: &mut DMatrix<i32>,
-    ) {
+    pub fn transition_synthesis_program(&self, t_set: &Vec<usize>, adjacency_matrix: &mut DMatrix<f64>) {
+        assert!(t_set.len() > 1);
 
-        let mut input = DMatrix::<i32>::zeros(d_input.nrows(), 1);
-        let mut output = DMatrix::<i32>::zeros(d_input.nrows(), 1);
-        for t in t_set.iter() {
-            d_input.column(*t).iter().enumerate().for_each(|(index, &b)| {
-                let a = input.row(index)[0];
-                input.row_mut(index)[0] = max_by(a, b, |&ra, &rb| ra.cmp(&rb));
-            });
-
-            d_output.column(*t).iter().enumerate().for_each(|(index, &b)| {
-                let a = output.row(index)[0];
-                output.row_mut(index)[0] = max_by(a, b, |&ra, &rb| ra.cmp(&rb));
-            });
+        let first = t_set[0];
+        for t in t_set.iter().skip(1) {
+            let column = adjacency_matrix.column(*t).clone_owned();
+            adjacency_matrix.column_mut(first).add_assign(column);
         }
 
-        for t in t_set.iter() {
-            d_input.set_column(*t, &input.column(0));
-            d_output.set_column(*t, &output.column(0));
+        for t in t_set.iter().skip(1) {
+            let vector = Vector::from_data(adjacency_matrix.column(first).clone_owned().data);
+            adjacency_matrix.set_column(*t, &vector);
         }
-
     }
 
     pub fn position_synthesis_program(
         &self,
         p_set: &Vec<usize>,
-        d_input: &mut DMatrix<i32>,
-        d_output: &mut DMatrix<i32>,
-        d_markers: &mut DMatrix<i32>,
+        adjacency_matrix: &mut DMatrix<f64>,
+        d_markers: &mut DMatrix<f64>,
     ) {
 
-        let mut input = DMatrix::<i32>::zeros(1, d_input.ncols());
-        let mut output = DMatrix::<i32>::zeros(1, d_input.ncols());
-        let mut markers = 0;
-        for p in p_set.iter() {
-            d_input.row(*p).iter().enumerate().for_each(|(index, &b)| {
-                let a = input.column(index)[0];
-                input.column_mut(index)[0] = max_by(a, b, |&ra, &rb| ra.cmp(&rb));
-            });
-
-            d_output.row(*p).iter().enumerate().for_each(|(index, &b)| {
-                let a = output.column(index)[0];
-                output.column_mut(index)[0] = max_by(a, b, |&ra, &rb| ra.cmp(&rb));
-            });
-
-            markers += d_markers.row(*p)[0];
+        let first = p_set[0];
+        for p in p_set.iter().skip(1) {
+            let row = adjacency_matrix.row(*p).clone_owned();
+            adjacency_matrix.row_mut(first).add_assign(row);
+            d_markers[(first, 0)] += d_markers[(*p, 0)];
         }
 
-        for p in p_set.iter() {
-            d_input.set_row(*p, &input.row(0));
-            d_output.set_row(*p, &output.row(0));
-            d_markers.row_mut(*p)[0] = markers;
+        for p in p_set.iter().skip(1) {
+            let row = RowVector::from_data(adjacency_matrix.row(first).clone_owned().data);
+            adjacency_matrix.set_row(*p, &row);
+            d_markers[(*p, 0)] += d_markers[(first, 0)];
         }
 
     }
