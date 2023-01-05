@@ -648,6 +648,28 @@ impl PetriNet {
         adjacency
     }
 
+    pub fn adjacency_matrices(&self) -> (DMatrix<f64>, DMatrix<f64>) {
+        let mut adjacency_input = DMatrix::<f64>::zeros(self.positions.len(), self.positions.len());
+        let mut adjacency_output = DMatrix::<f64>::zeros(self.positions.len(), self.positions.len());
+
+        for conn in self.connections.iter() {
+            match conn.first().type_ {
+                VertexType::Transition => {
+                    let place_index = self.positions.get_index_of(&conn.second()).unwrap();
+                    let transition_index = self.transitions.get_index_of(&conn.first()).unwrap();
+                    adjacency_output[(place_index, transition_index)] = conn.weight() as f64;
+                },
+                VertexType::Position => {
+                    let place_index = self.positions.get_index_of(&conn.first()).unwrap();
+                    let transition_index = self.transitions.get_index_of(&conn.second()).unwrap();
+                    adjacency_input[(place_index, transition_index)] = -(conn.weight() as f64);
+                },
+            }
+        }
+
+        (adjacency_input, adjacency_output)
+    }
+
     #[inline]
     pub fn update_transition_index(&self) {
         *(*self.transition_index).borrow_mut() += 1;
@@ -835,7 +857,7 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
     let mut tran_indexes_vec = programs.transitions().clone();
 
     let c_matrix = programs.c_matrix.clone();
-    let mut adjacency_primitive = programs.primitive_matrix.clone();
+    let (mut adjacency_input, mut adjacency_output) = programs.primitive_matrix.clone();
 
     let mut markers = programs.marking();
 
@@ -845,18 +867,25 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
     log::error!("TSET => {:?}", t_sets);
 
     for t_set in t_sets.into_iter() {
-        programs.transition_synthesis_program(&t_set, &mut adjacency_primitive);
+        programs.transition_synthesis_program(&t_set, &mut adjacency_input, &mut adjacency_output);
     }
 
     for p_set in p_sets.into_iter() {
-        programs.position_synthesis_program(&p_set, &mut adjacency_primitive, &mut markers);
+        programs.position_synthesis_program(&p_set, &mut adjacency_input, &mut adjacency_output, &mut markers);
     }
 
-    adjacency_primitive = &c_matrix * adjacency_primitive;
+    adjacency_input = &c_matrix * adjacency_input;
+    adjacency_output = &c_matrix * adjacency_output;
     markers = &c_matrix * markers;
 
     let mut fract = true;
-    adjacency_primitive.iter().for_each(|v| {
+    adjacency_input.iter().for_each(|v| {
+        if v.fract() != 0.0 {
+            fract = false;
+        }
+    });
+
+    adjacency_output.iter().for_each(|v| {
         if v.fract() != 0.0 {
             fract = false;
         }
@@ -868,18 +897,26 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
         }
     });
 
+    adjacency_input.iter().zip(adjacency_output.iter()).for_each(|(a, b)| {
+        if (*a > 0. && *b < 0.) || (*a < 0. && *b > 0.) {
+            fract = false;
+        }
+    });
+
     if !fract {
         return PetriNet::new();
     }
 
     let mut remove_rows = vec![];
-    for (index, row_a) in adjacency_primitive.row_iter().enumerate() {
-        if row_a.iter().all(|&e| e == 0.) {
+    for (index, (row_a, row_b)) in adjacency_input.row_iter().zip(adjacency_output.row_iter()).enumerate() {
+        if row_a.iter().all(|&e| e == 0.) && row_b.iter().all(|&e| e == 0.) {
             remove_rows.push(index);
             continue;
         }
-        for (sub_index, sub_a) in adjacency_primitive.row_iter().enumerate().skip(index + 1) {
+
+        for (sub_index, (sub_a, sub_b)) in adjacency_input.row_iter().zip(adjacency_output.row_iter()).enumerate().skip(index + 1) {
             if row_a == sub_a
+                && row_b == sub_b
                 && markers.row(index) == markers.row(sub_index)
             {
                 remove_rows.push(sub_index);
@@ -891,7 +928,8 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
         }
     }
 
-    adjacency_primitive = adjacency_primitive.remove_rows_at(&remove_rows);
+    adjacency_input = adjacency_input.remove_rows_at(&remove_rows);
+    adjacency_output = adjacency_output.remove_rows_at(&remove_rows);
     markers = markers.remove_rows_at(&remove_rows);
     pos_indexes_vec = pos_indexes_vec
         .into_iter()
@@ -902,19 +940,20 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
 
 
     let mut remove_cols = vec![];
-    for (index, col_a) in adjacency_primitive.column_iter().enumerate() {
-        if col_a.iter().all(|&e| e == 0.) {
+    for (index, (col_a, col_b)) in adjacency_input.column_iter().zip(adjacency_output.column_iter()).enumerate() {
+        if col_a.iter().chain(col_b.iter()).all(|&e| e == 0.) {
             remove_cols.push(index);
             continue;
         }
-        for (sub_index, sub_a) in adjacency_primitive.column_iter().enumerate().skip(index + 1) {
-            if col_a == sub_a {
+        for (sub_index, (sub_a, sub_b)) in adjacency_input.column_iter().zip(adjacency_output.column_iter()).enumerate().skip(index + 1) {
+            if col_a == sub_a && col_b == sub_b {
                 remove_cols.push(sub_index);
             }
         }
     }
 
-    adjacency_primitive = adjacency_primitive.remove_columns_at(&remove_cols);
+    adjacency_input = adjacency_input.remove_columns_at(&remove_cols);
+    adjacency_output = adjacency_output.remove_columns_at(&remove_cols);
     tran_indexes_vec = tran_indexes_vec
         .into_iter()
         .enumerate()
@@ -950,16 +989,23 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
 
     let mut connections = vec![];
     for transition in new_net.transitions.values() {
-        let column = adjacency_primitive.column(*trans_new_indexes.get(&transition.index()).unwrap());
-        for (index, &el) in column.iter().enumerate().filter(|e| e.1.ne(&0.)) {
-            let pos = pos_indexes_vec[index].clone();
-            if el < 0. {
-                connections.push(Connection::new(pos.index(), transition.index()));
-            } else {
-                connections.push(Connection::new(transition.index(), pos.index()));
-            }
+        for i in 0..2 {
+            let column = match i {
+                0 => adjacency_input.column(*trans_new_indexes.get(&transition.index()).unwrap()),
+                1 => adjacency_output.column(*trans_new_indexes.get(&transition.index()).unwrap()),
+                _ => panic!("Invalid column index"),
+            };
 
-            connections.last_mut().unwrap().set_weight(el.abs() as usize);
+            for (index, &el) in column.iter().enumerate().filter(|e| e.1.ne(&0.)) {
+                let pos = pos_indexes_vec[index].clone();
+                if el < 0. {
+                    connections.push(Connection::new(pos.index(), transition.index()));
+                } else {
+                    connections.push(Connection::new(transition.index(), pos.index()));
+                }
+
+                connections.last_mut().unwrap().set_weight(el.abs() as usize);
+            }
         }
     }
 

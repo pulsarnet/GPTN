@@ -212,7 +212,8 @@ impl DecomposeContextBuilder {
         let transitions = parts.0.iter().flat_map(|net| net.transitions.values()).cloned().collect::<Vec<_>>();
 
         let primitive_net = parts.primitive_net();
-        let adjacency_primitive = primitive_net.adjacency_matrix();
+        //let adjacency_primitive = primitive_net.adjacency_matrix();
+        let adjacency_primitive = primitive_net.adjacency_matrices();
 
         let (primitive_input, primitive_output) = parts.primitive_matrix();
         let linear_base_fragments_matrix = parts.equivalent_matrix();
@@ -244,7 +245,7 @@ pub struct DecomposeContext {
     pub positions: Vec<Vertex>,
     pub transitions: Vec<Vertex>,
     pub primitive_net: PetriNet,
-    pub primitive_matrix: DMatrix<f64>,
+    pub primitive_matrix: (DMatrix<f64>, DMatrix<f64>),
     pub linear_base_fragments_matrix: (CMatrix, CMatrix),
 
     pub programs: Vec<SynthesisProgram>,
@@ -442,38 +443,58 @@ impl DecomposeContext {
         &self.primitive_net
     }
 
-    pub fn transition_synthesis_program(&self, t_set: &Vec<usize>, adjacency_matrix: &mut DMatrix<f64>) {
+    pub fn transition_synthesis_program(
+        &self,
+        t_set: &Vec<usize>,
+        adjacency_input: &mut DMatrix<f64>,
+        adjacency_output: &mut DMatrix<f64>)
+    {
         assert!(t_set.len() > 1);
 
         let first = t_set[0];
         for t in t_set.iter().skip(1) {
-            let column = adjacency_matrix.column(*t).clone_owned();
-            adjacency_matrix.column_mut(first).add_assign(column);
+            let column_input = adjacency_input.column(*t).clone_owned();
+            adjacency_input.column_mut(first).add_assign(column_input);
+
+            let column_output = adjacency_output.column(*t).clone_owned();
+            adjacency_output.column_mut(first).add_assign(column_output);
         }
 
         for t in t_set.iter().skip(1) {
-            let vector = Vector::from_data(adjacency_matrix.column(first).clone_owned().data);
-            adjacency_matrix.set_column(*t, &vector);
+            let vector = Vector::from_data(adjacency_input.column(first).clone_owned().data);
+            adjacency_input.set_column(*t, &vector);
+
+            let vector = Vector::from_data(adjacency_output.column(first).clone_owned().data);
+            adjacency_output.set_column(*t, &vector);
         }
     }
 
     pub fn position_synthesis_program(
         &self,
         p_set: &Vec<usize>,
-        adjacency_matrix: &mut DMatrix<f64>,
+        adjacency_input: &mut DMatrix<f64>,
+        adjacency_output: &mut DMatrix<f64>,
         d_markers: &mut DMatrix<f64>,
     ) {
 
         let first = p_set[0];
         for p in p_set.iter().skip(1) {
-            let row = adjacency_matrix.row(*p).clone_owned();
-            adjacency_matrix.row_mut(first).add_assign(row);
+            let row = adjacency_input.row(*p).clone_owned();
+            adjacency_input.row_mut(first).add_assign(row);
+
+            let row = adjacency_output.row(*p).clone_owned();
+            adjacency_output.row_mut(first).add_assign(row);
+
             d_markers[(first, 0)] += d_markers[(*p, 0)];
         }
 
         for p in p_set.iter().skip(1) {
-            let row = RowVector::from_data(adjacency_matrix.row(first).clone_owned().data);
-            adjacency_matrix.set_row(*p, &row);
+            let row = RowVector::from_data(adjacency_input.row(first).clone_owned().data);
+            adjacency_input.set_row(*p, &row);
+
+            let row = RowVector::from_data(adjacency_output.row(first).clone_owned().data);
+            adjacency_output.set_row(*p, &row);
+
             d_markers[(*p, 0)] += d_markers[(first, 0)];
         }
 
