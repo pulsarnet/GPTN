@@ -12,6 +12,7 @@
 #include <QLabel>
 #include <unordered_map>
 
+#include <Q3DScatter>
 #include <QwtPlot>
 #include <QwtPlotCurve>
 #include <QwtSymbol>
@@ -47,6 +48,24 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     m_primitiveNetView = new DockWidget("Primitive view");
     m_primitiveNetView->setWidget(primitiveNetView);
 
+    Q3DScatter* scatter = new Q3DScatter();
+    scatter->setFlags(scatter->flags() ^ Qt::FramelessWindowHint);
+    scatter->axisX()->setTitle("2I/O");
+    scatter->axisX()->setTitleVisible(true);
+
+    scatter->axisY()->setTitle("P+T");
+    scatter->axisY()->setTitleVisible(true);
+
+    scatter->axisZ()->setTitle("EDGES");
+    scatter->axisZ()->setTitleVisible(true);
+
+    scatter->setAspectRatio(1.0f);
+    scatter->setHorizontalAspectRatio(1.0f);
+    scatter->setShadowQuality(QAbstract3DGraph::ShadowQualityNone);
+
+
+    QScatter3DSeries* series = new QScatter3DSeries();
+    QScatterDataArray data;
 
     // Plot
     QHash<QPoint, QVector<std::size_t>> map;
@@ -55,6 +74,18 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
 
         auto x_axis = program->input_positions() + 2 * program->output_positions();
         auto y_axis = program->positions().size() + program->transitions().size();
+
+        if (x_axis == 0 || y_axis == 0) {
+            continue;
+        }
+
+        auto connections = program->connections();
+        int weight = 0;
+        for (auto& connection : connections) {
+            weight += connection->weight();
+        }
+        // auto z_axis = program->connections().size();
+        data << QVector3D(x_axis, y_axis, weight);
 
         QPoint point = QPoint((int)x_axis, (int)y_axis);
         auto it = map.find(point);
@@ -66,6 +97,11 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
 
         program->drop();
     }
+
+
+    series->dataProxy()->addItems(data);
+    scatter->addSeries(series);
+    scatter->show();
 
     auto symbol = new QwtSymbol(QwtSymbol::Ellipse,
                                 QBrush( Qt::blue ), QPen( Qt::blue, 4 ), QSize( 10, 10 ) );
@@ -106,7 +142,7 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     connect(canvasPicker, &CanvasPicker::selected, this, &DecomposeModelTab::selectedPoint);
 
     m_plotWidget = new DockWidget("График");
-    m_plotWidget->setWidget(qwt_plot);
+    m_plotWidget->setWidget(QWidget::createWindowContainer(scatter));
 
     auto area = m_dockManager->addDockWidget(ads::LeftDockWidgetArea, m_linearBaseFragmentsView);
     area->setWindowTitle("Линейно-базовые фрагменты");

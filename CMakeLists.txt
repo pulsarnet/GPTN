@@ -53,7 +53,7 @@ if(NOT WIN32)
 endif()
 
 set(CMAKE_PREFIX_PATH ${Qt6_DIR})
-find_package(Qt6 REQUIRED COMPONENTS Widgets Core Gui Svg Charts)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Core Gui Svg Charts DataVisualization)
 
 set(CMAKE_PREFIX_PATH ${Qt_ADVANCED_DOCKING_SYSTEM_DIR})
 find_package(qtadvanceddocking)
@@ -194,6 +194,7 @@ target_link_libraries(ffi_rust PRIVATE
         Qt6::Core
         Qt6::Gui
         Qt6::Svg
+        Qt6::DataVisualization
         ads::qtadvanceddocking
         libopenblas
         gvc
