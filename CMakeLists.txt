@@ -104,7 +104,8 @@ set(SRC_FILES
         src/view/Commands/RemoveCommand.cpp
         src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.cpp
         src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.cpp
-        )
+        src/WindowWidgets/NewProjectWindow.cpp
+        src/DataVisualization/InputHandler3D.cpp)
 
 set(HEADERS
         src/mainwindow.h
@@ -143,12 +144,18 @@ set(HEADERS
         src/modules/reachability/reachability_line.h
         src/modules/reachability/reachability_view.h
         src/modules/reachability/reachability_window.h
-        src/MainTree/MainTreeItem.cpp src/MainTree/MainTreeItem.h
-        src/MainTree/MainTreeModel.cpp src/MainTree/MainTreeModel.h
-        src/MainTree/ProjectTreeItem.cpp src/MainTree/ProjectTreeItem.h
-        src/MainTree/AnalysisTreeItem.cpp src/MainTree/AnalysisTreeItem.h
-        src/MainTree/ModelTreeItem.cpp src/MainTree/ModelTreeItem.h
-        src/MainTree/MainTreeView.cpp src/MainTree/MainTreeView.h
+        src/MainTree/MainTreeItem.cpp
+        src/MainTree/MainTreeItem.h
+        src/MainTree/MainTreeModel.cpp
+        src/MainTree/MainTreeModel.h
+        src/MainTree/ProjectTreeItem.cpp
+        src/MainTree/ProjectTreeItem.h
+        src/MainTree/AnalysisTreeItem.cpp
+        src/MainTree/AnalysisTreeItem.h
+        src/MainTree/ModelTreeItem.cpp
+        src/MainTree/ModelTreeItem.h
+        src/MainTree/MainTreeView.cpp
+        src/MainTree/MainTreeView.h
         src/MainTree/DecomposeTreeItem.h
         src/MainTree/ReachabilityTreeItem.h
         src/view/Commands/AddCommand.h
@@ -160,7 +167,9 @@ set(HEADERS
         src/view/Simulation/SimulationWidget.h
         src/ffi/simulation.h
         src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.h
-        src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.h src/WindowWidgets/NewProjectWindow.cpp src/WindowWidgets/NewProjectWindow.h)
+        src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.h
+        src/WindowWidgets/NewProjectWindow.h
+        src/DataVisualization/InputHandler3D.h)
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 

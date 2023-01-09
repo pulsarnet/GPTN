@@ -13,18 +13,15 @@
 #include <unordered_map>
 
 #include <Q3DScatter>
-#include <QwtPlot>
-#include <QwtPlotCurve>
-#include <QwtSymbol>
-#include <QwtPlotMagnifier>
-#include <QwtPlotPanner>
-#include <QwtPlotPicker>
-#include <QwtPicker>
 #include <QwtPickerMachine>
 #include <QwtPlotGrid>
-#include "../QwtExt/qwt_ext_plot_curve_labels.h"
-#include "../QwtExt/CanvasPicker.h"
 #include "../synthesis/synthesis_window.h"
+#include "../DataVisualization/InputHandler3D.h"
+
+uint qHash(const QVector3D &v)
+{
+    return qHash( QString( "%1x%2x%3" ).arg(v.x()).arg(v.y()).arg(v.z()) ) ;
+}
 
 DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) : QWidget(parent)
     , m_netModelingTab(mainTab)
@@ -49,7 +46,7 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     m_primitiveNetView->setWidget(primitiveNetView);
 
     Q3DScatter* scatter = new Q3DScatter();
-    scatter->setFlags(scatter->flags() ^ Qt::FramelessWindowHint);
+    //scatter->setFlags(scatter->flags() ^ Qt::FramelessWindowHint);
     scatter->axisX()->setTitle("2I/O");
     scatter->axisX()->setTitleVisible(true);
 
@@ -63,12 +60,12 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     scatter->setHorizontalAspectRatio(1.0f);
     scatter->setShadowQuality(QAbstract3DGraph::ShadowQualityNone);
 
-
-    QScatter3DSeries* series = new QScatter3DSeries();
+    m_series = new QScatter3DSeries();
     QScatterDataArray data;
 
+    connect(m_series, &QScatter3DSeries::selectedItemChanged, this, &DecomposeModelTab::selectedPoint);
+
     // Plot
-    QHash<QPoint, QVector<std::size_t>> map;
     for(int i = 0; i < m_ctx->programs(); i++) {
         auto program = m_ctx->eval_program(i);
 
@@ -84,62 +81,26 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
         for (auto& connection : connections) {
             weight += connection->weight();
         }
-        // auto z_axis = program->connections().size();
-        data << QVector3D(x_axis, y_axis, weight);
 
-        QPoint point = QPoint((int)x_axis, (int)y_axis);
-        auto it = map.find(point);
-        if (it == map.end()) {
-            map.insert(point , QVector<std::size_t>({(std::size_t)i}));
+        QVector3D point(x_axis, y_axis, weight);
+        auto it = m_graphPoints.find(point);
+        if (it == m_graphPoints.end()) {
+            m_graphPoints.insert(point, QVector<std::size_t>{(std::size_t)i});
         } else {
-            (*it).push_back(i);
+            it.value().push_back(i);
         }
+
+        data << QVector3D(x_axis, y_axis, weight);
 
         program->drop();
     }
 
+    m_series->dataProxy()->addItems(data);
+    scatter->addSeries(m_series);
 
-    series->dataProxy()->addItems(data);
-    scatter->addSeries(series);
-    scatter->show();
-
-    auto symbol = new QwtSymbol(QwtSymbol::Ellipse,
-                                QBrush( Qt::blue ), QPen( Qt::blue, 4 ), QSize( 10, 10 ) );
-
-    m_plot = new QwtExtPlotCurveLabels;
-    m_plot->setStyle(QwtPlotCurve::Dots);
-    m_plot->setData(std::move(map));
-    m_plot->setSymbol(symbol);
-    m_plot->setRenderHint(QwtPlotItem::RenderAntialiased);
-
-    auto qwt_plot = new QwtPlot;
-    qwt_plot->setAxisTitle(QwtAxis::XBottom, "I/O positions");
-    qwt_plot->setAxisTitle(QwtAxis::YLeft, "Vertexes");
-    qwt_plot->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding));
-    m_plot->attach(qwt_plot);
-
-    auto grid = new QwtPlotGrid;
-    grid->setMajorPen(QPen( Qt::gray, 0.5 ));
-    grid->setRenderHint(QwtPlotItem::RenderAntialiased);
-    grid->attach( qwt_plot );
-
-    auto magnifier = new QwtPlotMagnifier(qwt_plot->canvas());
-    magnifier->setMouseButton(Qt::MiddleButton);
-
-    auto panner = new QwtPlotPanner(qwt_plot->canvas());
-    panner->setMouseButton(Qt::RightButton);
-
-    auto picker = new QwtPlotPicker(QwtAxis::XBottom,
-                                    QwtAxis::YLeft,
-                                    QwtPicker::CrossRubberBand,
-                                    QwtPicker::AlwaysOn,
-                                    qwt_plot->canvas());
-    picker->setRubberBandPen(QColor(Qt::red));
-    picker->setTrackerPen(QColor(Qt::black));
-    picker->setStateMachine(new QwtPickerDragRectMachine());
-
-    auto canvasPicker = new CanvasPicker(qwt_plot);
-    connect(canvasPicker, &CanvasPicker::selected, this, &DecomposeModelTab::selectedPoint);
+    auto handler = new InputHandler3D();
+    scatter->addInputHandler(handler);
+    scatter->setActiveInputHandler(handler);
 
     m_plotWidget = new DockWidget("График");
     m_plotWidget->setWidget(QWidget::createWindowContainer(scatter));
@@ -172,7 +133,8 @@ void DecomposeModelTab::selectedPoint(int idx) {
         window->show();
         window->activateWindow();
     } else {
-        auto window = new SynthesisWindow(m_ctx, m_plot->getData(idx));
+        auto point = m_series->dataProxy()->itemAt(idx)->position();
+        auto window = new SynthesisWindow(m_ctx, m_graphPoints[point]);
         m_synthesisWindows.insert(idx, window);
         window->show();
     }

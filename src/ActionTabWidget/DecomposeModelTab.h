@@ -11,7 +11,7 @@
 #include <DockManager.h>
 
 class SynthesisWindow;
-class QwtExtPlotCurveLabels;
+class QScatter3DSeries;
 
 class DecomposeModelTab : public QWidget {
 
@@ -33,9 +33,10 @@ private:
     DockWidget* m_primitiveNetView;
     DockWidget* m_plotWidget;
 
-    QwtExtPlotCurveLabels* m_plot;
+    QScatter3DSeries* m_series;
 
     QHash<size_t, SynthesisWindow*> m_synthesisWindows;
+    QHash<QVector3D, QVector<std::size_t>> m_graphPoints;
 };
 
 
