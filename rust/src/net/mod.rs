@@ -1,15 +1,15 @@
 mod connection;
 pub mod vertex;
 
-use core::MatrixFormat;
+
 use nalgebra::DMatrix;
 
 pub use net::connection::Connection;
 pub use net::vertex::Vertex;
 use std::cell::RefCell;
-use std::cmp::max;
+
 use std::collections::{HashMap, HashSet};
-use std::ops::Index;
+
 use std::rc::Rc;
 
 use ::{DecomposeContext};
@@ -649,8 +649,8 @@ impl PetriNet {
     }
 
     pub fn adjacency_matrices(&self) -> (DMatrix<f64>, DMatrix<f64>) {
-        let mut adjacency_input = DMatrix::<f64>::zeros(self.positions.len(), self.positions.len());
-        let mut adjacency_output = DMatrix::<f64>::zeros(self.positions.len(), self.positions.len());
+        let mut adjacency_input = DMatrix::<f64>::zeros(self.positions.len(), self.transitions.len());
+        let mut adjacency_output = DMatrix::<f64>::zeros(self.positions.len(), self.transitions.len());
 
         for conn in self.connections.iter() {
             match conn.first().type_ {
@@ -852,7 +852,6 @@ impl PetriNet {
 
 pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> PetriNet {
 
-    let positions = programs.positions().len();
     let mut pos_indexes_vec = programs.positions().clone();
     let mut tran_indexes_vec = programs.transitions().clone();
 
@@ -862,6 +861,7 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
     let mut markers = programs.marking();
 
     let (t_sets, p_sets) = programs.programs[index].sets(&pos_indexes_vec, &tran_indexes_vec);
+    let (t_sets_size, p_sets_size) = (t_sets.len(), p_sets.len());
 
     log::error!("PSET => {:?}", p_sets);
     log::error!("TSET => {:?}", t_sets);
@@ -874,28 +874,47 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
         programs.position_synthesis_program(&p_set, &mut adjacency_input, &mut adjacency_output, &mut markers);
     }
 
+    if t_sets_size == 0 && p_sets_size == 0 {
+        println!("adjacency_input BEFORE => {}", adjacency_input);
+        println!("adjacency_output BEFORE => {}", adjacency_output);
+    }
+
     adjacency_input = &c_matrix * adjacency_input;
     adjacency_output = &c_matrix * adjacency_output;
     markers = &c_matrix * markers;
 
+    if t_sets_size == 0 && p_sets_size == 0 {
+        println!("adjacency_input => {}", adjacency_input);
+        println!("adjacency_output => {}", adjacency_output);
+    }
+
     let mut fract = true;
-    adjacency_input.iter().for_each(|v| {
-        if v.fract() != 0.0 {
+    for element in adjacency_input.iter().chain(adjacency_output.iter()).chain(markers.iter()) {
+        if element.fract() != 0. {
             fract = false;
+            println!("FRACT");
+            break;
         }
-    });
+    }
 
-    adjacency_output.iter().for_each(|v| {
-        if v.fract() != 0.0 {
-            fract = false;
-        }
-    });
-
-    markers.iter().for_each(|v| {
-        if v.fract() != 0.0 {
-            fract = false;
-        }
-    });
+    // check if free transitions
+    // for col in 0..adjacency_input.ncols() {
+    //     let (mut neg, mut pos) = (false, false);
+    //     for row in 0..adjacency_input.nrows() {
+    //         if adjacency_input[(row, col)] < 0. || adjacency_output[(row, col)] < 0. {
+    //             neg = true;
+    //         }
+    //
+    //         if adjacency_input[(row, col)] > 0. || adjacency_output[(row, col)] > 0. {
+    //             pos = true;
+    //         }
+    //     }
+    //
+    //     if !neg || !pos {
+    //         fract = false;
+    //         break;
+    //     }
+    // }
 
     adjacency_input.iter().zip(adjacency_output.iter()).for_each(|(a, b)| {
         if (*a > 0. && *b < 0.) || (*a < 0. && *b > 0.) {

@@ -66,13 +66,17 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     connect(m_series, &QScatter3DSeries::selectedItemChanged, this, &DecomposeModelTab::selectedPoint);
 
     // Plot
-    for(int i = 0; i < m_ctx->programs(); i++) {
+    for(std::size_t i = 0; i < m_ctx->programs(); i++) {
+        if (i % 1000000 == 0) {
+            qDebug() << "Synthesised " << i << " programs of " << m_ctx->programs();
+        }
+
         auto program = m_ctx->eval_program(i);
 
         auto x_axis = program->input_positions() + 2 * program->output_positions();
         auto y_axis = program->positions().size() + program->transitions().size();
 
-        if (x_axis == 0 || y_axis == 0) {
+        if (x_axis == 0 && y_axis == 0) {
             continue;
         }
 
@@ -85,12 +89,12 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
         QVector3D point(x_axis, y_axis, weight);
         auto it = m_graphPoints.find(point);
         if (it == m_graphPoints.end()) {
+            //qDebug() << "New point: " << point << " size: " << m_graphPoints.size();
             m_graphPoints.insert(point, QVector<std::size_t>{(std::size_t)i});
+            data << QVector3D(x_axis, y_axis, weight);
         } else {
             it.value().push_back(i);
         }
-
-        data << QVector3D(x_axis, y_axis, weight);
 
         program->drop();
     }

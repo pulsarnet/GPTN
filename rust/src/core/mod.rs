@@ -1,6 +1,8 @@
 mod counter;
+mod utils;
 
 pub use self::counter::*;
+pub use self::utils::*;
 
 use crate::net::Vertex;
 use nalgebra::DMatrix;

@@ -1,4 +1,3 @@
-use std::cmp::max;
 use indexmap::IndexMap;
 use net::vertex::VertexIndex;
 use ::{CVec, PetriNet};
@@ -63,7 +62,7 @@ impl Simulation {
         let mut put_marking = self.marking.clone();
         put_marking.iter_mut().for_each(|(_, v)| *v = 0);
 
-        for (index, transition) in self.net().transitions.iter() {
+        for (index, _) in self.net().transitions.iter() {
             let input = self.net().connections
                 .iter()
                 .filter(|c| c.second() == *index)

@@ -1,8 +1,5 @@
-use std::collections::HashMap;
-use nalgebra::{Const, DMatrix, Dynamic, MatrixSlice, SliceStorage, U1};
+use nalgebra::{DMatrix, Dynamic, MatrixSlice, U1};
 use ::{PetriNet, Vertex};
-use ::{DecomposeContextBuilder, PetriNetVec};
-use std::collections::VecDeque;
 
 pub struct PrimitiveDecomposition {
     net: PetriNet,
@@ -27,7 +24,7 @@ impl PrimitiveDecomposition {
         let mut need = 2 * transitions_count - positions_count;
         if need > 0 {
             // Получим внутренние позиции
-            let filter = net.positions.iter().filter(|(index, position)| {
+            let filter = net.positions.iter().filter(|(index, _)| {
                 net.connections.iter().find(|connection| connection.first().eq(index)).is_some()
                 && net.connections.iter().find(|connection| connection.second().eq(index)).is_some()
             })
@@ -42,7 +39,7 @@ impl PrimitiveDecomposition {
             let mut iter = filter.iter();
 
             while need > 0 {
-                let Some((index, position)) = iter.next() else { break };
+                let Some((index, _)) = iter.next() else { break };
                 let position_index = net.next_position_index();
 
                 let new_position = Vertex::position(position_index);
@@ -105,8 +102,6 @@ impl PrimitiveDecomposition {
             }
         }
 
-        // Создадим матрицы примитивной системы DP(I) и DP(O)
-        let (primitive_input, primitive_output) = primitive_net.incidence_matrix();
 
         let c_input = DMatrix::<i32>::zeros(net.positions.len(), net.positions.len());
         let c_output = DMatrix::<i32>::zeros(net.positions.len(), net.positions.len());
@@ -135,69 +130,6 @@ impl PrimitiveDecomposition {
     }
 }
 
-// Функция выбирает строки, которые удовлетворяют итоговому условию:
-// Каждая строка всегда должна иметь ТОЛЬКО одно значение из массива [-1, 1] остальные 0
-fn deny_rows(matrix: &DMatrix<i32>) -> Vec<usize> {
-    matrix.row_iter().enumerate()
-        .filter(|(_, row)| {
-            row.iter().filter(|element| **element != 0).count() == 1
-        })
-        .map(|(index, _)| index)
-        .collect::<Vec<_>>()
-}
-
-// Функция проверяет, что в колонке есть ХОТЯ БЫ ОДНА -1 и ХОТЯ БЫ ОДНА 1
-fn column_condition(slice: &MatrixSlice<i32, Dynamic, U1>) -> bool {
-    slice.iter().filter(|element| **element == -1).count() > 0
-        && slice.iter().filter(|element| **element == 1).count() > 0
-}
-
-// Функция проверяет, что в колонке либо одна 1, либо одна -1
-fn row_condition(matrix: &DMatrix<i32>, row: usize) -> bool {
-    let slice = matrix.row(row);
-    let neg_count = slice.iter().filter(|element| **element == -1).count();
-    let pos_count = slice.iter().filter(|element| **element == 1).count();
-
-    (pos_count == 1 && neg_count == 0) || (pos_count == 0 && neg_count == 1)
-}
-
-// Функция проверяет, что в колонке есть ТОЛЬКО ОДНА -1 и ТОЛЬКО ОДНА 1
-fn full_column_condition(slice: &MatrixSlice<i32, Dynamic, U1>) -> bool {
-    slice.iter().filter(|element| **element == -1).count() == 1
-        && slice.iter().filter(|element| **element == 1).count() == 1
-}
-
-// Функция выбирает колонки, которые удовлетворяют итоговому условию:
-// каждый столбец должен содержать только ОДНУ -1 И ОДНУ 1
-fn deny_cols(matrix: &DMatrix<i32>) -> Vec<usize> {
-    matrix.column_iter().enumerate()
-        .filter(|(_, column)| {
-            column.iter().filter(|element| **element == -1).count() == 1
-                && column.iter().filter(|element| **element == 1).count() == 1
-        })
-        .map(|(index, _)| index)
-        .collect::<Vec<_>>()
-}
-
-fn recursive_choice_not_in_choice(candidates: &mut Vec<Vec<usize>>, choice: &mut Vec<usize>, level: usize, counter: &mut usize) {
-    if level >= candidates.len() {
-        return;
-    }
-
-    for idx in 0..candidates[level].len() {
-        *counter += 1;
-        if !choice.contains(&candidates[level][idx]) {
-            choice.push(candidates[level][idx]);
-            recursive_choice_not_in_choice(candidates, choice, level + 1, counter);
-            if choice.len() == candidates.len() {
-                return;
-            } else {
-                choice.pop();
-            }
-        }
-    }
-}
-
 fn khun_algorithnm(graph: &Vec<Vec<usize>>, mt: &mut Vec<i32>, used: &mut Vec<bool>, vertex: usize) -> bool {
     if used[vertex] {
         return false;
@@ -215,7 +147,7 @@ fn khun_algorithnm(graph: &Vec<Vec<usize>>, mt: &mut Vec<i32>, used: &mut Vec<bo
     return false;
 }
 
-fn simplify_matrix(mut matrix: DMatrix<i32>) -> Option<DMatrix<i32>> {
+fn simplify_matrix(matrix: DMatrix<i32>) -> Option<DMatrix<i32>> {
 
     // // Объявляем правильную матрицу с -1 и 1
     // let mut correct_matrix = DMatrix::from_element(matrix.nrows(), matrix.ncols(), 0);

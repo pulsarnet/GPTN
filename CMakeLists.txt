@@ -105,7 +105,11 @@ set(SRC_FILES
         src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.cpp
         src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.cpp
         src/WindowWidgets/NewProjectWindow.cpp
-        src/DataVisualization/InputHandler3D.cpp)
+        src/DataVisualization/InputHandler3D.cpp
+        src/MainTree/MainTreeItem.cpp
+        src/MainTree/MainTreeModel.cpp
+        src/MainTree/ProjectTreeItem.cpp
+        )
 
 set(HEADERS
         src/mainwindow.h
@@ -144,11 +148,8 @@ set(HEADERS
         src/modules/reachability/reachability_line.h
         src/modules/reachability/reachability_view.h
         src/modules/reachability/reachability_window.h
-        src/MainTree/MainTreeItem.cpp
         src/MainTree/MainTreeItem.h
-        src/MainTree/MainTreeModel.cpp
         src/MainTree/MainTreeModel.h
-        src/MainTree/ProjectTreeItem.cpp
         src/MainTree/ProjectTreeItem.h
         src/MainTree/AnalysisTreeItem.cpp
         src/MainTree/AnalysisTreeItem.h

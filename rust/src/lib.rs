@@ -1,4 +1,3 @@
-#![feature(let_else)]
 #![feature(drain_filter)]
 #![feature(option_result_contains)]
 
@@ -10,21 +9,22 @@ extern crate log;
 extern crate chrono;
 extern crate indexmap;
 extern crate ndarray;
+extern crate num_traits;
 
-use std::cmp::max_by;
+
 use std::collections::{HashMap, HashSet};
 use std::ffi::CString;
-use std::ops::{AddAssign, Deref};
+use std::ops::Deref;
 use libc::c_char;
 use log4rs::append::file::FileAppender;
 use log4rs::{Config, config::Logger};
 use log4rs::config::{Appender, Root};
 use log4rs::encode::pattern::PatternEncoder;
-use log::{info, LevelFilter};
-use nalgebra::{DMatrix, RowVector, Vector};
-use ndarray::{Array1, Array2, ArrayBase, AssignElem};
+use log::LevelFilter;
+use nalgebra::DMatrix;
+use ndarray::{Array1, Array2};
 use ndarray_linalg::Solve;
-use core::Counter;
+use core::{Counter, logical_column_add, logical_row_add};
 use ffi::vec::CVec;
 
 
@@ -128,10 +128,25 @@ impl DecomposeContextBuilder {
             }
 
             for j in 0..a.ncols() {
-                if a[(i, j)] == -1.{
+                if b[i] > 0. && a[(i, j)] == 1. {
+                    a[(next_equation_index, j)] = 1.;
+                    b[next_equation_index] = b[i];
+                    next_equation_index += 1;
+                    break
+                } else if b[i] < 0. && a[(i, j)] == -1. {
+                    a[(next_equation_index, j)] = 1.;
+                    b[next_equation_index] -= b[i];
+                    next_equation_index += 1;
+                    break
+                } else if a[(i, j)] == -1. {
                     a[(next_equation_index, j)] = 1.;
                     next_equation_index += 1;
+                    break
                 }
+                // if a[(i, j)] == -1.{
+                //     a[(next_equation_index, j)] = 1.;
+                //     next_equation_index += 1;
+                // }
             }
         }
 
@@ -140,14 +155,30 @@ impl DecomposeContextBuilder {
         a.solve(&b).unwrap()
     }
 
-    fn solve_without_mu(mut a: Array2<f64>, b: Array1<f64>) -> Array1<f64> {
+    fn solve_without_mu(mut a: Array2<f64>, mut b: Array1<f64>) -> Array1<f64> {
         let mut mu_equation_index = a.nrows() / 2;
         for i in 0..mu_equation_index {
             for j in 0..a.ncols() {
-                if a[(i, j)] == -1. {
+                if b[i] > 0. && a[(i, j)] == 1. {
+                    a[(mu_equation_index, j)] = 1.;
+                    b[mu_equation_index] = b[i];
+                    mu_equation_index += 1;
+                    break
+                } else if b[i] < 0. && a[(i, j)] == -1. {
+                    a[(mu_equation_index, j)] = 1.;
+                    b[mu_equation_index] -= b[i];
+                    mu_equation_index += 1;
+                    break
+                } else if a[(i, j)] == -1. {
                     a[(mu_equation_index, j)] = 1.;
                     mu_equation_index += 1;
+                    break
                 }
+
+                // if a[(i, j)] == -1. {
+                //     a[(mu_equation_index, j)] = 1.;
+                //     mu_equation_index += 1;
+                // }
             }
         }
 
@@ -201,6 +232,16 @@ impl DecomposeContextBuilder {
             c_matrix.row_mut(row).copy_from_slice(solution.as_slice().unwrap());
         }
 
+        println!("{}", c_matrix);
+
+        c_matrix.iter_mut().for_each(|x| {
+            if x.fract() == 0. && *x == 0. {
+                *x = 0.
+            }
+        });
+
+        println!("{}", c_matrix);
+
         c_matrix
     }
 
@@ -214,6 +255,8 @@ impl DecomposeContextBuilder {
         let primitive_net = parts.primitive_net();
         //let adjacency_primitive = primitive_net.adjacency_matrix();
         let adjacency_primitive = primitive_net.adjacency_matrices();
+        println!("adjacency_primitive 0: {}", adjacency_primitive.0);
+        println!("adjacency_primitive 1: {}", adjacency_primitive.1);
 
         let (primitive_input, primitive_output) = parts.primitive_matrix();
         let linear_base_fragments_matrix = parts.equivalent_matrix();
@@ -286,8 +329,8 @@ impl DecomposeContext {
             t_programs.push(c);
         }
 
-        let mut p_counter = Counter::new(positions);
-        let mut p_programs = Vec::with_capacity(Counter::new(positions).count());
+        let mut p_counter = Counter::new(positions).take(2usize.pow(12));
+        let mut p_programs = Vec::with_capacity(Counter::new(positions).take(2usize.pow(12) as usize).count());
         while let Some(c) = p_counter.next() {
             p_programs.push(c);
         }
@@ -304,7 +347,8 @@ impl DecomposeContext {
                     .for_each(|(i, v)| program.data[i] = *v);
 
                 self.programs.push(program);
-                synthesis_program(self, self.programs.len() - 1);
+
+                //synthesis_program(self, self.programs.len() - 1);
             }
         }
     }
@@ -453,19 +497,23 @@ impl DecomposeContext {
 
         let first = t_set[0];
         for t in t_set.iter().skip(1) {
-            let column_input = adjacency_input.column(*t).clone_owned();
-            adjacency_input.column_mut(first).add_assign(column_input);
-
-            let column_output = adjacency_output.column(*t).clone_owned();
-            adjacency_output.column_mut(first).add_assign(column_output);
+            logical_column_add(adjacency_input, first, *t);
+            logical_column_add(adjacency_output, first, *t);
+            // let column_input = adjacency_input.column(*t).clone_owned();
+            // adjacency_input.column_mut(first).add_assign(column_input);
+            //
+            // let column_output = adjacency_output.column(*t).clone_owned();
+            // adjacency_output.column_mut(first).add_assign(column_output);
         }
 
         for t in t_set.iter().skip(1) {
-            let vector = Vector::from_data(adjacency_input.column(first).clone_owned().data);
-            adjacency_input.set_column(*t, &vector);
-
-            let vector = Vector::from_data(adjacency_output.column(first).clone_owned().data);
-            adjacency_output.set_column(*t, &vector);
+            logical_column_add(adjacency_input, *t, first);
+            logical_column_add(adjacency_output, *t, first);
+            // let vector = Vector::from_data(adjacency_input.column(first).clone_owned().data);
+            // adjacency_input.set_column(*t, &vector);
+            //
+            // let vector = Vector::from_data(adjacency_output.column(first).clone_owned().data);
+            // adjacency_output.set_column(*t, &vector);
         }
     }
 
@@ -479,23 +527,27 @@ impl DecomposeContext {
 
         let first = p_set[0];
         for p in p_set.iter().skip(1) {
-            let row = adjacency_input.row(*p).clone_owned();
-            adjacency_input.row_mut(first).add_assign(row);
+            logical_row_add(adjacency_input, first, *p);
+            logical_row_add(adjacency_output, first, *p);
+            // let row = adjacency_input.row(*p).clone_owned();
+            // adjacency_input.row_mut(first).add_assign(row);
+            //
+            // let row = adjacency_output.row(*p).clone_owned();
+            // adjacency_output.row_mut(first).add_assign(row);
 
-            let row = adjacency_output.row(*p).clone_owned();
-            adjacency_output.row_mut(first).add_assign(row);
-
-            d_markers[(first, 0)] += d_markers[(*p, 0)];
+            d_markers[(first, 0)] = d_markers[(*p, 0)].max(d_markers[(first, 0)]);
         }
 
         for p in p_set.iter().skip(1) {
-            let row = RowVector::from_data(adjacency_input.row(first).clone_owned().data);
-            adjacency_input.set_row(*p, &row);
+            logical_row_add(adjacency_input, *p, first);
+            logical_row_add(adjacency_output, *p, first);
+            // let row = RowVector::from_data(adjacency_input.row(first).clone_owned().data);
+            // adjacency_input.set_row(*p, &row);
+            //
+            // let row = RowVector::from_data(adjacency_output.row(first).clone_owned().data);
+            // adjacency_output.set_row(*p, &row);
 
-            let row = RowVector::from_data(adjacency_output.row(first).clone_owned().data);
-            adjacency_output.set_row(*p, &row);
-
-            d_markers[(*p, 0)] += d_markers[(first, 0)];
+            d_markers[(*p, 0)] = d_markers[(first, 0)];
         }
 
     }
@@ -738,4 +790,36 @@ extern "C" fn synthesis_eval_program(ctx: &mut DecomposeContext, index: usize) -
 
     Box::into_raw(Box::new(synthesis_program(ctx, index))) as *const PetriNet
     //ctx.programs[index].net_after.as_ref().unwrap() as *const PetriNet
+}
+
+#[cfg(test)]
+mod tests {
+    // test SynthesisProgram
+    use super::*;
+
+    #[test]
+    fn test_synthesis_program() {
+        let mut program = SynthesisProgram::new(12, 4);
+        program.data = vec![0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7];
+
+        let pos_indexes = vec![
+            Vertex::position(1),
+            Vertex::position(2),
+            Vertex::position(3),
+            Vertex::position(4),
+            Vertex::position(5),
+            Vertex::position(6),
+            Vertex::position(7),
+            Vertex::position(8),
+        ];
+
+        let tran_indexes = vec![
+            Vertex::transition(1),
+            Vertex::transition(2),
+            Vertex::transition(3),
+            Vertex::transition(4),
+        ];
+
+        dbg!(program.sets(&pos_indexes, &tran_indexes));
+    }
 }
