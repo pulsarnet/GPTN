@@ -47,13 +47,13 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
 
     Q3DScatter* scatter = new Q3DScatter();
     //scatter->setFlags(scatter->flags() ^ Qt::FramelessWindowHint);
-    scatter->axisX()->setTitle("2I/O");
+    scatter->axisX()->setTitle("Positions");
     scatter->axisX()->setTitleVisible(true);
 
-    scatter->axisY()->setTitle("P+T");
+    scatter->axisY()->setTitle("Transitions");
     scatter->axisY()->setTitleVisible(true);
 
-    scatter->axisZ()->setTitle("EDGES");
+    scatter->axisZ()->setTitle("Edges");
     scatter->axisZ()->setTitleVisible(true);
 
     scatter->setAspectRatio(1.0f);
@@ -73,8 +73,11 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
 
         auto program = m_ctx->eval_program(i);
 
-        auto x_axis = program->input_positions() + 2 * program->output_positions();
-        auto y_axis = program->positions().size() + program->transitions().size();
+        //auto x_axis = program->input_positions() + 2 * program->output_positions();
+        //auto y_axis = program->positions().size() + program->transitions().size();
+
+        auto x_axis = program->positions().size();
+        auto y_axis = program->transitions().size();
 
         if (x_axis == 0 && y_axis == 0) {
             continue;
