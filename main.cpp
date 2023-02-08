@@ -8,6 +8,7 @@
 #include "src/mainwindow.h"
 #include "src/ffi/rust.h"
 #include "src/DockSystem/SplittableComponentsFactory.h"
+#include "src/Settings/RecentProjects.h"
 #include <DockManager.h>
 #include <DockComponentsFactory.h>
 
@@ -75,6 +76,12 @@ int main(int argc, char **argv) {
     auto qss_text = stream.readAll();
 
     app.setStyleSheet(qss_text);
+
+    // init
+    if (!RecentProjects::init()) {
+        QMessageBox::critical(nullptr, "Error", "Can't init recent projects");
+        return 1;
+    }
 
     MainWindow window(nullptr);
     window.setMinimumSize(QSize(1280, 720));

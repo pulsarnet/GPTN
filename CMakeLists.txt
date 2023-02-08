@@ -108,7 +108,7 @@ set(SRC_FILES
         src/MainTree/MainTreeItem.cpp
         src/MainTree/MainTreeModel.cpp
         src/MainTree/ProjectTreeItem.cpp
-        )
+        src/Settings/RecentProjects.cpp)
 
 set(HEADERS
         src/mainwindow.h
@@ -168,7 +168,7 @@ set(HEADERS
         src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.h
         src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.h
         src/WindowWidgets/NewProjectWindow.h
-        src/DataVisualization/InputHandler3D.h)
+        src/DataVisualization/InputHandler3D.h src/Settings/RecentProjects.h)
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 

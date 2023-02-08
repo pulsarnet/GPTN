@@ -26,6 +26,7 @@
 #include "MainTree/ReachabilityTreeItem.h"
 #include "MainTree/AnalysisTreeItem.h"
 #include "WindowWidgets/NewProjectWindow.h"
+#include "Settings/RecentProjects.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -124,6 +125,10 @@ bool MainWindow::open() {
     if (fileName.isEmpty())
         return false;
 
+    return openFile(fileName);
+}
+
+bool MainWindow::openFile(const QString &fileName) {
     QFile file(fileName);
 
     if (!file.open(QIODevice::ReadOnly)) {
@@ -145,13 +150,14 @@ bool MainWindow::open() {
 
     auto treeModel = qobject_cast<MainTreeModel*>(
             qobject_cast<MainTreeView*>(m_treeView)->model()
-            );
+    );
 
     treeModel->addChild(projectItem);
 
-
     setFileName(fileName);
     m_changed = false;
+
+    RecentProjects::addRecentProject(fileName);
 
     return true;
 }
@@ -178,6 +184,9 @@ void MainWindow::createMenuBar() {
     open_action->setShortcut(QKeySequence::Open);
     connect(open_action, &QAction::triggered, this, &MainWindow::slotOpenFile);
 
+    m_recent_submenu = new QMenu("Recent projects");
+    connect(m_recent_submenu, &QMenu::aboutToShow, this, &MainWindow::slotRecentFiles);
+
     auto save_action = new QAction("Save");
     save_action->setShortcut(QKeySequence::Save);
     connect(save_action, &QAction::triggered, this, &MainWindow::slotSaveFile);
@@ -192,6 +201,7 @@ void MainWindow::createMenuBar() {
 
     file_menu->addAction(new_action);
     file_menu->addAction(open_action);
+    file_menu->addMenu(m_recent_submenu);
     file_menu->addAction(save_action);
     file_menu->addAction(save_as_action);
     file_menu->addAction(quit_action);
@@ -226,6 +236,23 @@ void MainWindow::slotOpenFile(bool checked) {
     open();
 }
 
+void MainWindow::slotRecentFiles() {
+    m_recent_submenu->clear();
+
+    auto recentFiles = RecentProjects::getRecentProjects();
+    for (auto& file : recentFiles) {
+        auto action = new QAction(file, this);
+        connect(action, &QAction::triggered, this, &MainWindow::slotOpenRecentFile);
+        m_recent_submenu->addAction(action);
+    }
+}
+
+void MainWindow::slotOpenRecentFile() {
+    auto action = qobject_cast<QAction*>(sender());
+    if (action)
+        openFile(action->text());
+}
+
 void MainWindow::onNewProject(bool checked) {
     Q_UNUSED(checked);
 
@@ -240,21 +267,17 @@ void MainWindow::onNewProjectCreate(const QDir& dir, const QString& name) {
     if (!dir.exists())
         dir.mkpath(dir.absolutePath());
 
+    // create
     QFile file(path);
-    if (!file.open(QFile::WriteOnly)) {
-        QMessageBox::warning(this, tr("Petri Net Editor"),
-                             tr("Cannot create file %1:\n%2.")
-                             .arg(QDir::toNativeSeparators(path), file.errorString()));
-
+    if (!file.open(QIODevice::WriteOnly)) {
+        qDebug() << "Unable to create project";
         return;
     }
 
-    auto projectItem = new ProjectTreeItem(std::filesystem::path(path.toStdString()));
-    auto treeModel = qobject_cast<MainTreeModel*>(
-            qobject_cast<MainTreeView*>(m_treeView)->model()
-            );
-
-    treeModel->addChild(projectItem);
+    if (!openFile(path)) {
+        qDebug() << "Unable to create project";
+        return;
+    }
 }
 
 void MainWindow::treeItemAction(const QModelIndex& index) {

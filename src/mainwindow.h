@@ -45,7 +45,9 @@ public:
     void setFileName(const QString& name);
     bool saveAs();
     bool save();
+
     bool open();
+    bool openFile(const QString& fileName);
 
     bool saveFile();
     QMessageBox::StandardButton onSaveFileAsk();
@@ -57,6 +59,9 @@ public slots:
     void slotSaveAsFile(bool checked);
 
     void slotOpenFile(bool checked);
+
+    void slotRecentFiles();
+    void slotOpenRecentFile();
 
     void onNewProject(bool checked);
     void onNewProjectCreate(const QDir& dir, const QString& name);
@@ -93,9 +98,12 @@ private:
     MainTreeView* m_treeView = nullptr;
     ProjectTreeItem* m_currentProject = nullptr;
 
+    QMenu* m_recent_submenu = nullptr;
     QMenu* m_editMenu = nullptr;
     QAction* m_redoAction = nullptr;
     QAction* m_undoAction = nullptr;
+
+    std::vector<QString> m_openedProjects;
 
     QString m_filename;
     bool m_changed;
