@@ -61,7 +61,6 @@ find_package(qtadvanceddocking)
 set(SRC_FILES
         main.cpp
         src/mainwindow.cpp
-        src/matrix_model.cpp
         src/view/elements/arrow_line.cpp
         src/view/elements/position.cpp
         src/view/elements/transition.cpp
@@ -113,7 +112,6 @@ set(SRC_FILES
 
 set(HEADERS
         src/mainwindow.h
-        src/matrix_model.h
         src/view/elements/arrow_line.h
         src/view/elements/position.h
         src/view/elements/transition.h
