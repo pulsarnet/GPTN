@@ -95,8 +95,11 @@ private:
     QStatusBar* statusBar = nullptr;
     QMenuBar* menuBar = nullptr;
     ActionTabWidget* m_tabWidget = nullptr;
-    MainTreeView* m_treeView = nullptr;
     ProjectTreeItem* m_currentProject = nullptr;
+
+    QDockWidget* m_treeWidget = nullptr;
+    MainTreeView* m_treeView = nullptr;
+
 
     QMenu* m_recent_submenu = nullptr;
     QMenu* m_editMenu = nullptr;

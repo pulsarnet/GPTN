@@ -34,15 +34,12 @@ MainWindow::MainWindow(QWidget *parent)
     , m_tabWidget(new ActionTabWidget)
     , m_editMenu(new QMenu(tr("&Edit")))
 {
-    createMenuBar();
-    createStatusBar();
-
-    auto treeWidget = new QDockWidget(tr("Tree"), this);
-    treeWidget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    m_treeWidget = new QDockWidget(tr("Projects"), this);
+    m_treeWidget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
 
     auto treeModel = new MainTreeModel();
     m_treeView = new MainTreeView(treeModel, this);
-    treeWidget->setWidget(m_treeView);
+    m_treeWidget->setWidget(m_treeView);
     connect(m_treeView,
             &MainTreeView::elementAction,
             this,
@@ -58,7 +55,7 @@ MainWindow::MainWindow(QWidget *parent)
             this,
             &MainWindow::treeViewSelectionChanged);
 
-    addDockWidget(Qt::LeftDockWidgetArea, treeWidget);
+    addDockWidget(Qt::LeftDockWidgetArea, m_treeWidget);
 
     // Tab widget
     connect(m_tabWidget
@@ -67,6 +64,9 @@ MainWindow::MainWindow(QWidget *parent)
             , &MainWindow::tabWidgetCurrentChanged);
 
     setCentralWidget(m_tabWidget);
+
+    createMenuBar();
+    createStatusBar();
 }
 
 void MainWindow::setFileName(const QString &name) {
@@ -209,10 +209,13 @@ void MainWindow::createMenuBar() {
     m_editMenu->addAction(m_undoAction);
     m_editMenu->addAction(m_redoAction);
 
+    auto window_menu = new QMenu("&Window");
+    window_menu->addAction(m_treeWidget->toggleViewAction());
+
     menuBar->addMenu(file_menu);
     menuBar->addMenu(m_editMenu);
     menuBar->addMenu(new QMenu("&Tools"));
-    menuBar->addMenu(new QMenu("&Window"));
+    menuBar->addMenu(window_menu);
     menuBar->addMenu(new QMenu("&Help"));
 
     this->setMenuBar(menuBar);

@@ -75,6 +75,8 @@ QVariant MainTreeModel::data(const QModelIndex &index, int role) const {
         return item->data(index.column());
     } else if (role == Qt::DecorationRole) {
         return item->icon();
+    } else if (role == Qt::SizeHintRole) {
+        return QSize(0, 25);
     }
 
     return {};

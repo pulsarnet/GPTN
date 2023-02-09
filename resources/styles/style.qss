@@ -80,6 +80,10 @@ QTabBar::tab:selected {
 }
 
 
+QTabBar::close-button {
+    image: url(:/images/close.svg);
+}
+
 QMenu {
     padding: 0;
     border-radius: 5px;
@@ -106,4 +110,20 @@ QMenu::item {
 
 QTableView {
     background: white;
+}
+
+QToolTip {
+    background-color: black;
+    color: white;
+    border: 1px solid gray;
+    padding: 5px;
+    border-radius: 3px;
+}
+
+QDockWidget::title {
+    text-align: left;
+    background: white;
+    border: none;
+    padding-top: 5px;
+    padding-bottom: 5px;
 }
