@@ -227,18 +227,23 @@ impl Reachability {
                 // Для всякого перехода t, разрешенного в M(X), создать новую вершину Z дерева достижимости
                 for (transition, select) in selector.iter_mut() {
                     // Если на пути от корневой вершины к X существует вершина Y с
-                    // M(Y) < M[X]
+                    // M(Y) < M(R), где M(R) удовлетворяет M(X)->(transition)->M(R),
+                    // и M(Y)[Pj] < M(X)[Pj], то вершина M(Z)[Pj] = W
+                    let mut select_clone = select.clone();
                     let mut index = self.markings[marking].prev;
                     while let Some((t, i)) = index {
                         index = self.markings[i].prev;
 
-                        if t != *transition {
+                        // if t != *transition {
+                        //     continue;
+                        // }
+                        if self.markings[i].data.row(0) >= select_clone.data.row(0) {
                             continue;
                         }
 
                         for position in 0..self.input.nrows() {
-                            if self.markings[i].data.row(0)[position] < select.data.row(0)[position] {
-                                select.data.row_mut(0)[position] = MarkerValue::Infinity;
+                            if self.markings[i].data[(0, position)] < select_clone.data[(0, position)] {
+                                select.data[(0, position)] = MarkerValue::Infinity;
                             }
                         }
                     }

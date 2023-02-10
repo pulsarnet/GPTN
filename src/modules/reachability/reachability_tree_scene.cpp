@@ -47,6 +47,7 @@ void ReachabilityTreeScene::addNode(QList<int32_t> data) {
     // setup graphviz wrapper node
     auto index = QString("s%1").arg(m_nodes.length());
     auto circle = wrapper.addCircle(index.toUtf8().data(), QSize(30, 30));
+    agsafeset(circle, (char*)"label", node->text().toUtf8().data(), "");
     node->setGraphVizNode(circle);
 
     m_nodes.push_back(node);
