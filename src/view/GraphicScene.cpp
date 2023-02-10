@@ -335,6 +335,12 @@ QJsonDocument GraphicScene::json() const {
         connection.insert("to", to);
 
         connections.push_back(connection);
+
+        if (n_connection->isBidirectional()) {
+            connection.insert("from", to);
+            connection.insert("to", from);
+            connections.push_back(connection);
+        }
     }
 
     QJsonObject main;
@@ -426,10 +432,12 @@ bool GraphicScene::fromJson(const QJsonDocument& document) {
         else to = getTransition(toId);
 
         auto existing = getConnection(from, to);
-        if (existing)
+        if (existing) {
+            net()->connect(existing->to()->vertex(), existing->from()->vertex());
             existing->setBidirectional(true);
-        else
-            addItem(new ArrowLine(from, to, new ArrowLine::ConnectionState { 1 }));
+        } else {
+            addItem(new ArrowLine(from, to, new ArrowLine::ConnectionState{1}));
+        }
     }
 
     return true;
