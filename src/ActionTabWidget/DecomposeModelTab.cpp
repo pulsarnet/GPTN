@@ -35,6 +35,7 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     auto linearBaseFragmentsView = new GraphicsView;
     linearBaseFragmentsView->setScene(linearBaseFragmentsScene);
     linearBaseFragmentsView->setToolBoxVisibility(false);
+    linearBaseFragmentsView->setAllowSimulation(false);
     m_linearBaseFragmentsView = new DockWidget("LBF");
     m_linearBaseFragmentsView->setWidget(linearBaseFragmentsView);
 
@@ -42,6 +43,7 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     auto primitiveNetView = new GraphicsView;
     primitiveNetView->setScene(primitiveNetScene);
     primitiveNetView->setToolBoxVisibility(false);
+    primitiveNetView->setAllowSimulation(false);
     m_primitiveNetView = new DockWidget("Primitive view");
     m_primitiveNetView->setWidget(primitiveNetView);
 
@@ -116,12 +118,12 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     area->setWindowTitle("Линейно-базовые фрагменты");
     area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
 
-    area = m_dockManager->addDockWidget(ads::RightDockWidgetArea, m_primitiveNetView, area);
-    area->setWindowTitle("Примитивная система");
-    area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
+    auto right_area = m_dockManager->addDockWidget(ads::RightDockWidgetArea, m_plotWidget, area);
+    right_area->setWindowTitle("График отношения");
+    right_area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
 
-    area = m_dockManager->addDockWidget(ads::BottomDockWidgetArea, m_plotWidget, area);
-    area->setWindowTitle("График отношения");
+    area = m_dockManager->addDockWidget(ads::BottomDockWidgetArea, m_primitiveNetView, area);
+    area->setWindowTitle("Примитивная система");
     area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
 
     setMouseTracking(true);

@@ -27,6 +27,7 @@ public:
     virtual ~GraphicsView() noexcept;
 
     void setToolBoxVisibility(bool visible = true);
+    void setAllowSimulation(bool allow = true);
 
 protected:
 

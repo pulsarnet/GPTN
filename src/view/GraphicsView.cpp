@@ -80,11 +80,14 @@ GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
             );
 
     setContentsMargins(0, 0, 0, 0);
-
 }
 
 void GraphicsView::setToolBoxVisibility(bool visible) {
     m_mainToolBar->setVisible(visible);
+}
+
+void GraphicsView::setAllowSimulation(bool allow) {
+    m_simulationWidget->setVisible(allow);
 }
 
 QAction* GraphicsView::makeAction(const QString &name, const QIcon &icon, bool checkable, QActionGroup *actionGroup) {
