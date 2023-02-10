@@ -245,6 +245,7 @@ void MainWindow::slotRecentFiles() {
     auto recentFiles = RecentProjects::getRecentProjects();
     for (auto& file : recentFiles) {
         auto action = new QAction(file, this);
+        action->setData(file);
         connect(action, &QAction::triggered, this, &MainWindow::slotOpenRecentFile);
         m_recent_submenu->addAction(action);
     }
@@ -253,7 +254,7 @@ void MainWindow::slotRecentFiles() {
 void MainWindow::slotOpenRecentFile() {
     auto action = qobject_cast<QAction*>(sender());
     if (action)
-        openFile(action->text());
+        openFile(action->data().toString());
 }
 
 void MainWindow::onNewProject(bool checked) {
