@@ -30,6 +30,8 @@ private:
     QString m_text;
     QRectF m_boundingRect;
 
+    QPainterPath m_path;
+
     Agnode_s* m_node;
 };
 

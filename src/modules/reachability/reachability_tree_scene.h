@@ -9,6 +9,7 @@
 
 #include <QGraphicsScene>
 #include "../../graphviz/graphviz_wrapper.h"
+#include "../../ffi/reachability.h"
 
 class ReachabilityNode;
 
@@ -25,7 +26,7 @@ public:
 private:
 
     void addNode(QList<int32_t> data);
-    void addEdge(ReachabilityNode* from, ReachabilityNode* to, int32_t transition);
+    void addEdge(ReachabilityNode* from, ReachabilityNode* to, ffi::VertexIndex transition);
 
 private:
 

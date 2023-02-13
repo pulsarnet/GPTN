@@ -8,12 +8,13 @@
 #include <vector>
 #include "types.h"
 #include "vec.h"
+#include "rust.h"
 
 namespace rust {
     struct Marking {
         [[nodiscard]] ffi::CVec<int32_t> values() const;
         [[nodiscard]] int32_t prev() const;
-        [[nodiscard]] int32_t transition() const;
+        [[nodiscard]] ffi::VertexIndex transition() const;
     };
 
     struct Reachability {

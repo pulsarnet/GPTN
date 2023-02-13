@@ -59,5 +59,10 @@ void ReachabilityLine::paint(QPainter *painter, const QStyleOptionGraphicsItem *
     painter->drawPolygon(arrow);
     painter->restore();
 
+    // label
+    auto label = QString::fromUtf8(info->label->text);
+    auto pos = info->label->pos;
+    painter->drawText((int)pos.x, (int)pos.y, label);
+
     //QGraphicsLineItem::paint(painter, option, widget);
 }

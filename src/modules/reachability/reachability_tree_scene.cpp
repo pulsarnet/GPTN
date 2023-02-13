@@ -3,7 +3,6 @@
 //
 
 #include <QEvent>
-#include "../../ffi/reachability.h"
 #include "reachability_tree_scene.h"
 #include "reachability_node.h"
 #include "reachability_line.h"
@@ -47,6 +46,7 @@ void ReachabilityTreeScene::addNode(QList<int32_t> data) {
     // setup graphviz wrapper node
     auto index = QString("s%1").arg(m_nodes.length());
     auto circle = wrapper.addCircle(index.toUtf8().data(), QSize(30, 30));
+    agsafeset(circle, (char*)"shape", (char*)"record", "");
     agsafeset(circle, (char*)"label", node->text().toUtf8().data(), "");
     node->setGraphVizNode(circle);
 
@@ -54,7 +54,7 @@ void ReachabilityTreeScene::addNode(QList<int32_t> data) {
     addItem(node);
 }
 
-void ReachabilityTreeScene::addEdge(ReachabilityNode *from, ReachabilityNode *to, int32_t transition) {
+void ReachabilityTreeScene::addEdge(ReachabilityNode *from, ReachabilityNode *to, ffi::VertexIndex transition) {
     if (!from || !to) return;
 
     auto from_node = from->graphVizNode();
@@ -62,5 +62,5 @@ void ReachabilityTreeScene::addEdge(ReachabilityNode *from, ReachabilityNode *to
     auto edge = wrapper.addEdge(from_node, to_node);
     addItem(new ReachabilityLine(edge));
 
-    wrapper.setEdgeLabel(edge, std::to_string(transition).data());
+    wrapper.setEdgeLabel(edge, QString("T%1").arg(transition.id).toUtf8().data());
 }

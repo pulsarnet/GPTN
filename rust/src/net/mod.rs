@@ -848,6 +848,15 @@ impl PetriNet {
         log::info!("SELF => {self:?}");
         result
     }
+
+    pub fn marking(&self) -> DMatrix<i32> {
+        self.positions.values()
+            .enumerate()
+            .fold(DMatrix::zeros(1, self.positions.len()), |mut acc, (i, vert)| {
+                acc.row_mut(0)[i] = vert.markers() as i32;
+                acc
+            })
+    }
 }
 
 pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> PetriNet {

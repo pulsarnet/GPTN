@@ -4,6 +4,8 @@ use std::ops::{Add, AddAssign, Index, IndexMut, SubAssign};
 use std::slice::Iter;
 use nalgebra::DMatrix;
 use CVec;
+use net::PetriNet;
+use net::vertex::VertexIndex;
 
 mod decompose;
 mod simulation;
@@ -126,8 +128,8 @@ pub struct Marking {
     type_: CovType,
     data: DMatrix<MarkerValue>,
 
-    prev: Option<(usize, usize)>,
-    next: Vec<(usize, usize)>,
+    prev: Option<(VertexIndex, usize)>,
+    next: Vec<(VertexIndex, usize)>,
 }
 
 impl From<DMatrix<i32>> for Marking {
@@ -150,6 +152,7 @@ impl From<DMatrix<i32>> for Marking {
 }
 
 pub struct Reachability {
+    transitions: Vec<VertexIndex>,
     input: DMatrix<i32>,
     output: DMatrix<i32>,
 
@@ -157,15 +160,19 @@ pub struct Reachability {
 }
 
 impl Reachability {
-    pub fn new(input: DMatrix<i32>, output: DMatrix<i32>, marking: DMatrix<i32>) -> Self {
+    pub fn new(net: &PetriNet) -> Self {
+        let (input, output) = net.incidence_matrix();
+        let marking = net.marking();
+
         Reachability {
-            input,
-            output,
+            transitions: net.transitions.keys().cloned().collect(),
+            input: input.matrix,
+            output: output.matrix,
             markings: ReachabilityTree::new(Marking::from(marking)),
         }
     }
 
-    pub fn selector(&self, marking: &Marking) -> Vec<(usize, Marking)> {
+    pub fn selector(&self, marking: &Marking) -> Vec<(VertexIndex, Marking)> {
         let mut markings = vec![];
 
         'main: for transition in 0..self.input.ncols() {
@@ -184,6 +191,7 @@ impl Reachability {
                 new_marking.data.row_mut(0)[position] += output_col[position];
             }
 
+            let transition = self.transitions[transition];
             markings.push((transition, new_marking));
         }
 
@@ -230,7 +238,7 @@ impl Reachability {
                     // M(Y) < M(R), где M(R) удовлетворяет M(X)->(transition)->M(R),
                     // и M(Y)[Pj] < M(X)[Pj], то вершина M(Z)[Pj] = W
                     let mut select_clone = select.clone();
-                    let mut index = self.markings[marking].prev;
+                    let mut index = Some((transition.clone(), marking));
                     while let Some((t, i)) = index {
                         index = self.markings[i].prev;
 
@@ -242,7 +250,9 @@ impl Reachability {
                         }
 
                         for position in 0..self.input.nrows() {
-                            if self.markings[i].data[(0, position)] < select_clone.data[(0, position)] {
+                            if self.markings[i].data[(0, position)] > 0
+                                && self.markings[i].data[(0, position)] < select_clone.data[(0, position)]
+                            {
                                 select.data[(0, position)] = MarkerValue::Infinity;
                             }
                         }
@@ -342,8 +352,10 @@ extern "C" fn marking_previous(this: &Marking) -> i32 {
 }
 
 #[no_mangle]
-extern "C" fn marking_transition(this: &Marking) -> i32 {
-    this.prev.map(|v| v.0 as i32).unwrap_or(-1)
+extern "C" fn marking_transition(this: &Marking) -> VertexIndex {
+    this.prev
+        .map(|v| v.0)
+        .unwrap_or(VertexIndex::transition(0))
 }
 
 
@@ -352,36 +364,41 @@ mod tests {
     use std::hash::Hash;
     use nalgebra::DMatrix;
     use modules::reachability::Reachability;
+    use net::PetriNet;
 
     #[test]
     pub fn test_cov() {
-        let mut input = DMatrix::<i32>::zeros(4, 3);
-        let mut output = DMatrix::<i32>::zeros(4, 3);
-        let mut markers = DMatrix::<i32>::zeros(1, 4);
+        let mut net = PetriNet::new();
+        let p1 = net.add_position(1).index();
+        let p2 = net.add_position(2).index();
+        let p3 = net.add_position(3).index();
+        let p4 = net.add_position(4).index();
+
+        let t1 = net.add_transition(1).index();
+        let t2 = net.add_transition(2).index();
+        let t3 = net.add_transition(3).index();
 
         // p1
-        input.row_mut(0)[0] = 1;
-        input.row_mut(0)[1] = 1;
-        output.row_mut(0)[0] = 1;
+        net.connect(p1, t1);
+        net.connect(p1, t2);
+        net.connect(t1, p1);
 
         // p2
-        input.row_mut(1)[2] = 1;
-        output.row_mut(1)[0] = 1;
+        net.connect(p2, t3);
+        net.connect(t1, p2);
 
         // p3
-        input.row_mut(2)[2] = 1;
-        output.row_mut(2)[2] = 1;
-        output.row_mut(2)[1] = 1;
+        net.connect(p3, t3);
+        net.connect(t3, p3);
+        net.connect(t2, p3);
 
         // p4
-        output.row_mut(3)[2] = 1;
+        net.connect(t3, p4);
 
-        markers.row_mut(0)[0] = 1;
+        // marking
+        net.positions.get_mut(&p1).unwrap().add_marker();
 
-        println!("{}", input);
-        println!("{}", output);
-
-        let mut cov = Reachability::new(input, output, markers);
+        let mut cov = Reachability::new(&net);
         let tree = cov.compute();
 
         let mut current = vec![0];
@@ -396,9 +413,9 @@ mod tests {
                     Some((_, m)) => &cov.markings[m].data,
                     None => &cov.markings[0].data
                 };
-                print!("{level}: {} => {} => {}",
+                print!("{level}: {} => T{} => {}",
                     prev,
-                    cov.markings[current[i]].prev.unwrap_or((0, 0)).0,
+                    cov.markings[current[i]].prev.unwrap().0.id,
                     cov.markings[current[i]].data);
             }
             println!();

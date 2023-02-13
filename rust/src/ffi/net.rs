@@ -178,14 +178,6 @@ pub unsafe extern "C" fn petri_net_connection_weight(net: &PetriNet, a: &Vertex,
 
 #[no_mangle]
 pub extern "C" fn petri_net_reachability(net: &PetriNet) -> *mut ReachabilityTree {
-    let (input, output) = net.incidence_matrix();
-    let marking = net.positions.values()
-        .enumerate()
-        .fold(DMatrix::zeros(1, net.positions.len()), |mut acc, (i, vert)| {
-            acc.row_mut(0)[i] = vert.markers() as i32;
-            acc
-        });
-
-    let mut reachability = Reachability::new(input.matrix, output.matrix, marking);
+    let mut reachability = Reachability::new(net);
     Box::into_raw(Box::new(reachability.compute()))
 }

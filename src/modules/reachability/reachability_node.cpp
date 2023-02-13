@@ -7,12 +7,17 @@
 #include <QStyleOptionGraphicsItem>
 #include "reachability_node.h"
 
+#define PEN_WIDTH 1
+
 QString text_from_list(const QList<int32_t>& values) {
     QString result;
     for (auto value : values) {
         if (value < 0) result += QString("w|");
         else result += QString("%1|").arg(value);
     }
+
+    if (result.endsWith("|")) result.chop(1);
+
     return result;
 }
 
@@ -44,28 +49,30 @@ QRectF ReachabilityNode::boundingRect() const {
 
 void ReachabilityNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     if (!m_node) {
-        //QGraphicsItem::paint(painter, option, widget);
         return;
     }
 
-    auto info = (Agnodeinfo_t*)AGDATA(m_node);
-    auto [x, y] = info->coord;
+    painter->setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing | QPainter::SmoothPixmapTransform);
+    painter->setPen(QPen(Qt::black, PEN_WIDTH));
+    painter->drawPath(m_path);
 
-    auto rect = boundingRect();
-    auto center = rect.center();
-    painter->drawRect(rect);
+    auto fields = (field_t*)ND_shape_info(m_node);
+    auto label_x= m_boundingRect.topLeft().x();
+    auto label_y = m_boundingRect.topLeft().y();
+    for (int i = 0; i < fields->n_flds; i++) {
+        // draw text
+        auto field = fields->fld[i];
+        auto text = field->lp->text;
+        auto font = field->lp->fontname;
+        auto font_size = field->lp->fontsize;
 
-    auto label = info->label;
-    QFontMetricsF metrics(QFont(label->fontname, (int)10));
-    QSizeF text_size = metrics.size(0, label->text);
-    qreal x_label = center.x() - text_size.width() / 2.;
-    qreal y_label = center.y() + text_size.height() / 2.;
+        auto rect = QRectF(label_x, label_y, field->size.x, field->size.y);
 
-    painter->save();
-    painter->setFont(QFont(info->label->fontname, 10));
-    painter->drawText((int)x_label, (int)y_label, label->text);
-    painter->restore();
+        painter->setFont(QFont(font, font_size));
+        painter->drawText(rect, Qt::AlignCenter, text);
 
+        label_x += field->size.x;
+    }
 }
 
 void ReachabilityNode::updateLayout() {
@@ -79,7 +86,26 @@ void ReachabilityNode::updateLayout() {
     qreal w = info->width * 72.;
     qreal h = info->height * 72.;
 
-    m_boundingRect =  { - w / 2., - h / 2., w, h };
+    m_boundingRect =  { - w / 2.,
+                        - h / 2.,
+                        w,
+                        h };
+
+    m_path = QPainterPath();
+    m_path.addRect(m_boundingRect);
+
+    auto label_x= m_boundingRect.topLeft().x();
+    auto label_y = m_boundingRect.topLeft().y() + PEN_WIDTH;
+    field_t* shape = (field_t*)ND_shape_info(m_node);
+    for (int i = 0; i < shape->n_flds; i++) {
+        auto field = shape->fld[i];
+
+        if (i < shape->n_flds - 1) {
+            label_x += field->size.x;
+            m_path.moveTo(label_x, label_y);
+            m_path.lineTo(label_x, label_y + field->size.y - PEN_WIDTH);
+        }
+    }
 
     update();
 }
