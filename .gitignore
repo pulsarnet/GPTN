@@ -10,3 +10,4 @@ build_*
 .vscode
 log
 packages
+/rust/Cargo.lock
