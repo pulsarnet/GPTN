@@ -10,10 +10,18 @@ struct PositiveNegative {
 
 impl PositiveNegative {
     pub fn new(mat: &DMatrix<i32>) -> Option<PositiveNegative> {
+        let mut tmp = None;
         for (i, row) in mat.row_iter().enumerate() {
             let (pos, neg) = PositiveNegative::partition_pos_neg(row.iter());
-            if !pos.is_empty() || !neg.is_empty() {
-                return Some(PositiveNegative {
+            if pos.is_empty() ^ neg.is_empty() {
+                tmp = Some(PositiveNegative {
+                    row: i,
+                    p_cols: pos,
+                    n_cols: neg,
+                });
+                break
+            } else if tmp.is_none() && (!pos.is_empty() || !neg.is_empty()) {
+                tmp = Some(PositiveNegative {
                     row: i,
                     p_cols: pos,
                     n_cols: neg,
@@ -21,7 +29,7 @@ impl PositiveNegative {
             }
         }
 
-        None
+        tmp
     }
 
     pub fn min_index(&self) -> usize {
@@ -53,7 +61,7 @@ fn invariant(mat: &DMatrix<i32>) -> DMatrix<i32> {
     // phase 1:
     while let Some(pn) = PositiveNegative::new(&mat_c) {
         // while In matC exists non-zero row
-        if (pn.p_cols.is_empty() || pn.n_cols.is_empty()) && !(pn.p_cols.is_empty() && pn.n_cols.is_empty()) {
+        if pn.p_cols.is_empty() ^ pn.n_cols.is_empty() {
             // Существует строка в которой не пустое только одно множество (положительные и отрицательные) элементов
             // Тогда удалить все колонки из matC и matB, которые есть в объединении p_cols U n_cols
             let remove = pn.p_cols.iter()
