@@ -190,9 +190,9 @@ else()
 endif()
 
 if (APPLE)
-    set(FFI_LIBRARY_PATH "${CMAKE_SOURCE_DIR}/rust/target/release/libhello_world.a")
+    set(FFI_LIBRARY_PATH "${CMAKE_SOURCE_DIR}/rust/target/release/libptn_lib.a")
 else()
-    set(FFI_LIBRARY_PATH "${CMAKE_SOURCE_DIR}/rust/target/$<$<CONFIG:Debug>:debug>$<$<CONFIG:Release>:release>/hello_world.lib")
+    set(FFI_LIBRARY_PATH "${CMAKE_SOURCE_DIR}/rust/target/$<$<CONFIG:Debug>:debug>$<$<CONFIG:Release>:release>/ptn_lib.lib")
 endif()
 
 target_link_libraries(ffi_rust PRIVATE
