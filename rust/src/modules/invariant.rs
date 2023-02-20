@@ -1,5 +1,9 @@
+use std::io::Write;
 use nalgebra::DMatrix;
 use num::integer::gcd;
+
+
+use net::PetriNet;
 
 #[derive(Default, Debug)]
 struct PositiveNegative {
@@ -54,8 +58,7 @@ impl PositiveNegative {
     }
 }
 
-fn invariant(mat: &DMatrix<i32>) -> DMatrix<i32> {
-    let mut mat_c = mat.clone();
+fn invariant(mut mat_c: DMatrix<i32>) -> DMatrix<i32> {
     let mut mat_b = DMatrix::<i32>::identity(mat_c.ncols(), mat_c.ncols());
 
     // phase 1:
@@ -156,5 +159,77 @@ fn invariant(mat: &DMatrix<i32>) -> DMatrix<i32> {
         mat_b = mat_b.remove_columns_at(&neg);
     }
 
+    // sum of all solutions is invariant too
+    if mat_b.ncols() > 1 {
+        let cols = mat_b.ncols();
+        mat_b = mat_b.insert_column(cols, 0);
+        for j in 0..(mat_b.ncols() - 1) {
+            for i in 0..mat_b.nrows() {
+                mat_b[(i, cols)] += mat_b[(i, j)];
+            }
+        }
+    }
+
     mat_b
+}
+
+fn print_matrix(mat: &DMatrix<i32>, vertices: &[String]) {
+    for column in mat.column_iter() {
+        let mut first = true;
+        for (i, el) in column.iter().enumerate() {
+            if *el == 0 {
+                continue;
+            }
+
+            if !first {
+                print!(" + ");
+            }
+
+            match *el {
+                1 => print!("{}", vertices[i]),
+                _ => print!("{}{}", el, vertices[i]),
+            }
+
+            first = false;
+        }
+        println!();
+    }
+
+    std::io::stdout().flush().unwrap();
+}
+
+// extern invariant from petri net
+// TODO: return value and show in widget
+#[no_mangle]
+pub extern "C" fn petri_net_p_invariant(net: &PetriNet) {
+    let (i, o) = net.adjacency_matrices();
+    let mat = o + i;
+    let mat = DMatrix::<i32>::from_iterator(mat.nrows(), mat.ncols(), mat.iter().map(|el| *el as i32));
+
+    let res = invariant(mat.transpose());
+    let positions = net.positions.values()
+        .fold(vec![], |mut acc, pos| {
+            acc.push(format!("p{}", pos.index().id));
+            acc
+        });
+
+    print_matrix(&res, &positions);
+}
+
+// extern invariant from petri net
+// TODO: return value and show in widget
+#[no_mangle]
+pub extern "C" fn petri_net_t_invariant(net: &PetriNet) {
+    let (i, o) = net.adjacency_matrices();
+    let mat = o + i;
+    let mat = DMatrix::<i32>::from_iterator(mat.nrows(), mat.ncols(), mat.iter().map(|el| *el as i32));
+
+    let res = invariant(mat);
+    let transitions = net.transitions.values()
+        .fold(vec![], |mut acc, transition| {
+            acc.push(format!("t{}", transition.index().id));
+            acc
+        });
+
+    print_matrix(&res, &transitions);
 }

@@ -60,6 +60,7 @@ protected slots:
 
     void slotMatrixView(bool checked);
     void slotReachability(bool checked);
+    void slotInvariants(bool checked);
 
     void slotIOWindowClose(QWidget*);
 

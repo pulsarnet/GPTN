@@ -44,6 +44,9 @@ extern "C" {
     Connection* petri_net_get_connection(PetriNet&, Vertex*, Vertex*);
 
     Vertex* net_get_vertex(const PetriNet&, VertexIndex);
+    
+    void petri_net_p_invariant(const PetriNet&);
+    void petri_net_t_invariant(const PetriNet&);
 
     // Vertex
     VertexIndex vertex_index(const Vertex&);
@@ -234,6 +237,14 @@ rust::Reachability *PetriNet::reachability() const {
 
 Connection *PetriNet::get_connection(Vertex* from, Vertex* to) {
     return ::petri_net_get_connection(*this, from, to);
+}
+
+void PetriNet::p_invariant() const {
+    ::petri_net_p_invariant(*this);
+}
+
+void PetriNet::t_invariant() const {
+    ::petri_net_t_invariant(*this);
 }
 
 VertexIndex Vertex::index() const {

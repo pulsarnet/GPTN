@@ -215,6 +215,9 @@ void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
     auto reachability = new QAction("Reachability", menu);
     connect(reachability, &QAction::triggered, this, &GraphicsView::slotReachability);
 
+    auto invariants = new QAction("Invariants", menu);
+    connect(invariants, &QAction::triggered, this, &GraphicsView::slotInvariants);
+
     auto graphViz = new QMenu("GraphViz visualization", menu);
 
     auto dot = new QAction("dot", menu);
@@ -250,6 +253,7 @@ void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
     menu->addAction(vert);
     menu->addAction(matrix);
     menu->addAction(reachability);
+    menu->addAction(invariants);
     menu->addMenu(graphViz);
     menu->popup(event->globalPos());
 
@@ -275,6 +279,14 @@ void GraphicsView::slotReachability(bool checked) {
     auto reachability = net->reachability();
     auto reachabilityWindow = new ReachabilityWindow(net, reachability);
     reachabilityWindow->show();
+}
+
+void GraphicsView::slotInvariants(bool checked) {
+    Q_UNUSED(checked)
+    auto net = dynamic_cast<GraphicScene*>(scene())->net();
+    qDebug() << "P/T-invariants: ";
+    net->p_invariant();
+    net->t_invariant();
 }
 
 void GraphicsView::slotIOWindowClose(QWidget *window) {

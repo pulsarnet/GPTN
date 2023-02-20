@@ -83,6 +83,10 @@ namespace ffi {
         usize input_positions();
         usize output_positions();
         usize connection_weight(Vertex*, Vertex*);
+        
+        // invariant
+        void p_invariant() const;
+        void t_invariant() const;
     };
 
     struct Vertex {
