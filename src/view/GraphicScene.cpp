@@ -534,10 +534,10 @@ Position *GraphicScene::getPosition(int index) {
 void GraphicScene::markPosition(QGraphicsSceneMouseEvent *event) {
     auto item = netItemAt(event->scenePos());
     if (auto position = dynamic_cast<Position*>(item); position) {
-        if ((event->buttons() | Qt::LeftButton) || (event->buttons() | Qt::RightButton)) {
+        if (event->buttons() | Qt::LeftButton) {
             m_undoStack->push(new MarkCommand(
                     position,
-                    event->button() == Qt::LeftButton,
+                    event->button() == Qt::LeftButton && !(event->modifiers() & Qt::Modifier::SHIFT),
                     this
             ));
 
