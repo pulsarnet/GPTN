@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.17.3)
-project(ffi_rust VERSION 0.1)
+project(GPTN VERSION 0.1)
 include(ExternalProject)
 
 message(STATUS ${CMAKE_CXX_FLAGS})
@@ -173,14 +173,14 @@ set(HEADERS
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 
 if (APPLE)
-    add_executable(ffi_rust
+    add_executable(GPTN
             ${SRC_FILES}
             ${HEADERS}
             mainwindow.ui
             resources/resources.qrc
             )
 else()
-    add_executable(ffi_rust
+    add_executable(GPTN
             #WIN32
             ${SRC_FILES}
             ${HEADERS}
@@ -195,7 +195,7 @@ else()
     set(FFI_LIBRARY_PATH "${CMAKE_SOURCE_DIR}/rust/target/$<$<CONFIG:Debug>:debug>$<$<CONFIG:Release>:release>/ptn_lib.lib")
 endif()
 
-target_link_libraries(ffi_rust PRIVATE
+target_link_libraries(GPTN PRIVATE
         ${FFI_LIBRARY_PATH}
         #"${CMAKE_SOURCE_DIR}/rust/target/debug/hello_world.lib"
         Qt6::Widgets
@@ -210,11 +210,11 @@ target_link_libraries(ffi_rust PRIVATE
         ${QWT_LIBRARY}
         )
 
-qt6_import_plugins(ffi_rust
+qt6_import_plugins(GPTN
         INCLUDE_BY_TYPE imageformats
         )
 
-set_target_properties(ffi_rust PROPERTIES
+set_target_properties(GPTN PROPERTIES
         AUTOMOC ON
         AUTORCC ON
         AUTOUIC ON
@@ -231,7 +231,7 @@ if (APPLE)
             list(APPEND DIRS "${dir}/bin" "${dir}/lib")
         endforeach()
     endif()
-    set_target_properties(ffi_rust PROPERTIES
+    set_target_properties(GPTN PROPERTIES
             BUNDLE True
             )
 
@@ -281,6 +281,6 @@ if (WIN32)
     set(CPACK_PACKAGE_VENDOR "Nickolay Muraviev")
     set(CPACK_PACKAGE_VERSION_MAJOR "0")
     set(CPACK_PACKAGE_VERSION_MINOR "1")
-    install(TARGETS ffi_rust RUNTIME DESTINATION bin)
+    install(TARGETS GPTN RUNTIME DESTINATION bin)
     include(CPack)
 endif()
