@@ -325,13 +325,13 @@ impl DecomposeContext {
         let positions = self.positions.len();
 
         let mut t_counter = Counter::new(transitions);
-        let mut t_programs = Vec::with_capacity(Counter::new(transitions).count());
+        let mut t_programs = vec![];
         while let Some(c) = t_counter.next() {
             t_programs.push(c);
         }
 
-        let mut p_counter = Counter::new(positions).take(2usize.pow(12));
-        let mut p_programs = Vec::with_capacity(Counter::new(positions).take(2usize.pow(12) as usize).count());
+        let mut p_counter = Counter::new(positions);
+        let mut p_programs = vec![];
         while let Some(c) = p_counter.next() {
             p_programs.push(c);
         }
