@@ -29,10 +29,11 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 
     auto scene = graphicScene();
     auto simulation = scene->simulation();
+    auto rect = this->boundingRect();
 
     painter->save();
     painter->setPen(QPen(isSelected() ? Qt::green : painter->pen().color(), penWidth));
-    painter->drawEllipse(boundingRect().center(), radius - penWidth / 2., radius - penWidth / 2.);
+    painter->drawEllipse(rect.center(), radius - penWidth / 2., radius - penWidth / 2.);
 
     auto name = QString("P%1%2")
             .arg(this->index())
@@ -40,8 +41,8 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 
     QFontMetricsF metric = QFontMetricsF(painter->font());
     QSizeF nameSize = metric.size(0, name);
-    painter->drawText(boundingRect().center().x() - nameSize.width() / 2
-                      , boundingRect().center().y() - radius - 5
+    painter->drawText(rect.center().x() - nameSize.width() / 2
+                      , rect.center().y() - radius - 5
                       , name);
 
     int markers = 0;
@@ -57,7 +58,6 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
         painter->drawEllipse(boundingRect().center(), 3., 3.);
         painter->restore();
     } else if (markers == 2) {
-        auto rect = boundingRect();
         painter->save();
         painter->setBrush(QBrush(Qt::black));
 
@@ -69,7 +69,6 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 
         painter->restore();
     } else if (markers == 3) {
-        auto rect = boundingRect();
         painter->save();
         painter->setBrush(QBrush(Qt::black));
 
@@ -86,7 +85,6 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 
         painter->restore();
     } else if (markers == 4) {
-        auto rect = boundingRect();
         painter->save();
         painter->setBrush(QBrush(Qt::black));
 
@@ -107,7 +105,6 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 
         painter->restore();
     } else if (markers == 5) {
-        auto rect = boundingRect();
         painter->save();
         painter->setBrush(QBrush(Qt::black));
 
@@ -132,7 +129,7 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 
         painter->restore();
     } else if (markers > 5) {
-        painter->drawText(boundingRect(), Qt::AlignCenter, QString("%1").arg(this->markers()));
+        painter->drawText(rect, Qt::AlignCenter, QString("%1").arg(markers));
     }
 
     painter->restore();
