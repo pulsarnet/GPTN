@@ -1,8 +1,8 @@
-use std::ffi::CString;
-use std::os::raw::c_char;
 use indexmap::IndexMap;
 use nalgebra::DMatrix;
 use net::vertex::VertexIndex;
+use std::ffi::CString;
+use std::os::raw::c_char;
 use Vertex;
 
 #[repr(C)]
@@ -21,8 +21,8 @@ impl CNamedMatrix {
     ) -> Self {
         CNamedMatrix {
             rows: rows.values().map(|v| v.name()).collect(),
-            cols:  cols.values().map(|v| v.name()).collect(),
-            matrix
+            cols: cols.values().map(|v| v.name()).collect(),
+            matrix,
         }
     }
 
@@ -30,7 +30,7 @@ impl CNamedMatrix {
         CNamedMatrix {
             rows: headers.clone(),
             cols: headers,
-            matrix
+            matrix,
         }
     }
 }

@@ -5,7 +5,7 @@ use std::hash::{Hash, Hasher};
 #[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub enum VertexType {
     Position,
-    Transition
+    Transition,
 }
 
 impl Default for VertexType {
@@ -25,14 +25,14 @@ impl VertexIndex {
     pub fn position(index: usize) -> VertexIndex {
         VertexIndex {
             type_: VertexType::Position,
-            id: index
+            id: index,
         }
     }
 
     pub fn transition(index: usize) -> VertexIndex {
         VertexIndex {
             type_: VertexType::Transition,
-            id: index
+            id: index,
         }
     }
 }
@@ -52,7 +52,7 @@ pub struct Vertex {
     id: usize,
     markers: usize,
     parent: Option<VertexIndex>,
-    name: String
+    name: String,
 }
 
 impl Hash for Vertex {
@@ -73,7 +73,7 @@ impl Debug for Vertex {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let name = match self.type_ {
             VertexType::Position => format!("p{}", self.id),
-            VertexType::Transition => format!("t{}", self.id)
+            VertexType::Transition => format!("t{}", self.id),
         };
 
         f.pad(name.as_str())
@@ -89,11 +89,10 @@ impl Display for Vertex {
 }
 
 impl Vertex {
-
     pub fn name(&self) -> String {
         let mut name = match self.type_ {
             VertexType::Position => format!("P{}", self.id),
-            VertexType::Transition => format!("T{}", self.id)
+            VertexType::Transition => format!("T{}", self.id),
         };
 
         if let Some(parent) = self.parent {
@@ -121,28 +120,28 @@ impl Vertex {
     pub fn add_marker(&mut self) {
         match self.type_ {
             VertexType::Position => self.markers += 1,
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 
     pub fn set_markers(&mut self, count: usize) {
         match self.type_ {
             VertexType::Position => self.markers = count,
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 
     pub fn remove_marker(&mut self) {
         match self.type_ {
             VertexType::Position => self.markers -= 1,
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 
     pub fn index(&self) -> VertexIndex {
         VertexIndex {
             type_: self.type_,
-            id: self.id
+            id: self.id,
         }
     }
 
@@ -156,7 +155,7 @@ impl Vertex {
 
     pub fn label(&self, show_parent: bool) -> String {
         let mut name = self.name.clone();
-        if let (Some(VertexIndex { id, ..}), true) = (self.parent, show_parent) {
+        if let (Some(VertexIndex { id, .. }), true) = (self.parent, show_parent) {
             name = format!("{name}.{id}");
         }
         name
@@ -179,7 +178,7 @@ impl Vertex {
             id: index,
             markers: 0,
             parent: None,
-            name: String::new()
+            name: String::new(),
         }
     }
 
@@ -189,7 +188,7 @@ impl Vertex {
             id: index,
             markers: 0,
             parent: None,
-            name: String::new()
+            name: String::new(),
         }
     }
 

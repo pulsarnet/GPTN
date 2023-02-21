@@ -3,12 +3,12 @@
 // extern "C" unsigned long position_index(FFIPosition*);
 // extern "C" void remove_position(FFIPosition*);
 
-use ffi::vec::CVec;
-use ::{PetriNet, Vertex};
 use ffi::matrix::CNamedMatrix;
+use ffi::vec::CVec;
 use modules::reachability::{Reachability, ReachabilityTree};
-use net::Connection;
 use net::vertex::{VertexIndex, VertexType};
+use net::Connection;
+use {PetriNet, Vertex};
 
 #[no_mangle]
 pub extern "C" fn create_net() -> *mut PetriNet {
@@ -19,31 +19,43 @@ pub extern "C" fn create_net() -> *mut PetriNet {
 pub extern "C" fn net_get_vertex(net: &PetriNet, index: VertexIndex) -> *const Vertex {
     match index.type_ {
         VertexType::Position => net.get_position(index.id).unwrap() as *const Vertex,
-        VertexType::Transition => net.get_transition(index.id).unwrap() as *const Vertex
+        VertexType::Transition => net.get_transition(index.id).unwrap() as *const Vertex,
     }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn net_positions(net: &mut PetriNet, ret: &mut CVec<*const Vertex>) {
-    let result = net.positions
+    let result = net
+        .positions
         .values()
-        .map(|p| p as *const Vertex).collect::<Vec<_>>();
+        .map(|p| p as *const Vertex)
+        .collect::<Vec<_>>();
 
     core::ptr::write_unaligned(ret, CVec::from(result));
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn net_transitions(net: &mut PetriNet, ret: &mut CVec<*const Vertex>) {
-    let result = net.transitions
+    let result = net
+        .transitions
         .values()
-        .map(|p| p as *const Vertex).collect::<Vec<_>>();
+        .map(|p| p as *const Vertex)
+        .collect::<Vec<_>>();
 
     core::ptr::write_unaligned(ret, CVec::from(result));
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn net_connections(net: &mut PetriNet, ret: &mut CVec<*const Connection>) {
-    core::ptr::write_unaligned(ret, CVec::from(net.connections.iter().map(|c| c as *const Connection).collect::<Vec<_>>()));
+    core::ptr::write_unaligned(
+        ret,
+        CVec::from(
+            net.connections
+                .iter()
+                .map(|c| c as *const Connection)
+                .collect::<Vec<_>>(),
+        ),
+    );
 }
 
 #[no_mangle]
@@ -69,9 +81,16 @@ pub unsafe extern "C" fn add_position_with(net: &mut PetriNet, index: usize) -> 
 }
 
 #[no_mangle]
-pub extern "C" fn add_position_with_parent(net: &mut PetriNet, index: usize, parent: usize) -> *const Vertex {
+pub extern "C" fn add_position_with_parent(
+    net: &mut PetriNet,
+    index: usize,
+    parent: usize,
+) -> *const Vertex {
     let mut vertex = Vertex::position(index);
-    vertex.set_parent(VertexIndex { type_: VertexType::Position, id: parent});
+    vertex.set_parent(VertexIndex {
+        type_: VertexType::Position,
+        id: parent,
+    });
     net.insert(vertex) as *const Vertex
 }
 
@@ -96,9 +115,16 @@ pub extern "C" fn add_transition_with(net: &mut PetriNet, index: usize) -> *cons
 }
 
 #[no_mangle]
-pub extern "C" fn add_transition_with_parent(net: &mut PetriNet, index: usize, parent: usize) -> *const Vertex {
+pub extern "C" fn add_transition_with_parent(
+    net: &mut PetriNet,
+    index: usize,
+    parent: usize,
+) -> *const Vertex {
     let mut vertex = Vertex::transition(index);
-    vertex.set_parent(VertexIndex { type_: VertexType::Transition, id: parent});
+    vertex.set_parent(VertexIndex {
+        type_: VertexType::Transition,
+        id: parent,
+    });
     net.insert(vertex) as *const Vertex
 }
 
@@ -118,8 +144,7 @@ pub unsafe extern "C" fn connect_vertexes(
     net: &mut PetriNet,
     from: *const Vertex,
     to: *const Vertex,
-)
-{
+) {
     net.connect((&*from).index(), (&*to).index());
 }
 
@@ -128,8 +153,7 @@ pub unsafe extern "C" fn remove_connection(
     net: &mut PetriNet,
     from: *const Vertex,
     to: *const Vertex,
-)
-{
+) {
     let from = &*from;
     let to = &*to;
     net.connections
@@ -137,23 +161,32 @@ pub unsafe extern "C" fn remove_connection(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn petri_net_as_matrix(net: &PetriNet, matrix1: &mut *const CNamedMatrix, matrix2: &mut *const CNamedMatrix) {
+pub unsafe extern "C" fn petri_net_as_matrix(
+    net: &PetriNet,
+    matrix1: &mut *const CNamedMatrix,
+    matrix2: &mut *const CNamedMatrix,
+) {
     let (matrix_1, matrix_2) = net.incidence_matrix();
     *matrix1 = Box::into_raw(Box::new(matrix_1));
     *matrix2 = Box::into_raw(Box::new(matrix_2));
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn petri_net_get_connection(net: &mut PetriNet, from: *const Vertex, to: *const Vertex) -> *mut Connection {
+pub unsafe extern "C" fn petri_net_get_connection(
+    net: &mut PetriNet,
+    from: *const Vertex,
+    to: *const Vertex,
+) -> *mut Connection {
     let from = &*from;
     let to = &*to;
-    let result = net.connections
+    let result = net
+        .connections
         .iter()
         .find(|c| c.first().eq(&from.index()) && c.second().eq(&to.index()));
 
     match result {
         Some(c) => c as *const Connection as *mut Connection,
-        None => std::ptr::null_mut()
+        None => std::ptr::null_mut(),
     }
 }
 
@@ -168,7 +201,11 @@ pub unsafe extern "C" fn petri_net_output_positions(net: &PetriNet) -> usize {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn petri_net_connection_weight(net: &PetriNet, a: &Vertex, b: &Vertex) -> usize {
+pub unsafe extern "C" fn petri_net_connection_weight(
+    net: &PetriNet,
+    a: &Vertex,
+    b: &Vertex,
+) -> usize {
     net.connections
         .iter()
         .find(|conn| conn.first() == a.index() && conn.second() == b.index())

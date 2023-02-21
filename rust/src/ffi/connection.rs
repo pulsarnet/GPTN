@@ -1,5 +1,5 @@
-use net::Connection;
 use net::vertex::VertexIndex;
+use net::Connection;
 
 #[no_mangle]
 pub extern "C" fn connection_from(connection: *const Connection) -> VertexIndex {

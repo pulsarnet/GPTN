@@ -69,7 +69,7 @@ fn get_partition_by_index(mesh: &DMatrix<usize>, mut index: usize) -> Vec<u16> {
     let (mut i, mut j) = (1, 0);
 
     while i < n {
-        let factor = std::cmp::min(index / mesh[(i, j)],j + 1);
+        let factor = std::cmp::min(index / mesh[(i, j)], j + 1);
         partition[i] = factor as u16;
         index -= factor * mesh[(i, j)];
         if factor == (j + 1) {
@@ -89,18 +89,14 @@ mod tests {
     fn test_mesh() {
         let mesh = SetPartitionMesh::new(4, 4);
         assert_eq!(mesh.max, 225);
-        assert_eq!(mesh.positions, DMatrix::from_row_slice(4, 4, &[
-            15, 0, 0, 0,
-            5, 10, 0, 0,
-            2,  3, 4, 0,
-            1,  1, 1, 1,
-        ]));
-        assert_eq!(mesh.transitions, DMatrix::from_row_slice(4, 4, &[
-            15, 0, 0, 0,
-            5, 10, 0, 0,
-            2,  3, 4, 0,
-            1,  1, 1, 1,
-        ]));
+        assert_eq!(
+            mesh.positions,
+            DMatrix::from_row_slice(4, 4, &[15, 0, 0, 0, 5, 10, 0, 0, 2, 3, 4, 0, 1, 1, 1, 1,])
+        );
+        assert_eq!(
+            mesh.transitions,
+            DMatrix::from_row_slice(4, 4, &[15, 0, 0, 0, 5, 10, 0, 0, 2, 3, 4, 0, 1, 1, 1, 1,])
+        );
 
         assert_eq!(mesh.get_partition(0), vec![0, 0, 0, 0, 0, 0, 0, 0]);
         assert_eq!(mesh.get_partition(1), vec![0, 0, 0, 1, 0, 0, 0, 0]);

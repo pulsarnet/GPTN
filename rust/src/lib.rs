@@ -1,34 +1,32 @@
 #![feature(drain_filter)]
 #![feature(option_result_contains)]
 
-extern crate libc;
-extern crate nalgebra;
-extern crate ndarray_linalg;
-extern crate log4rs;
-extern crate log;
 extern crate chrono;
 extern crate indexmap;
+extern crate libc;
+extern crate log;
+extern crate log4rs;
+extern crate nalgebra;
 extern crate ndarray;
-extern crate num_traits;
+extern crate ndarray_linalg;
 extern crate num;
+extern crate num_traits;
 extern crate rand;
 
-
-
-use std::ffi::CString;
-use std::ops::Deref;
 use libc::c_char;
+use log::LevelFilter;
 use log4rs::append::file::FileAppender;
-use log4rs::{Config, config::Logger};
 use log4rs::config::{Appender, Root};
 use log4rs::encode::pattern::PatternEncoder;
-use log::LevelFilter;
+use log4rs::{config::Logger, Config};
 use nalgebra::DMatrix;
-
+use std::ffi::CString;
+use std::ops::Deref;
 
 use ffi::vec::CVec;
-use modules::synthesis::{DecomposeContext, DecomposeContextBuilder, synthesis_program, SynthesisProgram};
-
+use modules::synthesis::{
+    synthesis_program, DecomposeContext, DecomposeContextBuilder, SynthesisProgram,
+};
 
 pub mod ffi;
 mod modules;
@@ -40,7 +38,10 @@ use net::{PetriNet, PetriNetVec, Vertex};
 
 #[no_mangle]
 extern "C" fn init() {
-    let f = format!("log/{}.log", chrono::Local::now().format("%d-%m-%YT%H_%M_%S"));
+    let f = format!(
+        "log/{}.log",
+        chrono::Local::now().format("%d-%m-%YT%H_%M_%S")
+    );
     let requests = FileAppender::builder()
         .encoder(Box::new(PatternEncoder::new("{m}{n}")))
         .build(f)
@@ -48,18 +49,23 @@ extern "C" fn init() {
 
     let config = Config::builder()
         .appender(Appender::builder().build("requests", Box::new(requests)))
-        .logger(Logger::builder()
-            .appender("requests")
-            .build("app::requests", LevelFilter::Error))
-        .build(Root::builder().appender("requests").build(LevelFilter::Error))
+        .logger(
+            Logger::builder()
+                .appender("requests")
+                .build("app::requests", LevelFilter::Error),
+        )
+        .build(
+            Root::builder()
+                .appender("requests")
+                .build(LevelFilter::Error),
+        )
         .unwrap();
 
     log4rs::init_config(config).unwrap();
-
 }
 
 pub struct CMatrix {
-    inner: DMatrix<i32>
+    inner: DMatrix<i32>,
 }
 
 impl Deref for CMatrix {
@@ -77,11 +83,16 @@ impl From<DMatrix<i32>> for CMatrix {
 }
 
 #[no_mangle]
-pub extern "C" fn decompose_context_parts(ctx: &DecomposeContext, parts: &mut CVec<*const PetriNet>) {
-    let result = ctx.parts
+pub extern "C" fn decompose_context_parts(
+    ctx: &DecomposeContext,
+    parts: &mut CVec<*const PetriNet>,
+) {
+    let result = ctx
+        .parts
         .0
         .iter()
-        .map(|p| p as *const PetriNet).collect::<Vec<_>>();
+        .map(|p| p as *const PetriNet)
+        .collect::<Vec<_>>();
 
     unsafe { std::ptr::write_unaligned(parts, CVec::from(result)) };
 }
@@ -92,12 +103,17 @@ pub extern "C" fn decompose_context_init(net: &PetriNet) -> *mut DecomposeContex
 }
 
 #[no_mangle]
-pub extern "C" fn decompose_context_from_nets(nets: *mut *mut PetriNet, len: usize) -> *mut DecomposeContext {
+pub extern "C" fn decompose_context_from_nets(
+    nets: *mut *mut PetriNet,
+    len: usize,
+) -> *mut DecomposeContext {
     let mut parts_m = vec![];
     for i in 0..len {
         parts_m.push(unsafe { &**nets.offset(i as isize) }.clone());
     }
-    Box::into_raw(Box::new(DecomposeContextBuilder::new(PetriNetVec(parts_m)).build()))
+    Box::into_raw(Box::new(
+        DecomposeContextBuilder::new(PetriNetVec(parts_m)).build(),
+    ))
 }
 
 #[no_mangle]
@@ -121,12 +137,18 @@ extern "C" fn decompose_context_linear_base_fragments(ctx: &DecomposeContext) ->
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn decompose_context_position_index(ctx: &DecomposeContext, index: usize) -> usize {
+pub unsafe extern "C" fn decompose_context_position_index(
+    ctx: &DecomposeContext,
+    index: usize,
+) -> usize {
     ctx.positions[index].index().id as usize
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn decompose_context_transition_index(ctx: &DecomposeContext, index: usize) -> usize {
+pub unsafe extern "C" fn decompose_context_transition_index(
+    ctx: &DecomposeContext,
+    index: usize,
+) -> usize {
     ctx.transitions[index].index().id as usize
 }
 
@@ -146,17 +168,30 @@ extern "C" fn synthesis_remove_program(ctx: &mut DecomposeContext, index: usize)
 }
 
 #[no_mangle]
-extern "C" fn synthesis_program_value(ctx: &DecomposeContext, program: usize, index: usize) -> usize {
+extern "C" fn synthesis_program_value(
+    ctx: &DecomposeContext,
+    program: usize,
+    index: usize,
+) -> usize {
     ctx.program_value(program, index)
 }
 
 #[no_mangle]
-extern "C" fn synthesis_set_program_value(ctx: &mut DecomposeContext, program: usize, index: usize, value: usize) {
+extern "C" fn synthesis_set_program_value(
+    ctx: &mut DecomposeContext,
+    program: usize,
+    index: usize,
+    value: usize,
+) {
     ctx.set_program_value(program, index, value);
 }
 
 #[no_mangle]
-extern "C" fn synthesis_program_header_name(ctx: &mut DecomposeContext, index: usize, label: bool) -> *const c_char {
+extern "C" fn synthesis_program_header_name(
+    ctx: &mut DecomposeContext,
+    index: usize,
+    label: bool,
+) -> *const c_char {
     // TODO: Исправить постоянное выделение памяти
     let c_str = CString::new(ctx.program_header_name(index, label)).unwrap();
     let pointer = c_str.as_ptr();
@@ -165,7 +200,10 @@ extern "C" fn synthesis_program_header_name(ctx: &mut DecomposeContext, index: u
 }
 
 #[no_mangle]
-extern "C" fn synthesis_program_equations(ctx: &mut DecomposeContext, index: usize) -> *const c_char {
+extern "C" fn synthesis_program_equations(
+    ctx: &mut DecomposeContext,
+    index: usize,
+) -> *const c_char {
     let c_str = CString::new(ctx.program_equation(index)).unwrap();
     let pointer = c_str.as_ptr();
     std::mem::forget(c_str);
@@ -184,18 +222,14 @@ extern "C" fn synthesis_program_size(ctx: &DecomposeContext, _: usize) -> usize 
 
 #[no_mangle]
 extern "C" fn synthesis_program_transition_united(ctx: &DecomposeContext, index: usize) -> usize {
-    SynthesisProgram::new_with(
-        ctx.programs.get_partition(index),
-        ctx.transitions.len(),
-    ).transitions_united()
+    SynthesisProgram::new_with(ctx.programs.get_partition(index), ctx.transitions.len())
+        .transitions_united()
 }
 
 #[no_mangle]
 extern "C" fn synthesis_program_position_united(ctx: &DecomposeContext, index: usize) -> usize {
-    SynthesisProgram::new_with(
-        ctx.programs.get_partition(index),
-        ctx.transitions.len(),
-    ).positions_united()
+    SynthesisProgram::new_with(ctx.programs.get_partition(index), ctx.transitions.len())
+        .positions_united()
 }
 
 #[no_mangle]

@@ -1,7 +1,6 @@
-use std::io::Write;
 use nalgebra::DMatrix;
 use num::integer::gcd;
-
+use std::io::Write;
 
 use net::PetriNet;
 
@@ -23,7 +22,7 @@ impl PositiveNegative {
                     p_cols: pos,
                     n_cols: neg,
                 });
-                break
+                break;
             } else if tmp.is_none() && (!pos.is_empty() || !neg.is_empty()) {
                 tmp = Some(PositiveNegative {
                     row: i,
@@ -37,16 +36,15 @@ impl PositiveNegative {
     }
 
     pub fn min_index(&self) -> usize {
-        self.p_cols.first()
-            .map_or(self.n_cols[0], |&value| {
-                std::cmp::min(value, self.n_cols[0])
-            })
+        self.p_cols.first().map_or(self.n_cols[0], |&value| {
+            std::cmp::min(value, self.n_cols[0])
+        })
     }
 
     fn partition_pos_neg<'a>(iter: impl Iterator<Item = &'a i32>) -> (Vec<usize>, Vec<usize>) {
-        iter.enumerate()
-            .filter(|(_, el)| **el != 0)
-            .fold((vec![], vec![]), |(mut v1, mut v2), (i, &el)| {
+        iter.enumerate().filter(|(_, el)| **el != 0).fold(
+            (vec![], vec![]),
+            |(mut v1, mut v2), (i, &el)| {
                 if el > 0 {
                     v1.push(i)
                 } else {
@@ -54,7 +52,8 @@ impl PositiveNegative {
                 }
 
                 (v1, v2)
-            })
+            },
+        )
     }
 }
 
@@ -67,7 +66,9 @@ fn invariant(mut mat_c: DMatrix<i32>) -> DMatrix<i32> {
         if pn.p_cols.is_empty() ^ pn.n_cols.is_empty() {
             // Существует строка в которой не пустое только одно множество (положительные и отрицательные) элементов
             // Тогда удалить все колонки из matC и matB, которые есть в объединении p_cols U n_cols
-            let remove = pn.p_cols.iter()
+            let remove = pn
+                .p_cols
+                .iter()
                 .chain(pn.n_cols.iter())
                 .copied()
                 .collect::<Vec<_>>();
@@ -78,7 +79,7 @@ fn invariant(mut mat_c: DMatrix<i32>) -> DMatrix<i32> {
             if pn.p_cols.len() == 1 || pn.n_cols.len() == 1 {
                 let (k, indexes) = match pn.p_cols.len() == 1 {
                     true => (pn.p_cols[0], pn.n_cols.as_slice()),
-                    false => (pn.n_cols[0], pn.p_cols.as_slice())
+                    false => (pn.n_cols[0], pn.p_cols.as_slice()),
                 };
 
                 for &index in indexes {
@@ -101,12 +102,12 @@ fn invariant(mut mat_c: DMatrix<i32>) -> DMatrix<i32> {
                 let k = pn.min_index(); //matC.row(h).iter().position(|v| *v != 0).unwrap();
                 for j in 0..mat_c.ncols() {
                     if j == k || mat_c[(h, j)] == 0 {
-                        continue
+                        continue;
                     }
 
                     let chk = mat_c[(h, k)];
                     let chj = mat_c[(h, j)];
-                    let alpha= match chk.signum() != chk.signum() {
+                    let alpha = match chk.signum() != chk.signum() {
                         true => chj.abs(),
                         false => -chj.abs(),
                     };
@@ -128,7 +129,10 @@ fn invariant(mut mat_c: DMatrix<i32>) -> DMatrix<i32> {
 
     // phase 2
     // 1. Neg-el row
-    while let Some(row) = mat_b.row_iter().position(|row| row.iter().any(|el| *el < 0)) {
+    while let Some(row) = mat_b
+        .row_iter()
+        .position(|row| row.iter().any(|el| *el < 0))
+    {
         let (pos, neg) = PositiveNegative::partition_pos_neg(mat_c.row(row).iter());
 
         if !pos.is_empty() {
@@ -204,14 +208,14 @@ fn print_matrix(mat: &DMatrix<i32>, vertices: &[String]) {
 pub extern "C" fn petri_net_p_invariant(net: &PetriNet) {
     let (i, o) = net.adjacency_matrices();
     let mat = o + i;
-    let mat = DMatrix::<i32>::from_iterator(mat.nrows(), mat.ncols(), mat.iter().map(|el| *el as i32));
+    let mat =
+        DMatrix::<i32>::from_iterator(mat.nrows(), mat.ncols(), mat.iter().map(|el| *el as i32));
 
     let res = invariant(mat.transpose());
-    let positions = net.positions.values()
-        .fold(vec![], |mut acc, pos| {
-            acc.push(format!("p{}", pos.index().id));
-            acc
-        });
+    let positions = net.positions.values().fold(vec![], |mut acc, pos| {
+        acc.push(format!("p{}", pos.index().id));
+        acc
+    });
 
     print_matrix(&res, &positions);
 }
@@ -222,10 +226,13 @@ pub extern "C" fn petri_net_p_invariant(net: &PetriNet) {
 pub extern "C" fn petri_net_t_invariant(net: &PetriNet) {
     let (i, o) = net.adjacency_matrices();
     let mat = o + i;
-    let mat = DMatrix::<i32>::from_iterator(mat.nrows(), mat.ncols(), mat.iter().map(|el| *el as i32));
+    let mat =
+        DMatrix::<i32>::from_iterator(mat.nrows(), mat.ncols(), mat.iter().map(|el| *el as i32));
 
     let res = invariant(mat);
-    let transitions = net.transitions.values()
+    let transitions = net
+        .transitions
+        .values()
         .fold(vec![], |mut acc, transition| {
             acc.push(format!("t{}", transition.index().id));
             acc

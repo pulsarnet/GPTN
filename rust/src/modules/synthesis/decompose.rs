@@ -1,12 +1,12 @@
+use crate::core::SetPartitionMesh;
+use crate::core::{logical_column_add, logical_row_add};
+use crate::modules::synthesis::SynthesisProgram;
+use crate::net::vertex::Vertex;
+use crate::net::{PetriNet, PetriNetVec};
+use crate::CMatrix;
 use nalgebra::base::DMatrix;
 use ndarray::{Array1, Array2};
 use ndarray_linalg::Solve;
-use crate::core::SetPartitionMesh;
-use crate::core::{logical_column_add, logical_row_add};
-use crate::net::{PetriNet, PetriNetVec};
-use crate::net::vertex::Vertex;
-use crate::CMatrix;
-use crate::modules::synthesis::SynthesisProgram;
 
 /// Контекст декомпозиции
 ///
@@ -18,11 +18,8 @@ pub struct DecomposeContextBuilder {
 }
 
 impl DecomposeContextBuilder {
-
     pub fn new(parts: PetriNetVec) -> Self {
-        DecomposeContextBuilder {
-            parts
-        }
+        DecomposeContextBuilder { parts }
     }
 
     fn solve_with_mu(mut a: Array2<f64>, mut b: Array1<f64>) -> Array1<f64> {
@@ -51,7 +48,6 @@ impl DecomposeContextBuilder {
             }
         }
 
-
         // Set other negative to zero
         let mut next_equation_index = mu_equation_index + 1;
         'outer: for i in 0..mu_equation_index {
@@ -66,16 +62,16 @@ impl DecomposeContextBuilder {
                     a[(next_equation_index, j)] = 1.;
                     b[next_equation_index] = b[i];
                     next_equation_index += 1;
-                    break
+                    break;
                 } else if b[i] < 0. && a[(i, j)] == -1. {
                     a[(next_equation_index, j)] = 1.;
                     b[next_equation_index] -= b[i];
                     next_equation_index += 1;
-                    break
+                    break;
                 } else if a[(i, j)] == -1. {
                     a[(next_equation_index, j)] = 1.;
                     next_equation_index += 1;
-                    break
+                    break;
                 }
                 // if a[(i, j)] == -1.{
                 //     a[(next_equation_index, j)] = 1.;
@@ -97,16 +93,16 @@ impl DecomposeContextBuilder {
                     a[(mu_equation_index, j)] = 1.;
                     b[mu_equation_index] = b[i];
                     mu_equation_index += 1;
-                    break
+                    break;
                 } else if b[i] < 0. && a[(i, j)] == -1. {
                     a[(mu_equation_index, j)] = 1.;
                     b[mu_equation_index] -= b[i];
                     mu_equation_index += 1;
-                    break
+                    break;
                 } else if a[(i, j)] == -1. {
                     a[(mu_equation_index, j)] = 1.;
                     mu_equation_index += 1;
-                    break
+                    break;
                 }
 
                 // if a[(i, j)] == -1. {
@@ -129,15 +125,15 @@ impl DecomposeContextBuilder {
         }
     }
 
-    pub fn calculate_c_matrix(positions: usize,
-                              transitions: usize,
-                              linear_base_fragments: &(DMatrix<i32>, DMatrix<i32>),
-                              primitive_matrix: DMatrix<i32>,
-                              mu: &DMatrix<i32>) -> DMatrix<f64>
-    {
+    pub fn calculate_c_matrix(
+        positions: usize,
+        transitions: usize,
+        linear_base_fragments: &(DMatrix<i32>, DMatrix<i32>),
+        primitive_matrix: DMatrix<i32>,
+        mu: &DMatrix<i32>,
+    ) -> DMatrix<f64> {
         let mut c_matrix = nalgebra::DMatrix::<f64>::zeros(positions, positions);
-        let d_matrix =
-            linear_base_fragments.1.clone() - linear_base_fragments.0.clone();
+        let d_matrix = linear_base_fragments.1.clone() - linear_base_fragments.0.clone();
 
         for row in 0..positions {
             let mut array_a = Array2::<f64>::zeros((positions, positions));
@@ -145,25 +141,25 @@ impl DecomposeContextBuilder {
 
             for col in 0..transitions {
                 array_a.row_mut(col).assign(
-                    &primitive_matrix.column(col)
+                    &primitive_matrix
+                        .column(col)
                         .iter()
                         .map(|&x| x as f64)
-                        .collect::<Array1<f64>>()
+                        .collect::<Array1<f64>>(),
                 );
                 array_b[col] = d_matrix[(row, col)] as f64;
             }
 
             // set mu equation
-            array_a.row_mut(transitions).assign(
-                &mu.row(0)
-                    .iter()
-                    .map(|&x| x as f64)
-                    .collect::<Array1<f64>>()
-            );
+            array_a
+                .row_mut(transitions)
+                .assign(&mu.row(0).iter().map(|&x| x as f64).collect::<Array1<f64>>());
             array_b[transitions] = mu[(0, row)] as f64;
 
             let solution = DecomposeContextBuilder::solve(array_a, array_b);
-            c_matrix.row_mut(row).copy_from_slice(solution.as_slice().unwrap());
+            c_matrix
+                .row_mut(row)
+                .copy_from_slice(solution.as_slice().unwrap());
         }
 
         println!("{}", c_matrix);
@@ -183,8 +179,18 @@ impl DecomposeContextBuilder {
         self.parts.sort();
 
         let parts = self.parts;
-        let positions = parts.0.iter().flat_map(|net| net.positions.values()).cloned().collect::<Vec<_>>();
-        let transitions = parts.0.iter().flat_map(|net| net.transitions.values()).cloned().collect::<Vec<_>>();
+        let positions = parts
+            .0
+            .iter()
+            .flat_map(|net| net.positions.values())
+            .cloned()
+            .collect::<Vec<_>>();
+        let transitions = parts
+            .0
+            .iter()
+            .flat_map(|net| net.transitions.values())
+            .cloned()
+            .collect::<Vec<_>>();
 
         let primitive_net = parts.primitive_net();
         //let adjacency_primitive = primitive_net.adjacency_matrix();
@@ -194,13 +200,20 @@ impl DecomposeContextBuilder {
 
         let (primitive_input, primitive_output) = parts.primitive_matrix();
         let linear_base_fragments_matrix = parts.equivalent_matrix();
-        let mu = DMatrix::from_row_slice(1, positions.len(), &positions.iter().map(|x| x.markers() as i32).collect::<Vec<_>>());
+        let mu = DMatrix::from_row_slice(
+            1,
+            positions.len(),
+            &positions
+                .iter()
+                .map(|x| x.markers() as i32)
+                .collect::<Vec<_>>(),
+        );
         let c_matrix = DecomposeContextBuilder::calculate_c_matrix(
             positions.len(),
             transitions.len(),
             &linear_base_fragments_matrix,
             primitive_output.clone() - primitive_input.clone(),
-            &mu
+            &mu,
         );
 
         let (pos, tran) = (positions.len(), transitions.len());
@@ -210,12 +223,14 @@ impl DecomposeContextBuilder {
             transitions,
             primitive_net,
             primitive_matrix: adjacency_primitive,
-            linear_base_fragments_matrix: (CMatrix::from(linear_base_fragments_matrix.0), CMatrix::from(linear_base_fragments_matrix.1)),
+            linear_base_fragments_matrix: (
+                CMatrix::from(linear_base_fragments_matrix.0),
+                CMatrix::from(linear_base_fragments_matrix.1),
+            ),
             c_matrix,
             programs: SetPartitionMesh::new(pos, tran),
         }
     }
-
 }
 
 pub struct DecomposeContext {
@@ -232,7 +247,6 @@ pub struct DecomposeContext {
 }
 
 impl DecomposeContext {
-
     pub fn init(net: &PetriNet) -> Self {
         let mut net = net.clone();
         let mut parts = vec![];
@@ -298,7 +312,6 @@ impl DecomposeContext {
     }
 
     pub fn linear_base_fragments(&self) -> PetriNet {
-
         // TODO: Установить максимальный индекс у позиции и перехода
         // TODO: Получение позиции по индексу
         // TODO: Получение перехода по индексу
@@ -306,26 +319,48 @@ impl DecomposeContext {
         let mut result = PetriNet::new();
         let (d_input, d_output) = &self.linear_base_fragments_matrix;
 
-        result.positions.extend(self.positions.iter().map(|v| (v.index(), v.clone())));
-        result.transitions.extend(self.transitions.iter().map(|v| (v.index(), v.clone())));
+        result
+            .positions
+            .extend(self.positions.iter().map(|v| (v.index(), v.clone())));
+        result
+            .transitions
+            .extend(self.transitions.iter().map(|v| (v.index(), v.clone())));
 
         for row in 0..d_input.nrows() {
             for column in 0..d_input.ncols() {
-
                 if d_input.row(row)[column] > 0 {
                     result.connect(
-                        self.positions.iter().enumerate().find(|(k, _)| *k == row).map(|(_, k)| k.index()).unwrap(),
-                        self.transitions.iter().enumerate().find(|(k, _)| *k == column).map(|(_, k)| k.index()).unwrap(),
+                        self.positions
+                            .iter()
+                            .enumerate()
+                            .find(|(k, _)| *k == row)
+                            .map(|(_, k)| k.index())
+                            .unwrap(),
+                        self.transitions
+                            .iter()
+                            .enumerate()
+                            .find(|(k, _)| *k == column)
+                            .map(|(_, k)| k.index())
+                            .unwrap(),
                     )
                 }
 
                 if d_output.column(column)[row] > 0 {
                     result.connect(
-                        self.transitions.iter().enumerate().find(|(k, _)| *k == column).map(|(_, k)| k.index()).unwrap(),
-                        self.positions.iter().enumerate().find(|(k, _)| *k == row).map(|(_, k)| k.index()).unwrap(),
+                        self.transitions
+                            .iter()
+                            .enumerate()
+                            .find(|(k, _)| *k == column)
+                            .map(|(_, k)| k.index())
+                            .unwrap(),
+                        self.positions
+                            .iter()
+                            .enumerate()
+                            .find(|(k, _)| *k == row)
+                            .map(|(_, k)| k.index())
+                            .unwrap(),
                     )
                 }
-
             }
         }
 
@@ -365,19 +400,23 @@ impl DecomposeContext {
         let pos_indexes_vec = self.positions();
         let tran_indexes_vec = self.transitions();
 
-        let program = SynthesisProgram::new_with(
-            self.programs.get_partition(index),
-            tran_indexes_vec.len()
-        );
+        let program =
+            SynthesisProgram::new_with(self.programs.get_partition(index), tran_indexes_vec.len());
 
         let (t_sets, p_sets) = program.sets(pos_indexes_vec, tran_indexes_vec);
 
-        log::error!("{:?}\n{:?}\n{:?}\n{:?}", t_sets, p_sets, pos_indexes_vec, tran_indexes_vec);
+        log::error!(
+            "{:?}\n{:?}\n{:?}\n{:?}",
+            t_sets,
+            p_sets,
+            pos_indexes_vec,
+            tran_indexes_vec
+        );
 
         let mut result = String::new();
         for set in t_sets {
             if set.is_empty() {
-                continue
+                continue;
             }
 
             result += tran_indexes_vec[*set.last().unwrap()].name().as_str();
@@ -394,7 +433,7 @@ impl DecomposeContext {
 
         for set in p_sets {
             if set.is_empty() {
-                continue
+                continue;
             }
 
             result += &pos_indexes_vec[*set.last().unwrap()].name().as_str();
@@ -416,13 +455,12 @@ impl DecomposeContext {
         if index < self.transitions().len() {
             match label {
                 true => self.transitions()[index].label(false),
-                false => self.transitions()[index].full_name()
+                false => self.transitions()[index].full_name(),
             }
-        }
-        else {
+        } else {
             match label {
                 true => self.positions()[index - self.transitions().len()].label(false),
-                false => self.positions()[index - self.transitions().len()].full_name()
+                false => self.positions()[index - self.transitions().len()].full_name(),
             }
         }
     }
@@ -435,8 +473,8 @@ impl DecomposeContext {
         &self,
         t_set: &Vec<usize>,
         adjacency_input: &mut DMatrix<f64>,
-        adjacency_output: &mut DMatrix<f64>)
-    {
+        adjacency_output: &mut DMatrix<f64>,
+    ) {
         assert!(t_set.len() > 1);
 
         let first = t_set[0];
@@ -468,7 +506,6 @@ impl DecomposeContext {
         adjacency_output: &mut DMatrix<f64>,
         d_markers: &mut DMatrix<f64>,
     ) {
-
         let first = p_set[0];
         for p in p_set.iter().skip(1) {
             logical_row_add(adjacency_input, first, *p);
@@ -493,6 +530,5 @@ impl DecomposeContext {
 
             d_markers[(*p, 0)] = d_markers[(first, 0)];
         }
-
     }
 }

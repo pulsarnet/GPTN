@@ -1,12 +1,11 @@
-use ::{DecomposeContext, PetriNet};
+use {DecomposeContext, PetriNet};
+pub mod connection;
+pub mod matrix;
 pub mod net;
 pub mod vec;
 pub mod vertex;
-pub mod connection;
-pub mod matrix;
 
 struct PetriNetContext {
-
     // Основная сеть петри
     pub net: PetriNet,
 
@@ -15,11 +14,10 @@ struct PetriNetContext {
 }
 
 impl PetriNetContext {
-
     pub fn new() -> Self {
         Self {
             net: PetriNet::new(),
-            decompose_context: None
+            decompose_context: None,
         }
     }
 
@@ -42,7 +40,7 @@ extern "C" fn ctx_net(ctx: *const PetriNetContext) -> *const PetriNet {
 extern "C" fn ctx_decompose_context(ctx: *const PetriNetContext) -> *const DecomposeContext {
     match unsafe { &*ctx }.decompose_context.as_ref() {
         Some(decompose_context) => decompose_context.as_ref() as *const DecomposeContext,
-        None => std::ptr::null()
+        None => std::ptr::null(),
     }
 }
 
@@ -56,7 +54,7 @@ extern "C" fn ctx_set_decompose_context(ctx: *mut PetriNetContext, d_ctx: *mut D
     let ctx = unsafe { &mut *ctx };
     match d_ctx.is_null() {
         true => ctx.set_decompose_context(None),
-        false => ctx.set_decompose_context(Some(unsafe { Box::from_raw(d_ctx) }))
+        false => ctx.set_decompose_context(Some(unsafe { Box::from_raw(d_ctx) })),
     }
 }
 

@@ -27,13 +27,19 @@ mod tests {
     fn test_logical_row_add() {
         let mut matrix = DMatrix::from_row_slice(3, 3, &[1, 0, 0, 0, 1, 0, 0, 0, 1]);
         logical_row_add(&mut matrix, 0, 1);
-        assert_eq!(matrix, DMatrix::from_row_slice(3, 3, &[1, 1, 0, 0, 1, 0, 0, 0, 1]));
+        assert_eq!(
+            matrix,
+            DMatrix::from_row_slice(3, 3, &[1, 1, 0, 0, 1, 0, 0, 0, 1])
+        );
     }
 
     #[test]
     fn test_logical_column_add() {
         let mut matrix = DMatrix::from_row_slice(3, 3, &[1, 0, 0, 0, 1, 0, 0, 0, 1]);
         logical_column_add(&mut matrix, 0, 1);
-        assert_eq!(matrix, DMatrix::from_row_slice(3, 3, &[1, 0, 0, 1, 1, 0, 0, 0, 1]));
+        assert_eq!(
+            matrix,
+            DMatrix::from_row_slice(3, 3, &[1, 0, 0, 1, 1, 0, 0, 0, 1])
+        );
     }
 }

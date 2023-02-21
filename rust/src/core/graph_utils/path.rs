@@ -1,74 +1,81 @@
 use std::collections::HashMap;
 use std::iter::FromIterator;
 
-use net::PetriNet;
 use net::vertex::VertexIndex;
+use net::PetriNet;
 
 #[derive(Debug, PartialEq)]
 pub enum NodeMark {
     None,
     Temporary,
-    Permanent
+    Permanent,
 }
 
 #[derive(Debug, Default)]
 pub struct NetPaths {
-    paths: Vec<Vec<VertexIndex>>
+    paths: Vec<Vec<VertexIndex>>,
 }
 
 impl NetPaths {
-
     /// Find all paths from input positions to output positions if exists
     pub fn find(net: &PetriNet) -> NetPaths {
         // get input positions
-        let input_positions = net.positions
+        let input_positions = net
+            .positions
             .iter()
             .filter(|(index, _)| {
-                net.connections.iter().find(|c| c.second() == **index).is_none()
+                net.connections
+                    .iter()
+                    .find(|c| c.second() == **index)
+                    .is_none()
             })
             .map(|(index, _)| *index)
             .collect::<Vec<_>>();
 
         // get output positions
-        let output_positions = net.positions
+        let output_positions = net
+            .positions
             .iter()
             .filter(|(index, _)| {
-                net.connections.iter().find(|c| c.first() == **index).is_none()
+                net.connections
+                    .iter()
+                    .find(|c| c.first() == **index)
+                    .is_none()
             })
             .map(|(index, _)| *index)
             .collect::<Vec<_>>();
 
         if input_positions.is_empty() || output_positions.is_empty() {
-            return NetPaths::default()
+            return NetPaths::default();
         }
 
         // DFS Top Sort
-        let mut visited = HashMap::from_iter(
-            net.vertices().iter().map(|v| (*v, NodeMark::None))
-        );
+        let mut visited = HashMap::from_iter(net.vertices().iter().map(|v| (*v, NodeMark::None)));
         let mut paths = vec![];
         let mut stack = vec![];
         for vert in input_positions.iter() {
             visited.values_mut().for_each(|m| *m = NodeMark::None);
-            if let Err(_) = NetPaths::process_dfs(net, *vert, &mut visited, &mut paths, &mut stack) {
+            if let Err(_) = NetPaths::process_dfs(net, *vert, &mut visited, &mut paths, &mut stack)
+            {
                 log::error!("Cycle detected");
-                return NetPaths::default()
+                return NetPaths::default();
             }
         }
 
         NetPaths { paths }
     }
 
-    pub fn process_dfs(net: &PetriNet,
-                       vertex: VertexIndex,
-                       visited: &mut HashMap<VertexIndex, NodeMark>,
-                       paths: &mut Vec<Vec<VertexIndex>>,
-                       stack: &mut Vec<VertexIndex>) -> Result<(), ()>
-    {
+    pub fn process_dfs(
+        net: &PetriNet,
+        vertex: VertexIndex,
+        visited: &mut HashMap<VertexIndex, NodeMark>,
+        paths: &mut Vec<Vec<VertexIndex>>,
+        stack: &mut Vec<VertexIndex>,
+    ) -> Result<(), ()> {
         if visited[&vertex] == NodeMark::Permanent {
-            return Ok(())
+            return Ok(());
         } else if visited[&vertex] == NodeMark::Temporary {
-            return Err(()) // cycle detected
+            return Err(()); // cycle detected
         }
 
         stack.push(vertex);
@@ -92,7 +99,8 @@ impl NetPaths {
     }
 
     pub fn get_longest(&self) -> Option<&[VertexIndex]> {
-        self.paths.iter()
+        self.paths
+            .iter()
             .max_by(|a, b| a.len().cmp(&b.len()))
             .map(|a| a.as_slice())
     }

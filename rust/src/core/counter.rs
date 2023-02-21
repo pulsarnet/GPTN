@@ -36,7 +36,6 @@ impl Counter {
 
         Some(&self.a)
     }
-
 }
 
 impl Iterator for Counter {
@@ -51,11 +50,14 @@ impl Iterator for Counter {
         }
     }
 
-    fn count(mut self) -> usize where Self: Sized {
+    fn count(mut self) -> usize
+    where
+        Self: Sized,
+    {
         let mut counter = 1;
         while let Some(_) = self.next_borrow() {
             counter += 1;
         }
-        return counter
+        return counter;
     }
 }

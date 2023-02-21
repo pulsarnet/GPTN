@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 use net::vertex::VertexIndex;
-use ::{CVec, PetriNet};
+use {CVec, PetriNet};
 
 #[repr(C)]
 pub struct UpdateMarking {
@@ -63,12 +63,16 @@ impl Simulation {
         put_marking.iter_mut().for_each(|(_, v)| *v = 0);
 
         for (index, _) in self.net().transitions.iter() {
-            let input = self.net().connections
+            let input = self
+                .net()
+                .connections
                 .iter()
                 .filter(|c| c.second() == *index)
                 .collect::<Vec<_>>();
 
-            let output = self.net().connections
+            let output = self
+                .net()
+                .connections
                 .iter()
                 .filter(|c| c.first() == *index)
                 .collect::<Vec<_>>();
@@ -84,10 +88,7 @@ impl Simulation {
             }
 
             if can_fire {
-                let max_take = input.iter()
-                    .map(|c| c.weight())
-                    .max()
-                    .unwrap_or(0);
+                let max_take = input.iter().map(|c| c.weight()).max().unwrap_or(0);
 
                 for connection in input.iter() {
                     *take_marking.get_mut(&connection.first()).unwrap() += max_take;
@@ -136,7 +137,10 @@ pub unsafe extern "C" fn simulation_simulate(simulation: *mut Simulation) -> i32
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn simulation_markers(simulation: *const Simulation, index: VertexIndex) -> usize {
+pub unsafe extern "C" fn simulation_markers(
+    simulation: *const Simulation,
+    index: VertexIndex,
+) -> usize {
     let simulation = &*simulation;
     *simulation.marking.get(&index).unwrap()
 }
@@ -148,13 +152,19 @@ pub unsafe extern "C" fn simulation_cycles(simulation: *const Simulation) -> usi
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn simulation_fired(simulation: *const Simulation, fired: *mut CVec<VertexIndex>) {
+pub unsafe extern "C" fn simulation_fired(
+    simulation: *const Simulation,
+    fired: *mut CVec<VertexIndex>,
+) {
     let simulation = &*simulation;
     std::ptr::write_unaligned(fired, CVec::from(simulation.fired.clone()));
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn simulation_is_fired(simulation: *const Simulation, transition: VertexIndex) -> bool {
+pub unsafe extern "C" fn simulation_is_fired(
+    simulation: *const Simulation,
+    transition: VertexIndex,
+) -> bool {
     let simulation = &*simulation;
     simulation.fired.contains(&transition)
 }

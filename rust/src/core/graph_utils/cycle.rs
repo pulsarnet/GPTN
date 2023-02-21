@@ -1,12 +1,12 @@
-use std::collections::HashMap;
-use net::PetriNet;
 use net::vertex::VertexIndex;
+use net::PetriNet;
+use std::collections::HashMap;
 
 #[derive(Debug, PartialEq)]
 enum DFSVertexState {
     NotVisited,
     InStack,
-    Done
+    Done,
 }
 
 #[derive(Debug)]
@@ -35,11 +35,12 @@ impl NetCycles {
         NetCycles { cycles }
     }
 
-    fn process_dfs_tree(net: &PetriNet,
-                        stack: &mut Vec<VertexIndex>,
-                        visited: &mut HashMap<VertexIndex, DFSVertexState>,
-                        cycles: &mut Vec<Vec<VertexIndex>>,)
-    {
+    fn process_dfs_tree(
+        net: &PetriNet,
+        stack: &mut Vec<VertexIndex>,
+        visited: &mut HashMap<VertexIndex, DFSVertexState>,
+        cycles: &mut Vec<Vec<VertexIndex>>,
+    ) {
         for vert in net.adjacent(stack[stack.len() - 1]) {
             match visited[&vert] {
                 DFSVertexState::InStack => {
@@ -54,12 +55,12 @@ impl NetCycles {
                         cycles.last_mut().unwrap().push(vertex);
                         stack.push(vertex);
                     }
-                },
+                }
                 DFSVertexState::NotVisited => {
                     stack.push(vert);
                     *visited.get_mut(&vert).unwrap() = DFSVertexState::InStack;
                     NetCycles::process_dfs_tree(net, stack, visited, cycles);
-                },
+                }
                 DFSVertexState::Done => {}
             }
         }
@@ -68,7 +69,8 @@ impl NetCycles {
     }
 
     pub fn get_longest(&self) -> Option<&[VertexIndex]> {
-        self.cycles.iter()
+        self.cycles
+            .iter()
             .max_by(|a, b| a.len().cmp(&b.len()))
             .map(|v| v.as_slice())
     }

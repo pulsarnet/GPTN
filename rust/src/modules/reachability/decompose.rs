@@ -1,5 +1,5 @@
 use nalgebra::DMatrix;
-use ::{PetriNet, Vertex};
+use {PetriNet, Vertex};
 
 pub struct PrimitiveDecomposition {
     net: PetriNet,
@@ -12,22 +12,31 @@ pub struct PrimitiveDecomposition {
 
 impl PrimitiveDecomposition {
     pub fn new(mut net: PetriNet) -> Result<Self, ()> {
-
         let positions_count = net.positions.len();
         let transitions_count = net.transitions.len();
 
-        if positions_count > 2 *  transitions_count {
-            return Err(())
+        if positions_count > 2 * transitions_count {
+            return Err(());
         }
 
         // Добавим эквивалентные позиции
         let mut need = 2 * transitions_count - positions_count;
         if need > 0 {
             // Получим внутренние позиции
-            let filter = net.positions.iter().filter(|(index, _)| {
-                net.connections.iter().find(|connection| connection.first().eq(index)).is_some()
-                && net.connections.iter().find(|connection| connection.second().eq(index)).is_some()
-            })
+            let filter = net
+                .positions
+                .iter()
+                .filter(|(index, _)| {
+                    net.connections
+                        .iter()
+                        .find(|connection| connection.first().eq(index))
+                        .is_some()
+                        && net
+                            .connections
+                            .iter()
+                            .find(|connection| connection.second().eq(index))
+                            .is_some()
+                })
                 .take(need)
                 .map(|(index, position)| (index.clone(), position.clone()))
                 .collect::<Vec<_>>();
@@ -46,9 +55,12 @@ impl PrimitiveDecomposition {
                 let new_index = new_position.index();
 
                 net.insert_position(new_position);
-                let connections = net.connections.iter().filter(|connection| {
-                    connection.first().eq(index) || connection.second().eq(index)
-                })
+                let connections = net
+                    .connections
+                    .iter()
+                    .filter(|connection| {
+                        connection.first().eq(index) || connection.second().eq(index)
+                    })
                     .cloned()
                     .collect::<Vec<_>>();
 
@@ -102,7 +114,6 @@ impl PrimitiveDecomposition {
             }
         }
 
-
         let c_input = DMatrix::<i32>::zeros(net.positions.len(), net.positions.len());
         let c_output = DMatrix::<i32>::zeros(net.positions.len(), net.positions.len());
         // Вычислим тензоры C(I) и C(O)
@@ -125,12 +136,17 @@ impl PrimitiveDecomposition {
             input_tensor: c_input,
             output_tensor: c_output,
             inverse_input_tensor: e_input,
-            inverse_output_tensor: e_output
+            inverse_output_tensor: e_output,
         })
     }
 }
 
-fn khun_algorithnm(graph: &Vec<Vec<usize>>, mt: &mut Vec<i32>, used: &mut Vec<bool>, vertex: usize) -> bool {
+fn khun_algorithnm(
+    graph: &Vec<Vec<usize>>,
+    mt: &mut Vec<i32>,
+    used: &mut Vec<bool>,
+    vertex: usize,
+) -> bool {
     if used[vertex] {
         return false;
     }
@@ -148,7 +164,6 @@ fn khun_algorithnm(graph: &Vec<Vec<usize>>, mt: &mut Vec<i32>, used: &mut Vec<bo
 }
 
 fn simplify_matrix(matrix: DMatrix<i32>) -> Option<DMatrix<i32>> {
-
     // // Объявляем правильную матрицу с -1 и 1
     // let mut correct_matrix = DMatrix::from_element(matrix.nrows(), matrix.ncols(), 0);
     // for row in 0..correct_matrix.nrows() {
@@ -195,7 +210,6 @@ fn simplify_matrix(matrix: DMatrix<i32>) -> Option<DMatrix<i32>> {
     // let mut counter = 0;
     // recursive_choice_not_in_choice(&mut candidate_rows, &mut result_rows, 0, &mut counter);
 
-
     // Khun solution
     let mut mt = vec![-1; matrix.nrows()];
     let mut used = vec![false; matrix.nrows()];
@@ -226,7 +240,6 @@ fn simplify_matrix(matrix: DMatrix<i32>) -> Option<DMatrix<i32>> {
     }
 
     Some(result_matrix)
-
 }
 
 #[cfg(test)]
@@ -235,14 +248,11 @@ mod tests {
 
     #[test]
     fn test_simplify_matrix() {
-        let matrix = DMatrix::from_row_slice(6, 3, &[
-            -1,  0,  0,
-             1,  1,  1,
-             1, -1,  0,
-             0, -1, -1,
-             0,  1,  0,
-             0,  0,  1,
-        ]);
+        let matrix = DMatrix::from_row_slice(
+            6,
+            3,
+            &[-1, 0, 0, 1, 1, 1, 1, -1, 0, 0, -1, -1, 0, 1, 0, 0, 0, 1],
+        );
 
         let result = simplify_matrix(matrix);
         println!("{}", result.clone().unwrap());

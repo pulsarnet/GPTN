@@ -1,8 +1,8 @@
-use std::{mem, ptr};
-use net::Connection;
-use ::{PetriNet, Vertex};
 use crate::modules::reachability::Marking;
 use net::vertex::VertexIndex;
+use net::Connection;
+use std::{mem, ptr};
+use {PetriNet, Vertex};
 
 #[repr(C)]
 pub struct CVec<T> {
@@ -25,21 +25,13 @@ impl<T> From<Vec<T>> for CVec<T> {
 impl<T> Into<Vec<T>> for CVec<T> {
     fn into(self) -> Vec<T> {
         let mut this = mem::ManuallyDrop::new(self);
-        unsafe {
-            Vec::from_raw_parts(
-                this.ptr.as_mut(),
-                this.len,
-                this.cap
-            )
-        }
+        unsafe { Vec::from_raw_parts(this.ptr.as_mut(), this.len, this.cap) }
     }
 }
 
 impl<T> Drop for CVec<T> {
     fn drop(&mut self) {
-        unsafe {
-            drop::<Vec<T>>(ptr::read(self).into())
-        }
+        unsafe { drop::<Vec<T>>(ptr::read(self).into()) }
     }
 }
 
