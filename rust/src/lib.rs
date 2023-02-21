@@ -11,6 +11,7 @@ extern crate indexmap;
 extern crate ndarray;
 extern crate num_traits;
 extern crate num;
+extern crate rand;
 
 
 use std::collections::{HashMap, HashSet};

@@ -37,6 +37,15 @@ impl VertexIndex {
     }
 }
 
+impl Display for VertexIndex {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self.type_ {
+            VertexType::Position => write!(f, "p{}", self.id),
+            VertexType::Transition => write!(f, "t{}", self.id),
+        }
+    }
+}
+
 #[derive(Clone, Default)]
 pub struct Vertex {
     type_: VertexType,
