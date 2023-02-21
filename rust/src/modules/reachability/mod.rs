@@ -7,8 +7,8 @@ use CVec;
 use net::PetriNet;
 use net::vertex::VertexIndex;
 
-mod decompose;
-mod simulation;
+#[allow(unused)] mod decompose;
+#[allow(unused)] mod simulation;
 
 pub use self::simulation::FiredTransition;
 
@@ -237,9 +237,9 @@ impl Reachability {
                     // Если на пути от корневой вершины к X существует вершина Y с
                     // M(Y) < M(R), где M(R) удовлетворяет M(X)->(transition)->M(R),
                     // и M(Y)[Pj] < M(X)[Pj], то вершина M(Z)[Pj] = W
-                    let mut select_clone = select.clone();
+                    let select_clone = select.clone();
                     let mut index = Some((transition.clone(), marking));
-                    while let Some((t, i)) = index {
+                    while let Some((_, i)) = index {
                         index = self.markings[i].prev;
 
                         // if t != *transition {

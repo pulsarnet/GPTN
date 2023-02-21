@@ -3,7 +3,6 @@
 // extern "C" unsigned long position_index(FFIPosition*);
 // extern "C" void remove_position(FFIPosition*);
 
-use nalgebra::DMatrix;
 use ffi::vec::CVec;
 use ::{PetriNet, Vertex};
 use ffi::matrix::CNamedMatrix;

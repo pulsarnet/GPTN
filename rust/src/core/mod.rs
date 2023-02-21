@@ -7,7 +7,6 @@ pub use self::counter::*;
 pub use self::utils::*;
 pub use self::mesh::*;
 pub use self::graph_utils::*;
-
 use crate::net::Vertex;
 use nalgebra::DMatrix;
 use std::cmp::max;

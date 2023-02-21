@@ -28,17 +28,17 @@ impl NetCycles {
             if visited[&vert] == DFSVertexState::NotVisited {
                 let mut stack = vec![vert];
                 *visited.get_mut(&vert).unwrap() = DFSVertexState::InStack;
-                NetCycles::processDFSTree(net, &mut stack, &mut visited, &mut cycles);
+                NetCycles::process_dfs_tree(net, &mut stack, &mut visited, &mut cycles);
             }
         }
 
         NetCycles { cycles }
     }
 
-    fn processDFSTree(net: &PetriNet,
-                      stack: &mut Vec<VertexIndex>,
-                      visited: &mut HashMap<VertexIndex, DFSVertexState>,
-                      cycles: &mut Vec<Vec<VertexIndex>>,)
+    fn process_dfs_tree(net: &PetriNet,
+                        stack: &mut Vec<VertexIndex>,
+                        visited: &mut HashMap<VertexIndex, DFSVertexState>,
+                        cycles: &mut Vec<Vec<VertexIndex>>,)
     {
         for vert in net.adjacent(stack[stack.len() - 1]) {
             match visited[&vert] {
@@ -58,7 +58,7 @@ impl NetCycles {
                 DFSVertexState::NotVisited => {
                     stack.push(vert);
                     *visited.get_mut(&vert).unwrap() = DFSVertexState::InStack;
-                    NetCycles::processDFSTree(net, stack, visited, cycles);
+                    NetCycles::process_dfs_tree(net, stack, visited, cycles);
                 },
                 DFSVertexState::Done => {}
             }

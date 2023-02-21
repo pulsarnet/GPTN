@@ -1,4 +1,4 @@
-use nalgebra::{DMatrix, Dynamic, MatrixSlice, U1};
+use nalgebra::DMatrix;
 use ::{PetriNet, Vertex};
 
 pub struct PrimitiveDecomposition {

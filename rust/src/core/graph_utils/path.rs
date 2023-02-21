@@ -1,7 +1,6 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 use std::iter::FromIterator;
-use ndarray::s;
-use rand::Rng;
+
 use net::PetriNet;
 use net::vertex::VertexIndex;
 
@@ -51,7 +50,7 @@ impl NetPaths {
         let mut stack = vec![];
         for vert in input_positions.iter() {
             visited.values_mut().for_each(|m| *m = NodeMark::None);
-            if let Err(_) = NetPaths::processDFS(net, *vert, &mut visited, &mut paths, &mut stack) {
+            if let Err(_) = NetPaths::process_dfs(net, *vert, &mut visited, &mut paths, &mut stack) {
                 log::error!("Cycle detected");
                 return NetPaths::default()
             }
@@ -60,11 +59,11 @@ impl NetPaths {
         NetPaths { paths }
     }
 
-    pub fn processDFS(net: &PetriNet,
-                      vertex: VertexIndex,
-                      visited: &mut HashMap<VertexIndex, NodeMark>,
-                      paths: &mut Vec<Vec<VertexIndex>>,
-                      stack: &mut Vec<VertexIndex>) -> Result<(), ()>
+    pub fn process_dfs(net: &PetriNet,
+                       vertex: VertexIndex,
+                       visited: &mut HashMap<VertexIndex, NodeMark>,
+                       paths: &mut Vec<Vec<VertexIndex>>,
+                       stack: &mut Vec<VertexIndex>) -> Result<(), ()>
     {
         if visited[&vertex] == NodeMark::Permanent {
             return Ok(())
@@ -84,7 +83,7 @@ impl NetPaths {
 
         *visited.get_mut(&vertex).unwrap() = NodeMark::Temporary;
         for vert in adjacent {
-            NetPaths::processDFS(net, vert, visited, paths, stack)?;
+            NetPaths::process_dfs(net, vert, visited, paths, stack)?;
         }
 
         *visited.get_mut(&vertex).unwrap() = NodeMark::Permanent;

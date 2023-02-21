@@ -1,5 +1,4 @@
 use ::{DecomposeContext, PetriNet};
-
 pub mod net;
 pub mod vec;
 pub mod vertex;
