@@ -25,7 +25,7 @@ use log::LevelFilter;
 use nalgebra::DMatrix;
 use ndarray::{Array1, Array2};
 use ndarray_linalg::Solve;
-use core::{Counter, logical_column_add, logical_row_add};
+use core::{Counter, logical_column_add, logical_row_add, SetPartitionMesh};
 use ffi::vec::CVec;
 
 
@@ -270,6 +270,7 @@ impl DecomposeContextBuilder {
             &mu
         );
 
+        let (pos, tran) = (positions.len(), transitions.len());
         DecomposeContext {
             parts,
             positions,
@@ -278,7 +279,7 @@ impl DecomposeContextBuilder {
             primitive_matrix: adjacency_primitive,
             linear_base_fragments_matrix: (CMatrix::from(linear_base_fragments_matrix.0), CMatrix::from(linear_base_fragments_matrix.1)),
             c_matrix,
-            programs: vec![]
+            programs: SetPartitionMesh::new(pos, tran),
         }
     }
 
@@ -292,7 +293,7 @@ pub struct DecomposeContext {
     pub primitive_matrix: (DMatrix<f64>, DMatrix<f64>),
     pub linear_base_fragments_matrix: (CMatrix, CMatrix),
 
-    pub programs: Vec<SynthesisProgram>,
+    pub programs: SetPartitionMesh,
 
     pub c_matrix: DMatrix<f64>,
 }
@@ -315,44 +316,44 @@ impl DecomposeContext {
 
         let parts = PetriNetVec(parts);
 
-        let mut res = DecomposeContextBuilder::new(parts).build();
-        res.add_synthesis_programs();
-        res
+        DecomposeContextBuilder::new(parts).build()
+        //res.add_synthesis_programs();
+        //res
     }
 
-    pub fn add_synthesis_programs(&mut self) {
-        let transitions = self.transitions.len();
-        let positions = self.positions.len();
-
-        let mut t_counter = Counter::new(transitions);
-        let mut t_programs = vec![];
-        while let Some(c) = t_counter.next() {
-            t_programs.push(c);
-        }
-
-        let mut p_counter = Counter::new(positions);
-        let mut p_programs = vec![];
-        while let Some(c) = p_counter.next() {
-            p_programs.push(c);
-        }
-
-        println!("T: {}", t_programs.len());
-        println!("P: {}", p_programs.len());
-
-        for t_program in t_programs {
-            for p_program in p_programs.iter() {
-                let mut program = SynthesisProgram::new(transitions + positions, transitions);
-                t_program.iter()
-                    .chain(p_program.iter())
-                    .enumerate()
-                    .for_each(|(i, v)| program.data[i] = *v);
-
-                self.programs.push(program);
-
-                //synthesis_program(self, self.programs.len() - 1);
-            }
-        }
-    }
+    // pub fn add_synthesis_programs(&mut self) {
+    //     let transitions = self.transitions.len();
+    //     let positions = self.positions.len();
+    //
+    //     let mut t_counter = Counter::new(transitions);
+    //     let mut t_programs = vec![];
+    //     while let Some(c) = t_counter.next() {
+    //         t_programs.push(c);
+    //     }
+    //
+    //     let mut p_counter = Counter::new(positions);
+    //     let mut p_programs = vec![];
+    //     while let Some(c) = p_counter.next() {
+    //         p_programs.push(c);
+    //     }
+    //
+    //     println!("T: {}", t_programs.len());
+    //     println!("P: {}", p_programs.len());
+    //
+    //     for t_program in t_programs {
+    //         for p_program in p_programs.iter() {
+    //             let mut program = SynthesisProgram::new(transitions + positions, transitions);
+    //             t_program.iter()
+    //                 .chain(p_program.iter())
+    //                 .enumerate()
+    //                 .for_each(|(i, v)| program.data[i] = *v);
+    //
+    //             self.programs.push(program);
+    //
+    //             //synthesis_program(self, self.programs.len() - 1);
+    //         }
+    //     }
+    // }
 
     pub fn marking(&self) -> DMatrix<f64> {
         let mut marking = DMatrix::zeros(self.positions.len(), 1);
@@ -406,31 +407,40 @@ impl DecomposeContext {
         &self.transitions
     }
 
-    pub fn programs(&self) -> &Vec<SynthesisProgram> {
+    pub fn programs(&self) -> &SetPartitionMesh {
         &self.programs
     }
 
     pub fn add_program(&mut self) {
-        self.programs.push(SynthesisProgram::new(self.positions().len() + self.transitions().len(), self.transitions().len()))
+        //self.programs.push(SynthesisProgram::new(self.positions().len() + self.transitions().len(), self.transitions().len()))
     }
 
     pub fn remove_program(&mut self, index: usize) {
-        self.programs.remove(index);
+        //self.programs.remove(index);
     }
 
     pub fn program_value(&self, program: usize, index: usize) -> usize {
-        self.programs()[program].data[index] as usize
+        //self.programs()[program].data[index] as usize
+        0
     }
 
     pub fn set_program_value(&mut self, program: usize, index: usize, value: usize) {
-        self.programs[program].data[index] = value as u16;
+        //self.programs[program].data[index] = value as u16;
     }
 
     pub fn program_equation(&self, index: usize) -> String {
         let pos_indexes_vec = self.positions();
         let tran_indexes_vec = self.transitions();
-        let (t_sets, p_sets) = self.programs[index].sets(pos_indexes_vec, tran_indexes_vec);
+
+        let program = SynthesisProgram::new_with(
+            self.programs.get_partition(index),
+            tran_indexes_vec.len()
+        );
+
+        let (t_sets, p_sets) = program.sets(pos_indexes_vec, tran_indexes_vec);
+
         log::error!("{:?}\n{:?}\n{:?}\n{:?}", t_sets, p_sets, pos_indexes_vec, tran_indexes_vec);
+
         let mut result = String::new();
         for set in t_sets {
             if set.is_empty() {
@@ -630,6 +640,14 @@ impl SynthesisProgram {
         }
     }
 
+    pub fn new_with(data: Vec<u16>, transitions: usize) -> Self {
+        SynthesisProgram {
+            data,
+            transitions,
+            //net_after: None
+        }
+    }
+
     pub fn transitions_united(&self) -> usize {
         let mut counts = HashMap::with_capacity(self.transitions);
         self.data.iter().take(self.transitions).for_each(|el| {
@@ -730,35 +748,36 @@ extern "C" fn synthesis_program_header_name(ctx: &mut DecomposeContext, index: u
 
 #[no_mangle]
 extern "C" fn synthesis_program_equations(ctx: &mut DecomposeContext, index: usize) -> *const c_char {
-    match ctx.programs.get(index) {
-        Some(_) => {
-            let c_str = CString::new(ctx.program_equation(index)).unwrap();
-            let pointer = c_str.as_ptr();
-            std::mem::forget(c_str);
-            pointer
-        },
-        None => std::ptr::null()
-    }
+    let c_str = CString::new(ctx.program_equation(index)).unwrap();
+    let pointer = c_str.as_ptr();
+    std::mem::forget(c_str);
+    pointer
 }
 
 #[no_mangle]
 extern "C" fn synthesis_programs(ctx: &DecomposeContext) -> usize {
-    ctx.programs().len()
+    ctx.programs().max()
 }
 
 #[no_mangle]
 extern "C" fn synthesis_program_size(ctx: &DecomposeContext, index: usize) -> usize {
-    ctx.programs()[index].data.len()
+    ctx.programs().len()
 }
 
 #[no_mangle]
 extern "C" fn synthesis_program_transition_united(ctx: &DecomposeContext, index: usize) -> usize {
-    ctx.programs()[index].transitions_united()
+    SynthesisProgram::new_with(
+        ctx.programs.get_partition(index),
+        ctx.transitions.len(),
+    ).transitions_united()
 }
 
 #[no_mangle]
 extern "C" fn synthesis_program_position_united(ctx: &DecomposeContext, index: usize) -> usize {
-    ctx.programs()[index].positions_united()
+    SynthesisProgram::new_with(
+        ctx.programs.get_partition(index),
+        ctx.transitions.len(),
+    ).positions_united()
 }
 
 #[no_mangle]

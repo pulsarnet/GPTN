@@ -15,6 +15,7 @@ use std::rc::Rc;
 use ::{DecomposeContext};
 use net::vertex::{VertexIndex, VertexType};
 use indexmap::map::IndexMap;
+use SynthesisProgram;
 use crate::ffi::matrix::CNamedMatrix;
 
 #[derive(Debug)]
@@ -869,7 +870,13 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
 
     let mut markers = programs.marking();
 
-    let (t_sets, p_sets) = programs.programs[index].sets(&pos_indexes_vec, &tran_indexes_vec);
+    let program = programs.programs.get_partition(index);
+    let program = SynthesisProgram::new_with(
+        programs.programs.get_partition(index),
+        tran_indexes_vec.len(),
+    );
+
+    let (t_sets, p_sets) = program.sets(&pos_indexes_vec, &tran_indexes_vec);
     let (t_sets_size, p_sets_size) = (t_sets.len(), p_sets.len());
 
     log::error!("PSET => {:?}", p_sets);

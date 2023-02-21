@@ -1,8 +1,10 @@
 mod counter;
 mod utils;
+mod mesh;
 
 pub use self::counter::*;
 pub use self::utils::*;
+pub use self::mesh::*;
 
 use crate::net::Vertex;
 use nalgebra::DMatrix;
