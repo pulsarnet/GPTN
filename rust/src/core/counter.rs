@@ -7,6 +7,7 @@ pub struct Counter {
 }
 
 impl Counter {
+    #[allow(unused)]
     pub fn new(max: usize) -> Counter {
         Counter {
             a: vec![0; max],
