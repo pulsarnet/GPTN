@@ -4,7 +4,9 @@
 #include <QFontMetrics>
 #include "../../ffi/simulation.h"
 
-Position::Position(const QPointF& origin, ffi::PetriNet* net, ffi::VertexIndex position, QGraphicsItem* parent) : PetriObject(net, position, parent) {
+Position::Position(const QPointF& origin, ffi::PetriNet* net, ffi::VertexIndex position, QGraphicsItem* parent)
+    : PetriObject(net, position, parent)
+{
     this->setPos(origin);
 }
 
@@ -20,7 +22,7 @@ Position::Position(const QPointF &origin,
 }
 
 QRectF Position::boundingRect() const {
-    return shape().boundingRect().adjusted(-2, -20, 2, 20);
+    return shape().boundingRect().normalized();
 }
 
 void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
@@ -32,20 +34,11 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     auto rect = this->boundingRect();
 
     painter->save();
+    painter->setBrush(Qt::NoBrush);
     painter->setPen(QPen(isSelected() ? Qt::green : painter->pen().color(), penWidth));
     painter->drawEllipse(rect.center(), radius - penWidth / 2., radius - penWidth / 2.);
 
-    auto name = QString("P%1%2")
-            .arg(this->index())
-            .arg(this->vertex()->parent() == 0 ? "" : QString(".%1").arg(this->vertex()->parent()));
-
-    QFontMetricsF metric = QFontMetricsF(painter->font());
-    QSizeF nameSize = metric.size(0, name);
-    painter->drawText(rect.center().x() - nameSize.width() / 2
-                      , rect.center().y() - radius - 5
-                      , name);
-
-    int markers = 0;
+    int markers;
     if (simulation) {
         markers = simulation->markers(this->vertexIndex());
     } else {
@@ -55,7 +48,7 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     if (markers == 1) {
         painter->save();
         painter->setBrush(QBrush(Qt::black));
-        painter->drawEllipse(boundingRect().center(), 3., 3.);
+        painter->drawEllipse(rect.center(), 3., 3.);
         painter->restore();
     } else if (markers == 2) {
         painter->save();

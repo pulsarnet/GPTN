@@ -230,6 +230,5 @@ void ArrowLine::onRemoveFromScene() {
 }
 
 void ArrowLine::hoverEnterEvent(QGraphicsSceneHoverEvent *event) {
-    qDebug() << "Hover line" << event->scenePos();
     QGraphicsItem::hoverEnterEvent(event);
 }

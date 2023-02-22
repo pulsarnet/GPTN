@@ -10,7 +10,11 @@
 #include "../../ffi/rust.h"
 
 
-PetriObject::PetriObject(ffi::PetriNet* net, ffi::VertexIndex _vertex, QGraphicsItem* parent) : QGraphicsItem(parent), m_net(net), m_vertex(_vertex) {
+PetriObject::PetriObject(ffi::PetriNet* net, ffi::VertexIndex _vertex, QGraphicsItem* parent)
+    : QGraphicsItem(parent),
+    m_net(net),
+    m_vertex(_vertex)
+{
     setFlags(ItemIsMovable | ItemSendsGeometryChanges | ItemIsSelectable | ItemUsesExtendedStyleOption);
 
     m_labelItem = new QGraphicsTextItem(vertex()->get_name(false), this);
@@ -21,6 +25,17 @@ PetriObject::PetriObject(ffi::PetriNet* net, ffi::VertexIndex _vertex, QGraphics
 
     connect(m_labelItem->document(), &QTextDocument::contentsChanged, this, &PetriObject::labelChanged);
 
+    auto name = QString("%1%2%3")
+            .arg(this->vertex()->type() == ffi::VertexType::Position ? "P" : "T")
+            .arg(this->index())
+            .arg(this->vertex()->parent() == 0 ? "" : QString(".%1").arg(this->vertex()->parent()));
+
+    m_name = new QGraphicsTextItem(name, this);
+    m_name->setFlags(m_labelItem->flags() & 0);
+    m_name->setCacheMode(DeviceCoordinateCache);
+    m_name->setAcceptHoverEvents(false);
+
+    setCacheMode(DeviceCoordinateCache);
     setAcceptDrops(true);
 }
 
@@ -113,23 +128,20 @@ uint64_t PetriObject::index() const {
     return vertex()->index().id;
 }
 
-void PetriObject::connectTo(ffi::PetriNet *net, PetriObject *other) const {
-    net->connect(vertex(), other->vertex());
-}
-
 ffi::Vertex *PetriObject::vertex() const {
     return m_net->getVertex(m_vertex);
 }
 
 void PetriObject::updateLabelPosition() {
-    qDebug() << "Here";
     QRectF labelRect = m_labelItem->boundingRect();
-    qDebug() << "Here 2";
-    //int w = labelRect.width();
-    //int h = labelRect.height();
+    QRectF nameRect = m_name->boundingRect();
+    QRectF objectRect = boundingRect();
 
-    QRectF rect = boundingRect();
-    m_labelItem->setPos(rect.topLeft() - QPointF(labelRect.width(), 0));
+    m_labelItem->setPos(objectRect.topLeft() - QPointF(labelRect.width(), labelRect.height()));
+
+    auto offsetX = nameRect.width() / 2.;
+    auto offsetY = objectRect.height() / 2. + nameRect.height();
+    m_name->setPos(objectRect.center() + QPointF(-offsetX,  -offsetY));
 }
 
 void PetriObject::updateConnections() {

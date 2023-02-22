@@ -17,12 +17,6 @@ Transition::Transition(const QPointF& origin,
     , m_origin(origin)
 {
     this->setPos(m_origin);
-    auto name = QString("T%1%2")
-            .arg(this->index())
-            .arg(this->vertex()->parent() == 0 ? "" : QString(".%1").arg(this->vertex()->parent()));
-
-    m_label = new QGraphicsTextItem(name, this);
-    itemChange(ItemRotationHasChanged, {});
 }
 
 Transition::Transition(const QPointF& origin,
@@ -35,17 +29,12 @@ Transition::Transition(const QPointF& origin,
         , m_state(state)
 {
     this->setPos(m_origin);
-    auto name = QString("T%1%2")
-            .arg(this->index())
-            .arg(this->vertex()->parent() == 0 ? "" : QString(".%1").arg(this->vertex()->parent()));
-
-    m_label = new QGraphicsTextItem(name, this);
-    itemChange(ItemRotationHasChanged, {});
 }
 
 
 QRectF Transition::boundingRect() const {
-    return {-10, -30, 20, 60};
+    return !m_rotated ? QRectF(-10, -30, 20, 60) : QRectF(-30, -10, 60, 20);
+
 }
 
 void Transition::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
@@ -89,7 +78,6 @@ QPointF getIntersection(qreal dx, qreal dy, qreal cx, qreal cy, qreal width, qre
 
 QPointF Transition::connectionPos(PetriObject* to, bool reverse) {
 
-
     qreal w = QGraphicsItem::sceneBoundingRect().width() / 2.;
     qreal h = QGraphicsItem::sceneBoundingRect().height() / 2.;
 
@@ -112,27 +100,6 @@ QString Transition::name() const {
     return QString("t%1").arg(index());
 }
 
-QVariant Transition::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant &value) {
-    if (change == ItemRotationHasChanged) {
-        setLabelTransformation();
-    }
-    return PetriObject::itemChange(change, value);
-}
-
-void Transition::setLabelTransformation() {
-    qreal angle = rotation();
-
-    QFontMetricsF metrics = QFontMetricsF(scene() ? scene()->font() : QFont());
-    QSizeF nameSize = metrics.size(0, m_label->toPlainText());
-    if (angle != 0) {
-        m_label->setRotation(-angle);
-        m_label->setPos(-32, boundingRect().y() + boundingRect().height() / 2 + nameSize.width() / 2 + 2);
-    } else {
-        m_label->setPos(boundingRect().center().x() - nameSize.width() / 2 - 2, -60);
-        m_label->setRotation(-angle);
-    }
-}
-
 void Transition::onAddToScene(GraphicScene* scene) {
     auto net = scene->net();
 
@@ -153,4 +120,13 @@ void Transition::onRemoveFromScene() {
     m_state->parent = (int)vertex->parent();
 
     net->remove_transition(vertex);
+}
+
+QVariant Transition::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant &value) {
+    if (change == ItemRotationChange) {
+        m_rotated = !m_rotated;
+        updateLabelPosition();
+        return 0;
+    }
+    return PetriObject::itemChange(change, value);
 }

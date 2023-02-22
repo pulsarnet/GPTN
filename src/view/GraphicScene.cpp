@@ -9,6 +9,7 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QUndoStack>
+#include <QPixmapCache>
 #include "Commands.h"
 #include "GraphicScene.h"
 #include "elements/petri_object.h"

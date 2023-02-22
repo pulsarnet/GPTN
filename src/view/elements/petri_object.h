@@ -58,8 +58,6 @@ public:
 
     virtual bool allowConnection(PetriObject* other) = 0;
 
-    void connectTo(ffi::PetriNet* net, PetriObject* other) const;
-
     ffi::Vertex* vertex() const;
     ffi::VertexIndex vertexIndex() const;
 
@@ -103,6 +101,7 @@ protected:
     ffi::VertexIndex m_vertex;
 
     QGraphicsTextItem* m_labelItem;
+    QGraphicsTextItem* m_name;
 
 };
 

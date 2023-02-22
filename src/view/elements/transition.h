@@ -48,22 +48,18 @@ public:
 
     virtual QString name() const override;
 
-    QVariant itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant &value) override;
-
 protected:
 
     void onAddToScene(GraphicScene*) override;
     void onRemoveFromScene() override;
 
-private:
-
-    void setLabelTransformation();
+    QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
 
 private:
 
     QPointF m_origin;
-    QGraphicsTextItem* m_label;
     TransitionState* m_state = nullptr;
+    bool m_rotated = false;
 };
 
 #endif //FFI_RUST_TRANSITION_H
