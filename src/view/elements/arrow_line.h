@@ -43,13 +43,9 @@ public:
 
     ffi::Connection* netItem(bool reverse = false);
 
-    PetriObject* from() {
-        return m_from;
-    }
+    PetriObject* from() { return m_from; }
 
-    PetriObject* to() {
-        return m_to;
-    }
+    PetriObject* to() { return m_to; }
 
     void updateConnection();
 
@@ -59,6 +55,8 @@ protected:
 
     void onAddToScene(GraphicScene* scene);
     void onRemoveFromScene();
+
+    void hoverEnterEvent(QGraphicsSceneHoverEvent *event) override;
 
 private:
 

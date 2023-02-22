@@ -178,6 +178,8 @@ void Position::onAddToScene(GraphicScene* scene) {
         position->set_markers(m_state->markers);
         position->set_parent({ffi::VertexType::Position, (ffi::usize)m_state->parent});
     }
+
+    PetriObject::onAddToScene(scene);
 }
 
 void Position::onRemoveFromScene() {

@@ -140,6 +140,8 @@ void Transition::onAddToScene(GraphicScene* scene) {
         auto transition = net->add_transition_with(m_vertex.id);
         transition->set_parent({ffi::VertexType::Transition, (ffi::usize)m_state->parent});
     }
+
+    PetriObject::onAddToScene(scene);
 }
 
 void Transition::onRemoveFromScene() {

@@ -13,6 +13,7 @@ ArrowLine::ArrowLine(PetriObject* from, const QLineF &line, QGraphicsItem* paren
     , m_from(from)
 {
     setFlags(ItemIsSelectable);
+    setAcceptHoverEvents(true);
 }
 
 ArrowLine::ArrowLine(PetriObject *from, PetriObject *to, QGraphicsItem *parent)
@@ -20,6 +21,7 @@ ArrowLine::ArrowLine(PetriObject *from, PetriObject *to, QGraphicsItem *parent)
     , m_from(from)
 {
     setTo(to);
+    setAcceptHoverEvents(true);
 }
 
 ArrowLine::ArrowLine(PetriObject *from, PetriObject *to, ArrowLine::ConnectionState *state, QGraphicsItem *parent)
@@ -28,6 +30,7 @@ ArrowLine::ArrowLine(PetriObject *from, PetriObject *to, ArrowLine::ConnectionSt
     , m_state(state)
 {
     setTo(to);
+    setAcceptHoverEvents(true);
 }
 
 QRectF ArrowLine::boundingRect() const {
@@ -43,6 +46,7 @@ QRectF ArrowLine::boundingRect() const {
         rect.setWidth(rect.width() + 12);
         rect.setHeight(rect.height() + 12);
     }
+
     return rect;
 }
 
@@ -223,4 +227,9 @@ void ArrowLine::onRemoveFromScene() {
     net->remove_connection(m_from->vertex(), m_to->vertex());
     if (m_bidirectional)
         net->remove_connection(m_to->vertex(), m_from->vertex());
+}
+
+void ArrowLine::hoverEnterEvent(QGraphicsSceneHoverEvent *event) {
+    qDebug() << "Hover line" << event->scenePos();
+    QGraphicsItem::hoverEnterEvent(event);
 }

@@ -58,7 +58,7 @@ public:
 
     virtual bool allowConnection(PetriObject* other) = 0;
 
-    void connectTo(ffi::PetriNet* net, PetriObject* other);
+    void connectTo(ffi::PetriNet* net, PetriObject* other) const;
 
     ffi::Vertex* vertex() const;
     ffi::VertexIndex vertexIndex() const;
@@ -68,7 +68,6 @@ public:
         emit update(boundingRect());
     }
 
-    void setLabel(const QString& label);
     QString label() const;
     virtual QString name() const = 0;
 
@@ -92,7 +91,7 @@ protected:
 
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
 
-    virtual void onAddToScene(GraphicScene*) = 0;
+    virtual void onAddToScene(GraphicScene*);
     virtual void onRemoveFromScene() = 0;
 
 protected:

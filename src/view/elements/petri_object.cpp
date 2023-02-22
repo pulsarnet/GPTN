@@ -75,7 +75,6 @@ PetriObject::~PetriObject() {
     for (auto connection : m_connections) {
         //connection->disconnect(net());
     }
-
 }
 
 QVariant PetriObject::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant &value) {
@@ -93,7 +92,6 @@ QVariant PetriObject::itemChange(QGraphicsItem::GraphicsItemChange change, const
         }
     } else if (change == ItemPositionChange && scene()) {
         auto newPosition = value.toPointF();
-        //qDebug() << QApplication::keyboardModifiers();
         if (QApplication::keyboardModifiers() & Qt::ShiftModifier) {
             auto graphicScene = qobject_cast<GraphicScene*>(scene());
             qreal gridSize = 50.;
@@ -107,11 +105,15 @@ QVariant PetriObject::itemChange(QGraphicsItem::GraphicsItemChange change, const
     return QGraphicsItem::itemChange(change, value);
 }
 
+void PetriObject::onAddToScene(GraphicScene *) {
+    updateLabelPosition();
+}
+
 uint64_t PetriObject::index() const {
     return vertex()->index().id;
 }
 
-void PetriObject::connectTo(ffi::PetriNet *net, PetriObject *other) {
+void PetriObject::connectTo(ffi::PetriNet *net, PetriObject *other) const {
     net->connect(vertex(), other->vertex());
 }
 
@@ -120,11 +122,14 @@ ffi::Vertex *PetriObject::vertex() const {
 }
 
 void PetriObject::updateLabelPosition() {
-    int w = m_labelItem->boundingRect().width();
-    int h = m_labelItem->boundingRect().height();
+    qDebug() << "Here";
+    QRectF labelRect = m_labelItem->boundingRect();
+    qDebug() << "Here 2";
+    //int w = labelRect.width();
+    //int h = labelRect.height();
 
     QRectF rect = boundingRect();
-    m_labelItem->setPos(-w - rect.width() / 2 - 8, -h);
+    m_labelItem->setPos(rect.topLeft() - QPointF(labelRect.width(), 0));
 }
 
 void PetriObject::updateConnections() {
@@ -132,7 +137,6 @@ void PetriObject::updateConnections() {
         connection->updateConnection();
     }
 }
-
 
 void PetriObject::labelChanged() {
     this->vertex()->set_name(m_labelItem->document()->toRawText().toLocal8Bit().data());
@@ -146,12 +150,6 @@ void PetriObject::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event) {
 
 QString PetriObject::label() const {
     return m_labelItem->document()->toRawText();
-}
-
-void PetriObject::setLabel(const QString& label) {
-    vertex()->set_name(label.toLocal8Bit().data());
-    m_labelItem->document()->setPlainText(label);
-    updateLabelPosition();
 }
 
 ffi::VertexIndex PetriObject::vertexIndex() const {
