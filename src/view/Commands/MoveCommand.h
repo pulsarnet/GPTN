@@ -10,20 +10,24 @@
 
 class PetriObject;
 
+struct MoveCommandData {
+    PetriObject* item = nullptr;
+    QPointF oldPos;
+    QPointF newPos;
+};
+
 class MoveCommand : public QUndoCommand {
 
 public:
 
-    explicit MoveCommand(PetriObject *item, const QPointF& oldPos, const QPointF& newPos, QUndoCommand *parent = nullptr);
+    explicit MoveCommand(QList<MoveCommandData>&& items, QUndoCommand *parent = nullptr);
 
     void undo() override;
     void redo() override;
 
 private:
 
-    PetriObject* m_item;
-    QPointF m_oldPos;
-    QPointF m_newPos;
+    QList<MoveCommandData> m_items;
 
 };
 

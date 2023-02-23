@@ -108,7 +108,6 @@ QVariant PetriObject::itemChange(QGraphicsItem::GraphicsItemChange change, const
     } else if (change == ItemPositionChange && scene()) {
         auto newPosition = value.toPointF();
         if (QApplication::keyboardModifiers() & Qt::ShiftModifier) {
-            auto graphicScene = qobject_cast<GraphicScene*>(scene());
             qreal gridSize = 50.;
             qreal xV = round(newPosition.x() / gridSize) * gridSize;
             qreal yV = round(newPosition.y() / gridSize) * gridSize;

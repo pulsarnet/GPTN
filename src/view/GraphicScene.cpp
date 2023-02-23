@@ -94,10 +94,13 @@ void GraphicScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
                 // Чтобы получить grabber item
                 QGraphicsScene::mousePressEvent(event);
 
-                if (dynamic_cast<PetriObject*>(mouseGrabberItem())) {
+                if (auto dragged = dynamic_cast<PetriObject*>(mouseGrabberItem())) {
                     m_dragInProgress = true;
-                    m_draggedItem = dynamic_cast<PetriObject*>(mouseGrabberItem());
-                    m_dragItemPos = m_draggedItem->scenePos();
+                    for (auto item : selectedItems()) {
+                        if (auto petriItem = dynamic_cast<PetriObject*>(item)) {
+                            m_draggedItems.push_back({petriItem, petriItem->scenePos()});
+                        }
+                    }
                 }
                 break;
             case A_Rotation:
@@ -140,12 +143,21 @@ void GraphicScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
 void GraphicScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
 
     if (m_dragInProgress) {
-        if (m_draggedItem && m_dragItemPos != m_draggedItem->scenePos()) {
-            m_undoStack->push(new MoveCommand(m_draggedItem, m_dragItemPos, m_draggedItem->scenePos()));
+        if (!m_draggedItems.isEmpty()) {
+            QList<MoveCommandData> data;
+            for (auto& [m_draggedItem, m_dragItemPos] : m_draggedItems) {
+                if (m_draggedItem->scenePos() != m_dragItemPos) {
+                    data.push_back(MoveCommandData{m_draggedItem, m_dragItemPos, m_draggedItem->scenePos()});
+                }
+            }
+
+            if (!data.isEmpty()) {
+                m_undoStack->push(new MoveCommand(std::move(data)));
+            }
         }
 
         m_dragInProgress = false;
-        m_draggedItem = nullptr;
+        m_draggedItems.clear();
         onSceneChanged();
     }
 
@@ -551,7 +563,6 @@ void GraphicScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event) {
     if (m_mod == A_Move) QGraphicsScene::mouseDoubleClickEvent(event);
     else if (m_mod == A_Marker) markPosition(event);
 }
-
 
 void GraphicScene::dotVisualization(char* algorithm) {
 

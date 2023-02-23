@@ -127,8 +127,7 @@ private:
 
     bool m_restore = false;
     bool m_dragInProgress = false;
-    PetriObject* m_draggedItem = nullptr;
-    QPointF m_dragItemPos;
+    QList<QPair<PetriObject*, QPointF>> m_draggedItems;
 
     ffi::Simulation* m_simulation = nullptr;
 

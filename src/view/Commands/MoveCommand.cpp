@@ -3,23 +3,27 @@
 //
 
 #include "MoveCommand.h"
+
+#include <utility>
 #include "../elements/petri_object.h"
 
-MoveCommand::MoveCommand(PetriObject *item, const QPointF& oldPos, const QPointF& newPos, QUndoCommand *parent)
+MoveCommand::MoveCommand(QList<MoveCommandData>&& items, QUndoCommand *parent)
     : QUndoCommand(parent)
-    , m_item(item)
-    , m_oldPos(oldPos)
-    , m_newPos(newPos)
+    , m_items(std::move(items))
 {
 
 }
 
 void MoveCommand::redo() {
-    m_item->setPos(m_newPos);
-    m_item->updateConnections();
+    for (auto& data : m_items) {
+        data.item->setPos(data.newPos);
+        data.item->updateConnections();
+    }
 }
 
 void MoveCommand::undo() {
-    m_item->setPos(m_oldPos);
-    m_item->updateConnections();
+    for (auto& data : m_items) {
+        data.item->setPos(data.oldPos);
+        data.item->updateConnections();
+    }
 }
