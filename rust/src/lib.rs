@@ -1,5 +1,4 @@
 #![feature(drain_filter)]
-#![feature(option_result_contains)]
 
 extern crate chrono;
 extern crate indexmap;
@@ -157,15 +156,15 @@ pub unsafe extern "C" fn decompose_context_delete(ctx: *mut DecomposeContext) {
     let _ = Box::from_raw(ctx);
 }
 
-#[no_mangle]
-extern "C" fn synthesis_add_program(ctx: &mut DecomposeContext) {
-    ctx.add_program();
-}
+// #[no_mangle]
+// extern "C" fn synthesis_add_program(ctx: &mut DecomposeContext) {
+//     ctx.add_program();
+// }
 
-#[no_mangle]
-extern "C" fn synthesis_remove_program(ctx: &mut DecomposeContext, index: usize) {
-    ctx.remove_program(index);
-}
+// #[no_mangle]
+// extern "C" fn synthesis_remove_program(ctx: &mut DecomposeContext, index: usize) {
+//     ctx.remove_program(index);
+// }
 
 #[no_mangle]
 extern "C" fn synthesis_program_value(

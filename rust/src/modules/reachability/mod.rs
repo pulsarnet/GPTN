@@ -171,7 +171,7 @@ impl Reachability {
         let marking = net.marking();
 
         Reachability {
-            transitions: net.transitions.keys().cloned().collect(),
+            transitions: net.transitions().keys().cloned().collect(),
             input: input.matrix,
             output: output.matrix,
             markings: ReachabilityTree::new(Marking::from(marking)),

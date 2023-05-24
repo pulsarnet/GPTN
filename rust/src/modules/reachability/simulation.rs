@@ -32,7 +32,7 @@ impl Simulation {
             marking: {
                 let net = unsafe { &*net };
                 let mut marking = IndexMap::new();
-                for (index, vertex) in net.positions.iter() {
+                for (index, vertex) in net.positions().iter() {
                     marking.insert(*index, vertex.markers());
                 }
                 marking
@@ -62,17 +62,17 @@ impl Simulation {
         let mut put_marking = self.marking.clone();
         put_marking.iter_mut().for_each(|(_, v)| *v = 0);
 
-        for (index, _) in self.net().transitions.iter() {
+        for (index, _) in self.net().transitions().iter() {
             let input = self
                 .net()
-                .connections
+                .connections()
                 .iter()
                 .filter(|c| c.second() == *index)
                 .collect::<Vec<_>>();
 
             let output = self
                 .net()
-                .connections
+                .connections()
                 .iter()
                 .filter(|c| c.first() == *index)
                 .collect::<Vec<_>>();

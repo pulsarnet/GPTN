@@ -21,10 +21,10 @@ impl NetPaths {
     pub fn find(net: &PetriNet) -> NetPaths {
         // get input positions
         let input_positions = net
-            .positions
+            .positions()
             .iter()
             .filter(|(index, _)| {
-                net.connections
+                net.connections()
                     .iter()
                     .find(|c| c.second() == **index)
                     .is_none()
@@ -34,10 +34,10 @@ impl NetPaths {
 
         // get output positions
         let output_positions = net
-            .positions
+            .positions()
             .iter()
             .filter(|(index, _)| {
-                net.connections
+                net.connections()
                     .iter()
                     .find(|c| c.first() == **index)
                     .is_none()

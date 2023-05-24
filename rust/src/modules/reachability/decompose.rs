@@ -12,8 +12,8 @@ pub struct PrimitiveDecomposition {
 
 impl PrimitiveDecomposition {
     pub fn new(mut net: PetriNet) -> Result<Self, ()> {
-        let positions_count = net.positions.len();
-        let transitions_count = net.transitions.len();
+        let positions_count = net.positions().len();
+        let transitions_count = net.transitions().len();
 
         if positions_count > 2 * transitions_count {
             return Err(());
@@ -24,15 +24,15 @@ impl PrimitiveDecomposition {
         if need > 0 {
             // Получим внутренние позиции
             let filter = net
-                .positions
+                .positions()
                 .iter()
                 .filter(|(index, _)| {
-                    net.connections
+                    net.connections()
                         .iter()
                         .find(|connection| connection.first().eq(index))
                         .is_some()
                         && net
-                            .connections
+                            .connections()
                             .iter()
                             .find(|connection| connection.second().eq(index))
                             .is_some()
@@ -56,7 +56,7 @@ impl PrimitiveDecomposition {
 
                 net.insert_position(new_position);
                 let connections = net
-                    .connections
+                    .connections()
                     .iter()
                     .filter(|connection| {
                         connection.first().eq(index) || connection.second().eq(index)
@@ -89,11 +89,11 @@ impl PrimitiveDecomposition {
         // Создадим примитивную систему
         let Some(primitive_matrix) = simplify_matrix(d_matrix) else { return Err(()) };
         let mut primitive_net = PetriNet::new();
-        net.positions.iter().for_each(|(_, vertex)| {
+        net.positions().iter().for_each(|(_, vertex)| {
             primitive_net.insert_position(vertex.clone());
         });
 
-        net.transitions.iter().for_each(|(_, vertex)| {
+        net.transitions().iter().for_each(|(_, vertex)| {
             primitive_net.insert_transition(vertex.clone());
         });
 
@@ -102,20 +102,20 @@ impl PrimitiveDecomposition {
                 let value = primitive_matrix.row(row_index)[column_index];
                 if value > 0 {
                     primitive_net.connect(
-                        net.transitions[column_index].index(),
-                        net.positions[row_index].index(),
+                        net.transitions()[column_index].index(),
+                        net.positions()[row_index].index(),
                     )
                 } else if value < 0 {
                     primitive_net.connect(
-                        net.transitions[column_index].index(),
-                        net.positions[row_index].index(),
+                        net.transitions()[column_index].index(),
+                        net.positions()[row_index].index(),
                     )
                 }
             }
         }
 
-        let c_input = DMatrix::<i32>::zeros(net.positions.len(), net.positions.len());
-        let c_output = DMatrix::<i32>::zeros(net.positions.len(), net.positions.len());
+        let c_input = DMatrix::<i32>::zeros(net.positions().len(), net.positions().len());
+        let c_output = DMatrix::<i32>::zeros(net.positions().len(), net.positions().len());
         // Вычислим тензоры C(I) и C(O)
         // let (c_input, c_output) = DecomposeContextBuilder::calculate_c_matrix2(
         //     &PetriNetVec(vec![primitive_net.clone()])

@@ -138,6 +138,7 @@ impl Vertex {
         }
     }
 
+    /// Возвращает [`VertexIndex`] вершины
     pub fn index(&self) -> VertexIndex {
         VertexIndex {
             type_: self.type_,
@@ -145,6 +146,9 @@ impl Vertex {
         }
     }
 
+    /// Возвращает [`VertexIndex`] родительской вершины
+    /// 
+    /// Родительской вершиной считается вершина от которой отделена текущая
     pub fn get_parent(&self) -> Option<VertexIndex> {
         self.parent
     }

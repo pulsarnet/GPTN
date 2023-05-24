@@ -26,7 +26,7 @@ pub extern "C" fn net_get_vertex(net: &PetriNet, index: VertexIndex) -> *const V
 #[no_mangle]
 pub unsafe extern "C" fn net_positions(net: &mut PetriNet, ret: &mut CVec<*const Vertex>) {
     let result = net
-        .positions
+        .positions()
         .values()
         .map(|p| p as *const Vertex)
         .collect::<Vec<_>>();
@@ -37,7 +37,7 @@ pub unsafe extern "C" fn net_positions(net: &mut PetriNet, ret: &mut CVec<*const
 #[no_mangle]
 pub unsafe extern "C" fn net_transitions(net: &mut PetriNet, ret: &mut CVec<*const Vertex>) {
     let result = net
-        .transitions
+        .transitions()
         .values()
         .map(|p| p as *const Vertex)
         .collect::<Vec<_>>();
@@ -50,7 +50,7 @@ pub unsafe extern "C" fn net_connections(net: &mut PetriNet, ret: &mut CVec<*con
     core::ptr::write_unaligned(
         ret,
         CVec::from(
-            net.connections
+            net.connections()
                 .iter()
                 .map(|c| c as *const Connection)
                 .collect::<Vec<_>>(),
@@ -60,9 +60,9 @@ pub unsafe extern "C" fn net_connections(net: &mut PetriNet, ret: &mut CVec<*con
 
 #[no_mangle]
 pub unsafe extern "C" fn clear_net(v: &mut PetriNet) {
-    v.positions.clear();
-    v.transitions.clear();
-    v.connections.clear();
+    v.positions_mut().clear();
+    v.transitions_mut().clear();
+    v.connections_mut().clear();
 }
 
 #[no_mangle]
@@ -156,7 +156,7 @@ pub unsafe extern "C" fn remove_connection(
 ) {
     let from = &*from;
     let to = &*to;
-    net.connections
+    net.connections_mut()
         .drain_filter(|c| c.first().eq(&from.index()) && c.second().eq(&to.index()));
 }
 
@@ -180,7 +180,7 @@ pub unsafe extern "C" fn petri_net_get_connection(
     let from = &*from;
     let to = &*to;
     let result = net
-        .connections
+        .connections()
         .iter()
         .find(|c| c.first().eq(&from.index()) && c.second().eq(&to.index()));
 
@@ -206,7 +206,7 @@ pub unsafe extern "C" fn petri_net_connection_weight(
     a: &Vertex,
     b: &Vertex,
 ) -> usize {
-    net.connections
+    net.connections()
         .iter()
         .find(|conn| conn.first() == a.index() && conn.second() == b.index())
         .map_or(0, |conn| conn.weight())

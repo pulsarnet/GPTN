@@ -212,7 +212,7 @@ pub extern "C" fn petri_net_p_invariant(net: &PetriNet) {
         DMatrix::<i32>::from_iterator(mat.nrows(), mat.ncols(), mat.iter().map(|el| *el as i32));
 
     let res = invariant(mat.transpose());
-    let positions = net.positions.values().fold(vec![], |mut acc, pos| {
+    let positions = net.positions().values().fold(vec![], |mut acc, pos| {
         acc.push(format!("p{}", pos.index().id));
         acc
     });
@@ -231,7 +231,7 @@ pub extern "C" fn petri_net_t_invariant(net: &PetriNet) {
 
     let res = invariant(mat);
     let transitions = net
-        .transitions
+        .transitions()
         .values()
         .fold(vec![], |mut acc, transition| {
             acc.push(format!("t{}", transition.index().id));

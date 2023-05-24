@@ -1,4 +1,5 @@
 mod connection;
+mod petri_net_vec;
 pub mod vertex;
 
 use crate::ffi::matrix::CNamedMatrix;
@@ -12,171 +13,27 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
+pub use net::petri_net_vec::*;
+
 #[derive(Debug)]
 pub struct PetriNet {
-    pub positions: IndexMap<VertexIndex, Vertex>,
-    pub transitions: IndexMap<VertexIndex, Vertex>,
-    pub connections: Vec<Connection>,
+    /// Позиции сети Петри
+    positions: IndexMap<VertexIndex, Vertex>,
+
+    /// Переходы сети Петри
+    transitions: IndexMap<VertexIndex, Vertex>,
+
+    /// Соединения между вершинами в сети Петри
+    connections: Vec<Connection>,
+
+    /// Последняя добавленная позиция
     position_index: Rc<RefCell<usize>>,
+
+    /// Последний добавленный переход
     transition_index: Rc<RefCell<usize>>,
+
+    /// Является ли сеть циклом
     is_loop: bool,
-}
-
-pub struct PetriNetVec(pub Vec<PetriNet>);
-
-impl PetriNetVec {
-    pub fn positions(&self) -> Vec<Vertex> {
-        self.0
-            .iter()
-            .flat_map(|n| n.positions.iter().map(|p| p.1))
-            .cloned()
-            .collect()
-    }
-
-    pub fn transitions(&self) -> Vec<Vertex> {
-        self.0
-            .iter()
-            .flat_map(|n| n.transitions.iter().map(|p| p.1))
-            .cloned()
-            .collect()
-    }
-
-    pub fn sort(&mut self) {
-        self.0
-            .sort_by(|net_a, net_b| net_b.positions.len().cmp(&net_a.positions.len()));
-    }
-
-    pub fn position_indexes(&self) -> HashMap<VertexIndex, usize> {
-        self.0
-            .iter()
-            .flat_map(|net| net.positions.keys())
-            .enumerate()
-            .map(|(i, &v)| (v, i))
-            .collect()
-    }
-
-    pub fn transition_indexes(&self) -> HashMap<VertexIndex, usize> {
-        self.0
-            .iter()
-            .flat_map(|net| net.transitions.keys())
-            .enumerate()
-            .map(|(i, &v)| (v, i))
-            .collect()
-    }
-
-    pub fn primitive_net(&self) -> PetriNet {
-        let mut result = PetriNet::new();
-
-        for net in self.0.iter() {
-            let transitions = &net.transitions;
-
-            'brk: for transition in transitions.values() {
-                let mut from = net
-                    .connections
-                    .iter()
-                    .filter(|c| c.first().eq(&transition.index()));
-
-                while let Some(f) = from.next() {
-                    if result.positions.get(&f.second()).is_some() {
-                        continue;
-                    }
-
-                    let mut to = net.connections.iter().filter(|c| {
-                        c.first().ne(&f.second()) && c.second().eq(&transition.index())
-                    });
-
-                    while let Some(t) = to.next() {
-                        if result.positions.get(&t.first()).is_some() {
-                            continue;
-                        }
-
-                        result.insert(net.get_position(t.first().id).unwrap().clone());
-                        result.insert(net.get_transition(f.first().id).unwrap().clone());
-                        result.insert(net.get_position(f.second().id).unwrap().clone());
-
-                        // TODO: Как соединять веса
-                        result.connect(t.first(), f.first().clone());
-                        result.connect(f.first(), f.second().clone());
-                        continue 'brk;
-                    }
-                }
-            }
-        }
-
-        result
-    }
-
-    /// Возвращает матрицы D(I) и D(O) для примитивной системы
-    /// Элементы данных матриц, это положительные числа
-    pub fn primitive_matrix(&self) -> (DMatrix<i32>, DMatrix<i32>) {
-        let positions = self.position_indexes();
-        let transitions = self.transition_indexes();
-        let mut d_input = DMatrix::<i32>::zeros(positions.len(), transitions.len());
-        let mut d_output = DMatrix::<i32>::zeros(positions.len(), transitions.len());
-
-        let primitive_net = self.primitive_net();
-        for connection in primitive_net.connections.iter() {
-            match connection.first().type_ {
-                VertexType::Transition => {
-                    d_output.column_mut(*transitions.get(&connection.first()).unwrap())
-                        [*positions.get(&connection.second()).unwrap()] =
-                        connection.weight() as i32;
-                }
-                _ => {
-                    d_input.row_mut(*positions.get(&connection.first()).unwrap())
-                        [*transitions.get(&connection.second()).unwrap()] =
-                        connection.weight() as i32;
-                }
-            }
-        }
-
-        (d_input, d_output)
-    }
-
-    pub fn elements(&self) -> Vec<Vertex> {
-        self.0
-            .iter()
-            .flat_map(|n| n.positions.values().chain(n.transitions.values()))
-            .cloned()
-            .collect()
-    }
-
-    pub fn connections(&self) -> Vec<&Connection> {
-        self.0.iter().flat_map(|n| n.connections.iter()).collect()
-    }
-
-    /// Возвращает матрицы D(I) и D(O) для системы ЛБФ
-    /// Элементы данных матриц, это положительные числа
-    pub fn equivalent_matrix(&self) -> (DMatrix<i32>, DMatrix<i32>) {
-        let all_connections = self.connections();
-        let pos_indexes = self.position_indexes();
-        let tran_indexes = self.transition_indexes();
-
-        let mut d_input = nalgebra::DMatrix::<i32>::zeros(pos_indexes.len(), tran_indexes.len());
-        let mut d_output = nalgebra::DMatrix::<i32>::zeros(pos_indexes.len(), tran_indexes.len());
-
-        for connection in all_connections {
-            let first = connection.first();
-            let second = connection.second();
-
-            match first.type_ {
-                VertexType::Transition => {
-                    d_output.column_mut(*tran_indexes.get(&first).unwrap())
-                        [*pos_indexes.get(&second).unwrap()] = connection.weight() as i32;
-                }
-                _ => {
-                    d_input.row_mut(*pos_indexes.get(&first).unwrap())
-                        [*tran_indexes.get(&second).unwrap()] = connection.weight() as i32;
-                }
-            }
-        }
-
-        (d_input, d_output)
-    }
-
-    pub fn lbf_matrix(&self) -> Vec<(CNamedMatrix, CNamedMatrix)> {
-        self.0.iter().map(|net| net.as_matrix()).collect()
-    }
 }
 
 impl Clone for PetriNet {
@@ -220,6 +77,33 @@ impl PetriNet {
         PetriNet::default()
     }
 
+    pub fn positions(&self) -> &IndexMap<VertexIndex, Vertex> {
+        &self.positions
+    }
+
+    pub fn positions_mut(&mut self) -> &mut IndexMap<VertexIndex, Vertex> {
+        &mut self.positions
+    }
+
+    pub fn transitions(&self) -> &IndexMap<VertexIndex, Vertex> {
+        &self.transitions
+    }
+
+    pub fn transitions_mut(&mut self) -> &mut IndexMap<VertexIndex, Vertex> {
+        &mut self.transitions
+    }
+
+    pub fn connections(&self) -> &[Connection] {
+        &self.connections
+    }
+
+    pub fn connections_mut(&mut self) -> &mut Vec<Connection> {
+        &mut self.connections
+    }
+
+    /// Количество выходных позиций (т.е. позиций без выходных дуг)
+    ///
+    /// TODO: сделать итератор (output_positions_iter, output_positions - коллекция)
     pub fn output_positions(&self) -> usize {
         let mut post_c = 0;
         for pos in self.positions.keys() {
@@ -232,6 +116,9 @@ impl PetriNet {
         post_c
     }
 
+    /// Количество входных позиций (т.е. позиций без входных дуг)
+    ///
+    /// TODO: сделать итератор (input_positions_iter, input_positions - коллекция)
     pub fn input_positions(&self) -> usize {
         let mut pre_c = 0;
         for pos in self.positions.keys() {
@@ -244,6 +131,9 @@ impl PetriNet {
         pre_c
     }
 
+    /// Массив индексов всех вершин
+    ///
+    /// TODO: хранить отдельно в структуре сети, сделать возврат Slice.
     pub fn vertices(&self) -> Vec<VertexIndex> {
         self.positions
             .iter()
@@ -252,10 +142,12 @@ impl PetriNet {
             .collect::<Vec<_>>()
     }
 
+    /// Получить позицию по индексу [`VertexIndex`]
     pub fn get_position(&self, index: usize) -> Option<&Vertex> {
         self.positions.get(&VertexIndex::position(index))
     }
 
+    /// Удалить позицию по индексу [`VertexIndex`]
     pub fn remove_position(&mut self, index: usize) {
         let position = self.get_position(index).unwrap().index();
         self.connections
@@ -263,10 +155,12 @@ impl PetriNet {
         self.positions.remove(&position);
     }
 
+    /// Получить переход по индексу [`VertexIndex`]
     pub fn get_transition(&self, index: usize) -> Option<&Vertex> {
         self.transitions.get(&VertexIndex::transition(index))
     }
 
+    /// Удалить переход по индексу [`VertexIndex`]
     pub fn remove_transition(&mut self, index: usize) {
         let transition = self.get_transition(index).unwrap().index();
         self.connections
@@ -274,6 +168,7 @@ impl PetriNet {
         self.transitions.remove(&transition);
     }
 
+    /// Добавить позицию по индексу [`VertexIndex`]
     pub fn add_position(&mut self, index: usize) -> &Vertex {
         self.positions
             .entry(VertexIndex::position(index))
@@ -285,6 +180,7 @@ impl PetriNet {
         self.positions.get(&VertexIndex::position(index)).unwrap()
     }
 
+    /// Добавить переход по индексу [`VertexIndex`]
     pub fn add_transition(&mut self, index: usize) -> &Vertex {
         self.transitions
             .entry(VertexIndex::transition(index))
@@ -298,6 +194,12 @@ impl PetriNet {
             .unwrap()
     }
 
+    /// Вставить позицию
+    ///
+    /// Добавляет переданную позицию [`Vertex`] в сеть Петри [`PetriNet`]
+    ///
+    /// # Return
+    /// Ссылку на добавленный или существующий [`Vertex`]
     pub fn insert_position(&mut self, element: Vertex) -> &Vertex {
         match self.positions.contains_key(&element.index()) {
             true => self.positions.get(&element.index()).unwrap(),
@@ -365,13 +267,22 @@ impl PetriNet {
     }
 
     pub fn insert(&mut self, element: Vertex) -> &Vertex {
+        // todo Сделать выбор по типу
         match element.is_position() {
             true => self.insert_position(element),
             false => self.insert_transition(element),
         }
     }
 
+    /// Соединить две вершины
+    ///
+    /// # Panic
+    /// Метод паникует, если вершины одного типа
     pub fn connect(&mut self, a: VertexIndex, b: VertexIndex) {
+        if a.type_ == b.type_ {
+            panic!("Vertex {} has same type as {}", a, b);
+        }
+
         match self
             .connections
             .iter_mut()

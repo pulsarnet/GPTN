@@ -233,17 +233,17 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
         .collect();
 
     let mut new_net = PetriNet::new();
-    new_net.positions = pos_indexes_vec
+    *new_net.positions_mut() = pos_indexes_vec
         .iter()
         .map(|v| (v.index(), v.clone()))
         .collect();
-    new_net.transitions = tran_indexes_vec
+    *new_net.transitions_mut() = tran_indexes_vec
         .iter()
         .map(|v| (v.index(), v.clone()))
         .collect();
 
     let mut pos_new_indexes = HashMap::new();
-    for (index, position) in new_net.positions.values_mut().enumerate() {
+    for (index, position) in new_net.positions_mut().values_mut().enumerate() {
         log::info!("SET MARKERS: {} <= {}", index, markers.row(index)[0]);
         position.set_markers(markers.row(index)[0].max(0.) as usize);
         pos_new_indexes.insert(position.index(), index);
@@ -251,7 +251,7 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
 
     let mut trans_new_indexes = HashMap::new();
     for (index, transition) in new_net
-        .transitions
+        .transitions()
         .values()
         .filter(|e| e.is_transition())
         .enumerate()
@@ -260,7 +260,7 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
     }
 
     let mut connections = vec![];
-    for transition in new_net.transitions.values() {
+    for transition in new_net.transitions().values() {
         for i in 0..2 {
             let column = match i {
                 0 => adjacency_input.column(*trans_new_indexes.get(&transition.index()).unwrap()),
@@ -284,7 +284,7 @@ pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> Petri
         }
     }
 
-    new_net.connections = connections;
+    *new_net.connections_mut() = connections;
 
     new_net
 }

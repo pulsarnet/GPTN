@@ -182,13 +182,13 @@ impl DecomposeContextBuilder {
         let positions = parts
             .0
             .iter()
-            .flat_map(|net| net.positions.values())
+            .flat_map(|net| net.positions().values())
             .cloned()
             .collect::<Vec<_>>();
         let transitions = parts
             .0
             .iter()
-            .flat_map(|net| net.transitions.values())
+            .flat_map(|net| net.transitions().values())
             .cloned()
             .collect::<Vec<_>>();
 
@@ -268,40 +268,6 @@ impl DecomposeContext {
         //res
     }
 
-    // pub fn add_synthesis_programs(&mut self) {
-    //     let transitions = self.transitions.len();
-    //     let positions = self.positions.len();
-    //
-    //     let mut t_counter = Counter::new(transitions);
-    //     let mut t_programs = vec![];
-    //     while let Some(c) = t_counter.next() {
-    //         t_programs.push(c);
-    //     }
-    //
-    //     let mut p_counter = Counter::new(positions);
-    //     let mut p_programs = vec![];
-    //     while let Some(c) = p_counter.next() {
-    //         p_programs.push(c);
-    //     }
-    //
-    //     println!("T: {}", t_programs.len());
-    //     println!("P: {}", p_programs.len());
-    //
-    //     for t_program in t_programs {
-    //         for p_program in p_programs.iter() {
-    //             let mut program = SynthesisProgram::new(transitions + positions, transitions);
-    //             t_program.iter()
-    //                 .chain(p_program.iter())
-    //                 .enumerate()
-    //                 .for_each(|(i, v)| program.data[i] = *v);
-    //
-    //             self.programs.push(program);
-    //
-    //             //synthesis_program(self, self.programs.len() - 1);
-    //         }
-    //     }
-    // }
-
     pub fn marking(&self) -> DMatrix<f64> {
         let mut marking = DMatrix::zeros(self.positions.len(), 1);
         for (i, p) in self.positions.iter().enumerate() {
@@ -320,10 +286,10 @@ impl DecomposeContext {
         let (d_input, d_output) = &self.linear_base_fragments_matrix;
 
         result
-            .positions
+            .positions_mut()
             .extend(self.positions.iter().map(|v| (v.index(), v.clone())));
         result
-            .transitions
+            .transitions_mut()
             .extend(self.transitions.iter().map(|v| (v.index(), v.clone())));
 
         for row in 0..d_input.nrows() {
@@ -377,14 +343,6 @@ impl DecomposeContext {
 
     pub fn programs(&self) -> &SetPartitionMesh {
         &self.programs
-    }
-
-    pub fn add_program(&mut self) {
-        //self.programs.push(SynthesisProgram::new(self.positions().len() + self.transitions().len(), self.transitions().len()))
-    }
-
-    pub fn remove_program(&mut self, _: usize) {
-        //self.programs.remove(index);
     }
 
     pub fn program_value(&self, _: usize, _: usize) -> usize {
