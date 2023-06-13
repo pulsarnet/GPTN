@@ -93,7 +93,7 @@ impl SynthesisProgram {
     }
 }
 
-pub fn synthesis_program(programs: &mut DecomposeContext, index: usize) -> PetriNet {
+pub fn synthesis_program(programs: &DecomposeContext, index: usize) -> PetriNet {
     let mut pos_indexes_vec = programs.positions().clone();
     let mut tran_indexes_vec = programs.transitions().clone();
 

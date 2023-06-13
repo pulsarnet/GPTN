@@ -6,14 +6,14 @@ use {PetriNet, Vertex};
 
 #[repr(C)]
 pub struct CVec<T> {
-    ptr: std::ptr::NonNull<T>,
+    ptr: ptr::NonNull<T>,
     len: usize,
     cap: usize,
 }
 
 impl<T> From<Vec<T>> for CVec<T> {
     fn from(v: Vec<T>) -> Self {
-        let mut v = std::mem::ManuallyDrop::new(v);
+        let mut v = mem::ManuallyDrop::new(v);
         Self {
             ptr: unsafe { ptr::NonNull::new_unchecked(v.as_mut_ptr()).into() },
             len: v.len(),
@@ -46,8 +46,8 @@ macro_rules! generate_vec_type {
         paste::item! {
             #[no_mangle]
             pub unsafe extern "C" fn [<vec_drop_ $t>](vec: *mut CVec<$spec>) {
-                let vec = &mut *vec;
-                drop(vec)
+                // todo разобраться с ошибкой удаления (Runtime error)
+                //let _ = Box::from_raw(vec);
             }
         }
     };

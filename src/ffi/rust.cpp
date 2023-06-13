@@ -81,8 +81,6 @@ extern "C" {
     usize synthesis_program_size(const DecomposeContext&, usize);
     usize synthesis_program_transition_united(const DecomposeContext&, usize);
     usize synthesis_program_position_united(const DecomposeContext&, usize);
-    void synthesis_add_program(DecomposeContext&);
-    void synthesis_remove_program(DecomposeContext&, usize);
     usize synthesis_program_value(const DecomposeContext&, usize, usize);
     void synthesis_set_program_value(DecomposeContext&, usize, usize, usize);
     char* synthesis_program_header_name(const DecomposeContext&, usize, bool);
@@ -356,14 +354,6 @@ usize DecomposeContext::transition_united(ffi::usize index) {
 
 usize DecomposeContext::position_united(ffi::usize index) {
     return ::synthesis_program_position_united(*this, index);
-}
-
-void DecomposeContext::add_program() {
-    ::synthesis_add_program(*this);
-}
-
-void DecomposeContext::remove_program(usize index) {
-    ::synthesis_remove_program(*this, index);
 }
 
 usize DecomposeContext::program_value(usize program, usize index) const {

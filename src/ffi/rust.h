@@ -123,8 +123,6 @@ namespace ffi {
 
         usize programs() const;
         usize program_size(usize index) const;
-        void add_program();
-        void remove_program(usize index);
         usize program_value(usize program, usize index) const;
         void set_program_value(usize program, usize index, usize value);
         char* program_header_name(usize index, bool label) const;

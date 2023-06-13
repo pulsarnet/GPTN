@@ -283,4 +283,38 @@ if (WIN32)
     set(CPACK_PACKAGE_VERSION_MINOR "1")
     install(TARGETS GPTN RUNTIME DESTINATION bin)
     include(CPack)
+
+    add_custom_command(
+            TARGET GPTN POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:Qt6::Widgets>
+            $<TARGET_FILE:Qt6::Core>
+            $<TARGET_FILE:Qt6::Gui>
+            $<TARGET_FILE:Qt6::Svg>
+            $<TARGET_FILE:Qt6::DataVisualization>
+            $<TARGET_FILE:Qt6::OpenGL>
+            $<TARGET_FILE:Qt6::OpenGLWidgets>
+            $<TARGET_FILE_DIR:GPTN>
+    )
+
+    add_custom_command(
+            TARGET GPTN POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:Qt6::QWindowsIntegrationPlugin>
+            $<TARGET_FILE_DIR:GPTN>/plugins/platforms/
+    )
+
+    add_custom_command(
+            TARGET GPTN POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:Qt6::QSvgIconPlugin>
+            $<TARGET_FILE_DIR:GPTN>/plugins/imageformats/
+    )
+
+    add_custom_command(
+            TARGET GPTN POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:Qt6::QWindowsVistaStylePlugin>
+            $<TARGET_FILE_DIR:GPTN>/plugins/styles/
+    )
 endif()

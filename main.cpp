@@ -1,5 +1,6 @@
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "Bcrypt.lib")
+#pragma comment(lib, "ntdll.lib")
 
 #include <QApplication>
 #include <QFontDatabase>
