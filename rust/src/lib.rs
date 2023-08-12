@@ -1,5 +1,3 @@
-#![feature(drain_filter)]
-
 extern crate chrono;
 extern crate indexmap;
 extern crate libc;
@@ -11,6 +9,7 @@ extern crate ndarray_linalg;
 extern crate num;
 extern crate num_traits;
 extern crate rand;
+extern crate rayon;
 
 use libc::c_char;
 use log::LevelFilter;
@@ -21,11 +20,10 @@ use log4rs::{config::Logger, Config};
 use nalgebra::DMatrix;
 use std::ffi::CString;
 use std::ops::Deref;
+use std::sync::Arc;
 
 use ffi::vec::CVec;
-use modules::synthesis::{
-    synthesis_program, DecomposeContext, DecomposeContextBuilder, SynthesisProgram,
-};
+use modules::synthesis::{synthesis_program, DecomposeContext, DecomposeContextBuilder, SynthesisProgram, synthesis_all_programs};
 
 pub mod ffi;
 mod modules;
@@ -34,6 +32,19 @@ mod net;
 mod core;
 
 use net::{PetriNet, PetriNetVec, Vertex};
+
+macro_rules! profile {
+    ($($token:tt)+) => {
+        {
+            let _instant = std::time::Instant::now();
+            let _result = {
+                $($token)+
+            };
+
+            (_instant.elapsed(), _result)
+        }
+    }
+}
 
 #[no_mangle]
 extern "C" fn init() {
@@ -63,6 +74,7 @@ extern "C" fn init() {
     log4rs::init_config(config).unwrap();
 }
 
+#[derive(Debug, Clone)]
 pub struct CMatrix {
     inner: DMatrix<i32>,
 }
@@ -254,13 +266,17 @@ extern "C" fn matrix_columns(matrix: &CMatrix) -> usize {
 // Вычисление программ синтеза
 #[no_mangle]
 extern "C" fn synthesis_eval_program(ctx: &mut DecomposeContext, index: usize) -> *const PetriNet {
-    // TODO: Comment
-    // if ctx.programs[index].net_after.is_some() {
-    //     return ctx.programs[index].net_after.as_ref().unwrap() as *const PetriNet
-    // }
-
     Box::into_raw(Box::new(synthesis_program(ctx, index))) as *const PetriNet
-    //ctx.programs[index].net_after.as_ref().unwrap() as *const PetriNet
+}
+
+#[no_mangle]
+unsafe  extern "C" fn synthesis_all_programs_ext(ctx: &mut DecomposeContext) {
+    let ctx = Arc::new(ctx.clone());
+
+    println!("Start calc {} programs", ctx.programs.max());
+    let (dur, result) = profile!(synthesis_all_programs(ctx));
+    println!("Synthesis time {:?} of {} programs Rust parallel", dur, result);
+
 }
 
 #[cfg(test)]
@@ -270,9 +286,7 @@ mod tests {
 
     #[test]
     fn test_synthesis_program() {
-        let mut program = SynthesisProgram::new(12, 4);
-        program.data = vec![0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7];
-
+        let mut program = SynthesisProgram::new_with(vec![0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7], 4);
         let pos_indexes = vec![
             Vertex::position(1),
             Vertex::position(2),

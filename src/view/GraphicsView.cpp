@@ -27,7 +27,7 @@ GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
     this->setWindowFlag(Qt::BypassGraphicsProxyWidget);
     this->setRubberBandSelectionMode(Qt::ContainsItemBoundingRect);
     this->setDragMode(QGraphicsView::RubberBandDrag);
-    this->setOptimizationFlags(DontAdjustForAntialiasing | DontSavePainterState);
+    //this->setOptimizationFlags(DontAdjustForAntialiasing | DontSavePainterState);
     this->setCacheMode(CacheBackground);
 
     this->setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);

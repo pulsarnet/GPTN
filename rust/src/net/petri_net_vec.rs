@@ -4,6 +4,7 @@ use nalgebra::DMatrix;
 use ffi::matrix::CNamedMatrix;
 use net::Connection;
 
+#[derive(Debug, Clone)]
 pub struct PetriNetVec(pub Vec<PetriNet>);
 
 impl PetriNetVec {

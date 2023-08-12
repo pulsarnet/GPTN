@@ -3,6 +3,12 @@ mod decompose;
 pub use self::decompose::*;
 use net::{Connection, PetriNet, Vertex};
 use std::collections::{HashMap, HashSet};
+use std::hint::black_box;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::thread::sleep;
+use std::time::Duration;
+use rayon::ThreadPoolBuilder;
 
 pub struct SynthesisProgram {
     data: Vec<u16>,
@@ -287,4 +293,27 @@ pub fn synthesis_program(programs: &DecomposeContext, index: usize) -> PetriNet 
     *new_net.connections_mut() = connections;
 
     new_net
+}
+
+pub fn synthesis_all_programs(ctx: Arc<DecomposeContext>) -> usize {
+    let pool = ThreadPoolBuilder::new().num_threads(16).build().unwrap();
+    let programs = ctx.programs.max();
+    let counter = Arc::new(AtomicUsize::new(0));
+    for i in 0..programs {
+        let c = counter.clone();
+        let ctx = ctx.clone();
+        pool.spawn(move || {
+            let net = synthesis_program(ctx.as_ref(), i);
+            black_box(net);
+            c.fetch_add(1, Ordering::SeqCst);
+        });
+    }
+
+    while counter.load(Ordering::SeqCst) != programs {
+        sleep(Duration::from_micros(1000))
+    }
+
+    //println!("counter: {}", counter.load(Ordering::SeqCst));
+    //Arc::try_unwrap(result).unwrap().into_inner().unwrap()
+    counter.load(Ordering::SeqCst)
 }

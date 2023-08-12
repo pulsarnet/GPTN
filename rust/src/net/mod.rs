@@ -9,9 +9,8 @@ use nalgebra::DMatrix;
 pub use net::connection::Connection;
 pub use net::vertex::Vertex;
 use net::vertex::{VertexIndex, VertexType};
-use std::cell::RefCell;
 use std::collections::HashMap;
-use std::rc::Rc;
+use std::sync::{Arc, RwLock};
 
 pub use net::petri_net_vec::*;
 
@@ -27,10 +26,10 @@ pub struct PetriNet {
     connections: Vec<Connection>,
 
     /// Последняя добавленная позиция
-    position_index: Rc<RefCell<usize>>,
+    position_index: Arc<RwLock<usize>>,
 
     /// Последний добавленный переход
-    transition_index: Rc<RefCell<usize>>,
+    transition_index: Arc<RwLock<usize>>,
 
     /// Является ли сеть циклом
     is_loop: bool,
@@ -52,8 +51,8 @@ impl Clone for PetriNet {
             positions: self.positions.clone(),
             transitions: self.transitions.clone(),
             connections: new_connections,
-            position_index: Rc::new(RefCell::new(*self.position_index.borrow())),
-            transition_index: Rc::new(RefCell::new(*self.transition_index.borrow())),
+            position_index: Arc::new(RwLock::new(*self.position_index.read().unwrap())),
+            transition_index: Arc::new(RwLock::new(*self.transition_index.read().unwrap())),
             is_loop: self.is_loop,
         }
     }
@@ -65,8 +64,8 @@ impl Default for PetriNet {
             positions: IndexMap::new(),
             transitions: IndexMap::new(),
             connections: vec![],
-            position_index: Rc::new(RefCell::new(1)),
-            transition_index: Rc::new(RefCell::new(1)),
+            position_index: Arc::new(RwLock::new(1)),
+            transition_index: Arc::new(RwLock::new(1)),
             is_loop: false,
         }
     }
@@ -151,7 +150,8 @@ impl PetriNet {
     pub fn remove_position(&mut self, index: usize) {
         let position = self.get_position(index).unwrap().index();
         self.connections
-            .drain_filter(|c| c.first().eq(&position) || c.first().eq(&position));
+            .retain(|c| c.first().ne(&position) && c.second().ne(&position));
+            //.drain_filter(|c| c.first().eq(&position) || c.second().eq(&position));
         self.positions.remove(&position);
     }
 
@@ -164,7 +164,8 @@ impl PetriNet {
     pub fn remove_transition(&mut self, index: usize) {
         let transition = self.get_transition(index).unwrap().index();
         self.connections
-            .drain_filter(|c| c.first().eq(&transition) || c.second().eq(&transition));
+            .retain(|c| c.first().ne(&transition) && c.second().ne(&transition));
+            //.drain_filter(|c| c.first().eq(&transition) || c.second().eq(&transition));
         self.transitions.remove(&transition);
     }
 
@@ -175,7 +176,7 @@ impl PetriNet {
             .or_insert_with(|| Vertex::position(index));
 
         if index >= self.get_position_index() {
-            *(*self.position_index).borrow_mut() = index + 1;
+            *(*self.position_index).write().unwrap() = index + 1;
         }
         self.positions.get(&VertexIndex::position(index)).unwrap()
     }
@@ -187,7 +188,7 @@ impl PetriNet {
             .or_insert_with(|| Vertex::transition(index));
 
         if index >= self.get_transition_index() {
-            *(*self.transition_index).borrow_mut() = index + 1;
+            *(*self.transition_index).write().unwrap() = index + 1;
         }
         self.transitions
             .get(&VertexIndex::transition(index))
@@ -206,7 +207,7 @@ impl PetriNet {
             false => {
                 let index = element.index();
                 if index.id >= self.get_position_index() {
-                    *(*self.position_index).borrow_mut() = index.id + 1;
+                    *(*self.position_index).write().unwrap() = index.id + 1;
                 }
 
                 if let Some(parent_index) = element.get_parent() {
@@ -239,7 +240,7 @@ impl PetriNet {
             false => {
                 let index = element.index();
                 if index.id >= self.get_transition_index() {
-                    *(*self.transition_index).borrow_mut() = index.id + 1;
+                    *(*self.transition_index).write().unwrap() = index.id + 1;
                 }
 
                 if let Some(parent_index) = element.get_parent() {
@@ -305,12 +306,12 @@ impl PetriNet {
 
     #[inline]
     pub fn update_position_index(&self) {
-        *(*self.position_index).borrow_mut() += 1;
+        *(*self.position_index).write().unwrap() += 1;
     }
 
     #[inline]
     pub fn get_position_index(&self) -> usize {
-        *(*self.position_index).borrow()
+        *(*self.position_index).read().unwrap()
     }
 
     pub fn next_position_index(&self) -> usize {
@@ -440,12 +441,12 @@ impl PetriNet {
 
     #[inline]
     pub fn update_transition_index(&self) {
-        *(*self.transition_index).borrow_mut() += 1;
+        *(*self.transition_index).write().unwrap() += 1;
     }
 
     #[inline]
     pub fn get_transition_index(&self) -> usize {
-        *self.transition_index.borrow_mut()
+        *self.transition_index.read().unwrap()
     }
 
     pub fn next_transition_index(&self) -> usize {
@@ -535,9 +536,11 @@ impl PetriNet {
 
             result.connect(from, to);
             self.connections
-                .drain_filter(|conn| conn.first().eq(&from) && conn.second().eq(&to));
+                .retain(|conn| conn.first().ne(&from) || conn.second().ne(&to));
+                //.drain_filter(|conn| conn.first().eq(&from) && conn.second().eq(&to));
         }
 
+        // todo заменить на сравнение равенства типов first и last
         if (part.first().unwrap().type_ == VertexType::Position
             && part.last().unwrap().type_ == VertexType::Transition)
             || (part.first().unwrap().type_ == VertexType::Transition
@@ -545,9 +548,9 @@ impl PetriNet {
         {
             // Это цикл
             result.connect(*part.last().unwrap(), *part.first().unwrap());
-            self.connections.drain_filter(|conn| {
-                conn.first().eq(part.last().unwrap()) && conn.second().eq(part.first().unwrap())
-            });
+            self.connections
+                .retain(|conn| conn.first().ne(part.last().unwrap()) || conn.second().ne(part.first().unwrap()));
+                //.drain_filter(|conn| { conn.first().eq(part.last().unwrap()) && conn.second().eq(part.first().unwrap()) });
         }
 
         for loop_element in part.iter() {

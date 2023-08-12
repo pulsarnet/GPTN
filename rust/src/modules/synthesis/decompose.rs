@@ -233,6 +233,7 @@ impl DecomposeContextBuilder {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct DecomposeContext {
     pub parts: PetriNetVec,
     pub positions: Vec<Vertex>,

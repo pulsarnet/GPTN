@@ -15,6 +15,7 @@
 #include <Q3DScatter>
 #include <QwtPickerMachine>
 #include <QwtPlotGrid>
+#include <QElapsedTimer>
 #include "../synthesis/synthesis_window.h"
 #include "../DataVisualization/InputHandler3D.h"
 
@@ -67,7 +68,12 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
 
     connect(m_series, &QScatter3DSeries::selectedItemChanged, this, &DecomposeModelTab::selectedPoint);
 
+    // mesure
+    m_ctx->calculate_all();
+
     // Plot
+    QElapsedTimer timer;
+    timer.start();
     for(std::size_t i = 0; i < m_ctx->programs(); i++) {
         if (i % 1000000 == 0) {
             qDebug() << "Synthesised " << i << " programs of " << m_ctx->programs();
@@ -103,6 +109,7 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
 
         program->drop();
     }
+    qDebug() << "The slow operation took" << timer.elapsed() << "milliseconds";
 
     m_series->dataProxy()->addItems(data);
     scatter->addSeries(m_series);

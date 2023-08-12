@@ -130,6 +130,7 @@ namespace ffi {
         QString program_equations(usize index) const;
         usize transition_united(usize index);
         usize position_united(usize index);
+        void calculate_all() const;
 
         CVec<PetriNet*> parts() const;
     };

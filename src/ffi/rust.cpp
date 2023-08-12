@@ -87,6 +87,9 @@ extern "C" {
     PetriNet* synthesis_eval_program(DecomposeContext&, usize);
     char* synthesis_program_equations(const DecomposeContext&, usize);
 
+    // todo tmp
+    void synthesis_all_programs_ext(const DecomposeContext&);
+
     // CMatrix
     i32 matrix_index(const CMatrix&, usize, usize);
     void matrix_set_value(CMatrix&, usize, usize, i32);
@@ -337,6 +340,10 @@ CVec<PetriNet *> DecomposeContext::parts() const {
     CVec<PetriNet*> result${};
     ::decompose_context_parts(*this, &result$);
     return result$;
+}
+
+void DecomposeContext::calculate_all() const {
+    ::synthesis_all_programs_ext(*this);
 }
 
 

@@ -1,7 +1,7 @@
 use nalgebra::DMatrix;
 
 // Set Partition Mesh https://ajc.maths.uq.edu.au/pdf/65/ajc_v65_p152.pdf
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SetPartitionMesh {
     positions: DMatrix<usize>,
     transitions: DMatrix<usize>,

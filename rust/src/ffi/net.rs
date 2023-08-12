@@ -148,6 +148,7 @@ pub unsafe extern "C" fn connect_vertexes(
     net.connect((&*from).index(), (&*to).index());
 }
 
+/// Удаляет все соединения вершин, которые выходят из from и входят в to
 #[no_mangle]
 pub unsafe extern "C" fn remove_connection(
     net: &mut PetriNet,
@@ -157,7 +158,9 @@ pub unsafe extern "C" fn remove_connection(
     let from = &*from;
     let to = &*to;
     net.connections_mut()
-        .drain_filter(|c| c.first().eq(&from.index()) && c.second().eq(&to.index()));
+        .retain(|c| c.first().ne(&from.index()) || c.second().ne(&to.index()));
+    // net.connections_mut()
+    //     .drain_filter(|c| c.first().eq(&from.index()) && c.second().eq(&to.index()));
 }
 
 #[no_mangle]
