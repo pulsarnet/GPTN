@@ -162,7 +162,7 @@ pub struct Reachability {
     input: DMatrix<i32>,
     output: DMatrix<i32>,
 
-    markings: ReachabilityTree,
+    marking: Marking,
 }
 
 impl Reachability {
@@ -174,7 +174,7 @@ impl Reachability {
             transitions: net.transitions().keys().cloned().collect(),
             input: input.matrix,
             output: output.matrix,
-            markings: ReachabilityTree::new(Marking::from(marking)),
+            marking: Marking::from(marking),
         }
     }
 
@@ -204,15 +204,17 @@ impl Reachability {
         markings
     }
 
-    pub fn compute(&mut self) -> ReachabilityTree {
+    /// Возвращает дерево достижимых разметок
+    pub fn compute(&self) -> ReachabilityTree {
+        let mut tree = ReachabilityTree::new(self.marking.clone());
         loop {
             // Когда все вершины дерева – терминальные, дублирующие или внутренние, алгоритм останавливается
-            if !self.markings.has_boundary() {
+            if !tree.has_boundary() {
                 break;
             }
 
-            for marking in 0..self.markings.count() {
-                let marking_type = self.markings[marking].type_;
+            for marking in 0..tree.count() {
+                let marking_type = tree[marking].type_;
                 if marking_type != CovType::Boundary {
                     continue;
                 }
@@ -220,21 +222,20 @@ impl Reachability {
                 // Если в дереве имеется другая вершина Y, не являющаяся
                 // граничной, и с ней связана та же маркировка, M(X) = M(Y)
                 // то вершина X дублирующая
-                if let Some(_) = self
-                    .markings
+                if let Some(_) = tree
                     .iter()
                     .filter(|mark| mark.type_ != CovType::Boundary)
-                    .find(|mark| mark.data == self.markings[marking].data)
+                    .find(|mark| mark.data == tree[marking].data)
                 {
-                    self.markings[marking].type_ = CovType::Duplicate;
+                    tree[marking].type_ = CovType::Duplicate;
                     continue;
                 }
 
                 // Если для маркировки X не один из переходов не разрешен
                 // то вершина X терминальная
-                let mut selector = self.selector(&self.markings[marking]);
+                let mut selector = self.selector(&tree[marking]);
                 if selector.is_empty() {
-                    self.markings[marking].type_ = CovType::DeadEnd;
+                    tree[marking].type_ = CovType::DeadEnd;
                     continue;
                 }
 
@@ -246,18 +247,18 @@ impl Reachability {
                     let select_clone = select.clone();
                     let mut index = Some((transition.clone(), marking));
                     while let Some((_, i)) = index {
-                        index = self.markings[i].prev;
+                        index = tree[i].prev;
 
                         // if t != *transition {
                         //     continue;
                         // }
-                        if self.markings[i].data.row(0) >= select_clone.data.row(0) {
+                        if tree[i].data.row(0) >= select_clone.data.row(0) {
                             continue;
                         }
 
                         for position in 0..self.input.nrows() {
-                            if self.markings[i].data[(0, position)] > 0
-                                && self.markings[i].data[(0, position)]
+                            if tree[i].data[(0, position)] > 0
+                                && tree[i].data[(0, position)]
                                     < select_clone.data[(0, position)]
                             {
                                 select.data[(0, position)] = MarkerValue::Infinity;
@@ -272,17 +273,14 @@ impl Reachability {
                 for (transition, mut select) in selector.into_iter() {
                     select.type_ = CovType::Boundary;
                     select.prev = Some((transition, marking));
-                    self.markings.append(select);
+                    tree.append(select);
 
-                    let index = self.markings.count() - 1;
-                    self.markings[marking].next.push((transition, index));
-                    self.markings[marking].type_ = CovType::Inner;
+                    let index = tree.count() - 1;
+                    tree[marking].next.push((transition, index));
+                    tree[marking].type_ = CovType::Inner;
                 }
             }
         }
-
-        let mut tree = ReachabilityTree::new(self.markings.markings[0].clone());
-        std::mem::swap(&mut tree, &mut self.markings);
         tree
     }
 }
@@ -407,8 +405,8 @@ mod tests {
         // marking
         net.positions_mut().get_mut(&p1).unwrap().add_marker();
 
-        let mut cov = Reachability::new(&net);
-        let _tree = cov.compute();
+        let cov = Reachability::new(&net);
+        let tree = cov.compute();
 
         let mut current = vec![0];
         let mut level = 0;
@@ -418,15 +416,15 @@ mod tests {
             }
 
             for i in 0..current.len() {
-                let prev = match cov.markings[current[i]].prev {
-                    Some((_, m)) => &cov.markings[m].data,
-                    None => &cov.markings[0].data,
+                let prev = match tree[current[i]].prev {
+                    Some((_, m)) => &tree[m].data,
+                    None => &tree[0].data,
                 };
                 print!(
                     "{level}: {} => T{} => {}",
                     prev,
-                    cov.markings[current[i]].prev.unwrap().0.id,
-                    cov.markings[current[i]].data
+                    tree[current[i]].prev.map(|(v, _)| v.id).unwrap_or(9999),
+                    tree[current[i]].data
                 );
             }
             println!();
@@ -434,7 +432,7 @@ mod tests {
             current = current
                 .clone()
                 .iter()
-                .map(|i| &cov.markings[*i])
+                .map(|i| &tree[*i])
                 .map(|m| &m.next)
                 .flatten()
                 .map(|(_, i)| *i)

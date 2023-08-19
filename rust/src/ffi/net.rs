@@ -217,6 +217,6 @@ pub unsafe extern "C" fn petri_net_connection_weight(
 
 #[no_mangle]
 pub extern "C" fn petri_net_reachability(net: &PetriNet) -> *mut ReachabilityTree {
-    let mut reachability = Reachability::new(net);
+    let reachability = Reachability::new(net);
     Box::into_raw(Box::new(reachability.compute()))
 }
