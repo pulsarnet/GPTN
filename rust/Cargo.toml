@@ -12,7 +12,7 @@ cc = "1.0.72"
 nalgebra = "0.32.1"
 libc = "0.2.112"
 sparse21 = "0.2.1"
-ndarray-linalg = { version = "0.16.0", features = ["openblas-static"] }
+ndarray-linalg = "0.16.0"
 ndarray = "0.15.4"
 rand = "0.8.4"
 log4rs = "1.0.0"
