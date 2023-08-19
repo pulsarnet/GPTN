@@ -407,8 +407,8 @@ mod tests {
         // marking
         net.positions_mut().get_mut(&p1).unwrap().add_marker();
 
-        let cov = Reachability::new(&net);
-        //let tree = cov.compute();
+        let mut cov = Reachability::new(&net);
+        let _tree = cov.compute();
 
         let mut current = vec![0];
         let mut level = 0;
