@@ -286,7 +286,7 @@ mod tests {
 
     #[test]
     fn test_synthesis_program() {
-        let mut program = SynthesisProgram::new_with(vec![0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7], 4);
+        let program = SynthesisProgram::new_with(vec![0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7], 4);
         let pos_indexes = vec![
             Vertex::position(1),
             Vertex::position(2),

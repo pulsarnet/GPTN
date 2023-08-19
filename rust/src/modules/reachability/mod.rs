@@ -373,9 +373,7 @@ extern "C" fn marking_transition(this: &Marking) -> VertexIndex {
 #[cfg(test)]
 mod tests {
     use modules::reachability::Reachability;
-    use nalgebra::DMatrix;
     use net::PetriNet;
-    use std::hash::Hash;
 
     #[test]
     pub fn test_cov() {
@@ -407,10 +405,10 @@ mod tests {
         net.connect(t3, p4);
 
         // marking
-        net.positions.get_mut(&p1).unwrap().add_marker();
+        net.positions_mut().get_mut(&p1).unwrap().add_marker();
 
-        let mut cov = Reachability::new(&net);
-        let tree = cov.compute();
+        let cov = Reachability::new(&net);
+        //let tree = cov.compute();
 
         let mut current = vec![0];
         let mut level = 0;

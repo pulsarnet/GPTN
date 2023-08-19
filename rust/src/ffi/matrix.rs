@@ -68,5 +68,5 @@ extern "C" fn named_matrix_columns(this: &CNamedMatrix) -> usize {
 
 #[no_mangle]
 extern "C" fn remove_string(this: *mut c_char) {
-    unsafe { CString::from_raw(this) };
+    unsafe { let _ = CString::from_raw(this); };
 }

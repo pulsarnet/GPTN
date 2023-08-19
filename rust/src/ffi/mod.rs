@@ -60,5 +60,5 @@ extern "C" fn ctx_set_decompose_context(ctx: *mut PetriNetContext, d_ctx: *mut D
 
 #[no_mangle]
 extern "C" fn delete_context(ctx: *mut PetriNetContext) {
-    unsafe { Box::from_raw(ctx) };
+    unsafe { let _ = Box::from_raw(ctx); }
 }
