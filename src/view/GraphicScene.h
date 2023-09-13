@@ -117,7 +117,7 @@ private:
 
     ArrowLine* m_currentConnection = nullptr;
 
-    Mode m_mod;
+    Mode m_mode;
     Mode m_restoreMode;
 
     Modes m_allowMods;

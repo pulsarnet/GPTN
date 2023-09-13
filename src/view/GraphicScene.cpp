@@ -20,10 +20,10 @@
 
 GraphicScene::GraphicScene(ffi::PetriNet *net, QObject *parent)
     : QGraphicsScene(parent)
-    ,m_mod(Mode::A_Nothing)
-    ,m_allowMods(Mode::A_Nothing)
-    ,m_net(net)
-    ,m_undoStack(new QUndoStack(this))
+    , m_mode(Mode::A_Nothing)
+    , m_allowMods(Mode::A_Nothing)
+    , m_net(net)
+    , m_undoStack(new QUndoStack(this))
 {
     setSceneRect(-12500, -12500, 25000, 25000);
 
@@ -64,7 +64,7 @@ GraphicScene::GraphicScene(ffi::PetriNet *net, QObject *parent)
 
 
 void GraphicScene::setMode(Mode mod) {
-    if (m_allowMods & mod) m_mod = mod;
+    if (m_allowMods & mod) m_mode = mod;
     else qDebug() << "Mode " << mod << " not allowed!";
 }
 
@@ -73,9 +73,8 @@ void GraphicScene::setAllowMods(Modes mods) {
 }
 
 void GraphicScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
-
     if (event->button() == Qt::LeftButton) {
-        switch (m_mod) {
+        switch (m_mode) {
             case A_Position:
                 insertPosition(event);
                 break;
@@ -114,7 +113,7 @@ void GraphicScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
         }
     }
     else if (event->button() == Qt::RightButton) {
-        if (m_mod == A_Connection) connectionRollback(event);
+        if (m_mode == A_Connection) connectionRollback(event);
         else QGraphicsScene::mousePressEvent(event);
     }
 
@@ -123,7 +122,7 @@ void GraphicScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
 
 void GraphicScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
 
-    switch (m_mod) {
+    switch (m_mode) {
         case A_Connection:
             if (m_currentConnection) {
                 m_currentConnection->setLine(QLineF(m_currentConnection->line().p1(), event->scenePos()));
@@ -560,8 +559,8 @@ void GraphicScene::markPosition(QGraphicsSceneMouseEvent *event) {
 }
 
 void GraphicScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event) {
-    if (m_mod == A_Move) QGraphicsScene::mouseDoubleClickEvent(event);
-    else if (m_mod == A_Marker) markPosition(event);
+    if (m_mode == A_Move) QGraphicsScene::mouseDoubleClickEvent(event);
+    else if (m_mode == A_Marker) markPosition(event);
 }
 
 void GraphicScene::dotVisualization(char* algorithm) {

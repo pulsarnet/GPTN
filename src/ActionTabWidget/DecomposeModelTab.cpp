@@ -21,7 +21,7 @@
 
 uint qHash(const QVector3D &v)
 {
-    return qHash( QString( "%1x%2x%3" ).arg(v.x()).arg(v.y()).arg(v.z()) ) ;
+    return qHash(QString("%1x%2x%3" ).arg(v.x()).arg(v.y()).arg(v.z()) );
 }
 
 DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) : QWidget(parent)

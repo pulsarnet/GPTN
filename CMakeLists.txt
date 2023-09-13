@@ -1,14 +1,15 @@
 cmake_minimum_required(VERSION 3.17.3)
 project(GPTN VERSION 0.1)
-include(ExternalProject)
 
 message(STATUS ${CMAKE_CXX_FLAGS})
 set(CMAKE_CXX_STANDARD 20)
 
+set(TARGET_NAME GPTN)
 set(TARGET_DIR ${CMAKE_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TARGET_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${TARGET_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${TARGET_DIR}/lib)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 set(CMAKE_AUTORCC ON)
 
 if (NOT GRAPHVIZ_DIR)
@@ -108,7 +109,8 @@ set(SRC_FILES
         src/MainTree/MainTreeItem.cpp
         src/MainTree/MainTreeModel.cpp
         src/MainTree/ProjectTreeItem.cpp
-        src/Settings/RecentProjects.cpp)
+        src/Settings/RecentProjects.cpp
+)
 
 set(HEADERS
         src/mainwindow.h
@@ -168,19 +170,21 @@ set(HEADERS
         src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.h
         src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.h
         src/WindowWidgets/NewProjectWindow.h
-        src/DataVisualization/InputHandler3D.h src/Settings/RecentProjects.h)
+        src/DataVisualization/InputHandler3D.h
+        src/Settings/RecentProjects.h
+)
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 
 if (APPLE)
-    add_executable(GPTN
+    add_executable(${TARGET_NAME}
             ${SRC_FILES}
             ${HEADERS}
             mainwindow.ui
             resources/resources.qrc
             )
 else()
-    add_executable(GPTN
+    add_executable(${TARGET_NAME}
             #WIN32
             ${SRC_FILES}
             ${HEADERS}
@@ -189,15 +193,27 @@ else()
             )
 endif()
 
-if (APPLE)
-    set(FFI_LIBRARY_PATH "${CMAKE_SOURCE_DIR}/rust/target/release/libptn_lib.a")
+# RUST {
+include(AddExternalLibrary)
+if(APPLE)
+    set(FFI_LIBRARY_NAME "libptn_lib.a")
 else()
-    set(FFI_LIBRARY_PATH "${CMAKE_SOURCE_DIR}/rust/target/$<$<CONFIG:Debug>:debug>$<$<CONFIG:Release>:release>/ptn_lib.lib")
+    set(FFI_LIBRARY_NAME "ptn_lib.lib")
 endif()
+set(FFI_SOURCE_DIR "${CMAKE_SOURCE_DIR}/rust")
+set(FFI_TARGET_DIR ${FFI_SOURCE_DIR}/target/release)
+set(FFI_OUTPUT_PATH "${FFI_TARGET_DIR}/${FFI_LIBRARY_NAME}")
+add_external_library(
+        TARGET            ptn_lib
+        COMMAND           cargo build --release
+        WORKING_DIRECTORY "${FFI_SOURCE_DIR}"
+        OUTPUT            "${FFI_OUTPUT_PATH}"
+        COMMENT           "Cargo build ptn_lib"
+)
+# } RUST
 
-target_link_libraries(GPTN PRIVATE
-        ${FFI_LIBRARY_PATH}
-        #"${CMAKE_SOURCE_DIR}/rust/target/debug/hello_world.lib"
+target_link_libraries(${TARGET_NAME} PRIVATE
+        ptn_lib
         Qt6::Widgets
         Qt6::Core
         Qt6::Gui
@@ -210,11 +226,11 @@ target_link_libraries(GPTN PRIVATE
         ${QWT_LIBRARY}
         )
 
-qt6_import_plugins(GPTN
+qt6_import_plugins(${TARGET_NAME}
         INCLUDE_BY_TYPE imageformats
         )
 
-set_target_properties(GPTN PROPERTIES
+set_target_properties(${TARGET_NAME} PROPERTIES
         AUTOMOC ON
         AUTORCC ON
         AUTOUIC ON
@@ -231,7 +247,7 @@ if (APPLE)
             list(APPEND DIRS "${dir}/bin" "${dir}/lib")
         endforeach()
     endif()
-    set_target_properties(GPTN PROPERTIES
+    set_target_properties(${TARGET_NAME} PROPERTIES
             BUNDLE True
             )
 
@@ -241,7 +257,10 @@ if (APPLE)
     ")
 endif()
 
+
 if (WIN32)
+    set_property(TARGET ${TARGET_NAME} PROPERTY WIN32_EXECUTABLE true)
+
     include(InstallRequiredSystemLibraries)
     install(FILES
             # Copy Qt6 dlls
@@ -251,10 +270,14 @@ if (WIN32)
             "${QT6_BIN_DIR}/Qt6Svg.dll"
             "${QT6_BIN_DIR}/Qt6OpenGLWidgets.dll"
             "${QT6_BIN_DIR}/Qt6OpenGL.dll"
+            "${QT6_BIN_DIR}/Qt6DataVisualization.dll"
 
             # Copy Graphviz
             "${GRAPHVIZ_BIN_DIR}/cgraph.dll"
             "${GRAPHVIZ_BIN_DIR}/gvc.dll"
+            "${GRAPHVIZ_BIN_DIR}/pathplan.dll"
+            "${GRAPHVIZ_BIN_DIR}/expat.dll"
+            "${GRAPHVIZ_BIN_DIR}/cdt.dll"
             "${GRAPHVIZ_BIN_DIR}/gvplugin_core.dll"
             "${GRAPHVIZ_BIN_DIR}/gvplugin_dot_layout.dll"
             "${GRAPHVIZ_BIN_DIR}/gvplugin_neato_layout.dll"
@@ -276,16 +299,31 @@ if (WIN32)
     # Copy Qt6 styles
     install(FILES "${QT6_MAIN_DIR}/plugins/styles/qwindowsvistastyle.dll" DESTINATION bin/plugins/styles)
 
-    set(CPACK_PACKAGE_NAME "GPTN")
+    set(CPACK_PACKAGE_NAME "${TARGET_NAME}")
     set(CPACK_PACKAGE_DIRECTORY "packages")
     set(CPACK_PACKAGE_VENDOR "Nickolay Muraviev")
     set(CPACK_PACKAGE_VERSION_MAJOR "0")
     set(CPACK_PACKAGE_VERSION_MINOR "1")
-    install(TARGETS GPTN RUNTIME DESTINATION bin)
+    install(TARGETS ${TARGET_NAME} RUNTIME DESTINATION bin)
     include(CPack)
 
     add_custom_command(
-            TARGET GPTN POST_BUILD
+            TARGET ${TARGET_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${TARGET_NAME}>/plugins/platforms
+    )
+
+    add_custom_command(
+            TARGET ${TARGET_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${TARGET_NAME}>/plugins/styles
+    )
+
+    add_custom_command(
+            TARGET ${TARGET_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${TARGET_NAME}>/plugins/imageformats
+    )
+
+    add_custom_command(
+            TARGET ${TARGET_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:Qt6::Widgets>
             $<TARGET_FILE:Qt6::Core>
@@ -294,27 +332,61 @@ if (WIN32)
             $<TARGET_FILE:Qt6::DataVisualization>
             $<TARGET_FILE:Qt6::OpenGL>
             $<TARGET_FILE:Qt6::OpenGLWidgets>
-            $<TARGET_FILE_DIR:GPTN>
+            $<TARGET_FILE_DIR:${TARGET_NAME}>
     )
 
     add_custom_command(
-            TARGET GPTN POST_BUILD
+            TARGET ${TARGET_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:Qt6::QWindowsIntegrationPlugin>
-            $<TARGET_FILE_DIR:GPTN>/plugins/platforms/
+            $<TARGET_FILE_DIR:${TARGET_NAME}>/plugins/platforms/
     )
 
     add_custom_command(
-            TARGET GPTN POST_BUILD
+            TARGET ${TARGET_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:Qt6::QSvgIconPlugin>
-            $<TARGET_FILE_DIR:GPTN>/plugins/imageformats/
+            $<TARGET_FILE:Qt6::QSvgPlugin>
+            $<TARGET_FILE_DIR:${TARGET_NAME}>/plugins/imageformats/
     )
 
     add_custom_command(
-            TARGET GPTN POST_BUILD
+            TARGET ${TARGET_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:Qt6::QWindowsVistaStylePlugin>
-            $<TARGET_FILE_DIR:GPTN>/plugins/styles/
+            $<TARGET_FILE_DIR:${TARGET_NAME}>/plugins/styles/
+    )
+
+    # Copy GraphViz
+    add_custom_command(
+            TARGET ${TARGET_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${GRAPHVIZ_BIN_DIR}/cgraph.dll"
+            "${GRAPHVIZ_BIN_DIR}/gvc.dll"
+            "${GRAPHVIZ_BIN_DIR}/pathplan.dll"
+            "${GRAPHVIZ_BIN_DIR}/expat.dll"
+            "${GRAPHVIZ_BIN_DIR}/cdt.dll"
+            "${GRAPHVIZ_BIN_DIR}/gvplugin_core.dll"
+            "${GRAPHVIZ_BIN_DIR}/gvplugin_dot_layout.dll"
+            "${GRAPHVIZ_BIN_DIR}/gvplugin_neato_layout.dll"
+            "${GRAPHVIZ_BIN_DIR}/gvplugin_pango.dll"
+            "${GRAPHVIZ_BIN_DIR}/xdot.dll"
+            "${GRAPHVIZ_BIN_DIR}/config6"
+            $<TARGET_FILE_DIR:${TARGET_NAME}>
+    )
+
+    # Copy QWT
+    add_custom_command(
+            TARGET ${TARGET_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${QWT_BIN_DIR}/qwt.dll"
+            $<TARGET_FILE_DIR:${TARGET_NAME}>
+    )
+
+    # Copy QtAdvancedDockingSystem
+    add_custom_command(
+            TARGET ${TARGET_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${Qt_ADVANCED_DOCKING_SYSTEM_BIN_DIR}/qtadvanceddocking.dll"
+            $<TARGET_FILE_DIR:${TARGET_NAME}>
     )
 endif()
