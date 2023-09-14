@@ -145,12 +145,11 @@ bool MainWindow::openFile(const QString &fileName) {
     if (!dynamic_cast<GraphicScene*>(modelItem->netModelingTab()->view()->scene())->fromJson(document)) {
         QMessageBox::information(this, tr("Unable to open file"),
                                  file.errorString());
+        delete projectItem;
         return false;
     }
 
-    auto treeModel = qobject_cast<MainTreeModel*>(
-            qobject_cast<MainTreeView*>(m_treeView)->model()
-    );
+    auto treeModel = qobject_cast<MainTreeModel*>(qobject_cast<MainTreeView*>(m_treeView)->model());
 
     treeModel->addChild(projectItem);
 
@@ -355,6 +354,42 @@ void MainWindow::treeItemAction(const QModelIndex& index) {
     }
 }
 
+void MainWindow::closeProjectRequested(bool checked) {
+    Q_UNUSED(checked)
+
+    auto current = m_treeView->currentIndex();
+    if (!current.isValid())
+        return;
+
+    qDebug() << "MainWindow::closeProjectRequested(index = " << current << ")";
+
+    auto treeItem = static_cast<MainTreeItem*>(current.internalPointer());
+    auto project = dynamic_cast<ProjectTreeItem*>(treeItem);
+    if (!project)
+        return;
+
+
+    // Удалить вкладки (model, analysis) {
+    auto idx = m_tabWidget->findTabContainsWidget(project->modelItem()->netModelingTab());
+    if (idx >= 0) m_tabWidget->removeTab(idx);
+
+    auto analysis_children = project->analysisItem()->childCount();
+    for (int i = 0; i < analysis_children; i++) {
+        auto tab = project->analysisItem()->childItem(i);
+        if (auto reachability = dynamic_cast<ReachabilityTreeItem*>(tab); reachability) {
+            auto idx = m_tabWidget->findTabContainsWidget(reachability->reachabilityTab());
+            if (idx >= 0) m_tabWidget->removeTab(idx);
+        } else if (auto decompose = dynamic_cast<DecomposeTreeItem*>(tab); decompose) {
+            auto idx = m_tabWidget->findTabContainsWidget(decompose->decomposeModelTab());
+            if (idx >= 0) m_tabWidget->removeTab(idx);
+        }
+    }
+    // } Удалить вкладки (model, analysis)
+
+    // Удалить item из дерева
+    m_treeView->model()->removeRow(current.row(), current.parent());
+}
+
 void MainWindow::treeItemContextMenuRequested(const QPoint &point) {
     auto index = m_treeView->indexAt(point);
     if (!index.isValid()) {
@@ -362,19 +397,34 @@ void MainWindow::treeItemContextMenuRequested(const QPoint &point) {
     }
 
     auto item = static_cast<MainTreeItem*>(index.internalPointer());
-    auto menu = item->contextMenu();
-    if (menu) {
-        disconnect(item,
-                   &MainTreeItem::onChildAdd,
-                   this,
-                   &MainWindow::slotNeedUpdateTreeView);
+    if (auto project = dynamic_cast<ProjectTreeItem*>(item); project) {
+        auto menu = new QMenu;
+        menu->deleteLater();
 
-        connect(item,
-                &MainTreeItem::onChildAdd,
+        auto closeProjectAction = new QAction("Close project", menu);
+        connect(
+                closeProjectAction,
+                &QAction::triggered,
                 this,
-                &MainWindow::slotNeedUpdateTreeView);
-
+                &MainWindow::closeProjectRequested
+                );
+        menu->addAction(closeProjectAction);
         menu->exec(m_treeView->viewport()->mapToGlobal(point));
+    } else {
+        auto menu = item->contextMenu();
+        if (menu) {
+            disconnect(item,
+                       &MainTreeItem::onChildAdd,
+                       this,
+                       &MainWindow::slotNeedUpdateTreeView);
+
+            connect(item,
+                    &MainTreeItem::onChildAdd,
+                    this,
+                    &MainWindow::slotNeedUpdateTreeView);
+
+            menu->exec(m_treeView->viewport()->mapToGlobal(point));
+        }
     }
 }
 

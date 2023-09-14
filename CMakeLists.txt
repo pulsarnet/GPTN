@@ -259,7 +259,7 @@ endif()
 
 
 if (WIN32)
-    set_property(TARGET ${TARGET_NAME} PROPERTY WIN32_EXECUTABLE true)
+    #set_property(TARGET ${TARGET_NAME} PROPERTY WIN32_EXECUTABLE true)
 
     include(InstallRequiredSystemLibraries)
     install(FILES

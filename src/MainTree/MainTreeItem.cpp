@@ -37,6 +37,18 @@ bool MainTreeItem::insertChild(int row, MainTreeItem *item) {
     return true;
 }
 
+bool MainTreeItem::removeChildren(int position, int count) noexcept {
+    if (position < 0 || position + count > m_childItems.size()) {
+        return false;
+    }
+
+    for (int row = 0; row < count; ++row) {
+        delete m_childItems.takeAt(position);
+    }
+
+    return true;
+}
+
 QVariant MainTreeItem::data(int column) const noexcept {
     if (column != 0) return {};
     return QString("Root");
@@ -51,7 +63,5 @@ QMenu *MainTreeItem::contextMenu() noexcept {
 }
 
 MainTreeItem::~MainTreeItem() {
-    for (auto item : m_childItems) {
-        delete item;
-    }
+    qDeleteAll(m_childItems);
 }

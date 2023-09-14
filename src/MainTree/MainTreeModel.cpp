@@ -81,3 +81,15 @@ QVariant MainTreeModel::data(const QModelIndex &index, int role) const {
 
     return {};
 }
+
+bool MainTreeModel::removeRows(int row, int count, const QModelIndex &parent) {
+    auto item = getItem(parent);
+    if (!item) {
+        return false;
+    }
+
+    beginRemoveRows(parent, row, row + count - 1);
+    const bool success = item->removeChildren(row, count);
+    endRemoveRows();
+    return success;
+}

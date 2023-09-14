@@ -5,6 +5,7 @@
 #include "ProjectTreeItem.h"
 #include "ModelTreeItem.h"
 #include "AnalysisTreeItem.h"
+#include <QMenu>
 
 ProjectTreeItem::ProjectTreeItem(const std::filesystem::path& path)
     : MainTreeItem(nullptr)

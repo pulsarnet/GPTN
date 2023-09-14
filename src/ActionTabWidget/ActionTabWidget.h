@@ -17,6 +17,8 @@ public:
 
     explicit ActionTabWidget(QWidget *parent = nullptr);
 
+    int findTabContainsWidget(QWidget* widget) noexcept;
+
 public slots:
 
     void slotCloseTab(int index);

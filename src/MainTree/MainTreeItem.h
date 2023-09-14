@@ -25,6 +25,7 @@ public:
     [[nodiscard]] int childNumber() const noexcept;
 
     bool insertChild(int row, MainTreeItem* item);
+    bool removeChildren(int position, int count) noexcept;
 
     [[nodiscard]] virtual QVariant data(int column) const noexcept;
     [[nodiscard]] virtual QIcon icon() const noexcept;

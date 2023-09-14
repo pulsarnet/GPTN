@@ -4,6 +4,7 @@
 
 #include "MainTreeView.h"
 #include "MainTreeModel.h"
+#include "MainTreeItem.h"
 #include <QMouseEvent>
 
 MainTreeView::MainTreeView(MainTreeModel *model, QWidget *parent)

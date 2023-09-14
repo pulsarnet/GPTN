@@ -34,6 +34,8 @@ public:
 
     QVariant data(const QModelIndex &index, int role) const override;
 
+    bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
+
 private:
 
     MainTreeItem* m_root;

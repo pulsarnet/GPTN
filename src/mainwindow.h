@@ -67,6 +67,7 @@ public slots:
     void onNewProjectCreate(const QDir& dir, const QString& name);
 
     void treeItemAction(const QModelIndex& index);
+    void closeProjectRequested(bool checked);
 
     void treeItemContextMenuRequested(const QPoint& point);
 

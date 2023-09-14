@@ -24,7 +24,6 @@ public:
     std::filesystem::path folder() const { return m_path; }
 
     QVariant data(int column) const noexcept override;
-
 private:
 
     QString m_projectName;
