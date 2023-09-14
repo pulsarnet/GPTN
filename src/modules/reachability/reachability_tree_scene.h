@@ -14,14 +14,14 @@
 class ReachabilityNode;
 
 namespace rust {
-    struct Reachability;
+    struct ReachabilityTree;
 }
 
 class ReachabilityTreeScene : public QGraphicsScene {
 
 public:
 
-    explicit ReachabilityTreeScene(rust::Reachability* tree, QObject* parent = nullptr);
+    explicit ReachabilityTreeScene(rust::ReachabilityTree* tree, QObject* parent = nullptr);
 
 private:
 

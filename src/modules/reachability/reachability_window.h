@@ -13,20 +13,20 @@ namespace ffi {
 }
 
 namespace rust {
-    struct Reachability;
+    struct ReachabilityTree;
 }
 
 class ReachabilityWindow : public QWidget {
 
 public:
 
-    explicit ReachabilityWindow(ffi::PetriNet*, rust::Reachability*, QWidget* parent = nullptr);
+    explicit ReachabilityWindow(ffi::PetriNet*, rust::ReachabilityTree*, QWidget* parent = nullptr);
 
 private:
 
     ads::CDockManager* m_manager;
     ffi::PetriNet* m_net;
-    rust::Reachability* m_reachability;
+    rust::ReachabilityTree* m_reachability;
 
     ads::CDockWidget* m_view;
 };

@@ -9,7 +9,7 @@
 #include "reachability_window.h"
 #include "../../DockSystem/DockWidget.h"
 
-ReachabilityWindow::ReachabilityWindow(ffi::PetriNet *net, rust::Reachability *reachability, QWidget *parent)
+ReachabilityWindow::ReachabilityWindow(ffi::PetriNet *net, rust::ReachabilityTree *reachability, QWidget *parent)
     : QWidget(parent)
     , m_net(net)
     , m_reachability(reachability)

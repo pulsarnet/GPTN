@@ -7,7 +7,7 @@
 #include "types.h"
 
 namespace rust {
-    struct Reachability;
+    struct ReachabilityTree;
 }
 
 namespace ffi {
@@ -70,7 +70,7 @@ namespace ffi {
         void remove_transition(Vertex*);
         void connect(Vertex*, Vertex*);
         void remove_connection(Vertex*, Vertex*);
-        rust::Reachability* reachability() const;
+        rust::ReachabilityTree* reachability() const;
         Connection* get_connection(Vertex*, Vertex*);
 
         Vertex* getVertex(VertexIndex index) const;

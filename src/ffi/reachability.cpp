@@ -7,8 +7,8 @@
 using namespace rust;
 using namespace ffi;
 
-extern "C" void reachability_marking(const Reachability&, CVec<Marking*>&);
-extern "C" void reachability_drop(Reachability*);
+extern "C" void reachability_marking(const ReachabilityTree&, CVec<Marking*>&);
+extern "C" void reachability_drop(ReachabilityTree*);
 
 extern "C" void marking_values(const Marking&,  CVec<int32_t>&);
 extern "C" int32_t marking_previous(const Marking&);
@@ -28,12 +28,12 @@ ffi::VertexIndex Marking::transition() const {
     return ::marking_transition(*this);
 }
 
-CVec<Marking *> Reachability::marking() const {
+CVec<Marking *> ReachabilityTree::marking() const {
     CVec<Marking*> marking{};
     ::reachability_marking(*this, marking);
     return marking;
 }
 
-Reachability::~Reachability() {
+ReachabilityTree::~ReachabilityTree() {
     ::reachability_drop(this);
 }

@@ -40,7 +40,7 @@ extern "C" {
     usize petri_net_input_positions(const PetriNet&);
     usize petri_net_output_positions(const PetriNet&);
     usize petri_net_connection_weight(const PetriNet&, Vertex&, Vertex&);
-    rust::Reachability* petri_net_reachability(const PetriNet&);
+    rust::ReachabilityTree* petri_net_reachability(const PetriNet&);
     Connection* petri_net_get_connection(PetriNet&, Vertex*, Vertex*);
 
     Vertex* net_get_vertex(const PetriNet&, VertexIndex);
@@ -232,7 +232,7 @@ usize PetriNet::connection_weight(ffi::Vertex *a, ffi::Vertex *b) {
     return ::petri_net_connection_weight(*this, *a, *b);
 }
 
-rust::Reachability *PetriNet::reachability() const {
+rust::ReachabilityTree *PetriNet::reachability() const {
     return ::petri_net_reachability(*this);
 }
 

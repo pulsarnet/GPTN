@@ -17,9 +17,9 @@ namespace rust {
         [[nodiscard]] ffi::VertexIndex transition() const;
     };
 
-    struct Reachability {
+    struct ReachabilityTree {
         [[nodiscard]] ffi::CVec<Marking*> marking() const;
-        ~Reachability();
+        ~ReachabilityTree();
     };
 }
 

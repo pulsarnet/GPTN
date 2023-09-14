@@ -7,7 +7,7 @@
 #include "reachability_node.h"
 #include "reachability_line.h"
 
-ReachabilityTreeScene::ReachabilityTreeScene(rust::Reachability *tree, QObject *parent)
+ReachabilityTreeScene::ReachabilityTreeScene(rust::ReachabilityTree *tree, QObject *parent)
     : QGraphicsScene(parent)
 {
     setSceneRect(-12500, -12500, 25000, 25000);
