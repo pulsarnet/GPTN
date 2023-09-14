@@ -178,6 +178,7 @@ impl Reachability {
         }
     }
 
+    /// Получить возможные маркировки из текущей
     pub fn selector(&self, marking: &Marking) -> Vec<(VertexIndex, Marking)> {
         let mut markings = vec![];
 
@@ -241,27 +242,17 @@ impl Reachability {
 
                 // Для всякого перехода t, разрешенного в M(X), создать новую вершину Z дерева достижимости
                 for (transition, select) in selector.iter_mut() {
-                    // Если на пути от корневой вершины к X существует вершина Y с
-                    // M(Y) < M(R), где M(R) удовлетворяет M(X)->(transition)->M(R),
-                    // и M(Y)[Pj] < M(X)[Pj], то вершина M(Z)[Pj] = W
-                    let select_clone = select.clone();
+                    // On the path from the root to M if there exists a marking M"
+                    // such that M'(p)≥M"(p) for each place p and M'M", i.e., M" is coverable,
+                    // then replace M'(p) by o for each p such that M'(p)>M"(p).
                     let mut index = Some((transition.clone(), marking));
                     while let Some((_, i)) = index {
                         index = tree[i].prev;
-
-                        // if t != *transition {
-                        //     continue;
-                        // }
-                        if tree[i].data.row(0) >= select_clone.data.row(0) {
-                            continue;
-                        }
-
-                        for position in 0..self.input.nrows() {
-                            if tree[i].data[(0, position)] > 0
-                                && tree[i].data[(0, position)]
-                                    < select_clone.data[(0, position)]
-                            {
-                                select.data[(0, position)] = MarkerValue::Infinity;
+                        if select.data.row(0) >= tree[i].data.row(0) && select.data.row(0) != tree[i].data.row(0) {
+                            for position in 0..self.input.nrows() {
+                                if select.data[(0, position)] > tree[i].data[(0, position)] {
+                                    select.data[(0, position)] = MarkerValue::Infinity;
+                                }
                             }
                         }
                     }
@@ -296,11 +287,14 @@ impl ReachabilityTree {
         }
     }
 
-    fn has_boundary(&self) -> bool {
+    fn get_boundary(&self) -> Option<&Marking> {
         self.markings
             .iter()
             .find(|mark| mark.type_ == CovType::Boundary)
-            .is_some()
+    }
+
+    fn has_boundary(&self) -> bool {
+        self.get_boundary().is_some()
     }
 
     fn count(&self) -> usize {

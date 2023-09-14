@@ -185,7 +185,7 @@ if (APPLE)
             )
 else()
     add_executable(${TARGET_NAME}
-            WIN32
+            #WIN32
             ${SRC_FILES}
             ${HEADERS}
             mainwindow.ui
