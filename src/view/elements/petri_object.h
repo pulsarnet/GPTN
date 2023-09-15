@@ -41,7 +41,7 @@ protected:
 
 public:
 
-    virtual QPointF connectionPos(PetriObject*, bool reverse);
+    virtual QPointF connectionPos(PetriObject*);
 
     virtual QPointF center() = 0;
 

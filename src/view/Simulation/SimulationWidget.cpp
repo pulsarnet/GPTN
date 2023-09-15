@@ -97,6 +97,7 @@ SimulationWidget::SimulationWidget(GraphicsView *parent)
 }
 
 void SimulationWidget::paintEvent(QPaintEvent *event) {
+    Q_UNUSED(event)
     QStyleOptionFrame opt;
     opt.initFrom(this);
 

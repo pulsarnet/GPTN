@@ -59,6 +59,7 @@ int MainTreeModel::rowCount(const QModelIndex &parent) const {
 }
 
 int MainTreeModel::columnCount(const QModelIndex &parent) const {
+    Q_UNUSED(parent)
     return 1;
 }
 

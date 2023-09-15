@@ -16,7 +16,6 @@ public:
         setWindowTitle("Title");
         //setWindowFlags(Qt::FramelessWindowHint);
         setFocusPolicy(Qt::StrongFocus);
-        auto button = new QPushButton("Hello");
     }
 
 protected:

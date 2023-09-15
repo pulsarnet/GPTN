@@ -26,7 +26,9 @@ QRectF Position::boundingRect() const {
 }
 
 void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
-
+    Q_UNUSED(option)
+    Q_UNUSED(widget)
+    
     qreal penWidth = 2;
 
     auto scene = graphicScene();
@@ -132,7 +134,7 @@ QPointF Position::center() {
     return scenePos();
 }
 
-QPointF Position::connectionPos(PetriObject* to, bool reverse) {
+QPointF Position::connectionPos(PetriObject* to) {
 
     qreal angle = this->angleBetween(to->scenePos());
 

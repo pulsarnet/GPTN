@@ -4,7 +4,7 @@
 #include <QString>
 
 namespace ffi {
-    class PetriNetContext;
+    struct PetriNetContext;
 }
 
 class ProjectMetadata {

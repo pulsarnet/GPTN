@@ -17,6 +17,7 @@ DecomposeModelTab *DecomposeTreeItem::decomposeModelTab() {
 }
 
 QVariant DecomposeTreeItem::data(int column) const noexcept {
+    Q_UNUSED(column)
     return "Decomposition";
 }
 

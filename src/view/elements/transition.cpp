@@ -76,8 +76,7 @@ QPointF getIntersection(qreal dx, qreal dy, qreal cx, qreal cy, qreal width, qre
     return QPointF(cx + dx * height / qAbs(dy), cy + (dy > 0 ? height : -height));
 }
 
-QPointF Transition::connectionPos(PetriObject* to, bool reverse) {
-
+QPointF Transition::connectionPos(PetriObject* to) {
     qreal w = QGraphicsItem::sceneBoundingRect().width() / 2.;
     qreal h = QGraphicsItem::sceneBoundingRect().height() / 2.;
 

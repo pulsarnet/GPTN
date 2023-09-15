@@ -29,6 +29,9 @@ QRectF ReachabilityLine::boundingRect() const {
 }
 
 void ReachabilityLine::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    Q_UNUSED(option)
+    Q_UNUSED(widget)
+
     auto info = (Agedgeinfo_t*)AGDATA(m_edge);
 
     auto points_count = info->spl->list->size;

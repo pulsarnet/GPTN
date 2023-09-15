@@ -70,115 +70,113 @@ find_package(qt6advanceddocking)
 
 set(SRC_FILES
         main.cpp
-        src/mainwindow.cpp
-        src/view/elements/arrow_line.cpp
-        src/view/elements/position.cpp
-        src/view/elements/transition.cpp
-        src/view/elements/petri_object.cpp
-        src/Core/FFI/rust.cpp
-        src/view/GraphicsView.cpp
-        src/view/GraphicsViewZoom.cpp
-        src/view/GraphicScene.cpp
-        src/Core/Graphviz/GraphvizWrapper.cpp
-        src/synthesis/synthesis_model.cpp
-        src/synthesis/synthesis_item_delegate.cpp
         src/ActionTabWidget/ActionTabWidget.cpp
-        src/ActionTabWidget/NetModelingTab.cpp
-        src/overrides/MatrixWindow.cpp
-        src/ActionTabWidget/WrappedLayoutWidget.cpp
         src/ActionTabWidget/DecomposeModelTab.cpp
-        src/DockSystem/SplittableComponentsFactory.cpp
+        src/ActionTabWidget/NetModelingTab.cpp
+        src/ActionTabWidget/WrappedLayoutWidget.cpp
+        src/Core/FFI/reachability.cpp
+        src/Core/FFI/rust.cpp
+        src/Core/FFI/simulation.cpp
+        src/Core/FFI/vec.cpp
+        src/Core/Graphviz/GraphvizWrapper.cpp
+        src/Core/ProjectMetadata.cpp
+        src/DataVisualization/InputHandler3D.cpp
         src/DockSystem/DockToolbar.cpp
         src/DockSystem/DockWidget.cpp
-        src/synthesis/synthesis_table.cpp
-        src/QwtExt/qwt_ext_plot_curve_labels.cpp
-        src/QwtExt/CanvasPicker.cpp
-        src/synthesis/synthesis_window.cpp
-        src/modules/reachability/reachability_tree_scene.cpp
-        src/view/Simulation/SimulationWidget.cpp
+        src/DockSystem/SplittableComponentsFactory.cpp
         src/MainTree/DecomposeTreeItem.cpp
-        src/modules/reachability/reachability_node.cpp
-        src/Core/FFI/simulation.cpp
-        src/Core/FFI/reachability.cpp
-        src/Core/FFI/vec.cpp
-        src/modules/reachability/reachability_line.cpp
-        src/modules/reachability/reachability_view.cpp
-        src/modules/reachability/reachability_window.cpp
-        src/MainTree/ReachabilityTreeItem.cpp
-        src/view/Commands/AddCommand.cpp
-        src/view/Commands/MarkCommand.cpp
-        src/view/Commands/MoveCommand.cpp
-        src/view/Commands/RotateCommand.cpp
-        src/view/Commands/ConnectCommand.cpp
-        src/view/Commands/RemoveCommand.cpp
-        src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.cpp
-        src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.cpp
-        src/WindowWidgets/NewProjectWindow.cpp
-        src/DataVisualization/InputHandler3D.cpp
         src/MainTree/MainTreeItem.cpp
         src/MainTree/MainTreeModel.cpp
+        src/MainTree/ReachabilityTreeItem.cpp
+        src/QwtExt/CanvasPicker.cpp
+        src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.cpp
+        src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.cpp
+        src/QwtExt/qwt_ext_plot_curve_labels.cpp
         src/Settings/RecentProjects.cpp
-        src/Core/ProjectMetadata.cpp
+        src/WindowWidgets/NewProjectWindow.cpp
+        src/mainwindow.cpp
+        src/modules/reachability/reachability_line.cpp
+        src/modules/reachability/reachability_node.cpp
+        src/modules/reachability/reachability_tree_scene.cpp
+        src/modules/reachability/reachability_view.cpp
+        src/modules/reachability/reachability_window.cpp
+        src/overrides/MatrixWindow.cpp
+        src/synthesis/synthesis_table.cpp
+        src/synthesis/synthesis_window.cpp
+        src/synthesis/synthesis_model.cpp
+        src/view/Commands/AddCommand.cpp
+        src/view/Commands/ConnectCommand.cpp
+        src/view/Commands/MarkCommand.cpp
+        src/view/Commands/MoveCommand.cpp
+        src/view/Commands/RemoveCommand.cpp
+        src/view/Commands/RotateCommand.cpp
+        src/view/GraphicScene.cpp
+        src/view/GraphicsView.cpp
+        src/view/GraphicsViewZoom.cpp
+        src/view/Simulation/SimulationWidget.cpp
+        src/view/elements/arrow_line.cpp
+        src/view/elements/petri_object.cpp
+        src/view/elements/position.cpp
+        src/view/elements/transition.cpp
 )
 
 set(HEADERS
-        src/mainwindow.h
-        src/view/elements/arrow_line.h
-        src/view/elements/position.h
-        src/view/elements/transition.h
-        src/view/elements/petri_object.h
-        src/view/GraphicsView.h
-        src/view/GraphicsViewZoom.h
-        src/view/toolbox/toolbox.h
-        src/view/toolbox/tool.h
-        src/Core/FFI/rust.h
-        src/view/GraphicScene.h
-        src/Core/Graphviz/GraphvizWrapper.h
-        src/synthesis/synthesis_table.h
-        src/synthesis/synthesis_model.h
-        src/synthesis/synthesis_item_delegate.h
-        src/windows_types/close_on_inactive.h
-        src/named_matrix_model.h
-        src/overrides/MatrixWindow.h
         src/ActionTabWidget/ActionTabWidget.h
-        src/ActionTabWidget/NetModelingTab.h
         src/ActionTabWidget/DecomposeModelTab.h
+        src/ActionTabWidget/NetModelingTab.h
         src/ActionTabWidget/WrappedLayoutWidget.h
-        src/DockSystem/SplittableComponentsFactory.h
+        src/Core/FFI/reachability.h
+        src/Core/FFI/rust.h
+        src/Core/FFI/simulation.h
+        src/Core/Graphviz/GraphvizWrapper.h
+        src/Core/ProjectMetadata.h
+        src/DataVisualization/InputHandler3D.h
         src/DockSystem/DockToolbar.h
         src/DockSystem/DockWidget.h
-        src/QwtExt/qwt_ext_plot_curve_labels.h
-        src/QwtExt/CanvasPicker.h
-        src/synthesis/synthesis_window.h
-        src/view/Commands.h
-        src/modules/reachability/reachability_tree_scene.h
-        src/Core/FFI/reachability.h
-        src/modules/reachability/reachability_node.h
-        src/modules/reachability/reachability_line.h
-        src/modules/reachability/reachability_view.h
-        src/modules/reachability/reachability_window.h
+        src/DockSystem/SplittableComponentsFactory.h
+        src/MainTree/DecomposeTreeItem.h
         src/MainTree/MainTreeItem.h
         src/MainTree/MainTreeModel.h
-        src/MainTree/ModelTreeItem.cpp
-        src/MainTree/ModelTreeItem.h
         src/MainTree/MainTreeView.cpp
         src/MainTree/MainTreeView.h
-        src/MainTree/DecomposeTreeItem.h
+        src/MainTree/ModelTreeItem.cpp
+        src/MainTree/ModelTreeItem.h
         src/MainTree/ReachabilityTreeItem.h
+        src/QwtExt/CanvasPicker.h
+        src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.h
+        src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.h
+        src/QwtExt/qwt_ext_plot_curve_labels.h
+        src/Settings/RecentProjects.h
+        src/WindowWidgets/NewProjectWindow.h
+        src/mainwindow.h
+        src/modules/reachability/reachability_line.h
+        src/modules/reachability/reachability_node.h
+        src/modules/reachability/reachability_tree_scene.h
+        src/modules/reachability/reachability_view.h
+        src/modules/reachability/reachability_window.h
+        src/named_matrix_model.h
+        src/overrides/MatrixWindow.h
+        src/synthesis/synthesis_table.h
+        src/synthesis/synthesis_window.h
+        src/synthesis/synthesis_model.h
+        src/view/Commands.h
         src/view/Commands/AddCommand.h
+        src/view/Commands/ConnectCommand.h
         src/view/Commands/MarkCommand.h
         src/view/Commands/MoveCommand.h
-        src/view/Commands/RotateCommand.h
-        src/view/Commands/ConnectCommand.h
         src/view/Commands/RemoveCommand.h
+        src/view/Commands/RotateCommand.h
+        src/view/GraphicScene.h
+        src/view/GraphicsView.h
+        src/view/GraphicsViewZoom.h
         src/view/Simulation/SimulationWidget.h
-        src/Core/FFI/simulation.h
-        src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.h
-        src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.h
-        src/WindowWidgets/NewProjectWindow.h
-        src/DataVisualization/InputHandler3D.h
-        src/Settings/RecentProjects.h
-        src/Core/ProjectMetadata.h
+        src/view/elements/arrow_line.h
+        src/view/elements/petri_object.h
+        src/view/elements/position.h
+        src/view/elements/transition.h
+        src/view/toolbox/tool.h
+        src/view/toolbox/toolbox.h
+        src/windows_types/close_on_inactive.h
 )
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
@@ -356,4 +354,8 @@ if (WIN32)
             "$<TARGET_FILE:ads::qt6advanceddocking>"
             $<TARGET_FILE_DIR:${TARGET_NAME}>
     )
+endif()
+
+if(MSVC)
+    target_compile_options(${TARGET_NAME} PRIVATE /W4 /WX)
 endif()

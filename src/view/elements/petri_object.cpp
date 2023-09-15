@@ -59,7 +59,8 @@ void PetriObject::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
     QGraphicsItem::mouseReleaseEvent(event);
 }
 
-QPointF PetriObject::connectionPos(PetriObject* to, bool reverse) {
+QPointF PetriObject::connectionPos(PetriObject* to) {
+    Q_UNUSED(to)
     return {0, 0};
 }
 
@@ -87,9 +88,10 @@ void PetriObject::addConnectionLine(ArrowLine* line) {
 }
 
 PetriObject::~PetriObject() {
-    for (auto connection : m_connections) {
-        //connection->disconnect(net());
-    }
+    // todo а почему?
+//    for (auto connection : m_connections) {
+//        //connection->disconnect(net());
+//    }
 }
 
 QVariant PetriObject::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant &value) {

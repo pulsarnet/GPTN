@@ -92,12 +92,12 @@ void GraphicsView::setAllowSimulation(bool allow) {
     m_simulationWidget->setVisible(allow);
 }
 
-QAction* GraphicsView::makeAction(const QString &name, const QIcon &icon, bool checkable, QActionGroup *actionGroup) {
+QAction* GraphicsView::makeAction(const QString &name, const QIcon &icon, bool checkable, QActionGroup *actionGroup_) {
     auto action = new QAction(name);
     action->setIcon(icon);
     action->setCheckable(checkable);
 
-    if (actionGroup) actionGroup->addAction(action);
+    if (actionGroup_) actionGroup_->addAction(action);
 
     return action;
 }

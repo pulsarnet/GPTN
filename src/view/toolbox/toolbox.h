@@ -89,6 +89,7 @@ public:
                         (parentWidget() ? parentWidget()->geometry().bottomLeft().y() : 0) - 20 - qreal((m_buttonSize.height() + 6) * m_buttons.count())
                 );
             case BottomRight:
+            default:
                 return QPointF(
                         (parentWidget() ? parentWidget()->geometry().bottomRight().x() : 0) - 20 - m_buttonSize.width(),
                         (parentWidget() ? parentWidget()->geometry().bottomRight().y() : 0) - 20 - qreal((m_buttonSize.height() + 6) * m_buttons.count())

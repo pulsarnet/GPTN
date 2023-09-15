@@ -48,6 +48,8 @@ QRectF ReachabilityNode::boundingRect() const {
 
 
 void ReachabilityNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    Q_UNUSED(widget)
+    Q_UNUSED(option)
     if (!m_node) {
         return;
     }

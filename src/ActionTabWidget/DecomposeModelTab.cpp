@@ -21,7 +21,7 @@
 #include "../Core/ProjectMetadata.h"
 #include "../Core/FFI/rust.h"
 
-uint qHash(const QVector3D &v)
+inline size_t qHash(const QVector3D &v)
 {
     return qHash(QString("%1x%2x%3" ).arg(v.x()).arg(v.y()).arg(v.z()) );
 }
@@ -66,7 +66,7 @@ DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
     scatter->setShadowQuality(QAbstract3DGraph::ShadowQualityNone);
 
     m_series = new QScatter3DSeries();
-    QScatterDataArray data;
+    QScatterDataArray scatterDataArray;
 
     connect(m_series, &QScatter3DSeries::selectedItemChanged, this, &DecomposeModelTab::selectedPoint);
 
@@ -104,7 +104,7 @@ DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
         if (it == m_graphPoints.end()) {
             //qDebug() << "New point: " << point << " size: " << m_graphPoints.size();
             m_graphPoints.insert(point, QVector<std::size_t>{(std::size_t)i});
-            data << QVector3D(x_axis, y_axis, weight);
+            scatterDataArray << QVector3D(x_axis, y_axis, weight);
         } else {
             it.value().push_back(i);
         }
@@ -113,7 +113,7 @@ DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
     }
     qDebug() << "The slow operation took" << timer.elapsed() << "milliseconds";
 
-    m_series->dataProxy()->addItems(data);
+    m_series->dataProxy()->addItems(scatterDataArray);
     scatter->addSeries(m_series);
 
     auto handler = new InputHandler3D();

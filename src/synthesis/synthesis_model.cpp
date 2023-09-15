@@ -16,10 +16,12 @@ SynthesisModel::SynthesisModel(ffi::DecomposeContext *ctx, QVector<size_t> progr
 }
 
 int SynthesisModel::rowCount(const QModelIndex &parent) const {
+    Q_UNUSED(parent)
     return static_cast<int>(m_programs.size());
 }
 
 int SynthesisModel::columnCount(const QModelIndex &parent) const {
+    Q_UNUSED(parent)
     return 1;
 }
 

@@ -13,7 +13,7 @@ class GraphicsView;
 class DockWidget;
 
 namespace ffi {
-    class DecomposeContext;
+    struct DecomposeContext;
 }
 
 class SynthesisWindow : public QWidget {

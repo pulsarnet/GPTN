@@ -23,6 +23,12 @@
 #include "WindowWidgets/NewProjectWindow.h"
 #include "Settings/RecentProjects.h"
 
+/*
+ * MainWindow содержит:
+ * - Дерево модулей проекта MainTreeView
+ * - Окно вкладок ActionTabWidget
+ * - Меню приложения Menu
+ */
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , m_tabWidget(new ActionTabWidget)
@@ -249,15 +255,18 @@ void MainWindow::createStatusBar() {
 }
 
 void MainWindow::slotSaveFile(bool checked) {
+    Q_UNUSED(checked)
     save();
 }
 
 void MainWindow::slotSaveAsFile(bool checked) {
+    Q_UNUSED(checked)
     auto window = new CloseOnInActive;
     window->show();
 }
 
 void MainWindow::slotOpenFile(bool checked) {
+    Q_UNUSED(checked)
     open();
 }
 
@@ -312,68 +321,68 @@ void MainWindow::treeItemAction(const QModelIndex& index) {
         qDebug() << "Opening ModelTreeItem tab";
         auto tab = model->netModelingTab();
 
-        int index = -1;
+        int idx = -1;
         for (int i = 0; i < m_tabWidget->count(); i++) {
             auto it = m_tabWidget->widget(i);
             if (it == tab) {
-                index = i;
+                idx = i;
                 break;
             }
         }
 
-        if (index < 0) {
-            index = m_tabWidget->insertTab(
+        if (idx < 0) {
+            idx = m_tabWidget->insertTab(
                     m_tabWidget->count() - 1,
                     tab,
                     "Model"
                     //dynamic_cast<ProjectTreeItem*>(model->parentItem())->data(0).toString()
             );
-            m_tabWidget->setTabIcon(index, model->icon());
+            m_tabWidget->setTabIcon(idx, model->icon());
         }
 
-        m_tabWidget->setCurrentIndex(index);
-    } else if (auto model = dynamic_cast<ReachabilityTreeItem*>(treeItem); model) {
-        auto tab = model->reachabilityTab();
+        m_tabWidget->setCurrentIndex(idx);
+    } else if (auto reachability = dynamic_cast<ReachabilityTreeItem*>(treeItem); reachability) {
+        auto tab = reachability->reachabilityTab();
 
-        int index = -1;
+        int idx = -1;
         for (int i = 0; i < m_tabWidget->count(); i++) {
             auto it = m_tabWidget->widget(i);
             if (it == tab) {
-                index = i;
+                idx = i;
                 break;
             }
         }
 
-        if (index < 0) {
+        if (idx < 0) {
             QString name(tr("Reachability Tree"));
-            index = m_tabWidget->insertTab(m_tabWidget->count() - 1,
-                                           tab,
-                                           name);
-            m_tabWidget->setTabIcon(index, model->icon());
+            idx = m_tabWidget->insertTab(m_tabWidget->count() - 1,
+                                         tab,
+                                         name);
+            m_tabWidget->setTabIcon(idx, reachability->icon());
         }
 
-        m_tabWidget->setCurrentIndex(index);
-    } else if (auto model = dynamic_cast<DecomposeTreeItem*>(treeItem); model) {
-        auto tab = model->decomposeModelTab();
+        m_tabWidget->setCurrentIndex(idx);
+    } else if (auto decompose = dynamic_cast<DecomposeTreeItem*>(treeItem); decompose) {
+        auto tab = decompose->decomposeModelTab();
 
-        int index = -1;
+        int idx = -1;
         for (int i = 0; i < m_tabWidget->count(); i++) {
             auto it = m_tabWidget->widget(i);
             if (it == tab) {
-                index = i;
+                idx = i;
                 break;
             }
         }
 
-        if (index < 0) {
+        if (idx < 0) {
             QString name(tr("Decompose"));
-            index = m_tabWidget->insertTab(m_tabWidget->count() - 1,
-                                           tab,
-                                           name);
-            m_tabWidget->setTabIcon(index, model->icon());
+            idx = m_tabWidget->insertTab(m_tabWidget->count() - 1,
+                                         tab,
+                                         name);
+            m_tabWidget->setTabIcon(idx, decompose->icon());
         }
 
-        m_tabWidget->setCurrentIndex(index);
+        m_tabWidget->setCurrentIndex(idx);
     }
 }
 
@@ -415,6 +424,7 @@ void MainWindow::closeProjectRequested(bool checked) {
 }
 
 void MainWindow::treeItemContextMenuRequested(const QPoint &point) {
+    Q_UNUSED(point)
     // TODO: Новая механика
 //    auto index = m_treeView->indexAt(point);
 //    if (!index.isValid()) {

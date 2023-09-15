@@ -8,6 +8,7 @@ ModelTreeItem::ModelTreeItem(MainTreeItem *item, NetModelingTab *tab)
 }
 
 QVariant ModelTreeItem::data(int column) const noexcept {
+    Q_UNUSED(column)
     return "Model";
 }
 

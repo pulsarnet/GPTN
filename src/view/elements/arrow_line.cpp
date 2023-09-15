@@ -51,6 +51,9 @@ QRectF ArrowLine::boundingRect() const {
 }
 
 void ArrowLine::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    Q_UNUSED(option)
+    Q_UNUSED(widget)
+
     painter->setClipRect(boundingRect());
     painter->setRenderHints(QPainter::TextAntialiasing | QPainter::Antialiasing);
 
@@ -112,8 +115,8 @@ ffi::Connection *ArrowLine::netItem(bool reverse) {
 void ArrowLine::updateConnection() {
 
     if (from() && to()) {
-        auto point1 = from()->connectionPos(to(), true);
-        auto point2 = to()->connectionPos(from(), false);
+        auto point1 = from()->connectionPos(to());
+        auto point2 = to()->connectionPos(from());
 
         setLine(QLineF(point1, point2));
     }
@@ -124,13 +127,14 @@ void ArrowLine::updateConnection() {
     m_arrow1 = ArrowLine::arrow(line1);
     m_arrow2 = ArrowLine::arrow(line2);
 
-    QPointF arrowLineCenter = QLineF(m_arrow1.data()[1], m_arrow1.data()[2]).center();
-    QPointF endPoint = line1.p1();
-    endPoint.setX(arrowLineCenter.x());
-    endPoint.setY(arrowLineCenter.y());
-
     QPainterPath curve;
-    curve.moveTo(endPoint);
+    {
+        QPointF arrowLineCenter = QLineF(m_arrow1.data()[1], m_arrow1.data()[2]).center();
+        QPointF endPoint = line1.p1();
+        endPoint.setX(arrowLineCenter.x());
+        endPoint.setY(arrowLineCenter.y());
+        curve.moveTo(endPoint);
+    }
 
     if (m_bidirectional) {
         QPointF arrowLineCenter = QLineF(m_arrow2.data()[1], m_arrow2.data()[2]).center();

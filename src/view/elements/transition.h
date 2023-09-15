@@ -36,7 +36,7 @@ public:
 
     QPointF center() override;
 
-    QPointF connectionPos(PetriObject*, bool reverse) override;
+    QPointF connectionPos(PetriObject*) override;
 
     ObjectType objectType() override { return PetriObject::Transition; }
 

@@ -15,7 +15,7 @@ class QScatter3DSeries;
 class ProjectMetadata;
 
 namespace ffi {
-    class DecomposeContext;
+    struct DecomposeContext;
 }
 
 class DecomposeModelTab : public QWidget {

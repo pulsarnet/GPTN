@@ -17,18 +17,26 @@ public:
     }
 
     bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) override {
+        Q_UNUSED(data)
+        Q_UNUSED(action)
+        Q_UNUSED(row)
+        Q_UNUSED(column)
+        Q_UNUSED(parent)
         return false;
     }
 
     [[nodiscard]] Qt::ItemFlags flags(const QModelIndex &index) const override {
+        Q_UNUSED(index)
         return Qt::ItemFlag::ItemIsEnabled;
     }
 
     [[nodiscard]] int rowCount(const QModelIndex &parent) const override {
+        Q_UNUSED(parent)
         return (int)m_matrix->rows();
     }
 
     [[nodiscard]] int columnCount(const QModelIndex &parent) const override {
+        Q_UNUSED(parent)
         return (int)m_matrix->columns();
     }
 
@@ -54,10 +62,12 @@ public:
     }
 
     [[nodiscard]] QModelIndex index(int row, int column, const QModelIndex &parent) const override {
+        Q_UNUSED(parent);
         return createIndex(row, column);
     }
 
     [[nodiscard]] QModelIndex sibling(int row, int column, const QModelIndex &idx) const override {
+        Q_UNUSED(idx);
         return createIndex(row, column);
     }
 

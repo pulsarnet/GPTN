@@ -107,6 +107,7 @@ bool DockToolbar::isFullScreen() const {
 }
 
 SpacerWidget::SpacerWidget(QWidget *parent) {
+    Q_UNUSED(parent)
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setStyleSheet("border: none; background: none;");
 }

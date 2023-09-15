@@ -22,6 +22,7 @@ WrappedLayoutWidget *ReachabilityTreeItem::reachabilityTab() {
 }
 
 QVariant ReachabilityTreeItem::data(int column) const noexcept {
+    Q_UNUSED(column)
     return "Reachability Tree";
 }
 
