@@ -51,14 +51,14 @@ public:
 
 public slots:
 
-    void slotSaveFile(bool checked);
+    void onSaveFile(bool checked);
 
-    void slotSaveAsFile(bool checked);
+    void onSaveAsFile(bool checked);
 
-    void slotOpenFile(bool checked);
+    void onOpenFile(bool checked);
 
-    void slotRecentFiles();
-    void slotOpenRecentFile();
+    void onRecentProjects();
+    void onOpenRecentProject();
 
     void onNewProject(bool checked);
     void onNewProjectCreate(const QDir& dir, const QString& name);
@@ -91,17 +91,22 @@ private:
 private:
 
     QStatusBar* statusBar = nullptr;
-    QMenuBar* menuBar = nullptr;
     ActionTabWidget* m_tabWidget = nullptr;
 
     QDockWidget* m_treeWidget = nullptr;
     MainTreeView* m_treeView = nullptr;
 
-
-    QMenu* m_recent_submenu = nullptr;
-    QMenu* m_editMenu = nullptr;
-    QAction* m_redoAction = nullptr;
-    QAction* m_undoAction = nullptr;
+    // Menu bar
+    QMenuBar* mMenuBar = nullptr;
+    QMenu* mFileMenu = nullptr;
+    QMenu* mRecentSubmenu = nullptr;
+    QMenu* mEditMenu = nullptr;
+    QMenu* mViewMenu = nullptr;
+    QMenu* mToolsMenu = nullptr;
+    QMenu* mWindowMenu = nullptr;
+    QMenu* mHelpMenu = nullptr;
+    QAction* mRedoAction = nullptr;
+    QAction* mUndoAction = nullptr;
 
     std::vector<QString> m_openedProjects;
 

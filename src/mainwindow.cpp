@@ -32,7 +32,6 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , m_tabWidget(new ActionTabWidget)
-    , m_editMenu(new QMenu(tr("&Edit")))
 {
     m_treeWidget = new QDockWidget(tr("Project Tree"), this);
     m_treeWidget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
@@ -200,9 +199,14 @@ QMessageBox::StandardButton MainWindow::onSaveFileAsk() {
 }
 
 void MainWindow::createMenuBar() {
-    menuBar = new QMenuBar;
-
-    auto file_menu = new QMenu("&File");
+    mMenuBar = new QMenuBar;
+    mFileMenu = new QMenu(tr("&File"));
+    mRecentSubmenu = new QMenu(tr("Recent projects"));
+    mEditMenu = new QMenu(tr("&Edit"));
+    mViewMenu = new QMenu(tr("&View"));
+    mToolsMenu = new QMenu(tr("&Tools"));
+    mWindowMenu = new QMenu(tr("&Window"));
+    mHelpMenu = new QMenu(tr("&Help"));
 
     auto new_action = new QAction("&New", this);
     new_action->setShortcut(QKeySequence::New);
@@ -210,43 +214,44 @@ void MainWindow::createMenuBar() {
 
     auto open_action = new QAction("&Open");
     open_action->setShortcut(QKeySequence::Open);
-    connect(open_action, &QAction::triggered, this, &MainWindow::slotOpenFile);
+    connect(open_action, &QAction::triggered, this, &MainWindow::onOpenFile);
 
-    m_recent_submenu = new QMenu("Recent projects");
-    connect(m_recent_submenu, &QMenu::aboutToShow, this, &MainWindow::slotRecentFiles);
+    connect(mRecentSubmenu, &QMenu::aboutToShow, this, &MainWindow::onRecentProjects);
 
     auto save_action = new QAction("Save");
     save_action->setShortcut(QKeySequence::Save);
-    connect(save_action, &QAction::triggered, this, &MainWindow::slotSaveFile);
+    connect(save_action, &QAction::triggered, this, &MainWindow::onSaveFile);
 
     auto save_as_action = new QAction("Save as...");
     save_as_action->setShortcut(QKeySequence::SaveAs);
-    connect(save_as_action, &QAction::triggered, this, &MainWindow::slotSaveAsFile);
+    connect(save_as_action, &QAction::triggered, this, &MainWindow::onSaveAsFile);
 
     auto quit_action = new QAction("&Quit");
     quit_action->setShortcut(QKeySequence::Quit);
     connect(quit_action, &QAction::triggered, this, &MainWindow::slotQuit);
 
-    file_menu->addAction(new_action);
-    file_menu->addAction(open_action);
-    file_menu->addMenu(m_recent_submenu);
-    file_menu->addAction(save_action);
-    file_menu->addAction(save_as_action);
-    file_menu->addAction(quit_action);
+    mFileMenu->addAction(new_action);
+    mFileMenu->addAction(open_action);
+    mFileMenu->addMenu(mRecentSubmenu);
+    mFileMenu->addAction(save_action);
+    mFileMenu->addAction(save_as_action);
+    mFileMenu->addAction(quit_action);
 
-    m_editMenu->addAction(m_undoAction);
-    m_editMenu->addAction(m_redoAction);
+    mEditMenu->addAction(mUndoAction);
+    mEditMenu->addAction(mRedoAction);
 
-    auto window_menu = new QMenu("&Window");
-    window_menu->addAction(m_treeWidget->toggleViewAction());
+    mViewMenu->addAction(m_treeWidget->toggleViewAction());
 
-    menuBar->addMenu(file_menu);
-    menuBar->addMenu(m_editMenu);
-    menuBar->addMenu(new QMenu("&Tools"));
-    menuBar->addMenu(window_menu);
-    menuBar->addMenu(new QMenu("&Help"));
+    mWindowMenu->addAction(m_treeWidget->toggleViewAction());
 
-    this->setMenuBar(menuBar);
+    mMenuBar->addMenu(mFileMenu);
+    mMenuBar->addMenu(mEditMenu);
+    mMenuBar->addMenu(mViewMenu);
+    mMenuBar->addMenu(mToolsMenu);
+    mMenuBar->addMenu(mWindowMenu);
+    mMenuBar->addMenu(mHelpMenu);
+
+    this->setMenuBar(mMenuBar);
 }
 
 void MainWindow::createStatusBar() {
@@ -254,35 +259,35 @@ void MainWindow::createStatusBar() {
     this->setStatusBar(statusBar);
 }
 
-void MainWindow::slotSaveFile(bool checked) {
+void MainWindow::onSaveFile(bool checked) {
     Q_UNUSED(checked)
     save();
 }
 
-void MainWindow::slotSaveAsFile(bool checked) {
+void MainWindow::onSaveAsFile(bool checked) {
     Q_UNUSED(checked)
     auto window = new CloseOnInActive;
     window->show();
 }
 
-void MainWindow::slotOpenFile(bool checked) {
+void MainWindow::onOpenFile(bool checked) {
     Q_UNUSED(checked)
     open();
 }
 
-void MainWindow::slotRecentFiles() {
-    m_recent_submenu->clear();
+void MainWindow::onRecentProjects() {
+    mRecentSubmenu->clear();
 
     auto recentFiles = RecentProjects::getRecentProjects();
     for (auto& file : recentFiles) {
         auto action = new QAction(file, this);
         action->setData(file);
-        connect(action, &QAction::triggered, this, &MainWindow::slotOpenRecentFile);
-        m_recent_submenu->addAction(action);
+        connect(action, &QAction::triggered, this, &MainWindow::onOpenRecentProject);
+        mRecentSubmenu->addAction(action);
     }
 }
 
-void MainWindow::slotOpenRecentFile() {
+void MainWindow::onOpenRecentProject() {
     auto action = qobject_cast<QAction*>(sender());
     if (action)
         openFile(action->data().toString());
@@ -532,25 +537,25 @@ void MainWindow::tabWidgetCurrentChanged(int index) {
     auto tab = m_tabWidget->widget(index);
 
     // First: delete actions
-    m_editMenu->removeAction(m_undoAction);
-    m_editMenu->removeAction(m_redoAction);
-    delete m_undoAction;
-    delete m_redoAction;
+    mEditMenu->removeAction(mUndoAction);
+    mEditMenu->removeAction(mRedoAction);
+    delete mUndoAction;
+    delete mRedoAction;
 
     if (auto netModelingTab = dynamic_cast<NetModelingTab*>(tab); netModelingTab) {
         auto scene = dynamic_cast<GraphicScene*>(netModelingTab->view()->scene());
-        m_undoAction = scene->undoAction();
-        m_redoAction = scene->redoAction();
+        mUndoAction = scene->undoAction();
+        mRedoAction = scene->redoAction();
     } else {
-        m_undoAction = new QAction("Undo", this);
-        m_undoAction->setShortcut(QKeySequence::Undo);
-        m_undoAction->setEnabled(false);
+        mUndoAction = new QAction("Undo", this);
+        mUndoAction->setShortcut(QKeySequence::Undo);
+        mUndoAction->setEnabled(false);
 
-        m_redoAction = new QAction("Redo", this);
-        m_redoAction->setShortcut(QKeySequence::Redo);
-        m_redoAction->setEnabled(false);
+        mRedoAction = new QAction("Redo", this);
+        mRedoAction->setShortcut(QKeySequence::Redo);
+        mRedoAction->setEnabled(false);
     }
 
-    m_editMenu->addAction(m_undoAction);
-    m_editMenu->addAction(m_redoAction);
+    mEditMenu->addAction(mUndoAction);
+    mEditMenu->addAction(mRedoAction);
 }
