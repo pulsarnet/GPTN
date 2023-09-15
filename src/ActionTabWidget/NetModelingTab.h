@@ -7,21 +7,22 @@
 
 #include <QWidget>
 #include "../view/GraphicsView.h"
-#include "../ffi/rust.h"
+
+class ProjectMetadata;
 
 class NetModelingTab : public QWidget {
 
 public:
 
-    explicit NetModelingTab(QWidget *parent = nullptr);
+    explicit NetModelingTab(ProjectMetadata* metadata, QWidget *parent = nullptr);
 
-    ffi::PetriNetContext* ctx() const;
-    GraphicsView* view() const;
+    [[nodiscard]] ProjectMetadata* metadata() const;
+    [[nodiscard]] GraphicsView* view() const;
 
 private:
 
     GraphicsView *m_view;
-    ffi::PetriNetContext* m_ctx;
+    ProjectMetadata* m_metadata;
 
 };
 

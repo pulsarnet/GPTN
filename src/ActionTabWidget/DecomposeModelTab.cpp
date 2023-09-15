@@ -18,21 +18,23 @@
 #include <QElapsedTimer>
 #include "../synthesis/synthesis_window.h"
 #include "../DataVisualization/InputHandler3D.h"
+#include "../Core/ProjectMetadata.h"
+#include "../Core/FFI/rust.h"
 
 uint qHash(const QVector3D &v)
 {
     return qHash(QString("%1x%2x%3" ).arg(v.x()).arg(v.y()).arg(v.z()) );
 }
 
-DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) : QWidget(parent)
-    , m_netModelingTab(mainTab)
+DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
+    : QWidget(parent)
+    , m_metadata(metadata)
+    , m_dockManager(new ads::CDockManager(this))
 {
-    mainTab->ctx()->decompose();
-    m_ctx = mainTab->ctx()->decompose_ctx();
+    // TODO: make return error if error
+    m_metadata->context()->decompose();
 
-    m_dockManager = new ads::CDockManager(this);
-
-    auto linearBaseFragmentsScene = new GraphicScene(m_ctx->linear_base_fragments());
+    auto linearBaseFragmentsScene = new GraphicScene(decomposeContext()->linear_base_fragments());
     auto linearBaseFragmentsView = new GraphicsView;
     linearBaseFragmentsView->setScene(linearBaseFragmentsScene);
     linearBaseFragmentsView->setToolBoxVisibility(false);
@@ -40,7 +42,7 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     m_linearBaseFragmentsView = new DockWidget("LBF");
     m_linearBaseFragmentsView->setWidget(linearBaseFragmentsView);
 
-    auto primitiveNetScene = new GraphicScene(m_ctx->primitive_net());
+    auto primitiveNetScene = new GraphicScene(decomposeContext()->primitive_net());
     auto primitiveNetView = new GraphicsView;
     primitiveNetView->setScene(primitiveNetScene);
     primitiveNetView->setToolBoxVisibility(false);
@@ -69,17 +71,17 @@ DecomposeModelTab::DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent) :
     connect(m_series, &QScatter3DSeries::selectedItemChanged, this, &DecomposeModelTab::selectedPoint);
 
     // mesure
-    m_ctx->calculate_all();
+    decomposeContext()->calculate_all();
 
     // Plot
     QElapsedTimer timer;
     timer.start();
-    for(std::size_t i = 0; i < m_ctx->programs(); i++) {
+    for(std::size_t i = 0; i < decomposeContext()->programs(); i++) {
         if (i % 1000000 == 0) {
-            qDebug() << "Synthesised " << i << " programs of " << m_ctx->programs();
+            qDebug() << "Synthesised " << i << " programs of " << decomposeContext()->programs();
         }
 
-        auto program = m_ctx->eval_program(i);
+        auto program = decomposeContext()->eval_program(i);
 
         //auto x_axis = program->input_positions() + 2 * program->output_positions();
         //auto y_axis = program->positions().size() + program->transitions().size();
@@ -150,8 +152,12 @@ void DecomposeModelTab::selectedPoint(int idx) {
         window->activateWindow();
     } else {
         auto point = m_series->dataProxy()->itemAt(idx)->position();
-        auto window = new SynthesisWindow(m_ctx, m_graphPoints[point]);
+        auto window = new SynthesisWindow(decomposeContext(), m_graphPoints[point]);
         m_synthesisWindows.insert(idx, window);
         window->show();
     }
+}
+
+ffi::DecomposeContext *DecomposeModelTab::decomposeContext() const noexcept {
+    return m_metadata->context()->decompose_ctx();
 }

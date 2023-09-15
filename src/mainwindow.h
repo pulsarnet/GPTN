@@ -1,7 +1,3 @@
-//
-// Created by Николай Муравьев on 11.12.2021.
-//
-
 #ifndef FFI_RUST_MAINWINDOW_H
 #define FFI_RUST_MAINWINDOW_H
 
@@ -21,6 +17,7 @@
 #include <QMessageBox>
 #include <DockManager.h>
 #include <QDir>
+#include "core/ProjectMetadata.h"
 
 class QTreeView;
 class ActionTabWidget;
@@ -42,12 +39,12 @@ public:
     MainWindow(MainWindow&&) = delete;
     explicit MainWindow(QWidget *parent = nullptr);
 
-    void setFileName(const QString& name);
     bool saveAs();
     bool save();
 
     bool open();
     bool openFile(const QString& fileName);
+    bool initProject(const QString &fileName, QJsonDocument&& document);
 
     bool saveFile();
     QMessageBox::StandardButton onSaveFileAsk();
@@ -96,7 +93,6 @@ private:
     QStatusBar* statusBar = nullptr;
     QMenuBar* menuBar = nullptr;
     ActionTabWidget* m_tabWidget = nullptr;
-    ProjectTreeItem* m_currentProject = nullptr;
 
     QDockWidget* m_treeWidget = nullptr;
     MainTreeView* m_treeView = nullptr;
@@ -109,8 +105,7 @@ private:
 
     std::vector<QString> m_openedProjects;
 
-    QString m_filename;
-    bool m_changed;
+    ProjectMetadata* m_metadata = nullptr;
 };
 
 #endif //FFI_RUST_MAINWINDOW_H

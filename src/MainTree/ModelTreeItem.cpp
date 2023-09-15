@@ -1,12 +1,8 @@
-//
-// Created by darkp on 08.10.2022.
-//
-
 #include "ModelTreeItem.h"
 
-ModelTreeItem::ModelTreeItem(ProjectTreeItem *parent)
-    : MainTreeItem(parent)
-    , m_modelingTab(new NetModelingTab)
+ModelTreeItem::ModelTreeItem(MainTreeItem *item, NetModelingTab *tab)
+    : MainTreeItem(item)
+    , m_modelingTab(tab)
 {
 
 }

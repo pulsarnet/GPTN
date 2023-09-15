@@ -12,7 +12,7 @@ using namespace ffi;
 MatrixWindow::MatrixWindow(CNamedMatrix *matrix1, CNamedMatrix *matrix2, QWidget *parent) : QWidget(parent),
     m_layout(new QGridLayout(this))
 {
-    setWindowTitle("Hello world");
+    setWindowTitle("I/O Matrix View");
     setWindowFlags(Qt::WindowStaysOnTopHint);
     setAttribute(Qt::WA_DeleteOnClose);
     setEnabled(true);

@@ -1,21 +1,19 @@
-//
-// Created by nmuravev on 3/20/2022.
-//
-
 #include <QBoxLayout>
 #include "NetModelingTab.h"
 #include "../view/GraphicScene.h"
 #include "../view/elements/position.h"
 #include "../view/elements/transition.h"
 #include "../view/elements/arrow_line.h"
+#include "../Core/ProjectMetadata.h"
 
-NetModelingTab::NetModelingTab(QWidget *parent) : QWidget(parent) {
+NetModelingTab::NetModelingTab(ProjectMetadata* metadata, QWidget *parent)
+    : QWidget(parent)
+    ,m_metadata(metadata)
+    ,m_view(new GraphicsView(this))
+{
     setLayout(new QBoxLayout(QBoxLayout::TopToBottom));
 
-    m_ctx = ffi::PetriNetContext::create();
-    m_view = new GraphicsView(this);
-
-    auto scene = new GraphicScene(m_ctx->net());
+    auto scene = new GraphicScene(metadata->context()->net());
     scene->setAllowMods(GraphicScene::A_Default);
 
     m_view->setScene(scene);
@@ -24,8 +22,8 @@ NetModelingTab::NetModelingTab(QWidget *parent) : QWidget(parent) {
     layout()->setContentsMargins(0, 0, 0, 0);
 }
 
-ffi::PetriNetContext *NetModelingTab::ctx() const {
-    return m_ctx;
+ProjectMetadata *NetModelingTab::metadata() const {
+    return m_metadata;
 }
 
 GraphicsView* NetModelingTab::view() const {

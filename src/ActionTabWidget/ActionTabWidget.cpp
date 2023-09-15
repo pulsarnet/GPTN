@@ -1,6 +1,8 @@
-//
-// Created by nmuravev on 3/20/2022.
-//
+/**
+ *
+ *
+ */
+
 
 #include "ActionTabWidget.h"
 #include "NetModelingTab.h"

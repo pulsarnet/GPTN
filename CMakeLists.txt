@@ -43,9 +43,18 @@ find_library(QWT_LIBRARY
         HINTS ${QWT_DIR}/lib
         REQUIRED)
 
+find_library(QWT_LIBRARY_D
+        NAMES qwtd
+        HINTS ${QWT_DIR}/lib
+        REQUIRED)
+
 if(QWT_LIBRARY)
     include_directories(${QWT_DIR}/include)
-    message("QWT found:${QWT_LIBRARY}")
+    message("QWT optimized found: ${QWT_LIBRARY}")
+endif()
+
+if(QWT_LIBRARY_D)
+    message("QWT debug found: ${QWT_LIBRARY_D}")
 endif()
 
 if(NOT WIN32)
@@ -57,7 +66,7 @@ set(CMAKE_PREFIX_PATH ${Qt6_DIR})
 find_package(Qt6 REQUIRED COMPONENTS Widgets Core Gui Svg Charts DataVisualization)
 
 set(CMAKE_PREFIX_PATH ${Qt_ADVANCED_DOCKING_SYSTEM_DIR})
-find_package(qtadvanceddocking)
+find_package(qt6advanceddocking)
 
 set(SRC_FILES
         main.cpp
@@ -66,11 +75,11 @@ set(SRC_FILES
         src/view/elements/position.cpp
         src/view/elements/transition.cpp
         src/view/elements/petri_object.cpp
-        src/ffi/rust.cpp
+        src/Core/FFI/rust.cpp
         src/view/GraphicsView.cpp
         src/view/GraphicsViewZoom.cpp
         src/view/GraphicScene.cpp
-        src/graphviz/graphviz_wrapper.cpp
+        src/Core/Graphviz/GraphvizWrapper.cpp
         src/synthesis/synthesis_model.cpp
         src/synthesis/synthesis_item_delegate.cpp
         src/ActionTabWidget/ActionTabWidget.cpp
@@ -89,9 +98,9 @@ set(SRC_FILES
         src/view/Simulation/SimulationWidget.cpp
         src/MainTree/DecomposeTreeItem.cpp
         src/modules/reachability/reachability_node.cpp
-        src/ffi/simulation.cpp
-        src/ffi/reachability.cpp
-        src/ffi/vec.cpp
+        src/Core/FFI/simulation.cpp
+        src/Core/FFI/reachability.cpp
+        src/Core/FFI/vec.cpp
         src/modules/reachability/reachability_line.cpp
         src/modules/reachability/reachability_view.cpp
         src/modules/reachability/reachability_window.cpp
@@ -108,8 +117,8 @@ set(SRC_FILES
         src/DataVisualization/InputHandler3D.cpp
         src/MainTree/MainTreeItem.cpp
         src/MainTree/MainTreeModel.cpp
-        src/MainTree/ProjectTreeItem.cpp
         src/Settings/RecentProjects.cpp
+        src/Core/ProjectMetadata.cpp
 )
 
 set(HEADERS
@@ -122,9 +131,9 @@ set(HEADERS
         src/view/GraphicsViewZoom.h
         src/view/toolbox/toolbox.h
         src/view/toolbox/tool.h
-        src/ffi/rust.h
+        src/Core/FFI/rust.h
         src/view/GraphicScene.h
-        src/graphviz/graphviz_wrapper.h
+        src/Core/Graphviz/GraphvizWrapper.h
         src/synthesis/synthesis_table.h
         src/synthesis/synthesis_model.h
         src/synthesis/synthesis_item_delegate.h
@@ -143,16 +152,13 @@ set(HEADERS
         src/synthesis/synthesis_window.h
         src/view/Commands.h
         src/modules/reachability/reachability_tree_scene.h
-        src/ffi/reachability.h
+        src/Core/FFI/reachability.h
         src/modules/reachability/reachability_node.h
         src/modules/reachability/reachability_line.h
         src/modules/reachability/reachability_view.h
         src/modules/reachability/reachability_window.h
         src/MainTree/MainTreeItem.h
         src/MainTree/MainTreeModel.h
-        src/MainTree/ProjectTreeItem.h
-        src/MainTree/AnalysisTreeItem.cpp
-        src/MainTree/AnalysisTreeItem.h
         src/MainTree/ModelTreeItem.cpp
         src/MainTree/ModelTreeItem.h
         src/MainTree/MainTreeView.cpp
@@ -166,12 +172,13 @@ set(HEADERS
         src/view/Commands/ConnectCommand.h
         src/view/Commands/RemoveCommand.h
         src/view/Simulation/SimulationWidget.h
-        src/ffi/simulation.h
+        src/Core/FFI/simulation.h
         src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.h
         src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.h
         src/WindowWidgets/NewProjectWindow.h
         src/DataVisualization/InputHandler3D.h
         src/Settings/RecentProjects.h
+        src/Core/ProjectMetadata.h
 )
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
@@ -212,18 +219,11 @@ add_external_library(
 )
 # } RUST
 
+target_link_libraries(${TARGET_NAME} PRIVATE ptn_lib libopenblas ads::qt6advanceddocking gvc cgraph Qt6::Widgets Qt6::Core Qt6::Gui Qt6::Svg Qt6::DataVisualization)
 target_link_libraries(${TARGET_NAME} PRIVATE
         ptn_lib
-        Qt6::Widgets
-        Qt6::Core
-        Qt6::Gui
-        Qt6::Svg
-        Qt6::DataVisualization
-        ads::qtadvanceddocking
-        libopenblas
-        gvc
-        cgraph
-        ${QWT_LIBRARY}
+        optimized ${QWT_LIBRARY}
+        debug ${QWT_LIBRARY_D}
         )
 
 qt6_import_plugins(${TARGET_NAME}
@@ -316,20 +316,8 @@ if (WIN32)
     add_custom_command(
             TARGET ${TARGET_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${TARGET_NAME}>/plugins/platforms
-    )
-
-    add_custom_command(
-            TARGET ${TARGET_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${TARGET_NAME}>/plugins/styles
-    )
-
-    add_custom_command(
-            TARGET ${TARGET_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${TARGET_NAME}>/plugins/imageformats
-    )
-
-    add_custom_command(
-            TARGET ${TARGET_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:Qt6::Widgets>
             $<TARGET_FILE:Qt6::Core>
@@ -339,32 +327,15 @@ if (WIN32)
             $<TARGET_FILE:Qt6::OpenGL>
             $<TARGET_FILE:Qt6::OpenGLWidgets>
             $<TARGET_FILE_DIR:${TARGET_NAME}>
-    )
-
-    add_custom_command(
-            TARGET ${TARGET_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:Qt6::QWindowsIntegrationPlugin>
             $<TARGET_FILE_DIR:${TARGET_NAME}>/plugins/platforms/
-    )
-
-    add_custom_command(
-            TARGET ${TARGET_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:Qt6::QSvgPlugin>
             $<TARGET_FILE_DIR:${TARGET_NAME}>/plugins/imageformats/
-    )
-
-    add_custom_command(
-            TARGET ${TARGET_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:Qt6::QWindowsVistaStylePlugin>
             $<TARGET_FILE_DIR:${TARGET_NAME}>/plugins/styles/
-    )
-
-    # Copy GraphViz
-    add_custom_command(
-            TARGET ${TARGET_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${GRAPHVIZ_BIN_DIR}/cgraph.dll"
             "${GRAPHVIZ_BIN_DIR}/gvc.dll"
@@ -378,21 +349,11 @@ if (WIN32)
             "${GRAPHVIZ_BIN_DIR}/xdot.dll"
             "${GRAPHVIZ_BIN_DIR}/config6"
             $<TARGET_FILE_DIR:${TARGET_NAME}>
-    )
-
-    # Copy QWT
-    add_custom_command(
-            TARGET ${TARGET_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${QWT_BIN_DIR}/qwt.dll"
+            "${QWT_BIN_DIR}/qwt$<$<CONFIG:Debug>:d>.dll"
             $<TARGET_FILE_DIR:${TARGET_NAME}>
-    )
-
-    # Copy QtAdvancedDockingSystem
-    add_custom_command(
-            TARGET ${TARGET_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${Qt_ADVANCED_DOCKING_SYSTEM_BIN_DIR}/qtadvanceddocking.dll"
+            "$<TARGET_FILE:ads::qt6advanceddocking>"
             $<TARGET_FILE_DIR:${TARGET_NAME}>
     )
 endif()

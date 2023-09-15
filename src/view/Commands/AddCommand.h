@@ -7,7 +7,7 @@
 
 #include <QUndoCommand>
 #include <QPointF>
-#include "../../ffi/rust.h"
+#include "../../Core/FFI/rust.h"
 
 class PetriObject;
 class GraphicScene;

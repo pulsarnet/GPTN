@@ -12,21 +12,29 @@
 
 class SynthesisWindow;
 class QScatter3DSeries;
+class ProjectMetadata;
+
+namespace ffi {
+    class DecomposeContext;
+}
 
 class DecomposeModelTab : public QWidget {
 
 public:
 
-    explicit DecomposeModelTab(NetModelingTab* mainTab, QWidget *parent = nullptr);
+    explicit DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent = nullptr);
 
 public slots:
 
     void selectedPoint(int idx);
 
+protected:
+
+    ffi::DecomposeContext* decomposeContext() const noexcept;
+
 private:
 
-    NetModelingTab* m_netModelingTab;
-    ffi::DecomposeContext* m_ctx;
+    ProjectMetadata* m_metadata;
 
     ads::CDockManager* m_dockManager;
     DockWidget* m_linearBaseFragmentsView;

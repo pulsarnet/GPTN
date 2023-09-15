@@ -6,7 +6,7 @@
 #define FFI_RUST_QWTTIMELINETRANSITIONACTIVITY_H
 
 #include <QwtPlot>
-#include "../../ffi/rust.h"
+#include "../../Core/FFI/rust.h"
 
 class QwtPlotShapeItem;
 

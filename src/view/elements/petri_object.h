@@ -10,7 +10,7 @@
 #include <QStyleOptionGraphicsItem>
 #include <QtMath>
 #include <QGraphicsSceneMouseEvent>
-#include "../../ffi/rust.h"
+#include "../../Core/FFI/rust.h"
 
 class ArrowLine;
 class GraphicScene;

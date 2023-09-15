@@ -7,14 +7,13 @@
 #include <QFile>
 #include <QSettings>
 #include "src/mainwindow.h"
-#include "src/ffi/rust.h"
 #include "src/DockSystem/SplittableComponentsFactory.h"
 #include "src/Settings/RecentProjects.h"
+#include "src/Core/FFI/rust.h"
 #include <DockManager.h>
 #include <DockComponentsFactory.h>
 
 int main(int argc, char **argv) {
-
     QCoreApplication::setOrganizationName("GPTN");
     QCoreApplication::setOrganizationDomain("lamas.tech");
     QCoreApplication::setApplicationName("GPTN");
@@ -28,7 +27,6 @@ int main(int argc, char **argv) {
 
     ads::CDockComponentsFactory::setFactory(new SplittableComponentsFactory);
 
-    // Если NDEBUG, тогда включаем логирование
     #ifdef QT_DEBUG
         ffi::init();
     #endif

@@ -14,7 +14,7 @@
 #include "../DockSystem/DockWidget.h"
 #include "../view/GraphicScene.h"
 #include "../view/GraphicsView.h"
-#include "../ffi/rust.h"
+#include "../Core/FFI/rust.h"
 
 SynthesisWindow::SynthesisWindow(ffi::DecomposeContext *ctx, QVector<size_t> programs, QWidget* parent)
     : QWidget(parent)

@@ -7,7 +7,7 @@
 #include "../GraphicScene.h"
 #include "petri_object.h"
 #include "arrow_line.h"
-#include "../../ffi/rust.h"
+#include "../../Core/FFI/rust.h"
 
 
 PetriObject::PetriObject(ffi::PetriNet* net, ffi::VertexIndex _vertex, QGraphicsItem* parent)

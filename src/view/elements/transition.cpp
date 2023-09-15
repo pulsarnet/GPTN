@@ -7,7 +7,7 @@
 #include "position.h"
 #include "transition.h"
 #include "../GraphicScene.h"
-#include "../../ffi/simulation.h"
+#include "../../Core/FFI/simulation.h"
 
 Transition::Transition(const QPointF& origin,
                        ffi::PetriNet* net,

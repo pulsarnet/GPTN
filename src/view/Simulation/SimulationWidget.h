@@ -14,7 +14,7 @@
 #define FFI_RUST_SIMULATIONWIDGET_H
 
 #include <QFrame>
-#include "../../ffi/rust.h"
+#include "../../Core/FFI/rust.h"
 
 class QLabel;
 class QPushButton;

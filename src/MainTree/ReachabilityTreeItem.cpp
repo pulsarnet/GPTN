@@ -3,17 +3,17 @@
 //
 
 #include "ReachabilityTreeItem.h"
-#include "AnalysisTreeItem.h"
 #include "ModelTreeItem.h"
 #include "../ActionTabWidget/WrappedLayoutWidget.h"
 #include "../modules/reachability/reachability_window.h"
+#include "../Core/ProjectMetadata.h"
+#include "../Core/FFI/rust.h"
 
-ReachabilityTreeItem::ReachabilityTreeItem(AnalysisTreeItem *parent)
+ReachabilityTreeItem::ReachabilityTreeItem(ProjectMetadata* metadata, MainTreeItem *parent)
         : MainTreeItem(parent)
 {
-    auto modelItem = dynamic_cast<ProjectTreeItem*>(parent->parentItem())->modelItem();
-    auto netModelingTab = modelItem->netModelingTab();
-    auto reachabilityTree = new ReachabilityWindow(netModelingTab->ctx()->net(), netModelingTab->ctx()->net()->reachability());
+    auto net = metadata->context()->net();
+    auto reachabilityTree = new ReachabilityWindow(net, net->reachability());
     m_reachabilityTab = new WrappedLayoutWidget(reachabilityTree);
 }
 

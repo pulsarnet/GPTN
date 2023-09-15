@@ -7,14 +7,14 @@
 
 #include "MainTreeItem.h"
 
-class AnalysisTreeItem;
 class WrappedLayoutWidget;
+class ProjectMetadata;
 
 class ReachabilityTreeItem : public MainTreeItem {
 
 public:
 
-    explicit ReachabilityTreeItem(AnalysisTreeItem* parent);
+    explicit ReachabilityTreeItem(ProjectMetadata* metadata, MainTreeItem* parent);
 
     WrappedLayoutWidget* reachabilityTab();
 

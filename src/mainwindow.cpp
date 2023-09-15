@@ -1,7 +1,3 @@
-//
-// Created by Николай Муравьев on 11.12.2021.
-//
-
 #include "mainwindow.h"
 
 #include <QApplication>
@@ -13,28 +9,26 @@
 #include <QMessageBox>
 #include <DockAreaWidget.h>
 #include <DockAreaTitleBar.h>
+#include <QProcess>
 #include "windows_types/close_on_inactive.h"
 #include "ActionTabWidget/ActionTabWidget.h"
 #include "ActionTabWidget/DecomposeModelTab.h"
 #include "ActionTabWidget/WrappedLayoutWidget.h"
 #include "view/GraphicScene.h"
 #include "MainTree/MainTreeModel.h"
-#include "MainTree/ProjectTreeItem.h"
 #include "MainTree/ModelTreeItem.h"
 #include "MainTree/MainTreeView.h"
 #include "MainTree/DecomposeTreeItem.h"
 #include "MainTree/ReachabilityTreeItem.h"
-#include "MainTree/AnalysisTreeItem.h"
 #include "WindowWidgets/NewProjectWindow.h"
 #include "Settings/RecentProjects.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , m_changed(false)
     , m_tabWidget(new ActionTabWidget)
     , m_editMenu(new QMenu(tr("&Edit")))
 {
-    m_treeWidget = new QDockWidget(tr("Projects"), this);
+    m_treeWidget = new QDockWidget(tr("Project Tree"), this);
     m_treeWidget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
 
     auto treeModel = new MainTreeModel();
@@ -69,15 +63,6 @@ MainWindow::MainWindow(QWidget *parent)
     createStatusBar();
 }
 
-void MainWindow::setFileName(const QString &name) {
-    m_filename = name;
-
-    if (m_filename.isEmpty())
-        setWindowTitle("Petri Net Editor");
-    else
-        setWindowTitle("Petri Net Editor - " + m_filename);
-}
-
 bool MainWindow::saveAs() {
     QString filename = QFileDialog::getSaveFileName(this,
                                                     tr("Save Petri network file"),
@@ -97,31 +82,36 @@ bool MainWindow::saveFile() {
 
     // Get current tree project item
     // Get filepath and save it
-    if (!m_currentProject)
+    if (!m_metadata)
         return false;
 
-    auto path = QString::fromStdString(m_currentProject->folder().string());
-    auto json =
-            qobject_cast<GraphicScene*>(m_currentProject->modelItem()->netModelingTab()->view()->scene())->json();
-
-    QFile file(path);
-    if (!file.open(QFile::WriteOnly)) {
-        QMessageBox::warning(this, tr("Petri Net Editor"),
-                             tr("Cannot write file %1:\n%2.")
-                             .arg(QDir::toNativeSeparators(path), file.errorString()));
-    }
-
-    file.write(json.toJson());
+    // TODO: Переделать
+//    auto path = m_metadata->fileName();
+//    auto json =
+//            qobject_cast<GraphicScene*>(m_currentProject->modelItem()->netModelingTab()->view()->scene())->json();
+//
+//    QFile file(path);
+//    if (!file.open(QFile::WriteOnly)) {
+//        QMessageBox::warning(this, tr("Petri Net Editor"),
+//                             tr("Cannot write file %1:\n%2.")
+//                             .arg(QDir::toNativeSeparators(path), file.errorString()));
+//    }
+//
+//    file.write(json.toJson());
 
     return true;
 
 }
 
+/**
+ * Выбрать и открыть файл.
+ *
+ * @return true - если открыт новый проект, false - если не удалось открыть
+ */
 bool MainWindow::open() {
     QString fileName = QFileDialog::getOpenFileName(this,
-                                                    tr("Open Address Book"), "",
-                                                    tr("Address Book (*.json)"));
-
+                                                    tr("Open Petri Net"), "",
+                                                    tr("JSON Petri Net (*.json)"));
     if (fileName.isEmpty())
         return false;
 
@@ -131,40 +121,73 @@ bool MainWindow::open() {
 bool MainWindow::openFile(const QString &fileName) {
     QFile file(fileName);
 
+    // TODO: Найти в открытых проектах
+
+    // Try open project file
     if (!file.open(QIODevice::ReadOnly)) {
-        QMessageBox::information(this, tr("Unable to open file"),
-                                 file.errorString());
+        QMessageBox::information(this, tr("Unable to open file"),file.errorString());
         return false;
     }
 
+    // Parse JSON data
+    QJsonParseError error;
     auto buffer = file.readAll();
-    auto document = buffer.isEmpty() ? QJsonDocument() : QJsonDocument::fromJson(buffer);
-
-    auto projectItem = new ProjectTreeItem(file.filesystemFileName());
-    auto modelItem = projectItem->modelItem();
-    if (!dynamic_cast<GraphicScene*>(modelItem->netModelingTab()->view()->scene())->fromJson(document)) {
-        QMessageBox::information(this, tr("Unable to open file"),
-                                 file.errorString());
-        delete projectItem;
+    auto document = buffer.isEmpty() ? QJsonDocument() : QJsonDocument::fromJson(buffer, &error);
+    if (error.error != QJsonParseError::NoError) {
+        QMessageBox::information(this, tr("Failed parse json data"),error.errorString());
         return false;
     }
 
-    auto treeModel = qobject_cast<MainTreeModel*>(qobject_cast<MainTreeView*>(m_treeView)->model());
+    if (m_metadata) {
+        // if there is opened project in window
+        auto newWindow = new MainWindow(nullptr);
+        if (!newWindow->initProject(fileName, std::move(document))) {
+            delete newWindow;
+            return false;
+        }
+        newWindow->setMinimumSize(QSize(1280, 720));
+        newWindow->show();
+    } else {
+        if (!initProject(fileName, std::move(document))) {
+            return false;
+        }
+    }
 
-    treeModel->addChild(projectItem);
+    return true;
+}
 
-    setFileName(fileName);
-    m_changed = false;
+/**
+ * Инициализирует проект в текущем окне
+ */
+bool MainWindow::initProject(const QString &fileName, QJsonDocument &&document) {
+    // Установим metadata
+    m_metadata = new ProjectMetadata(fileName);
+    auto modelTab = new NetModelingTab(m_metadata);
+    auto scene = qobject_cast<GraphicScene*>(modelTab->view()->scene());
+    if (!scene->fromJson(document)) {
+        delete modelTab;
+        return false;
+    }
+
+    // Try add to tree
+    auto treeItem = new ModelTreeItem(nullptr, modelTab);
+    auto treeModel = qobject_cast<MainTreeModel*>(m_treeView->model());
+    if (!treeModel->addChild(treeItem)) {
+        delete treeItem;
+        return false;
+    }
+
+    // Установим данные окна (todo: отдельная функция)
+    this->setWindowTitle(this->m_metadata->projectName());
 
     RecentProjects::addRecentProject(fileName);
-
     return true;
 }
 
 QMessageBox::StandardButton MainWindow::onSaveFileAsk() {
     return QMessageBox::warning(
             this,
-            m_filename,
+            m_metadata->fileName(),
             tr("The document has been modified.\n"
                "Do you want to save your changes?"),
             QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
@@ -286,6 +309,7 @@ void MainWindow::onNewProjectCreate(const QDir& dir, const QString& name) {
 void MainWindow::treeItemAction(const QModelIndex& index) {
     auto treeItem = static_cast<MainTreeItem*>(index.internalPointer());
     if (auto model = dynamic_cast<ModelTreeItem*>(treeItem); model) {
+        qDebug() << "Opening ModelTreeItem tab";
         auto tab = model->netModelingTab();
 
         int index = -1;
@@ -298,9 +322,12 @@ void MainWindow::treeItemAction(const QModelIndex& index) {
         }
 
         if (index < 0) {
-            index = m_tabWidget->insertTab(m_tabWidget->count() - 1,
-                                   tab,
-                                   dynamic_cast<ProjectTreeItem*>(model->parentItem())->data(0).toString());
+            index = m_tabWidget->insertTab(
+                    m_tabWidget->count() - 1,
+                    tab,
+                    "Model"
+                    //dynamic_cast<ProjectTreeItem*>(model->parentItem())->data(0).toString()
+            );
             m_tabWidget->setTabIcon(index, model->icon());
         }
 
@@ -318,9 +345,7 @@ void MainWindow::treeItemAction(const QModelIndex& index) {
         }
 
         if (index < 0) {
-            QString name = QString("Reachability Tree of %1")
-                    .arg(dynamic_cast<ProjectTreeItem*>(model->parentItem()->parentItem())->data(0).toString());
-
+            QString name(tr("Reachability Tree"));
             index = m_tabWidget->insertTab(m_tabWidget->count() - 1,
                                            tab,
                                            name);
@@ -341,9 +366,7 @@ void MainWindow::treeItemAction(const QModelIndex& index) {
         }
 
         if (index < 0) {
-            QString name = QString("Decompose of %1")
-                    .arg(dynamic_cast<ProjectTreeItem*>(model->parentItem()->parentItem())->data(0).toString());
-
+            QString name(tr("Decompose"));
             index = m_tabWidget->insertTab(m_tabWidget->count() - 1,
                                            tab,
                                            name);
@@ -357,75 +380,77 @@ void MainWindow::treeItemAction(const QModelIndex& index) {
 void MainWindow::closeProjectRequested(bool checked) {
     Q_UNUSED(checked)
 
-    auto current = m_treeView->currentIndex();
-    if (!current.isValid())
-        return;
-
-    qDebug() << "MainWindow::closeProjectRequested(index = " << current << ")";
-
-    auto treeItem = static_cast<MainTreeItem*>(current.internalPointer());
-    auto project = dynamic_cast<ProjectTreeItem*>(treeItem);
-    if (!project)
-        return;
-
-
-    // Удалить вкладки (model, analysis) {
-    auto idx = m_tabWidget->findTabContainsWidget(project->modelItem()->netModelingTab());
-    if (idx >= 0) m_tabWidget->removeTab(idx);
-
-    auto analysis_children = project->analysisItem()->childCount();
-    for (int i = 0; i < analysis_children; i++) {
-        auto tab = project->analysisItem()->childItem(i);
-        if (auto reachability = dynamic_cast<ReachabilityTreeItem*>(tab); reachability) {
-            auto idx = m_tabWidget->findTabContainsWidget(reachability->reachabilityTab());
-            if (idx >= 0) m_tabWidget->removeTab(idx);
-        } else if (auto decompose = dynamic_cast<DecomposeTreeItem*>(tab); decompose) {
-            auto idx = m_tabWidget->findTabContainsWidget(decompose->decomposeModelTab());
-            if (idx >= 0) m_tabWidget->removeTab(idx);
-        }
-    }
-    // } Удалить вкладки (model, analysis)
-
-    // Удалить item из дерева
-    m_treeView->model()->removeRow(current.row(), current.parent());
+    // TODO: Новая механика
+//    auto current = m_treeView->currentIndex();
+//    if (!current.isValid())
+//        return;
+//
+//    qDebug() << "MainWindow::closeProjectRequested(index = " << current << ")";
+//
+//    auto treeItem = static_cast<MainTreeItem*>(current.internalPointer());
+//    auto project = dynamic_cast<ProjectTreeItem*>(treeItem);
+//    if (!project)
+//        return;
+//
+//
+//    // Удалить вкладки (model, analysis) {
+//    auto idx = m_tabWidget->findTabContainsWidget(project->modelItem()->netModelingTab());
+//    if (idx >= 0) m_tabWidget->removeTab(idx);
+//
+//    auto analysis_children = project->analysisItem()->childCount();
+//    for (int i = 0; i < analysis_children; i++) {
+//        auto tab = project->analysisItem()->childItem(i);
+//        if (auto reachability = dynamic_cast<ReachabilityTreeItem*>(tab); reachability) {
+//            auto idx = m_tabWidget->findTabContainsWidget(reachability->reachabilityTab());
+//            if (idx >= 0) m_tabWidget->removeTab(idx);
+//        } else if (auto decompose = dynamic_cast<DecomposeTreeItem*>(tab); decompose) {
+//            auto idx = m_tabWidget->findTabContainsWidget(decompose->decomposeModelTab());
+//            if (idx >= 0) m_tabWidget->removeTab(idx);
+//        }
+//    }
+//    // } Удалить вкладки (model, analysis)
+//
+//    // Удалить item из дерева
+//    m_treeView->model()->removeRow(current.row(), current.parent());
 }
 
 void MainWindow::treeItemContextMenuRequested(const QPoint &point) {
-    auto index = m_treeView->indexAt(point);
-    if (!index.isValid()) {
-        return;
-    }
-
-    auto item = static_cast<MainTreeItem*>(index.internalPointer());
-    if (auto project = dynamic_cast<ProjectTreeItem*>(item); project) {
-        auto menu = new QMenu;
-        menu->deleteLater();
-
-        auto closeProjectAction = new QAction("Close project", menu);
-        connect(
-                closeProjectAction,
-                &QAction::triggered,
-                this,
-                &MainWindow::closeProjectRequested
-                );
-        menu->addAction(closeProjectAction);
-        menu->exec(m_treeView->viewport()->mapToGlobal(point));
-    } else {
-        auto menu = item->contextMenu();
-        if (menu) {
-            disconnect(item,
-                       &MainTreeItem::onChildAdd,
-                       this,
-                       &MainWindow::slotNeedUpdateTreeView);
-
-            connect(item,
-                    &MainTreeItem::onChildAdd,
-                    this,
-                    &MainWindow::slotNeedUpdateTreeView);
-
-            menu->exec(m_treeView->viewport()->mapToGlobal(point));
-        }
-    }
+    // TODO: Новая механика
+//    auto index = m_treeView->indexAt(point);
+//    if (!index.isValid()) {
+//        return;
+//    }
+//
+//    auto item = static_cast<MainTreeItem*>(index.internalPointer());
+//    if (auto project = dynamic_cast<ProjectTreeItem*>(item); project) {
+//        auto menu = new QMenu;
+//        menu->deleteLater();
+//
+//        auto closeProjectAction = new QAction("Close project", menu);
+//        connect(
+//                closeProjectAction,
+//                &QAction::triggered,
+//                this,
+//                &MainWindow::closeProjectRequested
+//                );
+//        menu->addAction(closeProjectAction);
+//        menu->exec(m_treeView->viewport()->mapToGlobal(point));
+//    } else {
+//        auto menu = item->contextMenu();
+//        if (menu) {
+//            disconnect(item,
+//                       &MainTreeItem::onChildAdd,
+//                       this,
+//                       &MainWindow::slotNeedUpdateTreeView);
+//
+//            connect(item,
+//                    &MainTreeItem::onChildAdd,
+//                    this,
+//                    &MainWindow::slotNeedUpdateTreeView);
+//
+//            menu->exec(m_treeView->viewport()->mapToGlobal(point));
+//        }
+//    }
 }
 
 void MainWindow::slotNeedUpdateTreeView() {
@@ -436,18 +461,19 @@ void MainWindow::slotNeedUpdateTreeView() {
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
-
     if (saveOnExit()) {
         event->accept();
     }
     else {
         event->ignore();
     }
-
 }
 
 bool MainWindow::saveOnExit() {
-    if (!m_changed)
+    qDebug() << "MainWindow::saveOnExit()";
+
+    // Check if project is changed
+    if (!m_metadata || !m_metadata->isChanged())
         return true;
 
     switch (onSaveFileAsk())
@@ -471,25 +497,24 @@ void MainWindow::slotQuit(bool checked) {
 void MainWindow::treeViewSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected) {
     Q_UNUSED(selected)
     Q_UNUSED(deselected)
-    auto index = m_treeView->currentIndex();
-    if (!index.isValid()) {
-        // set null
-        m_currentProject = nullptr;
-        return;
-    }
+    // TODO: А может функция уже не нужна
+//    auto index = m_treeView->currentIndex();
+//    if (!index.isValid()) {
+//        // set null
+//        return;
+//    }
+//
+//    auto item = static_cast<MainTreeItem*>(index.internalPointer());
 
-    auto item = static_cast<MainTreeItem*>(index.internalPointer());
-
-    // set current project item
-    if (auto project = dynamic_cast<ProjectTreeItem*>(item); project) {
-        m_currentProject = project;
-    } else if (auto project = dynamic_cast<ProjectTreeItem*>(item->parentItem()); project) {
-        m_currentProject = project;
-    } else if (auto project = dynamic_cast<ProjectTreeItem*>(item->parentItem()->parentItem()); project) {
-        m_currentProject = project;
-    }
-
-    qDebug() << "Current project: " << m_currentProject->data(0).toString();
+    // TODO: REMOVE =====> set current project item
+//    if (auto project = dynamic_cast<ProjectTreeItem*>(item); project) {
+//        m_currentProject = project;
+//    } else if (auto project = dynamic_cast<ProjectTreeItem*>(item->parentItem()); project) {
+//        m_currentProject = project;
+//    } else if (auto project = dynamic_cast<ProjectTreeItem*>(item->parentItem()->parentItem()); project) {
+//        m_currentProject = project;
+//    }
+    //qDebug() << "Current project: " << m_currentProject->data(0).toString();
 }
 
 void MainWindow::tabWidgetCurrentChanged(int index) {

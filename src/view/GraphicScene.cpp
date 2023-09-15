@@ -16,7 +16,7 @@
 #include "elements/position.h"
 #include "elements/transition.h"
 #include "elements/arrow_line.h"
-#include "../graphviz/graphviz_wrapper.h"
+#include "../Core/graphviz/GraphvizWrapper.h"
 
 GraphicScene::GraphicScene(ffi::PetriNet *net, QObject *parent)
     : QGraphicsScene(parent)

@@ -3,7 +3,7 @@
 //
 
 
-#include "graphviz_wrapper.h"
+#include "GraphvizWrapper.h"
 #include <QObject>
 #include <QJsonObject>
 #include <QJsonDocument>

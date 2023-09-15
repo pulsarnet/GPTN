@@ -8,7 +8,7 @@
 #include <QWidget>
 #include <QGridLayout>
 #include <QTableView>
-#include "../ffi/rust.h"
+#include "../Core/FFI/rust.h"
 
 class MatrixWindow : public QWidget {
 

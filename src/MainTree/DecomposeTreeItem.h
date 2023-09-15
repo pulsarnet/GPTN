@@ -7,14 +7,14 @@
 
 #include "MainTreeItem.h"
 
-class AnalysisTreeItem;
+class ProjectMetadata;
 class DecomposeModelTab;
 
 class DecomposeTreeItem : public MainTreeItem {
 
 public:
 
-    explicit DecomposeTreeItem(AnalysisTreeItem* parent);
+    explicit DecomposeTreeItem(ProjectMetadata* metadata, MainTreeItem* parent);
 
     DecomposeModelTab* decomposeModelTab();
 
@@ -25,7 +25,6 @@ public:
 private:
 
     DecomposeModelTab* m_decomposeTab;
-
 };
 
 

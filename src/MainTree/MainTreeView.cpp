@@ -18,6 +18,7 @@ MainTreeView::MainTreeView(MainTreeModel *model, QWidget *parent)
 
 void MainTreeView::mouseDoubleClickEvent(QMouseEvent *event) {
     auto index = this->indexAt(event->pos());
+    qDebug() << "MainTreeView::mouseDoubleClickEvent(index = " << index << ")";
 
     if (index.isValid())
         emit elementAction(index);

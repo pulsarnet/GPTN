@@ -5,7 +5,7 @@
 #include "synthesis_model.h"
 
 #include <utility>
-#include "../ffi/rust.h"
+#include "../Core/FFI/rust.h"
 
 SynthesisModel::SynthesisModel(ffi::DecomposeContext *ctx, QVector<size_t> programs, QObject *parent)
     : QAbstractTableModel(parent)

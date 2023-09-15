@@ -2,7 +2,7 @@
 #include "transition.h"
 #include "../GraphicScene.h"
 #include <QFontMetrics>
-#include "../../ffi/simulation.h"
+#include "../../Core/FFI/simulation.h"
 
 Position::Position(const QPointF& origin, ffi::PetriNet* net, ffi::VertexIndex position, QGraphicsItem* parent)
     : PetriObject(net, position, parent)

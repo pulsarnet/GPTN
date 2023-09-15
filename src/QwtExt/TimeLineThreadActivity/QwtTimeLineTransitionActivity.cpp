@@ -3,7 +3,7 @@
 //
 
 #include "QwtTimeLineTransitionActivity.h"
-#include "../../ffi/simulation.h"
+#include "../../Core/FFI/simulation.h"
 #include "QwtVertexScaleDraw.h"
 #include <QTimer>
 #include <QwtPlotShapeItem>

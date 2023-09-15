@@ -4,7 +4,7 @@
 
 #ifndef FFI_RUST_MARKCOMMAND_H
 #define FFI_RUST_MARKCOMMAND_H
-#include "../../ffi/rust.h"
+#include "../../Core/FFI/rust.h"
 
 #include <QUndoCommand>
 

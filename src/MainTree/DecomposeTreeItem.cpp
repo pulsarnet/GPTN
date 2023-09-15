@@ -3,16 +3,13 @@
 //
 
 #include "DecomposeTreeItem.h"
-#include "AnalysisTreeItem.h"
 #include "ModelTreeItem.h"
 #include "../ActionTabWidget/DecomposeModelTab.h"
 
-DecomposeTreeItem::DecomposeTreeItem(AnalysisTreeItem *parent)
+DecomposeTreeItem::DecomposeTreeItem(ProjectMetadata *metadata, MainTreeItem *parent)
     : MainTreeItem(parent)
 {
-    auto modelItem = dynamic_cast<ProjectTreeItem*>(parent->parentItem())->modelItem();
-    auto netModelingTab = modelItem->netModelingTab();
-    m_decomposeTab = new DecomposeModelTab(netModelingTab);
+    m_decomposeTab = new DecomposeModelTab(metadata);
 }
 
 DecomposeModelTab *DecomposeTreeItem::decomposeModelTab() {

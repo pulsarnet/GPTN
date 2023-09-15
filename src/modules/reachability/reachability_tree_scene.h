@@ -8,8 +8,8 @@
 #define FFI_RUST_REACHABILITY_TREE_SCENE_H
 
 #include <QGraphicsScene>
-#include "../../graphviz/graphviz_wrapper.h"
-#include "../../ffi/reachability.h"
+#include "../../Core/graphviz/GraphvizWrapper.h"
+#include "../../Core/FFI/reachability.h"
 
 class ReachabilityNode;
 

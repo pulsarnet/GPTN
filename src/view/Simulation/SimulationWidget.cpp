@@ -1,6 +1,6 @@
 #include "SimulationWidget.h"
 #include "../GraphicsView.h"
-#include "../../ffi/Simulation.h"
+#include "../../Core/FFI/Simulation.h"
 #include "../GraphicScene.h"
 #include "../elements/position.h"
 #include <QPushButton>

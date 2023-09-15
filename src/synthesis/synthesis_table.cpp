@@ -8,7 +8,7 @@
 #include "synthesis_model.h"
 #include "synthesis_table.h"
 #include "synthesis_item_delegate.h"
-#include "../ffi/rust.h"
+#include "../Core/FFI/rust.h"
 
 SynthesisTable::SynthesisTable(ffi::DecomposeContext *ctx, QVector<size_t> programs, QWidget *parent)
     : QWidget(parent)
