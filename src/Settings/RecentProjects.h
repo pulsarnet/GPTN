@@ -20,6 +20,7 @@ public:
 
     static std::vector<QString> getRecentProjects();
     static void addRecentProject(const QString& path);
+    static void removeRecentProject(const QString& path);
 
 private:
 

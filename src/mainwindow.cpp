@@ -266,8 +266,14 @@ void MainWindow::onRecentProjects() {
 
 void MainWindow::onOpenRecentProject() {
     auto action = qobject_cast<QAction*>(sender());
-    if (action)
-        mController->openProject(action->data().toString());
+    if (!action)
+        return;
+
+    QString path(action->data().toString());
+    if (!mController->openProject(path)) {
+        RecentProjects::removeRecentProject(path);
+        return;
+    }
 }
 
 void MainWindow::onNewProject(bool checked) {

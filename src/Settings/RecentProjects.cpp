@@ -47,6 +47,19 @@ void RecentProjects::addRecentProject(const QString &path) {
     RecentProjects::writeRecentProjects(std::move(projects));
 }
 
+void RecentProjects::removeRecentProject(const QString &path) {
+    Q_ASSERT(!path.isEmpty());
+
+    auto base64 = QString::fromStdString(path.toUtf8().toBase64().toStdString());
+    auto projects = RecentProjects::readRecentProjects();
+    auto toRemove = std::remove_if(projects.begin(), projects.end(), [&base64](const RecentProject& project) {
+        return project.id == base64;
+    });
+    projects.erase(toRemove, projects.end());
+
+    RecentProjects::writeRecentProjects(std::move(projects));
+}
+
 QString RecentProjects::path() {
     auto defaultDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     if (!QDir(defaultDir).exists()) {
