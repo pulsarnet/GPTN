@@ -24,6 +24,7 @@ class ActionTabWidget;
 class MainTreeItem;
 class MainTreeView;
 class ApplicationProjectController;
+class MainTreeController;
 
 class MainWindow : public QMainWindow {
 
@@ -63,11 +64,8 @@ public slots:
     void onNewProjectCreate(const QDir& dir, const QString& name);
 
     void treeItemAction(const QModelIndex& index);
-    void closeProjectRequested(bool checked);
 
     void treeItemContextMenuRequested(const QPoint& point);
-
-    void slotNeedUpdateTreeView();
 
     void slotQuit(bool checked);
 
@@ -90,12 +88,10 @@ private:
 private:
 
     ApplicationProjectController* mController;
+    MainTreeController* mTreeController;
 
     QStatusBar* statusBar = nullptr;
     ActionTabWidget* m_tabWidget = nullptr;
-
-    QDockWidget* m_treeWidget = nullptr;
-    MainTreeView* m_treeView = nullptr;
 
     // Menu bar
     QMenuBar* mMenuBar = nullptr;

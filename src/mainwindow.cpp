@@ -23,6 +23,7 @@
 #include "WindowWidgets/NewProjectWindow.h"
 #include "Settings/RecentProjects.h"
 #include "Core/ApplicationProjectController.h"
+#include "MainTree/MainTreeController.h"
 
 /*
  * MainWindow содержит:
@@ -35,28 +36,7 @@ MainWindow::MainWindow(ApplicationProjectController* controller, QWidget *parent
     , m_tabWidget(new ActionTabWidget)
     , mController(controller)
 {
-    m_treeWidget = new QDockWidget(tr("Project Tree"), this);
-    m_treeWidget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-
-    auto treeModel = new MainTreeModel();
-    m_treeView = new MainTreeView(treeModel, this);
-    m_treeWidget->setWidget(m_treeView);
-    connect(m_treeView,
-            &MainTreeView::elementAction,
-            this,
-            &MainWindow::treeItemAction);
-
-    connect(m_treeView,
-            &QTreeView::customContextMenuRequested,
-            this,
-            &MainWindow::treeItemContextMenuRequested);
-
-    connect(m_treeView->selectionModel(),
-            &QItemSelectionModel::selectionChanged,
-            this,
-            &MainWindow::treeViewSelectionChanged);
-
-    addDockWidget(Qt::LeftDockWidgetArea, m_treeWidget);
+    mTreeController = new MainTreeController(this);
 
     // Tab widget
     connect(m_tabWidget
@@ -155,8 +135,7 @@ bool MainWindow::initProject(const QString &filename) {
 
     // Try add to tree
     auto treeItem = new ModelTreeItem(nullptr, modelTab);
-    auto treeModel = qobject_cast<MainTreeModel*>(m_treeView->model());
-    if (!treeModel->addChild(treeItem)) {
+    if (!mTreeController->addChildItem(treeItem)) {
         delete treeItem;
         return false;
     }
@@ -219,7 +198,7 @@ void MainWindow::createMenuBar() {
     mEditMenu->addAction(mUndoAction);
     mEditMenu->addAction(mRedoAction);
 
-    mViewMenu->addAction(m_treeWidget->toggleViewAction());
+    mViewMenu->addAction(mTreeController->toggleViewAction());
 
     mMenuBar->addMenu(mFileMenu);
     mMenuBar->addMenu(mEditMenu);
@@ -374,88 +353,29 @@ void MainWindow::treeItemAction(const QModelIndex& index) {
     }
 }
 
-void MainWindow::closeProjectRequested(bool checked) {
-    Q_UNUSED(checked)
-
-    // TODO: Новая механика
-//    auto current = m_treeView->currentIndex();
-//    if (!current.isValid())
-//        return;
-//
-//    qDebug() << "MainWindow::closeProjectRequested(index = " << current << ")";
-//
-//    auto treeItem = static_cast<MainTreeItem*>(current.internalPointer());
-//    auto project = dynamic_cast<ProjectTreeItem*>(treeItem);
-//    if (!project)
-//        return;
-//
-//
-//    // Удалить вкладки (model, analysis) {
-//    auto idx = m_tabWidget->findTabContainsWidget(project->modelItem()->netModelingTab());
-//    if (idx >= 0) m_tabWidget->removeTab(idx);
-//
-//    auto analysis_children = project->analysisItem()->childCount();
-//    for (int i = 0; i < analysis_children; i++) {
-//        auto tab = project->analysisItem()->childItem(i);
-//        if (auto reachability = dynamic_cast<ReachabilityTreeItem*>(tab); reachability) {
-//            auto idx = m_tabWidget->findTabContainsWidget(reachability->reachabilityTab());
-//            if (idx >= 0) m_tabWidget->removeTab(idx);
-//        } else if (auto decompose = dynamic_cast<DecomposeTreeItem*>(tab); decompose) {
-//            auto idx = m_tabWidget->findTabContainsWidget(decompose->decomposeModelTab());
-//            if (idx >= 0) m_tabWidget->removeTab(idx);
-//        }
-//    }
-//    // } Удалить вкладки (model, analysis)
-//
-//    // Удалить item из дерева
-//    m_treeView->model()->removeRow(current.row(), current.parent());
-}
-
 void MainWindow::treeItemContextMenuRequested(const QPoint &point) {
     Q_UNUSED(point)
-    // TODO: Новая механика
-//    auto index = m_treeView->indexAt(point);
-//    if (!index.isValid()) {
-//        return;
-//    }
-//
-//    auto item = static_cast<MainTreeItem*>(index.internalPointer());
-//    if (auto project = dynamic_cast<ProjectTreeItem*>(item); project) {
-//        auto menu = new QMenu;
-//        menu->deleteLater();
-//
-//        auto closeProjectAction = new QAction("Close project", menu);
-//        connect(
-//                closeProjectAction,
-//                &QAction::triggered,
-//                this,
-//                &MainWindow::closeProjectRequested
-//                );
-//        menu->addAction(closeProjectAction);
-//        menu->exec(m_treeView->viewport()->mapToGlobal(point));
-//    } else {
-//        auto menu = item->contextMenu();
-//        if (menu) {
-//            disconnect(item,
-//                       &MainTreeItem::onChildAdd,
-//                       this,
-//                       &MainWindow::slotNeedUpdateTreeView);
-//
-//            connect(item,
-//                    &MainTreeItem::onChildAdd,
-//                    this,
-//                    &MainWindow::slotNeedUpdateTreeView);
-//
-//            menu->exec(m_treeView->viewport()->mapToGlobal(point));
-//        }
-//    }
-}
 
-void MainWindow::slotNeedUpdateTreeView() {
-    auto treeModel = qobject_cast<MainTreeModel*>(m_treeView->model());
+    // if project not set skip this action
+    if (!m_metadata)
+        return;
 
-    m_treeView->expand(m_treeView->currentIndex());
-    treeModel->layoutChanged();
+    auto menu = new QMenu;
+    menu->deleteLater();
+
+    bool hasReachability = false;
+
+    auto rootItem = mTreeController->getItem(QModelIndex());
+    for (int idx = 0; idx < rootItem->childCount(); idx++) {
+        auto child = rootItem->childItem(idx);
+        if (auto reachability = qobject_cast<ReachabilityTreeItem*>(child); reachability) {
+            hasReachability = true;
+        }
+    }
+
+//    if (!hasReachability) {
+//        menu->addAction()
+//    }
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {

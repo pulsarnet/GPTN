@@ -12,6 +12,8 @@ class ProjectMetadata;
 
 class ReachabilityTreeItem : public MainTreeItem {
 
+    Q_OBJECT
+
 public:
 
     explicit ReachabilityTreeItem(ProjectMetadata* metadata, MainTreeItem* parent);

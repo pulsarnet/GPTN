@@ -10,8 +10,9 @@
 #include <Qlabel>
 #include <QSettings>
 
-NewProjectWindow::NewProjectWindow(QWidget *parent) : QDialog(parent) {
-
+NewProjectWindow::NewProjectWindow(QWidget *parent)
+    : QDialog(parent)
+{
     setAttribute(Qt::WA_DeleteOnClose, true);
     setMinimumSize(400, 100);
     setModal(true);
