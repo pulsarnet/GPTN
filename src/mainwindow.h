@@ -23,7 +23,7 @@ class QTreeView;
 class ActionTabWidget;
 class MainTreeItem;
 class MainTreeView;
-class ProjectTreeItem;
+class ApplicationProjectController;
 
 class MainWindow : public QMainWindow {
 
@@ -37,14 +37,13 @@ public:
     MainWindow() = delete;
     MainWindow(const MainWindow&) = delete;
     MainWindow(MainWindow&&) = delete;
-    explicit MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(ApplicationProjectController* controller, QWidget *parent = nullptr);
 
     bool saveAs();
     bool save();
 
     bool open();
-    bool openFile(const QString& fileName);
-    bool initProject(const QString &fileName, QJsonDocument&& document);
+    bool initProject(const QString &filename);
 
     bool saveFile();
     QMessageBox::StandardButton onSaveFileAsk();
@@ -89,6 +88,8 @@ private:
     void createStatusBar();
 
 private:
+
+    ApplicationProjectController* mController;
 
     QStatusBar* statusBar = nullptr;
     ActionTabWidget* m_tabWidget = nullptr;

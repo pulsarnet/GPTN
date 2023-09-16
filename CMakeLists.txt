@@ -177,6 +177,8 @@ set(HEADERS
         src/view/toolbox/tool.h
         src/view/toolbox/toolbox.h
         src/windows_types/close_on_inactive.h
+        src/Core/ApplicationProjectController.cpp
+        src/Core/ApplicationProjectController.h
 )
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")

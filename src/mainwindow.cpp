@@ -22,6 +22,7 @@
 #include "MainTree/ReachabilityTreeItem.h"
 #include "WindowWidgets/NewProjectWindow.h"
 #include "Settings/RecentProjects.h"
+#include "Core/ApplicationProjectController.h"
 
 /*
  * MainWindow содержит:
@@ -29,9 +30,10 @@
  * - Окно вкладок ActionTabWidget
  * - Меню приложения Menu
  */
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(ApplicationProjectController* controller, QWidget *parent)
     : QMainWindow(parent)
     , m_tabWidget(new ActionTabWidget)
+    , mController(controller)
 {
     m_treeWidget = new QDockWidget(tr("Project Tree"), this);
     m_treeWidget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
@@ -114,59 +116,36 @@ bool MainWindow::saveFile() {
  * @return true - если открыт новый проект, false - если не удалось открыть
  */
 bool MainWindow::open() {
-    QString fileName = QFileDialog::getOpenFileName(this,
-                                                    tr("Open Petri Net"), "",
+    QString filename = QFileDialog::getOpenFileName(this,
+                                                    tr("Open Petri Net"),
+                                                    "",
                                                     tr("JSON Petri Net (*.json)"));
-    if (fileName.isEmpty())
+    if (filename.isEmpty())
         return false;
 
-    return openFile(fileName);
-}
-
-bool MainWindow::openFile(const QString &fileName) {
-    QFile file(fileName);
-
-    // TODO: Найти в открытых проектах
-
-    // Try open project file
-    if (!file.open(QIODevice::ReadOnly)) {
-        QMessageBox::information(this, tr("Unable to open file"),file.errorString());
-        return false;
-    }
-
-    // Parse JSON data
-    QJsonParseError error;
-    auto buffer = file.readAll();
-    auto document = buffer.isEmpty() ? QJsonDocument() : QJsonDocument::fromJson(buffer, &error);
-    if (error.error != QJsonParseError::NoError) {
-        QMessageBox::information(this, tr("Failed parse json data"),error.errorString());
-        return false;
-    }
-
-    if (m_metadata) {
-        // if there is opened project in window
-        auto newWindow = new MainWindow(nullptr);
-        if (!newWindow->initProject(fileName, std::move(document))) {
-            delete newWindow;
-            return false;
-        }
-        newWindow->setMinimumSize(QSize(1280, 720));
-        newWindow->show();
-    } else {
-        if (!initProject(fileName, std::move(document))) {
-            return false;
-        }
-    }
-
-    return true;
+    return mController->openProject(filename);
 }
 
 /**
  * Инициализирует проект в текущем окне
  */
-bool MainWindow::initProject(const QString &fileName, QJsonDocument &&document) {
+bool MainWindow::initProject(const QString &filename) {
+    // Open JSON
+    QFile file(filename);
+    if (!file.open(QIODevice::ReadOnly)) {
+        QMessageBox::information(this, tr("Unable to open file"),file.errorString());
+        return false;
+    }
+
+    QJsonParseError error;
+    QJsonDocument document = QJsonDocument::fromJson(file.readAll(), &error);
+    if (error.error != QJsonParseError::NoError) {
+        QMessageBox::information(this, tr("Failed parse json data"),error.errorString());
+        return false;
+    }
+
     // Установим metadata
-    m_metadata = new ProjectMetadata(fileName);
+    m_metadata = new ProjectMetadata(filename);
     auto modelTab = new NetModelingTab(m_metadata);
     auto scene = qobject_cast<GraphicScene*>(modelTab->view()->scene());
     if (!scene->fromJson(document)) {
@@ -185,7 +164,7 @@ bool MainWindow::initProject(const QString &fileName, QJsonDocument &&document) 
     // Установим данные окна (todo: отдельная функция)
     this->setWindowTitle(this->m_metadata->projectName());
 
-    RecentProjects::addRecentProject(fileName);
+    RecentProjects::addRecentProject(filename);
     return true;
 }
 
@@ -242,8 +221,6 @@ void MainWindow::createMenuBar() {
 
     mViewMenu->addAction(m_treeWidget->toggleViewAction());
 
-    mWindowMenu->addAction(m_treeWidget->toggleViewAction());
-
     mMenuBar->addMenu(mFileMenu);
     mMenuBar->addMenu(mEditMenu);
     mMenuBar->addMenu(mViewMenu);
@@ -290,7 +267,7 @@ void MainWindow::onRecentProjects() {
 void MainWindow::onOpenRecentProject() {
     auto action = qobject_cast<QAction*>(sender());
     if (action)
-        openFile(action->data().toString());
+        mController->openProject(action->data().toString());
 }
 
 void MainWindow::onNewProject(bool checked) {
@@ -314,7 +291,7 @@ void MainWindow::onNewProjectCreate(const QDir& dir, const QString& name) {
         return;
     }
 
-    if (!openFile(path)) {
+    if (!mController->openProject(path)) {
         qDebug() << "Unable to create project";
         return;
     }
@@ -476,10 +453,13 @@ void MainWindow::slotNeedUpdateTreeView() {
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
+    qDebug() << "MainWindow::closeEvent(" << event << ")";
     if (saveOnExit()) {
+        if (m_metadata) {
+            mController->closeProject(m_metadata->fileName());
+        }
         event->accept();
-    }
-    else {
+    } else {
         event->ignore();
     }
 }

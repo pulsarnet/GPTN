@@ -12,6 +12,7 @@
 #include "src/Core/FFI/rust.h"
 #include <DockManager.h>
 #include <DockComponentsFactory.h>
+#include "src/Core/ApplicationProjectController.h"
 
 int main(int argc, char **argv) {
     QCoreApplication::setOrganizationName("GPTN");
@@ -82,9 +83,9 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    MainWindow window(nullptr);
-    window.setMinimumSize(QSize(1280, 720));
-    window.show();
+    ApplicationProjectController controller;
+    auto initialWindow = controller.createMainWindow();
+    initialWindow->show();
 
     return app.exec();
 }
