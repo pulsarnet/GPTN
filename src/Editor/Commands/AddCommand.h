@@ -10,7 +10,7 @@
 #include "../../Core/FFI/rust.h"
 
 class PetriObject;
-class GraphicScene;
+class GraphicsScene;
 
 namespace ffi {
     struct PetriNet;
@@ -21,7 +21,7 @@ class AddCommand : public QUndoCommand {
 public:
 
     explicit AddCommand(PetriObject* item,
-                        GraphicScene* scene,
+                        GraphicsScene* scene,
                         QUndoCommand* parent = nullptr);
 
     void undo() override;
@@ -31,7 +31,7 @@ public:
 
 private:
 
-    GraphicScene* m_scene;
+    GraphicsScene* m_scene;
     PetriObject* m_item;
 };
 

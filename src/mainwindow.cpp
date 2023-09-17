@@ -7,23 +7,19 @@
 #include <QJsonDocument>
 #include <QTableView>
 #include <QMessageBox>
-#include <DockAreaWidget.h>
-#include <DockAreaTitleBar.h>
 #include <QProcess>
 #include "windows_types/close_on_inactive.h"
 #include "ActionTabWidget/ActionTabWidget.h"
 #include "ActionTabWidget/DecomposeModelTab.h"
-#include "ActionTabWidget/WrappedLayoutWidget.h"
-#include "view/GraphicScene.h"
+#include "MainTree/MainTreeItem.h"
 #include "MainTree/MainTreeModel.h"
-#include "MainTree/ModelTreeItem.h"
 #include "MainTree/MainTreeView.h"
-#include "MainTree/DecomposeTreeItem.h"
-#include "MainTree/ReachabilityTreeItem.h"
 #include "WindowWidgets/NewProjectWindow.h"
 #include "Settings/RecentProjects.h"
 #include "Core/ApplicationProjectController.h"
 #include "MainTree/MainTreeController.h"
+#include "ActionTabWidget/ActionTabWidgetController.h"
+#include "Editor/GraphicsScene.h"
 
 /*
  * MainWindow содержит:
@@ -33,18 +29,10 @@
  */
 MainWindow::MainWindow(ApplicationProjectController* controller, QWidget *parent)
     : QMainWindow(parent)
-    , m_tabWidget(new ActionTabWidget)
     , mController(controller)
 {
     mTreeController = new MainTreeController(this);
-
-    // Tab widget
-    connect(m_tabWidget
-            , &ActionTabWidget::currentChanged
-            , this
-            , &MainWindow::tabWidgetCurrentChanged);
-
-    setCentralWidget(m_tabWidget);
+    mActionTabWidgetController = new ActionTabWidgetController(this);
 
     createMenuBar();
     createStatusBar();
@@ -127,14 +115,14 @@ bool MainWindow::initProject(const QString &filename) {
     // Установим metadata
     m_metadata = new ProjectMetadata(filename);
     auto modelTab = new NetModelingTab(m_metadata);
-    auto scene = qobject_cast<GraphicScene*>(modelTab->view()->scene());
+    auto scene = qobject_cast<GraphicsScene*>(modelTab->view()->scene());
     if (!scene->fromJson(document)) {
         delete modelTab;
         return false;
     }
 
     // Try add to tree
-    auto treeItem = new ModelTreeItem(nullptr, modelTab);
+    auto treeItem = new MainTreeItem("Model", QIcon(":/images/modeling.svg"), modelTab);
     if (!mTreeController->addChildItem(treeItem)) {
         delete treeItem;
         return false;
@@ -195,8 +183,10 @@ void MainWindow::createMenuBar() {
     mFileMenu->addAction(save_as_action);
     mFileMenu->addAction(quit_action);
 
-    mEditMenu->addAction(mUndoAction);
-    mEditMenu->addAction(mRedoAction);
+    // todo: СДЕЛАТЬ!!!!
+    //auto sceneActions = mTreeController->netModeling
+//    mEditMenu->addAction(mUndoAction);
+//    mEditMenu->addAction(mRedoAction);
 
     mViewMenu->addAction(mTreeController->toggleViewAction());
 
@@ -284,98 +274,15 @@ void MainWindow::onNewProjectCreate(const QDir& dir, const QString& name) {
 
 void MainWindow::treeItemAction(const QModelIndex& index) {
     auto treeItem = static_cast<MainTreeItem*>(index.internalPointer());
-    if (auto model = dynamic_cast<ModelTreeItem*>(treeItem); model) {
-        qDebug() << "Opening ModelTreeItem tab";
-        auto tab = model->netModelingTab();
-
-        int idx = -1;
-        for (int i = 0; i < m_tabWidget->count(); i++) {
-            auto it = m_tabWidget->widget(i);
-            if (it == tab) {
-                idx = i;
-                break;
-            }
-        }
-
-        if (idx < 0) {
-            idx = m_tabWidget->insertTab(
-                    m_tabWidget->count() - 1,
-                    tab,
-                    "Model"
-                    //dynamic_cast<ProjectTreeItem*>(model->parentItem())->data(0).toString()
-            );
-            m_tabWidget->setTabIcon(idx, model->icon());
-        }
-
-        m_tabWidget->setCurrentIndex(idx);
-    } else if (auto reachability = dynamic_cast<ReachabilityTreeItem*>(treeItem); reachability) {
-        auto tab = reachability->reachabilityTab();
-
-        int idx = -1;
-        for (int i = 0; i < m_tabWidget->count(); i++) {
-            auto it = m_tabWidget->widget(i);
-            if (it == tab) {
-                idx = i;
-                break;
-            }
-        }
-
-        if (idx < 0) {
-            QString name(tr("Reachability Tree"));
-            idx = m_tabWidget->insertTab(m_tabWidget->count() - 1,
-                                         tab,
-                                         name);
-            m_tabWidget->setTabIcon(idx, reachability->icon());
-        }
-
-        m_tabWidget->setCurrentIndex(idx);
-    } else if (auto decompose = dynamic_cast<DecomposeTreeItem*>(treeItem); decompose) {
-        auto tab = decompose->decomposeModelTab();
-
-        int idx = -1;
-        for (int i = 0; i < m_tabWidget->count(); i++) {
-            auto it = m_tabWidget->widget(i);
-            if (it == tab) {
-                idx = i;
-                break;
-            }
-        }
-
-        if (idx < 0) {
-            QString name(tr("Decompose"));
-            idx = m_tabWidget->insertTab(m_tabWidget->count() - 1,
-                                         tab,
-                                         name);
-            m_tabWidget->setTabIcon(idx, decompose->icon());
-        }
-
-        m_tabWidget->setCurrentIndex(idx);
+    auto name = treeItem->data(0).toString();
+    if (treeItem->widget()) {
+        mActionTabWidgetController->openTab(name, treeItem->icon(), treeItem->widget());
     }
 }
 
 void MainWindow::treeItemContextMenuRequested(const QPoint &point) {
     Q_UNUSED(point)
 
-    // if project not set skip this action
-    if (!m_metadata)
-        return;
-
-    auto menu = new QMenu;
-    menu->deleteLater();
-
-    bool hasReachability = false;
-
-    auto rootItem = mTreeController->getItem(QModelIndex());
-    for (int idx = 0; idx < rootItem->childCount(); idx++) {
-        auto child = rootItem->childItem(idx);
-        if (auto reachability = qobject_cast<ReachabilityTreeItem*>(child); reachability) {
-            hasReachability = true;
-        }
-    }
-
-//    if (!hasReachability) {
-//        menu->addAction()
-//    }
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
@@ -439,29 +346,30 @@ void MainWindow::treeViewSelectionChanged(const QItemSelection &selected, const 
 }
 
 void MainWindow::tabWidgetCurrentChanged(int index) {
+    Q_UNUSED(index)
     // set undo redo scene action for NetModelingTab scene only
-    auto tab = m_tabWidget->widget(index);
-
-    // First: delete actions
-    mEditMenu->removeAction(mUndoAction);
-    mEditMenu->removeAction(mRedoAction);
-    delete mUndoAction;
-    delete mRedoAction;
-
-    if (auto netModelingTab = dynamic_cast<NetModelingTab*>(tab); netModelingTab) {
-        auto scene = dynamic_cast<GraphicScene*>(netModelingTab->view()->scene());
-        mUndoAction = scene->undoAction();
-        mRedoAction = scene->redoAction();
-    } else {
-        mUndoAction = new QAction("Undo", this);
-        mUndoAction->setShortcut(QKeySequence::Undo);
-        mUndoAction->setEnabled(false);
-
-        mRedoAction = new QAction("Redo", this);
-        mRedoAction->setShortcut(QKeySequence::Redo);
-        mRedoAction->setEnabled(false);
-    }
-
-    mEditMenu->addAction(mUndoAction);
-    mEditMenu->addAction(mRedoAction);
+//    auto tab = m_tabWidget->widget(index);
+//
+//    // First: delete actions
+//    mEditMenu->removeAction(mUndoAction);
+//    mEditMenu->removeAction(mRedoAction);
+//    delete mUndoAction;
+//    delete mRedoAction;
+//
+//    if (auto netModelingTab = dynamic_cast<NetModelingTab*>(tab); netModelingTab) {
+//        auto scene = dynamic_cast<GraphicScene*>(netModelingTab->view()->scene());
+//        mUndoAction = scene->undoAction();
+//        mRedoAction = scene->redoAction();
+//    } else {
+//        mUndoAction = new QAction("Undo", this);
+//        mUndoAction->setShortcut(QKeySequence::Undo);
+//        mUndoAction->setEnabled(false);
+//
+//        mRedoAction = new QAction("Redo", this);
+//        mRedoAction->setShortcut(QKeySequence::Redo);
+//        mRedoAction->setEnabled(false);
+//    }
+//
+//    mEditMenu->addAction(mUndoAction);
+//    mEditMenu->addAction(mRedoAction);
 }

@@ -1,9 +1,9 @@
 #include <QBoxLayout>
 #include "NetModelingTab.h"
-#include "../view/GraphicScene.h"
-#include "../view/elements/position.h"
-#include "../view/elements/transition.h"
-#include "../view/elements/arrow_line.h"
+#include "../Editor/GraphicsScene.h"
+#include "../Editor/elements/position.h"
+#include "../Editor/elements/transition.h"
+#include "../Editor/elements/arrow_line.h"
 #include "../Core/ProjectMetadata.h"
 
 NetModelingTab::NetModelingTab(ProjectMetadata* metadata, QWidget *parent)
@@ -13,8 +13,8 @@ NetModelingTab::NetModelingTab(ProjectMetadata* metadata, QWidget *parent)
 {
     setLayout(new QBoxLayout(QBoxLayout::TopToBottom));
 
-    auto scene = new GraphicScene(metadata->context()->net());
-    scene->setAllowMods(GraphicScene::A_Default);
+    auto scene = new GraphicsScene(metadata->context()->net());
+    scene->setAllowMods(GraphicsScene::A_Default);
 
     m_view->setScene(scene);
 

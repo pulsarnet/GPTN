@@ -1,6 +1,6 @@
 #include "position.h"
 #include "transition.h"
-#include "../GraphicScene.h"
+#include "../GraphicsScene.h"
 #include <QFontMetrics>
 #include "../../Core/FFI/simulation.h"
 
@@ -166,7 +166,7 @@ QPainterPath Position::shape() const {
     return path;
 }
 
-void Position::onAddToScene(GraphicScene* scene) {
+void Position::onAddToScene(GraphicsScene* scene) {
     if (m_state) {
         auto net = scene->net();
         auto position = net->add_position_with(m_vertex.id);
@@ -178,7 +178,7 @@ void Position::onAddToScene(GraphicScene* scene) {
 }
 
 void Position::onRemoveFromScene() {
-    auto scene = dynamic_cast<GraphicScene*>(this->scene());
+    auto scene = dynamic_cast<GraphicsScene*>(this->scene());
     auto net = scene->net();
     auto vertex = net->getVertex(m_vertex);
 

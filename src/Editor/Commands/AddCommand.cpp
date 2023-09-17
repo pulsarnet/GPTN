@@ -3,12 +3,12 @@
 //
 
 #include "AddCommand.h"
-#include "../GraphicScene.h"
+#include "../GraphicsScene.h"
 #include "../elements/petri_object.h"
 #include "../elements/position.h"
 #include "../elements/transition.h"
 
-AddCommand::AddCommand(PetriObject* item, GraphicScene *scene, QUndoCommand *parent)
+AddCommand::AddCommand(PetriObject* item, GraphicsScene *scene, QUndoCommand *parent)
     : QUndoCommand(parent)
     , m_scene(scene)
     , m_item(item)

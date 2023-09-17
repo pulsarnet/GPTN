@@ -5,7 +5,7 @@
 #include "arrow_line.h"
 #include "petri_object.h"
 #include "transition.h"
-#include "../GraphicScene.h"
+#include "../GraphicsScene.h"
 #include <QMatrix4x4>
 
 ArrowLine::ArrowLine(PetriObject* from, const QLineF &line, QGraphicsItem* parent)
@@ -105,7 +105,7 @@ void ArrowLine::setBidirectional(bool b) {
 }
 
 ffi::Connection *ArrowLine::netItem(bool reverse) {
-    auto scene = dynamic_cast<GraphicScene*>(this->scene());
+    auto scene = dynamic_cast<GraphicsScene*>(this->scene());
     if (reverse)
         return scene->net()->get_connection(m_to->vertex(), m_from->vertex());
     else
@@ -148,7 +148,7 @@ void ArrowLine::updateConnection() {
 
 
     if (to()) {
-        auto net = dynamic_cast<GraphicScene*>(this->scene())->net();
+        auto net = dynamic_cast<GraphicsScene*>(this->scene())->net();
 
         m_text.clear();
         if (m_bidirectional) {
@@ -180,13 +180,13 @@ QVariant ArrowLine::itemChange(QGraphicsItem::GraphicsItemChange change, const Q
     if (change == ItemSceneChange) {
         if (!m_from || !m_to) return value;
 
-        auto scene = value.value<GraphicScene*>();
+        auto scene = value.value<GraphicsScene*>();
         if (scene) {
             scene->registerItem(this);
             if (m_createInNet)
                 this->onAddToScene(scene);
         } else {
-            dynamic_cast<GraphicScene*>(this->scene())->unregisterItem(this);
+            dynamic_cast<GraphicsScene*>(this->scene())->unregisterItem(this);
             this->onRemoveFromScene();
         }
     } else if (change == ItemSceneHasChanged) {
@@ -196,7 +196,7 @@ QVariant ArrowLine::itemChange(QGraphicsItem::GraphicsItemChange change, const Q
     return QGraphicsItem::itemChange(change, value);
 }
 
-void ArrowLine::onAddToScene(GraphicScene *scene) {
+void ArrowLine::onAddToScene(GraphicsScene *scene) {
     auto net = scene->net();
 
     net->connect(m_from->vertex(), m_to->vertex());
@@ -227,7 +227,7 @@ void ArrowLine::onRemoveFromScene() {
     m_to->removeConnectionLine(this);
 
     // Remove from net
-    auto net = dynamic_cast<GraphicScene*>(this->scene())->net();
+    auto net = dynamic_cast<GraphicsScene*>(this->scene())->net();
     net->remove_connection(m_from->vertex(), m_to->vertex());
     if (m_bidirectional)
         net->remove_connection(m_to->vertex(), m_from->vertex());

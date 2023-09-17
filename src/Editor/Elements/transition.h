@@ -50,7 +50,7 @@ public:
 
 protected:
 
-    void onAddToScene(GraphicScene*) override;
+    void onAddToScene(GraphicsScene*) override;
     void onRemoveFromScene() override;
 
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;

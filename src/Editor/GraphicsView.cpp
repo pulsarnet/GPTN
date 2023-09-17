@@ -10,7 +10,7 @@
 #include "elements/arrow_line.h"
 #include "GraphicsView.h"
 #include "GraphicsViewZoom.h"
-#include "GraphicScene.h"
+#include "GraphicsScene.h"
 #include "toolbox/toolbox.h"
 #include "../overrides/MatrixWindow.h"
 #include "../modules/reachability/reachability_window.h"
@@ -103,31 +103,31 @@ QAction* GraphicsView::makeAction(const QString &name, const QIcon &icon, bool c
 }
 
 void GraphicsView::positionChecked(bool checked) {
-    dynamic_cast<GraphicScene*>(scene())->setMode(checked ? GraphicScene::A_Position : GraphicScene::A_Nothing);
+    dynamic_cast<GraphicsScene*>(scene())->setMode(checked ? GraphicsScene::A_Position : GraphicsScene::A_Nothing);
 }
 
 void GraphicsView::transitionChecked(bool checked) {
-    dynamic_cast<GraphicScene*>(scene())->setMode(checked ? GraphicScene::A_Transition : GraphicScene::A_Nothing);
+    dynamic_cast<GraphicsScene*>(scene())->setMode(checked ? GraphicsScene::A_Transition : GraphicsScene::A_Nothing);
 }
 
 void GraphicsView::moveChecked(bool checked) {
-    dynamic_cast<GraphicScene*>(scene())->setMode(checked ? GraphicScene::A_Move : GraphicScene::A_Nothing);
+    dynamic_cast<GraphicsScene*>(scene())->setMode(checked ? GraphicsScene::A_Move : GraphicsScene::A_Nothing);
 }
 
 void GraphicsView::connectChecked(bool checked) {
-    dynamic_cast<GraphicScene*>(scene())->setMode(checked ? GraphicScene::A_Connection : GraphicScene::A_Nothing);
+    dynamic_cast<GraphicsScene*>(scene())->setMode(checked ? GraphicsScene::A_Connection : GraphicsScene::A_Nothing);
 }
 
 void GraphicsView::rotateChecked(bool checked) {
-    dynamic_cast<GraphicScene*>(scene())->setMode(checked ? GraphicScene::A_Rotation : GraphicScene::A_Nothing);
+    dynamic_cast<GraphicsScene*>(scene())->setMode(checked ? GraphicsScene::A_Rotation : GraphicsScene::A_Nothing);
 }
 
 void GraphicsView::removeChecked(bool checked) {
-    dynamic_cast<GraphicScene*>(scene())->setMode(checked ? GraphicScene::A_Remove : GraphicScene::A_Nothing);
+    dynamic_cast<GraphicsScene*>(scene())->setMode(checked ? GraphicsScene::A_Remove : GraphicsScene::A_Nothing);
 }
 
 void GraphicsView::markerChecked(bool checked) {
-    dynamic_cast<GraphicScene*>(scene())->setMode(checked ? GraphicScene::A_Marker : GraphicScene::A_Nothing);
+    dynamic_cast<GraphicsScene*>(scene())->setMode(checked ? GraphicsScene::A_Marker : GraphicsScene::A_Nothing);
 }
 
 
@@ -193,7 +193,7 @@ void GraphicsView::paintEvent(QPaintEvent *event) {
 }
 
 void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
-    auto gScene = dynamic_cast<GraphicScene*>(scene());
+    auto gScene = dynamic_cast<GraphicsScene*>(scene());
     //auto item = gScene->netItemAt(mapToScene(event->pos()));
     //if (!item) return;
 
@@ -205,11 +205,11 @@ void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
 
     auto horz = new QAction("Horizontal alignment", menu);
     horz->setEnabled(itemSelected);
-    connect(horz, &QAction::triggered, gScene, &GraphicScene::slotHorizontalAlignment);
+    connect(horz, &QAction::triggered, gScene, &GraphicsScene::slotHorizontalAlignment);
 
     auto vert = new QAction("Vertical alignment", menu);
     vert->setEnabled(itemSelected);
-    connect(vert, &QAction::triggered, gScene, &GraphicScene::slotVerticalAlignment);
+    connect(vert, &QAction::triggered, gScene, &GraphicsScene::slotVerticalAlignment);
 
     auto matrix = new QAction("I/O matrix view", menu);
     connect(matrix, &QAction::triggered, this, &GraphicsView::slotMatrixView);
@@ -268,7 +268,7 @@ void GraphicsView::slotMatrixView(bool checked) {
     if (m_IOMatrixWindow)
         m_IOMatrixWindow->activateWindow();
     else {
-        auto matrix = dynamic_cast<GraphicScene*>(scene())->net()->as_matrix();
+        auto matrix = dynamic_cast<GraphicsScene*>(scene())->net()->as_matrix();
         m_IOMatrixWindow = new MatrixWindow(matrix.first, matrix.second);
         connect(m_IOMatrixWindow, &MatrixWindow::onWindowClose, this, &GraphicsView::slotIOWindowClose);
         m_IOMatrixWindow->show();
@@ -277,7 +277,7 @@ void GraphicsView::slotMatrixView(bool checked) {
 
 void GraphicsView::slotReachability(bool checked) {
     Q_UNUSED(checked)
-    auto net = dynamic_cast<GraphicScene*>(scene())->net();
+    auto net = dynamic_cast<GraphicsScene*>(scene())->net();
     auto reachability = net->reachability();
     auto reachabilityWindow = new ReachabilityWindow(net, reachability);
     reachabilityWindow->show();
@@ -285,7 +285,7 @@ void GraphicsView::slotReachability(bool checked) {
 
 void GraphicsView::slotInvariants(bool checked) {
     Q_UNUSED(checked)
-    auto net = dynamic_cast<GraphicScene*>(scene())->net();
+    auto net = dynamic_cast<GraphicsScene*>(scene())->net();
     qDebug() << "P/T-invariants: ";
     net->p_invariant();
     net->t_invariant();
@@ -298,42 +298,42 @@ void GraphicsView::slotIOWindowClose(QWidget *window) {
 
 void GraphicsView::slotDotVisualization(bool checked) {
     Q_UNUSED(checked)
-    dynamic_cast<GraphicScene*>(scene())->dotVisualization((char *) "dot");
+    dynamic_cast<GraphicsScene*>(scene())->dotVisualization((char *) "dot");
 }
 
 void GraphicsView::slotNeatoVisualization(bool checked) {
     Q_UNUSED(checked)
-    dynamic_cast<GraphicScene*>(scene())->dotVisualization((char *) "neato");
+    dynamic_cast<GraphicsScene*>(scene())->dotVisualization((char *) "neato");
 }
 
 void GraphicsView::slotTwopiVisualization(bool checked) {
     Q_UNUSED(checked)
-    dynamic_cast<GraphicScene*>(scene())->dotVisualization((char *) "twopi");
+    dynamic_cast<GraphicsScene*>(scene())->dotVisualization((char *) "twopi");
 }
 
 void GraphicsView::slotCircoVisualization(bool checked) {
     Q_UNUSED(checked)
-    dynamic_cast<GraphicScene*>(scene())->dotVisualization((char *) "circo");
+    dynamic_cast<GraphicsScene*>(scene())->dotVisualization((char *) "circo");
 }
 
 void GraphicsView::slotFDPVisualization(bool checked) {
     Q_UNUSED(checked)
-    dynamic_cast<GraphicScene*>(scene())->dotVisualization((char *) "fdp");
+    dynamic_cast<GraphicsScene*>(scene())->dotVisualization((char *) "fdp");
 }
 
 void GraphicsView::slotOsageVisualization(bool checked) {
     Q_UNUSED(checked)
-    dynamic_cast<GraphicScene*>(scene())->dotVisualization((char *) "osage");
+    dynamic_cast<GraphicsScene*>(scene())->dotVisualization((char *) "osage");
 }
 
 void GraphicsView::slotPatchworkVisualization(bool checked) {
     Q_UNUSED(checked)
-    dynamic_cast<GraphicScene*>(scene())->dotVisualization((char *) "patchwork");
+    dynamic_cast<GraphicsScene*>(scene())->dotVisualization((char *) "patchwork");
 }
 
 void GraphicsView::slotSFDPpVisualization(bool checked) {
     Q_UNUSED(checked)
-    dynamic_cast<GraphicScene*>(scene())->dotVisualization((char *) "sfdp");
+    dynamic_cast<GraphicsScene*>(scene())->dotVisualization((char *) "sfdp");
 }
 
 GraphicsView::~GraphicsView() noexcept {

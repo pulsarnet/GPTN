@@ -8,6 +8,7 @@ class PetriObject;
 class Position;
 class Transition;
 class ArrowLine;
+class GraphicSceneActions;
 class QUndoCommand;
 class QUndoStack;
 
@@ -17,7 +18,7 @@ namespace ffi {
     struct Simulation;
 }
 
-class GraphicScene : public QGraphicsScene {
+class GraphicsScene : public QGraphicsScene {
 
     Q_OBJECT
 
@@ -37,7 +38,7 @@ public:
 
     Q_DECLARE_FLAGS(Modes, Mode);
 
-    explicit GraphicScene(ffi::PetriNet* net, QObject* parent = nullptr);
+    explicit GraphicsScene(ffi::PetriNet* net, QObject* parent = nullptr);
 
     void setAllowMods(Modes mods);
 
@@ -57,8 +58,7 @@ public:
     void setConnectionWeight(ArrowLine* connection, int weight, bool reverse);
     ArrowLine* getConnection(PetriObject* from, PetriObject* to);
 
-    QAction* undoAction();
-    QAction* redoAction();
+    QUndoStack* undoStack() const { return m_undoStack; }
 
     [[nodiscard]] const QList<Position*>& positions() const { return m_positions; }
     [[nodiscard]] const QList<Transition*>& transitions() const { return m_transition; }
@@ -77,9 +77,11 @@ public:
     void setSimulation(ffi::Simulation*);
     ffi::Simulation* simulation() const;
 
+    GraphicSceneActions* actions();
+
 public slots:
 
-    void setMode(GraphicScene::Mode mode);
+    void setMode(GraphicsScene::Mode mode);
     void slotHorizontalAlignment(bool triggered);
     void slotVerticalAlignment(bool triggered);
 
@@ -87,6 +89,8 @@ signals:
     void sceneChanged();
 
 protected:
+
+    void createActions();
 
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
@@ -110,6 +114,7 @@ protected:
 private:
 
     QUndoStack* m_undoStack;
+    GraphicSceneActions* m_actions = nullptr;
 
     QList<Position*> m_positions;
     QList<Transition*> m_transition;
@@ -133,6 +138,6 @@ private:
 
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(GraphicScene::Modes);
+Q_DECLARE_OPERATORS_FOR_FLAGS(GraphicsScene::Modes);
 
 #endif //FFI_RUST_GRAPHICSCENE_H

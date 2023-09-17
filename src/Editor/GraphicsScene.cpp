@@ -11,14 +11,15 @@
 #include <QUndoStack>
 #include <QPixmapCache>
 #include "Commands.h"
-#include "GraphicScene.h"
+#include "GraphicsScene.h"
 #include "elements/petri_object.h"
 #include "elements/position.h"
 #include "elements/transition.h"
 #include "elements/arrow_line.h"
 #include "../Core/graphviz/GraphvizWrapper.h"
+#include "GraphicSceneActions.h"
 
-GraphicScene::GraphicScene(ffi::PetriNet *net, QObject *parent)
+GraphicsScene::GraphicsScene(ffi::PetriNet *net, QObject *parent)
     : QGraphicsScene(parent)
     , m_mode(Mode::A_Nothing)
     , m_allowMods(Mode::A_Nothing)
@@ -63,16 +64,16 @@ GraphicScene::GraphicScene(ffi::PetriNet *net, QObject *parent)
 }
 
 
-void GraphicScene::setMode(Mode mod) {
+void GraphicsScene::setMode(Mode mod) {
     if (m_allowMods & mod) m_mode = mod;
     else qDebug() << "Mode " << mod << " not allowed!";
 }
 
-void GraphicScene::setAllowMods(Modes mods) {
+void GraphicsScene::setAllowMods(Modes mods) {
     m_allowMods = mods;
 }
 
-void GraphicScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
+void GraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
     if (event->button() == Qt::LeftButton) {
         switch (m_mode) {
             case A_Position:
@@ -120,7 +121,7 @@ void GraphicScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
     //QGraphicsScene::mousePressEvent(event);
 }
 
-void GraphicScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
+void GraphicsScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
 
     switch (m_mode) {
         case A_Connection:
@@ -139,7 +140,7 @@ void GraphicScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
     //QGraphicsScene::mouseMoveEvent(event);
 }
 
-void GraphicScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
+void GraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
 
     if (m_dragInProgress) {
         if (!m_draggedItems.isEmpty()) {
@@ -163,19 +164,19 @@ void GraphicScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
     QGraphicsScene::mouseReleaseEvent(event);
 }
 
-void GraphicScene::insertPosition(QGraphicsSceneMouseEvent *event) {
+void GraphicsScene::insertPosition(QGraphicsSceneMouseEvent *event) {
     auto position = new Position(event->scenePos(), m_net, m_net->add_position()->index());
     m_undoStack->push(new AddCommand(position, this));
     //addPosition(-1, event->scenePos());
 }
 
-void GraphicScene::insertTransition(QGraphicsSceneMouseEvent *event) {
+void GraphicsScene::insertTransition(QGraphicsSceneMouseEvent *event) {
     auto transition = new Transition(event->scenePos(), m_net, m_net->add_transition()->index());
     m_undoStack->push(new AddCommand(transition, this));
     //addTransition(-1, event->scenePos());
 }
 
-void GraphicScene::removeObject(QGraphicsSceneMouseEvent *event) {
+void GraphicsScene::removeObject(QGraphicsSceneMouseEvent *event) {
 
     auto item = itemAt(event->scenePos(), QTransform());
     if (auto scenePetriObject = dynamic_cast<PetriObject*>(item); scenePetriObject) {
@@ -187,7 +188,7 @@ void GraphicScene::removeObject(QGraphicsSceneMouseEvent *event) {
 
 }
 
-void GraphicScene::connectionStart(QGraphicsSceneMouseEvent *event) {
+void GraphicsScene::connectionStart(QGraphicsSceneMouseEvent *event) {
 
     auto item = itemAt(event->scenePos(), QTransform());
     if (auto petri = dynamic_cast<PetriObject*>(item); petri) {
@@ -198,7 +199,7 @@ void GraphicScene::connectionStart(QGraphicsSceneMouseEvent *event) {
 
 }
 
-void GraphicScene::connectionCommit(QGraphicsSceneMouseEvent *event) {
+void GraphicsScene::connectionCommit(QGraphicsSceneMouseEvent *event) {
     if (!m_currentConnection) return;
 
     auto item = netItemAt(event->scenePos());
@@ -234,7 +235,7 @@ void GraphicScene::connectionCommit(QGraphicsSceneMouseEvent *event) {
     m_currentConnection = nullptr;
 }
 
-void GraphicScene::connectionRollback(QGraphicsSceneMouseEvent *event) {
+void GraphicsScene::connectionRollback(QGraphicsSceneMouseEvent *event) {
     Q_UNUSED(event)
 
     if (m_currentConnection) {
@@ -243,7 +244,7 @@ void GraphicScene::connectionRollback(QGraphicsSceneMouseEvent *event) {
     }
 }
 
-PetriObject *GraphicScene::netItemAt(const QPointF &pos) {
+PetriObject *GraphicsScene::netItemAt(const QPointF &pos) {
     auto it = std::find_if(m_positions.begin(), m_positions.end(), [&](Position* item) {
        return item->sceneBoundingRect().contains(pos);
     });
@@ -259,7 +260,7 @@ PetriObject *GraphicScene::netItemAt(const QPointF &pos) {
     return nullptr;
 }
 
-void GraphicScene::rotateObject(QGraphicsSceneMouseEvent *event) {
+void GraphicsScene::rotateObject(QGraphicsSceneMouseEvent *event) {
     auto item = netItemAt(event->scenePos());
     if (item) {
         if (auto transition = dynamic_cast<Transition*>(item); transition) {
@@ -268,26 +269,26 @@ void GraphicScene::rotateObject(QGraphicsSceneMouseEvent *event) {
     }
 }
 
-ffi::PetriNet *GraphicScene::net() {
+ffi::PetriNet *GraphicsScene::net() {
     return m_net;
 }
 
-void GraphicScene::onSceneChanged() {
+void GraphicsScene::onSceneChanged() {
     if (m_restore)
         return;
 
     emit sceneChanged();
 }
 
-void GraphicScene::setSimulation(ffi::Simulation* simulation) {
+void GraphicsScene::setSimulation(ffi::Simulation* simulation) {
     m_simulation = simulation;
 }
 
-ffi::Simulation* GraphicScene::simulation() const {
+ffi::Simulation* GraphicsScene::simulation() const {
     return m_simulation;
 }
 
-QJsonDocument GraphicScene::json() const {
+QJsonDocument GraphicsScene::json() const {
     auto n_positions = positions();
     auto n_transitions = transitions();
     auto n_connections = connections();
@@ -363,7 +364,7 @@ QJsonDocument GraphicScene::json() const {
     return QJsonDocument(main);
 }
 
-bool GraphicScene::fromJson(const QJsonDocument& document) {
+bool GraphicsScene::fromJson(const QJsonDocument& document) {
     auto main = document.object();
 
     QJsonArray positions;
@@ -455,7 +456,7 @@ bool GraphicScene::fromJson(const QJsonDocument& document) {
     return true;
 }
 
-void GraphicScene::removeAll() {
+void GraphicsScene::removeAll() {
     QGraphicsScene::clear();
 
     m_net->clear();
@@ -464,12 +465,12 @@ void GraphicScene::removeAll() {
     m_connections.clear();
 }
 
-void GraphicScene::setConnectionWeight(ArrowLine *connection, int weight, bool reverse) {
+void GraphicsScene::setConnectionWeight(ArrowLine *connection, int weight, bool reverse) {
     connection->netItem(reverse)->setWeight(weight);
     connection->updateConnection();
 }
 
-ArrowLine* GraphicScene::getConnection(PetriObject *from, PetriObject *to) {
+ArrowLine* GraphicsScene::getConnection(PetriObject *from, PetriObject *to) {
     auto it = std::find_if(
             m_connections.begin(),
             m_connections.end(),
@@ -481,7 +482,7 @@ ArrowLine* GraphicScene::getConnection(PetriObject *from, PetriObject *to) {
     return it != m_connections.end() ? *it : nullptr;
 }
 
-void GraphicScene::slotHorizontalAlignment(bool triggered) {
+void GraphicsScene::slotHorizontalAlignment(bool triggered) {
     Q_UNUSED(triggered)
 
     qreal y = 0;
@@ -504,7 +505,7 @@ void GraphicScene::slotHorizontalAlignment(bool triggered) {
     }
 }
 
-void GraphicScene::slotVerticalAlignment(bool triggered) {
+void GraphicsScene::slotVerticalAlignment(bool triggered) {
     Q_UNUSED(triggered)
 
     qreal x = 0;
@@ -527,7 +528,7 @@ void GraphicScene::slotVerticalAlignment(bool triggered) {
     }
 }
 
-Transition *GraphicScene::getTransition(int index) {
+Transition *GraphicsScene::getTransition(int index) {
     auto it = std::find_if(m_transition.begin(), m_transition.end(), [=](Transition* t) {
         return t->index() == index;
     });
@@ -535,7 +536,7 @@ Transition *GraphicScene::getTransition(int index) {
     return it == m_transition.end() ? nullptr : *it;
 }
 
-Position *GraphicScene::getPosition(int index) {
+Position *GraphicsScene::getPosition(int index) {
     auto it = std::find_if(m_positions.begin(), m_positions.end(), [=](Position* p) {
         return p->index() == index;
     });
@@ -543,7 +544,7 @@ Position *GraphicScene::getPosition(int index) {
     return it == m_positions.end() ? nullptr : *it;
 }
 
-void GraphicScene::markPosition(QGraphicsSceneMouseEvent *event) {
+void GraphicsScene::markPosition(QGraphicsSceneMouseEvent *event) {
     auto item = netItemAt(event->scenePos());
     if (auto position = dynamic_cast<Position*>(item); position) {
         if (event->buttons() | Qt::LeftButton) {
@@ -558,12 +559,12 @@ void GraphicScene::markPosition(QGraphicsSceneMouseEvent *event) {
     }
 }
 
-void GraphicScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event) {
+void GraphicsScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event) {
     if (m_mode == A_Move) QGraphicsScene::mouseDoubleClickEvent(event);
     else if (m_mode == A_Marker) markPosition(event);
 }
 
-void GraphicScene::dotVisualization(char* algorithm) {
+void GraphicsScene::dotVisualization(char* algorithm) {
 
     GraphVizWrapper graph;
     for (auto& element : this->positions()) {
@@ -592,7 +593,7 @@ void GraphicScene::dotVisualization(char* algorithm) {
 
 }
 
-void GraphicScene::drawBackground(QPainter *painter, const QRectF &rect) {
+void GraphicsScene::drawBackground(QPainter *painter, const QRectF &rect) {
     const int gridSize = 50.;
 
     QPen pen(QColor(0, 0, 0, 150), 0, Qt::DotLine);
@@ -628,19 +629,7 @@ void GraphicScene::drawBackground(QPainter *painter, const QRectF &rect) {
 
 }
 
-QAction *GraphicScene::undoAction() {
-    auto action = m_undoStack->createUndoAction(this, tr("&Undo"));
-    action->setShortcuts(QKeySequence::Undo);
-    return action;
-}
-
-QAction *GraphicScene::redoAction() {
-    auto action = m_undoStack->createRedoAction(this, tr("&Redo"));
-    action->setShortcuts(QKeySequence::Redo);
-    return action;
-}
-
-void GraphicScene::registerItem(QGraphicsItem *item) {
+void GraphicsScene::registerItem(QGraphicsItem *item) {
     if (auto position = dynamic_cast<Position*>(item); position) {
         m_positions.push_back(position);
     }
@@ -651,7 +640,7 @@ void GraphicScene::registerItem(QGraphicsItem *item) {
     }
 }
 
-void GraphicScene::unregisterItem(QGraphicsItem *item) {
+void GraphicsScene::unregisterItem(QGraphicsItem *item) {
     if (auto position = dynamic_cast<Position*>(item); position) {
         m_positions.remove(m_positions.indexOf(position));
     }
@@ -660,4 +649,15 @@ void GraphicScene::unregisterItem(QGraphicsItem *item) {
     } else if (auto connection = dynamic_cast<ArrowLine*>(item); connection) {
         m_connections.remove(m_connections.indexOf(connection));
     }
+}
+
+GraphicSceneActions *GraphicsScene::actions() {
+    if (!m_actions)
+        createActions();
+
+    return m_actions;
+}
+
+void GraphicsScene::createActions() {
+    m_actions = new GraphicSceneActions(this);
 }

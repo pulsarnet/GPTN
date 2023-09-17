@@ -25,6 +25,7 @@ class MainTreeItem;
 class MainTreeView;
 class ApplicationProjectController;
 class MainTreeController;
+class ActionTabWidgetController;
 
 class MainWindow : public QMainWindow {
 
@@ -89,9 +90,9 @@ private:
 
     ApplicationProjectController* mController;
     MainTreeController* mTreeController;
+    ActionTabWidgetController* mActionTabWidgetController;
 
     QStatusBar* statusBar = nullptr;
-    ActionTabWidget* m_tabWidget = nullptr;
 
     // Menu bar
     QMenuBar* mMenuBar = nullptr;
@@ -102,10 +103,6 @@ private:
     QMenu* mToolsMenu = nullptr;
     QMenu* mWindowMenu = nullptr;
     QMenu* mHelpMenu = nullptr;
-    QAction* mRedoAction = nullptr;
-    QAction* mUndoAction = nullptr;
-
-    std::vector<QString> m_openedProjects;
 
     ProjectMetadata* m_metadata = nullptr;
 };

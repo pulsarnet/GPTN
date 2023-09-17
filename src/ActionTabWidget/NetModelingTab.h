@@ -6,7 +6,7 @@
 #define FFI_RUST_NETMODELINGTAB_H
 
 #include <QWidget>
-#include "../view/GraphicsView.h"
+#include "../Editor/GraphicsView.h"
 
 class ProjectMetadata;
 

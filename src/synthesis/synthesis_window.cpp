@@ -12,8 +12,8 @@
 #include "synthesis_table.h"
 #include "synthesis_model.h"
 #include "../DockSystem/DockWidget.h"
-#include "../view/GraphicScene.h"
-#include "../view/GraphicsView.h"
+#include "../Editor/GraphicsScene.h"
+#include "../Editor/GraphicsView.h"
 #include "../Core/FFI/rust.h"
 
 SynthesisWindow::SynthesisWindow(ffi::DecomposeContext *ctx, QVector<size_t> programs, QWidget* parent)
@@ -77,7 +77,7 @@ void SynthesisWindow::onSelectionChanged(const QItemSelection &selected, const Q
 
     int program = programVariant.toInt();
     auto result = m_ctx->eval_program(program);
-    auto newScene = new GraphicScene(result);
+    auto newScene = new GraphicsScene(result);
     auto oldScene = view()->scene();
     view()->setScene(newScene);
     delete oldScene;

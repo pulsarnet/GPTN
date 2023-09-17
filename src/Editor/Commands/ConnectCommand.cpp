@@ -3,11 +3,11 @@
 //
 
 #include "ConnectCommand.h"
-#include "../GraphicScene.h"
+#include "../GraphicsScene.h"
 #include "../elements/petri_object.h"
 #include "../elements/arrow_line.h"
 
-ConnectCommand::ConnectCommand(ArrowLine* connection, ConnectionType type, GraphicScene *scene, QUndoCommand *parent)
+ConnectCommand::ConnectCommand(ArrowLine* connection, ConnectionType type, GraphicsScene *scene, QUndoCommand *parent)
     : QUndoCommand(parent)
     , m_scene(scene)
     , m_connection(connection)
@@ -21,7 +21,7 @@ ConnectCommand::ConnectCommand(ArrowLine* connection,
                                int newWeight,
                                int oldWeight,
                                bool reverse,
-                               GraphicScene *scene,
+                               GraphicsScene *scene,
                                QUndoCommand *parent)
         : QUndoCommand(parent)
         , m_scene(scene)
@@ -72,19 +72,19 @@ void ConnectCommand::undo() {
     }
 }
 
-ConnectCommand *ConnectCommand::connect(PetriObject *from, PetriObject *to, GraphicScene *scene) {
+ConnectCommand *ConnectCommand::connect(PetriObject *from, PetriObject *to, GraphicsScene *scene) {
     return new ConnectCommand(new ArrowLine(from, to), Connect, scene);
 }
 
-ConnectCommand *ConnectCommand::disconnect(ArrowLine *connection, GraphicScene *scene) {
+ConnectCommand *ConnectCommand::disconnect(ArrowLine *connection, GraphicsScene *scene) {
     return new ConnectCommand(connection, Disconnect, scene);
 }
 
-ConnectCommand *ConnectCommand::setBidirectional(ArrowLine *connection, GraphicScene *scene) {
+ConnectCommand *ConnectCommand::setBidirectional(ArrowLine *connection, GraphicsScene *scene) {
     return new ConnectCommand(connection, Bidirectional, scene);
 }
 
-ConnectCommand *ConnectCommand::setWeight(ArrowLine *connection, int newWeight, bool reverse, GraphicScene *scene) {
+ConnectCommand *ConnectCommand::setWeight(ArrowLine *connection, int newWeight, bool reverse, GraphicsScene *scene) {
     return new ConnectCommand(connection,
                               SetWeight,
                               newWeight,

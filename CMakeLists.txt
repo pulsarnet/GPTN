@@ -84,10 +84,8 @@ set(SRC_FILES
         src/DockSystem/DockToolbar.cpp
         src/DockSystem/DockWidget.cpp
         src/DockSystem/SplittableComponentsFactory.cpp
-        src/MainTree/DecomposeTreeItem.cpp
         src/MainTree/MainTreeItem.cpp
         src/MainTree/MainTreeModel.cpp
-        src/MainTree/ReachabilityTreeItem.cpp
         src/QwtExt/CanvasPicker.cpp
         src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.cpp
         src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.cpp
@@ -104,20 +102,20 @@ set(SRC_FILES
         src/synthesis/synthesis_table.cpp
         src/synthesis/synthesis_window.cpp
         src/synthesis/synthesis_model.cpp
-        src/view/Commands/AddCommand.cpp
-        src/view/Commands/ConnectCommand.cpp
-        src/view/Commands/MarkCommand.cpp
-        src/view/Commands/MoveCommand.cpp
-        src/view/Commands/RemoveCommand.cpp
-        src/view/Commands/RotateCommand.cpp
-        src/view/GraphicScene.cpp
-        src/view/GraphicsView.cpp
-        src/view/GraphicsViewZoom.cpp
-        src/view/Simulation/SimulationWidget.cpp
-        src/view/elements/arrow_line.cpp
-        src/view/elements/petri_object.cpp
-        src/view/elements/position.cpp
-        src/view/elements/transition.cpp
+        src/Editor/Commands/AddCommand.cpp
+        src/Editor/Commands/ConnectCommand.cpp
+        src/Editor/Commands/MarkCommand.cpp
+        src/Editor/Commands/MoveCommand.cpp
+        src/Editor/Commands/RemoveCommand.cpp
+        src/Editor/Commands/RotateCommand.cpp
+        src/Editor/GraphicsScene.cpp
+        src/Editor/GraphicsView.cpp
+        src/Editor/GraphicsViewZoom.cpp
+        src/Editor/Simulation/SimulationWidget.cpp
+        src/Editor/Elements/arrow_line.cpp
+        src/Editor/Elements/petri_object.cpp
+        src/Editor/Elements/position.cpp
+        src/Editor/Elements/transition.cpp
 )
 
 set(HEADERS
@@ -134,14 +132,10 @@ set(HEADERS
         src/DockSystem/DockToolbar.h
         src/DockSystem/DockWidget.h
         src/DockSystem/SplittableComponentsFactory.h
-        src/MainTree/DecomposeTreeItem.h
         src/MainTree/MainTreeItem.h
         src/MainTree/MainTreeModel.h
         src/MainTree/MainTreeView.cpp
         src/MainTree/MainTreeView.h
-        src/MainTree/ModelTreeItem.cpp
-        src/MainTree/ModelTreeItem.h
-        src/MainTree/ReachabilityTreeItem.h
         src/QwtExt/CanvasPicker.h
         src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.h
         src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.h
@@ -159,28 +153,32 @@ set(HEADERS
         src/synthesis/synthesis_table.h
         src/synthesis/synthesis_window.h
         src/synthesis/synthesis_model.h
-        src/view/Commands.h
-        src/view/Commands/AddCommand.h
-        src/view/Commands/ConnectCommand.h
-        src/view/Commands/MarkCommand.h
-        src/view/Commands/MoveCommand.h
-        src/view/Commands/RemoveCommand.h
-        src/view/Commands/RotateCommand.h
-        src/view/GraphicScene.h
-        src/view/GraphicsView.h
-        src/view/GraphicsViewZoom.h
-        src/view/Simulation/SimulationWidget.h
-        src/view/elements/arrow_line.h
-        src/view/elements/petri_object.h
-        src/view/elements/position.h
-        src/view/elements/transition.h
-        src/view/toolbox/tool.h
-        src/view/toolbox/toolbox.h
+        src/Editor/Commands.h
+        src/Editor/Commands/AddCommand.h
+        src/Editor/Commands/ConnectCommand.h
+        src/Editor/Commands/MarkCommand.h
+        src/Editor/Commands/MoveCommand.h
+        src/Editor/Commands/RemoveCommand.h
+        src/Editor/Commands/RotateCommand.h
+        src/Editor/GraphicsScene.h
+        src/Editor/GraphicsView.h
+        src/Editor/GraphicsViewZoom.h
+        src/Editor/Simulation/SimulationWidget.h
+        src/Editor/Elements/arrow_line.h
+        src/Editor/Elements/petri_object.h
+        src/Editor/Elements/position.h
+        src/Editor/Elements/transition.h
+        src/Editor/ToolBox/tool.h
+        src/Editor/ToolBox/toolbox.h
         src/windows_types/close_on_inactive.h
         src/Core/ApplicationProjectController.cpp
         src/Core/ApplicationProjectController.h
         src/MainTree/MainTreeController.cpp
         src/MainTree/MainTreeController.h
+        src/ActionTabWidget/ActionTabWidgetController.cpp
+        src/ActionTabWidget/ActionTabWidgetController.h
+        src/Editor/GraphicSceneActions.cpp
+        src/Editor/GraphicSceneActions.h
 )
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")

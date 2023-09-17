@@ -6,7 +6,7 @@
 #include <QGraphicsScene>
 #include "position.h"
 #include "transition.h"
-#include "../GraphicScene.h"
+#include "../GraphicsScene.h"
 #include "../../Core/FFI/simulation.h"
 
 Transition::Transition(const QPointF& origin,
@@ -99,7 +99,7 @@ QString Transition::name() const {
     return QString("t%1").arg(index());
 }
 
-void Transition::onAddToScene(GraphicScene* scene) {
+void Transition::onAddToScene(GraphicsScene* scene) {
     auto net = scene->net();
 
     if (m_state) {
@@ -111,7 +111,7 @@ void Transition::onAddToScene(GraphicScene* scene) {
 }
 
 void Transition::onRemoveFromScene() {
-    auto scene = dynamic_cast<GraphicScene*>(this->scene());
+    auto scene = dynamic_cast<GraphicsScene*>(this->scene());
     auto net = scene->net();
     auto vertex = net->getVertex(m_vertex);
 

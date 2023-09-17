@@ -3,10 +3,10 @@
 //
 
 #include "MarkCommand.h"
-#include "../GraphicScene.h"
+#include "../GraphicsScene.h"
 #include "../elements/petri_object.h"
 
-MarkCommand::MarkCommand(PetriObject* item, bool add, GraphicScene *scene, QUndoCommand *parent)
+MarkCommand::MarkCommand(PetriObject* item, bool add, GraphicsScene *scene, QUndoCommand *parent)
     : QUndoCommand(parent)
     , m_item(item)
     , m_add(add)

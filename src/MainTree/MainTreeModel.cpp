@@ -6,10 +6,8 @@
 #include "MainTreeModel.h"
 #include <QIcon>
 
-MainTreeModel::MainTreeModel()
-    : m_root(new MainTreeItem)
-{
-
+MainTreeModel::MainTreeModel() : QAbstractItemModel(nullptr) {
+    m_root = new MainTreeItem("Root");
 }
 
 MainTreeItem *MainTreeModel::getItem(const QModelIndex &index) const {

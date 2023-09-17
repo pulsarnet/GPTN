@@ -3,11 +3,11 @@
 //
 
 #include "RemoveCommand.h"
-#include "../GraphicScene.h"
+#include "../GraphicsScene.h"
 #include "../elements/petri_object.h"
 #include "../elements/arrow_line.h"
 
-RemoveCommand::RemoveCommand(PetriObject *item, GraphicScene *scene, QUndoCommand *parent)
+RemoveCommand::RemoveCommand(PetriObject *item, GraphicsScene *scene, QUndoCommand *parent)
     : QUndoCommand(parent)
     , m_scene(scene)
     , m_item(item)

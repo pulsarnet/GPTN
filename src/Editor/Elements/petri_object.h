@@ -13,7 +13,7 @@
 #include "../../Core/FFI/rust.h"
 
 class ArrowLine;
-class GraphicScene;
+class GraphicsScene;
 
 class PetriObject : public QObject, public QGraphicsItem {
 
@@ -77,7 +77,7 @@ public:
     void updateConnections();
     const QList<ArrowLine*>& connections() const { return m_connections; };
 
-    GraphicScene* graphicScene() const;
+    GraphicsScene* graphicScene() const;
 
     ~PetriObject();
 
@@ -89,7 +89,7 @@ protected:
 
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
 
-    virtual void onAddToScene(GraphicScene*);
+    virtual void onAddToScene(GraphicsScene*);
     virtual void onRemoveFromScene() = 0;
 
 protected:

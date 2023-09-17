@@ -4,7 +4,7 @@
 
 #include <QTextDocument>
 #include <QApplication>
-#include "../GraphicScene.h"
+#include "../GraphicsScene.h"
 #include "petri_object.h"
 #include "arrow_line.h"
 #include "../../Core/FFI/rust.h"
@@ -99,12 +99,12 @@ QVariant PetriObject::itemChange(QGraphicsItem::GraphicsItemChange change, const
         updateConnections();
         return value;
     } else if (change == ItemSceneChange) {
-        auto scene = value.value<GraphicScene*>();
+        auto scene = value.value<GraphicsScene*>();
         if (scene) {
             scene->registerItem(this);
             this->onAddToScene(scene);
         } else {
-            dynamic_cast<GraphicScene*>(this->scene())->unregisterItem(this);
+            dynamic_cast<GraphicsScene*>(this->scene())->unregisterItem(this);
             this->onRemoveFromScene();
         }
     } else if (change == ItemPositionChange && scene()) {
@@ -121,7 +121,7 @@ QVariant PetriObject::itemChange(QGraphicsItem::GraphicsItemChange change, const
     return QGraphicsItem::itemChange(change, value);
 }
 
-void PetriObject::onAddToScene(GraphicScene *) {
+void PetriObject::onAddToScene(GraphicsScene *) {
     updateLabelPosition();
 }
 
@@ -169,6 +169,6 @@ ffi::VertexIndex PetriObject::vertexIndex() const {
     return m_vertex;
 }
 
-GraphicScene *PetriObject::graphicScene() const {
-    return qobject_cast<GraphicScene*>(scene());
+GraphicsScene *PetriObject::graphicScene() const {
+    return qobject_cast<GraphicsScene*>(scene());
 }

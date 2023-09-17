@@ -51,7 +51,7 @@ public:
 
 protected:
 
-    void onAddToScene(GraphicScene* scene) override;
+    void onAddToScene(GraphicsScene* scene) override;
     void onRemoveFromScene() override;
 
 private:

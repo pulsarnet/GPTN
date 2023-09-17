@@ -8,14 +8,14 @@
 
 #include <QUndoCommand>
 
-class GraphicScene;
+class GraphicsScene;
 class PetriObject;
 
 class MarkCommand : public QUndoCommand {
 
 public:
 
-    explicit MarkCommand(PetriObject* item, bool add, GraphicScene* scene, QUndoCommand* parent = nullptr);
+    explicit MarkCommand(PetriObject* item, bool add, GraphicsScene* scene, QUndoCommand* parent = nullptr);
 
     void undo() override;
     void redo() override;
@@ -24,7 +24,7 @@ private:
 
     PetriObject* m_item;
     bool m_add;
-    GraphicScene* m_scene;
+    GraphicsScene* m_scene;
 };
 
 

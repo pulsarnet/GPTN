@@ -1,12 +1,26 @@
-//
-// Created by darkp on 08.10.2022.
-//
-
 #include "MainTreeItem.h"
 #include <QIcon>
+#include <utility>
 
-MainTreeItem::MainTreeItem(MainTreeItem *parent)
-    : m_parentItem(parent)
+MainTreeItem::MainTreeItem(QString name, QIcon icon, MainTreeItem *parent)
+    : QObject(nullptr)
+    , m_parentItem(parent)
+    , m_name(std::move(name))
+    , m_icon(std::move(icon))
+    , m_widget(nullptr)
+{
+    if (parent) {
+        // Добавим текущий элемент как потомок parent
+        parent->insertChild(parent->childCount(), this);
+    }
+}
+
+MainTreeItem::MainTreeItem(QString name, QIcon icon, QWidget *widget, MainTreeItem *parent)
+    : QObject(nullptr)
+    , m_parentItem(parent)
+    , m_name(std::move(name))
+    , m_icon(std::move(icon))
+    , m_widget(widget)
 {
     if (parent) {
         // Добавим текущий элемент как потомок parent
@@ -51,15 +65,15 @@ bool MainTreeItem::removeChildren(int position, int count) noexcept {
 
 QVariant MainTreeItem::data(int column) const noexcept {
     if (column != 0) return {};
-    return QString("Root");
+    return m_name;
 }
 
 QIcon MainTreeItem::icon() const noexcept {
-    return {};
+    return m_icon;
 }
 
-QMenu *MainTreeItem::contextMenu() noexcept {
-    return nullptr;
+QWidget *MainTreeItem::widget() const noexcept {
+    return m_widget;
 }
 
 MainTreeItem::~MainTreeItem() {

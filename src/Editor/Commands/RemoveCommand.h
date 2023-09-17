@@ -7,14 +7,14 @@
 
 #include <QUndoCommand>
 
-class GraphicScene;
+class GraphicsScene;
 class PetriObject;
 class ArrowLine;
 
 class RemoveCommand : public QUndoCommand {
 
 public:
-    explicit RemoveCommand(PetriObject* item, GraphicScene* scene, QUndoCommand* parent = nullptr);
+    explicit RemoveCommand(PetriObject* item, GraphicsScene* scene, QUndoCommand* parent = nullptr);
 
     void redo() override;
 
@@ -22,7 +22,7 @@ public:
 
 private:
 
-    GraphicScene* m_scene;
+    GraphicsScene* m_scene;
     PetriObject* m_item;
     QList<ArrowLine*> m_connections;
 

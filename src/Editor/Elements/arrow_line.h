@@ -16,7 +16,7 @@ namespace ffi {
 }
 
 class PetriObject;
-class GraphicScene;
+class GraphicsScene;
 
 class ArrowLine : public QGraphicsLineItem {
 
@@ -53,7 +53,7 @@ protected:
 
     QVariant itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant &value) override;
 
-    void onAddToScene(GraphicScene* scene);
+    void onAddToScene(GraphicsScene* scene);
     void onRemoveFromScene();
 
     void hoverEnterEvent(QGraphicsSceneHoverEvent *event) override;

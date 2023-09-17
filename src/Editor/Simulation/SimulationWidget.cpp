@@ -1,7 +1,7 @@
 #include "SimulationWidget.h"
 #include "../GraphicsView.h"
 #include "../../Core/FFI/Simulation.h"
-#include "../GraphicScene.h"
+#include "../GraphicsScene.h"
 #include "../elements/position.h"
 #include <QPushButton>
 #include <QLabel>
@@ -214,7 +214,7 @@ void SimulationWidget::updateLabel() {
 
 void SimulationWidget::updateScene() {
     auto parent = qobject_cast<GraphicsView*>(this->parent());
-    auto scene = qobject_cast<GraphicScene*>(parent->scene());
+    auto scene = qobject_cast<GraphicsScene*>(parent->scene());
     // Перерисуем позиции
     for (auto position : scene->positions()) {
         position->update();
@@ -229,7 +229,7 @@ void SimulationWidget::initSimulation() {
     // Инициализация симуляции
     // Создание объекта ffi симуляции сети
     auto parent = qobject_cast<GraphicsView*>(this->parent());
-    auto scene = qobject_cast<GraphicScene*>(parent->scene());
+    auto scene = qobject_cast<GraphicsScene*>(parent->scene());
 
     m_simulation = ffi::Simulation::create(scene->net());
     scene->setSimulation(m_simulation);
@@ -247,7 +247,7 @@ void SimulationWidget::simulate() {
     }
 
     auto parent = qobject_cast<GraphicsView*>(this->parent());
-    auto scene = qobject_cast<GraphicScene*>(parent->scene());
+    auto scene = qobject_cast<GraphicsScene*>(parent->scene());
 
     updateScene();
     updatePlot();
@@ -260,7 +260,7 @@ void SimulationWidget::cancelSimulation() {
     // Очистка симуляции
     // scene
     auto parent = qobject_cast<GraphicsView*>(this->parent());
-    auto scene = qobject_cast<GraphicScene*>(parent->scene());
+    auto scene = qobject_cast<GraphicsScene*>(parent->scene());
     scene->setSimulation(nullptr);
 
     // plot

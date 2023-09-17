@@ -7,7 +7,7 @@
 
 #include <QUndoCommand>
 
-class GraphicScene;
+class GraphicsScene;
 class ArrowLine;
 class PetriObject;
 
@@ -22,7 +22,7 @@ class ConnectCommand : public QUndoCommand {
 
     explicit ConnectCommand(ArrowLine* connection,
                             ConnectionType type,
-                            GraphicScene* scene,
+                            GraphicsScene* scene,
                             QUndoCommand* parent = nullptr);
 
     explicit ConnectCommand(ArrowLine* connection,
@@ -30,22 +30,22 @@ class ConnectCommand : public QUndoCommand {
                             int newWeight,
                             int oldWeight,
                             bool reverse,
-                            GraphicScene* scene,
+                            GraphicsScene* scene,
                             QUndoCommand* parent = nullptr);
 
 public:
 
-    static ConnectCommand* connect(PetriObject* from, PetriObject* to, GraphicScene* scene);
-    static ConnectCommand* disconnect(ArrowLine* connection, GraphicScene* scene);
-    static ConnectCommand* setWeight(ArrowLine* connection, int newWeight, bool reverse, GraphicScene* scene);
-    static ConnectCommand* setBidirectional(ArrowLine* connection, GraphicScene* scene);
+    static ConnectCommand* connect(PetriObject* from, PetriObject* to, GraphicsScene* scene);
+    static ConnectCommand* disconnect(ArrowLine* connection, GraphicsScene* scene);
+    static ConnectCommand* setWeight(ArrowLine* connection, int newWeight, bool reverse, GraphicsScene* scene);
+    static ConnectCommand* setBidirectional(ArrowLine* connection, GraphicsScene* scene);
 
     void redo() override;
     void undo() override;
 
 private:
 
-    GraphicScene* m_scene;
+    GraphicsScene* m_scene;
     ArrowLine* m_connection;
     ConnectionType m_type;
     int m_newWeight;

@@ -6,6 +6,7 @@
 #define FFI_RUST_MAINTREEITEM_H
 
 #include <QVariant>
+#include <QIcon>
 
 class QMenu;
 
@@ -15,7 +16,8 @@ class MainTreeItem : public QObject{
 
 public:
 
-    explicit MainTreeItem(MainTreeItem* parent = nullptr);
+    explicit MainTreeItem(QString name, QIcon icon = QIcon(), MainTreeItem* parent = nullptr);
+    explicit MainTreeItem(QString name, QIcon icon, QWidget* widget, MainTreeItem* parent = nullptr);
 
     MainTreeItem* parentItem() noexcept { return m_parentItem; };
     MainTreeItem* childItem(int row) { return m_childItems[row]; }
@@ -29,7 +31,7 @@ public:
 
     [[nodiscard]] virtual QVariant data(int column) const noexcept;
     [[nodiscard]] virtual QIcon icon() const noexcept;
-    [[nodiscard]] virtual QMenu* contextMenu() noexcept;
+    [[nodiscard]] virtual QWidget* widget() const noexcept;
 
     virtual ~MainTreeItem();
 
@@ -42,6 +44,9 @@ private:
     MainTreeItem* m_parentItem;
     QList<MainTreeItem*> m_childItems;
 
+    QString m_name;
+    QIcon m_icon;
+    QWidget* m_widget;
 };
 
 

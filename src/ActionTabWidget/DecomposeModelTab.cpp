@@ -3,7 +3,7 @@
 //
 
 #include "DecomposeModelTab.h"
-#include "../view/GraphicScene.h"
+#include "../Editor/GraphicsScene.h"
 #include "../synthesis/synthesis_table.h"
 #include "../DockSystem/DockToolbar.h"
 #include <QGridLayout>
@@ -34,7 +34,7 @@ DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
     // TODO: make return error if error
     m_metadata->context()->decompose();
 
-    auto linearBaseFragmentsScene = new GraphicScene(decomposeContext()->linear_base_fragments());
+    auto linearBaseFragmentsScene = new GraphicsScene(decomposeContext()->linear_base_fragments());
     auto linearBaseFragmentsView = new GraphicsView;
     linearBaseFragmentsView->setScene(linearBaseFragmentsScene);
     linearBaseFragmentsView->setToolBoxVisibility(false);
@@ -42,7 +42,7 @@ DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
     m_linearBaseFragmentsView = new DockWidget("LBF");
     m_linearBaseFragmentsView->setWidget(linearBaseFragmentsView);
 
-    auto primitiveNetScene = new GraphicScene(decomposeContext()->primitive_net());
+    auto primitiveNetScene = new GraphicsScene(decomposeContext()->primitive_net());
     auto primitiveNetView = new GraphicsView;
     primitiveNetView->setScene(primitiveNetScene);
     primitiveNetView->setToolBoxVisibility(false);
