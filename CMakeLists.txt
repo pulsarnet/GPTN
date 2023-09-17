@@ -120,9 +120,13 @@ set(SRC_FILES
 
 set(HEADERS
         src/ActionTabWidget/ActionTabWidget.h
+        src/ActionTabWidget/ActionTabWidgetController.cpp
+        src/ActionTabWidget/ActionTabWidgetController.h
         src/ActionTabWidget/DecomposeModelTab.h
         src/ActionTabWidget/NetModelingTab.h
         src/ActionTabWidget/WrappedLayoutWidget.h
+        src/Core/ApplicationProjectController.cpp
+        src/Core/ApplicationProjectController.h
         src/Core/FFI/reachability.h
         src/Core/FFI/rust.h
         src/Core/FFI/simulation.h
@@ -132,10 +136,31 @@ set(HEADERS
         src/DockSystem/DockToolbar.h
         src/DockSystem/DockWidget.h
         src/DockSystem/SplittableComponentsFactory.h
-        src/MainTree/MainTreeItem.h
-        src/MainTree/MainTreeModel.h
-        src/MainTree/MainTreeView.cpp
-        src/MainTree/MainTreeView.h
+        src/Editor/Commands.h
+        src/Editor/Commands/AddCommand.h
+        src/Editor/Commands/ConnectCommand.h
+        src/Editor/Commands/MarkCommand.h
+        src/Editor/Commands/MoveCommand.h
+        src/Editor/Commands/RemoveCommand.h
+        src/Editor/Commands/RotateCommand.h
+        src/Editor/Elements/arrow_line.h
+        src/Editor/Elements/petri_object.h
+        src/Editor/Elements/position.h
+        src/Editor/Elements/transition.h
+        src/Editor/GraphicSceneActions.cpp
+        src/Editor/GraphicSceneActions.h
+        src/Editor/GraphicsScene.h
+        src/Editor/GraphicsView.h
+        src/Editor/GraphicsViewZoom.h
+        src/Editor/Simulation/SimulationWidget.h
+        src/Editor/ToolBox/tool.h
+        src/Editor/ToolBox/toolbox.h
+#        src/MainTree/MainTreeController.cpp
+#        src/MainTree/MainTreeController.h
+#        src/MainTree/MainTreeItem.h
+#        src/MainTree/MainTreeModel.h
+#        src/MainTree/MainTreeView.cpp
+#        src/MainTree/MainTreeView.h
         src/QwtExt/CanvasPicker.h
         src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.h
         src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.h
@@ -150,35 +175,10 @@ set(HEADERS
         src/modules/reachability/reachability_window.h
         src/named_matrix_model.h
         src/overrides/MatrixWindow.h
+        src/synthesis/synthesis_model.h
         src/synthesis/synthesis_table.h
         src/synthesis/synthesis_window.h
-        src/synthesis/synthesis_model.h
-        src/Editor/Commands.h
-        src/Editor/Commands/AddCommand.h
-        src/Editor/Commands/ConnectCommand.h
-        src/Editor/Commands/MarkCommand.h
-        src/Editor/Commands/MoveCommand.h
-        src/Editor/Commands/RemoveCommand.h
-        src/Editor/Commands/RotateCommand.h
-        src/Editor/GraphicsScene.h
-        src/Editor/GraphicsView.h
-        src/Editor/GraphicsViewZoom.h
-        src/Editor/Simulation/SimulationWidget.h
-        src/Editor/Elements/arrow_line.h
-        src/Editor/Elements/petri_object.h
-        src/Editor/Elements/position.h
-        src/Editor/Elements/transition.h
-        src/Editor/ToolBox/tool.h
-        src/Editor/ToolBox/toolbox.h
         src/windows_types/close_on_inactive.h
-        src/Core/ApplicationProjectController.cpp
-        src/Core/ApplicationProjectController.h
-        src/MainTree/MainTreeController.cpp
-        src/MainTree/MainTreeController.h
-        src/ActionTabWidget/ActionTabWidgetController.cpp
-        src/ActionTabWidget/ActionTabWidgetController.h
-        src/Editor/GraphicSceneActions.cpp
-        src/Editor/GraphicSceneActions.h
 )
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")

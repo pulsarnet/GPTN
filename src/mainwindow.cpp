@@ -11,13 +11,9 @@
 #include "windows_types/close_on_inactive.h"
 #include "ActionTabWidget/ActionTabWidget.h"
 #include "ActionTabWidget/DecomposeModelTab.h"
-#include "MainTree/MainTreeItem.h"
-#include "MainTree/MainTreeModel.h"
-#include "MainTree/MainTreeView.h"
 #include "WindowWidgets/NewProjectWindow.h"
 #include "Settings/RecentProjects.h"
 #include "Core/ApplicationProjectController.h"
-#include "MainTree/MainTreeController.h"
 #include "ActionTabWidget/ActionTabWidgetController.h"
 #include "Editor/GraphicsScene.h"
 
@@ -31,7 +27,6 @@ MainWindow::MainWindow(ApplicationProjectController* controller, QWidget *parent
     : QMainWindow(parent)
     , mController(controller)
 {
-    mTreeController = new MainTreeController(this);
     mActionTabWidgetController = new ActionTabWidgetController(this);
 
     createMenuBar();
@@ -121,12 +116,14 @@ bool MainWindow::initProject(const QString &filename) {
         return false;
     }
 
+    mActionTabWidgetController->openTab("Model", QIcon(":/images/modeling.svg"), modelTab);
+
     // Try add to tree
-    auto treeItem = new MainTreeItem("Model", QIcon(":/images/modeling.svg"), modelTab);
-    if (!mTreeController->addChildItem(treeItem)) {
-        delete treeItem;
-        return false;
-    }
+//    auto treeItem = new MainTreeItem("Model", QIcon(":/images/modeling.svg"), modelTab);
+//    if (!mTreeController->addChildItem(treeItem)) {
+//        delete treeItem;
+//        return false;
+//    }
 
     // Установим данные окна (todo: отдельная функция)
     this->setWindowTitle(this->m_metadata->projectName());
@@ -174,7 +171,7 @@ void MainWindow::createMenuBar() {
 
     auto quit_action = new QAction("&Quit");
     quit_action->setShortcut(QKeySequence::Quit);
-    connect(quit_action, &QAction::triggered, this, &MainWindow::slotQuit);
+    connect(quit_action, &QAction::triggered, this, &MainWindow::onQuit);
 
     mFileMenu->addAction(new_action);
     mFileMenu->addAction(open_action);
@@ -188,7 +185,7 @@ void MainWindow::createMenuBar() {
 //    mEditMenu->addAction(mUndoAction);
 //    mEditMenu->addAction(mRedoAction);
 
-    mViewMenu->addAction(mTreeController->toggleViewAction());
+    //mViewMenu->addAction(mTreeController->toggleViewAction());
 
     mMenuBar->addMenu(mFileMenu);
     mMenuBar->addMenu(mEditMenu);
@@ -272,19 +269,6 @@ void MainWindow::onNewProjectCreate(const QDir& dir, const QString& name) {
     }
 }
 
-void MainWindow::treeItemAction(const QModelIndex& index) {
-    auto treeItem = static_cast<MainTreeItem*>(index.internalPointer());
-    auto name = treeItem->data(0).toString();
-    if (treeItem->widget()) {
-        mActionTabWidgetController->openTab(name, treeItem->icon(), treeItem->widget());
-    }
-}
-
-void MainWindow::treeItemContextMenuRequested(const QPoint &point) {
-    Q_UNUSED(point)
-
-}
-
 void MainWindow::closeEvent(QCloseEvent *event) {
     qDebug() << "MainWindow::closeEvent(" << event << ")";
     if (saveOnExit()) {
@@ -317,32 +301,9 @@ bool MainWindow::saveOnExit() {
     return true;
 }
 
-void MainWindow::slotQuit(bool checked) {
+void MainWindow::onQuit(bool checked) {
     Q_UNUSED(checked)
     QApplication::quit();
-}
-
-void MainWindow::treeViewSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected) {
-    Q_UNUSED(selected)
-    Q_UNUSED(deselected)
-    // TODO: А может функция уже не нужна
-//    auto index = m_treeView->currentIndex();
-//    if (!index.isValid()) {
-//        // set null
-//        return;
-//    }
-//
-//    auto item = static_cast<MainTreeItem*>(index.internalPointer());
-
-    // TODO: REMOVE =====> set current project item
-//    if (auto project = dynamic_cast<ProjectTreeItem*>(item); project) {
-//        m_currentProject = project;
-//    } else if (auto project = dynamic_cast<ProjectTreeItem*>(item->parentItem()); project) {
-//        m_currentProject = project;
-//    } else if (auto project = dynamic_cast<ProjectTreeItem*>(item->parentItem()->parentItem()); project) {
-//        m_currentProject = project;
-//    }
-    //qDebug() << "Current project: " << m_currentProject->data(0).toString();
 }
 
 void MainWindow::tabWidgetCurrentChanged(int index) {

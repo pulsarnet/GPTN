@@ -216,7 +216,7 @@ void ArrowLine::onAddToScene(GraphicsScene *scene) {
 }
 
 void ArrowLine::onRemoveFromScene() {
-    Q_ASSERT(m_state);
+    Q_ASSERT(!m_state);
 
     // Save state
     m_state = new ConnectionState();

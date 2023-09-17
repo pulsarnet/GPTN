@@ -15,8 +15,9 @@
 #include "../overrides/MatrixWindow.h"
 #include "../modules/reachability/reachability_window.h"
 
-GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent) {
-
+GraphicsView::GraphicsView(QWidget *parent)
+    : QGraphicsView(parent)
+{
     setBackgroundBrush(Qt::NoBrush);
 
     this->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);

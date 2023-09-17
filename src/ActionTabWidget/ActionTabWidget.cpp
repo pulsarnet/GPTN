@@ -15,7 +15,7 @@
 ActionTabWidget::ActionTabWidget(QWidget *parent) : QTabWidget(parent) {
 
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    setTabsClosable(true);
+    setTabsClosable(false);
 
     connect(this,
             &QTabWidget::tabCloseRequested,

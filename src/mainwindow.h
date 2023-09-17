@@ -51,27 +51,14 @@ public:
     QMessageBox::StandardButton onSaveFileAsk();
 
 public slots:
-
     void onSaveFile(bool checked);
-
     void onSaveAsFile(bool checked);
-
     void onOpenFile(bool checked);
-
     void onRecentProjects();
     void onOpenRecentProject();
-
     void onNewProject(bool checked);
     void onNewProjectCreate(const QDir& dir, const QString& name);
-
-    void treeItemAction(const QModelIndex& index);
-
-    void treeItemContextMenuRequested(const QPoint& point);
-
-    void slotQuit(bool checked);
-
-    void treeViewSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
-
+    void onQuit(bool checked);
     void tabWidgetCurrentChanged(int index);
 
 protected:
@@ -89,7 +76,6 @@ private:
 private:
 
     ApplicationProjectController* mController;
-    MainTreeController* mTreeController;
     ActionTabWidgetController* mActionTabWidgetController;
 
     QStatusBar* statusBar = nullptr;
