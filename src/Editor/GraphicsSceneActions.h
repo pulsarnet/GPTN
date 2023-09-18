@@ -17,11 +17,15 @@ public:
 
     [[nodiscard]] QAction* undoAction() const { return m_undoAction; }
     [[nodiscard]] QAction* redoAction() const { return m_redoAction; }
+    [[nodiscard]] QAction* hAlignmentAction() const { return m_hAlignment; }
+    [[nodiscard]] QAction* vAlignmentAction() const { return m_vAlignment; }
 
 private:
 
     QAction* m_undoAction;
     QAction* m_redoAction;
+    QAction* m_hAlignment;
+    QAction* m_vAlignment;
 };
 
 

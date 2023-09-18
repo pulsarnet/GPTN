@@ -15,6 +15,7 @@
 #include "../overrides/MatrixWindow.h"
 #include "../modules/reachability/reachability_window.h"
 #include "../MainWindow.h"
+#include "GraphicsSceneActions.h"
 
 GraphicsView::GraphicsView(MainWindow* window, QWidget *parent)
     : QGraphicsView(parent)
@@ -200,19 +201,10 @@ void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
     //auto item = gScene->netItemAt(mapToScene(event->pos()));
     //if (!item) return;
 
-    auto itemSelected = scene()->selectedItems().length() > 1;
     auto menu = new QMenu;
     menu->setWindowFlags(menu->windowFlags() | Qt::FramelessWindowHint);
     menu->setAttribute(Qt::WA_TranslucentBackground);
     menu->setAttribute(Qt::WA_DeleteOnClose);
-
-    auto horz = new QAction("Horizontal alignment", menu);
-    horz->setEnabled(itemSelected);
-    connect(horz, &QAction::triggered, gScene, &GraphicsScene::slotHorizontalAlignment);
-
-    auto vert = new QAction("Vertical alignment", menu);
-    vert->setEnabled(itemSelected);
-    connect(vert, &QAction::triggered, gScene, &GraphicsScene::slotVerticalAlignment);
 
     auto matrix = new QAction("I/O matrix view", menu);
     connect(matrix, &QAction::triggered, m_mainWindow, &MainWindow::onMatrixWindow);
@@ -254,8 +246,8 @@ void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
     graphViz->addAction(patchwork);
     graphViz->addAction(sfdp);
 
-    menu->addAction(horz);
-    menu->addAction(vert);
+    menu->addAction(gScene->actions()->hAlignmentAction());
+    menu->addAction(gScene->actions()->vAlignmentAction());
     menu->addAction(matrix);
     menu->addAction(reachability);
     menu->addAction(invariants);

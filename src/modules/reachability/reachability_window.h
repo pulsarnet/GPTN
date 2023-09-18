@@ -16,6 +16,8 @@ namespace rust {
     struct ReachabilityTree;
 }
 
+class ReachabilityView;
+
 class ReachabilityWindow : public QWidget {
 
 public:
@@ -23,12 +25,9 @@ public:
     explicit ReachabilityWindow(ffi::PetriNet*, rust::ReachabilityTree*, QWidget* parent = nullptr);
 
 private:
-
-    ads::CDockManager* m_manager;
     ffi::PetriNet* m_net;
     rust::ReachabilityTree* m_reachability;
-
-    ads::CDockWidget* m_view;
+    ReachabilityView* m_view;
 };
 
 

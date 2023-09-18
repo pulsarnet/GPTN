@@ -7,7 +7,6 @@
 #include <QJsonDocument>
 #include <QMessageBox>
 #include <QProcess>
-#include "windows_types/close_on_inactive.h"
 #include "ActionTabWidget/ActionTabWidget.h"
 #include "ActionTabWidget/DecomposeModelTab.h"
 #include "WindowWidgets/NewProjectWindow.h"
@@ -204,8 +203,6 @@ void MainWindow::onSaveFile(bool checked) {
 
 void MainWindow::onSaveAsFile(bool checked) {
     Q_UNUSED(checked)
-    auto window = new CloseOnInActive;
-    window->show();
 }
 
 void MainWindow::onOpenFile(bool checked) {

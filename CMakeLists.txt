@@ -178,7 +178,6 @@ set(HEADERS
         src/synthesis/synthesis_model.h
         src/synthesis/synthesis_table.h
         src/synthesis/synthesis_window.h
-        src/windows_types/close_on_inactive.h
 )
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")

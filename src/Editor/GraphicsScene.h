@@ -84,6 +84,7 @@ public slots:
     void setMode(GraphicsScene::Mode mode);
     void slotHorizontalAlignment(bool triggered);
     void slotVerticalAlignment(bool triggered);
+    void onSelectionChanged();
 
 signals:
     void sceneChanged();

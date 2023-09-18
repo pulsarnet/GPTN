@@ -13,21 +13,13 @@ ReachabilityWindow::ReachabilityWindow(ffi::PetriNet *net, rust::ReachabilityTre
     : QWidget(parent)
     , m_net(net)
     , m_reachability(reachability)
-    , m_manager(new ads::CDockManager(this))
 {
-
     auto scene = new ReachabilityTreeScene(reachability);
-    auto view = new ReachabilityView(this);
-    view->setScene(scene);
+    m_view = new ReachabilityView(this);
+    m_view->setScene(scene);
 
-    m_view = new DockWidget("Reachability Tree");
-    m_view->setWidget(view);
-
-    auto area = m_manager->addDockWidget(ads::DockWidgetArea::LeftDockWidgetArea, m_view);
-    area->setWindowTitle("Дерево достижимости");
-    area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
     setLayout(new QGridLayout(this));
-    layout()->addWidget(m_manager);
+    layout()->addWidget(m_view);
     layout()->setContentsMargins(0, 0, 0, 0);
 }
 

@@ -61,6 +61,8 @@ GraphicsScene::GraphicsScene(ffi::PetriNet *net, QObject *parent)
     }
 
     dotVisualization((char*)"dot");
+
+    connect(this, &QGraphicsScene::selectionChanged, this, &GraphicsScene::onSelectionChanged);
 }
 
 
@@ -71,6 +73,12 @@ void GraphicsScene::setMode(Mode mod) {
 
 void GraphicsScene::setAllowMods(Modes mods) {
     m_allowMods = mods;
+}
+
+void GraphicsScene::onSelectionChanged() {
+    auto selected = selectedItems();
+    m_actions->hAlignmentAction()->setEnabled(!selected.empty());
+    m_actions->vAlignmentAction()->setEnabled(!selected.empty());
 }
 
 void GraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
