@@ -17,7 +17,7 @@
 #include "elements/transition.h"
 #include "elements/arrow_line.h"
 #include "../Core/graphviz/GraphvizWrapper.h"
-#include "GraphicSceneActions.h"
+#include "GraphicsSceneActions.h"
 
 GraphicsScene::GraphicsScene(ffi::PetriNet *net, QObject *parent)
     : QGraphicsScene(parent)
@@ -632,8 +632,7 @@ void GraphicsScene::drawBackground(QPainter *painter, const QRectF &rect) {
 void GraphicsScene::registerItem(QGraphicsItem *item) {
     if (auto position = dynamic_cast<Position*>(item); position) {
         m_positions.push_back(position);
-    }
-    else if (auto transition = dynamic_cast<Transition*>(item); transition) {
+    } else if (auto transition = dynamic_cast<Transition*>(item); transition) {
         m_transition.push_back(transition);
     } else if (auto connection = dynamic_cast<ArrowLine*>(item); connection) {
         m_connections.push_back(connection);
@@ -651,7 +650,7 @@ void GraphicsScene::unregisterItem(QGraphicsItem *item) {
     }
 }
 
-GraphicSceneActions *GraphicsScene::actions() {
+GraphicsSceneActions *GraphicsScene::actions() {
     if (!m_actions)
         createActions();
 
@@ -659,5 +658,5 @@ GraphicSceneActions *GraphicsScene::actions() {
 }
 
 void GraphicsScene::createActions() {
-    m_actions = new GraphicSceneActions(this);
+    m_actions = new GraphicsSceneActions(this);
 }

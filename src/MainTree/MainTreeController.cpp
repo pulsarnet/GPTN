@@ -1,4 +1,4 @@
-#include "../mainwindow.h"
+#include "../MainWindow.h"
 #include "MainTreeController.h"
 #include "MainTreeModel.h"
 #include "MainTreeView.h"

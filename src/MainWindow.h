@@ -19,13 +19,11 @@
 #include <QDir>
 #include "core/ProjectMetadata.h"
 
-class QTreeView;
 class ActionTabWidget;
 class MainTreeItem;
-class MainTreeView;
 class ApplicationProjectController;
-class MainTreeController;
 class ActionTabWidgetController;
+class MatrixWindow;
 
 class MainWindow : public QMainWindow {
 
@@ -50,6 +48,8 @@ public:
     bool saveFile();
     QMessageBox::StandardButton onSaveFileAsk();
 
+    ProjectMetadata* metadata() const { return m_metadata; }
+
 public slots:
     void onSaveFile(bool checked);
     void onSaveAsFile(bool checked);
@@ -59,7 +59,12 @@ public slots:
     void onNewProject(bool checked);
     void onNewProjectCreate(const QDir& dir, const QString& name);
     void onQuit(bool checked);
-    void tabWidgetCurrentChanged(int index);
+
+    // Net
+    void onReachabilityTree(bool checked);
+
+    void onMatrixWindow(bool checked);
+    void onMatrixWindowClose(QWidget* window);
 
 protected:
 
@@ -91,6 +96,8 @@ private:
     QMenu* mHelpMenu = nullptr;
 
     ProjectMetadata* m_metadata = nullptr;
+
+    MatrixWindow* m_IOMatrixWindow = nullptr;
 };
 
 #endif //FFI_RUST_MAINWINDOW_H

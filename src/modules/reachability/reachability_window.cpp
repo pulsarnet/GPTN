@@ -19,6 +19,7 @@ ReachabilityWindow::ReachabilityWindow(ffi::PetriNet *net, rust::ReachabilityTre
     auto scene = new ReachabilityTreeScene(reachability);
     auto view = new ReachabilityView(this);
     view->setScene(scene);
+
     m_view = new DockWidget("Reachability Tree");
     m_view->setWidget(view);
 

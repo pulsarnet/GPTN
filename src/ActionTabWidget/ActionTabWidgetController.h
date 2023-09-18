@@ -6,6 +6,7 @@
 #define GPTN_ACTIONTABWIDGETCONTROLLER_H
 
 #include <QObject>
+#include <QHash>
 
 using namespace std;
 
@@ -22,10 +23,15 @@ public:
 
     bool openTab(const QString& name, const QIcon& icon, QWidget* widget);
 
+public slots:
+
+    void onTabChanged(int index);
+
 private:
 
     MainWindow* m_mainWindow;
     ActionTabWidget* m_actionTabWidget;
+    QHash<QString, int> m_openedTabs;
 };
 
 

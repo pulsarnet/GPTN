@@ -9,13 +9,15 @@
 
 using namespace ffi;
 
-MatrixWindow::MatrixWindow(CNamedMatrix *matrix1, CNamedMatrix *matrix2, QWidget *parent) : QWidget(parent),
-    m_layout(new QGridLayout(this))
+MatrixWindow::MatrixWindow(CNamedMatrix *matrix1, CNamedMatrix *matrix2, QWidget *parent)
+    : QDialog(parent)
+    , m_layout(new QGridLayout(this))
 {
     setWindowTitle("I/O Matrix View");
-    setWindowFlags(Qt::WindowStaysOnTopHint);
+    setWindowFlags(Qt::Window | Qt::WindowStaysOnTopHint);
     setAttribute(Qt::WA_DeleteOnClose);
     setEnabled(true);
+    setModal(false);
 
     m_matrix1 = new QTableView;
     m_matrix1->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);

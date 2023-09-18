@@ -35,7 +35,7 @@ DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
     m_metadata->context()->decompose();
 
     auto linearBaseFragmentsScene = new GraphicsScene(decomposeContext()->linear_base_fragments());
-    auto linearBaseFragmentsView = new GraphicsView;
+    auto linearBaseFragmentsView = new GraphicsView(nullptr);
     linearBaseFragmentsView->setScene(linearBaseFragmentsScene);
     linearBaseFragmentsView->setToolBoxVisibility(false);
     linearBaseFragmentsView->setAllowSimulation(false);
@@ -43,7 +43,7 @@ DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
     m_linearBaseFragmentsView->setWidget(linearBaseFragmentsView);
 
     auto primitiveNetScene = new GraphicsScene(decomposeContext()->primitive_net());
-    auto primitiveNetView = new GraphicsView;
+    auto primitiveNetView = new GraphicsView(nullptr);
     primitiveNetView->setScene(primitiveNetScene);
     primitiveNetView->setToolBoxVisibility(false);
     primitiveNetView->setAllowSimulation(false);

@@ -8,21 +8,22 @@
 #include <QWidget>
 #include "../Editor/GraphicsView.h"
 
-class ProjectMetadata;
+class MainWindow;
 
 class NetModelingTab : public QWidget {
 
+    Q_OBJECT
+
 public:
 
-    explicit NetModelingTab(ProjectMetadata* metadata, QWidget *parent = nullptr);
+    explicit NetModelingTab(MainWindow* window, QWidget *parent = nullptr);
 
-    [[nodiscard]] ProjectMetadata* metadata() const;
     [[nodiscard]] GraphicsView* view() const;
 
 private:
 
     GraphicsView *m_view;
-    ProjectMetadata* m_metadata;
+    MainWindow* m_mainWindow;
 
 };
 

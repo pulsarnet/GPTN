@@ -2,18 +2,18 @@
 // Created by darkp on 17.09.2023.
 //
 
-#ifndef GPTN_GRAPHICSCENEACTIONS_H
-#define GPTN_GRAPHICSCENEACTIONS_H
+#ifndef GPTN_GRAPHICSSCENEACTIONS_H
+#define GPTN_GRAPHICSSCENEACTIONS_H
 
 #include <QAction>
 
 class GraphicsScene;
 
-class GraphicSceneActions : public QObject {
+class GraphicsSceneActions : public QObject {
 
 public:
 
-    explicit GraphicSceneActions(GraphicsScene* scene);
+    explicit GraphicsSceneActions(GraphicsScene* scene);
 
     [[nodiscard]] QAction* undoAction() const { return m_undoAction; }
     [[nodiscard]] QAction* redoAction() const { return m_redoAction; }
@@ -25,4 +25,4 @@ private:
 };
 
 
-#endif //GPTN_GRAPHICSCENEACTIONS_H
+#endif //GPTN_GRAPHICSSCENEACTIONS_H

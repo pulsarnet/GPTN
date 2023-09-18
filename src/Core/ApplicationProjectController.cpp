@@ -3,7 +3,7 @@
 //
 
 #include "ApplicationProjectController.h"
-#include "../mainwindow.h"
+#include "../MainWindow.h"
 #include <filesystem>
 
 namespace fs = std::filesystem;

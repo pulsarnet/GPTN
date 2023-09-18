@@ -14,9 +14,11 @@
 #include "toolbox/toolbox.h"
 #include "../overrides/MatrixWindow.h"
 #include "../modules/reachability/reachability_window.h"
+#include "../MainWindow.h"
 
-GraphicsView::GraphicsView(QWidget *parent)
+GraphicsView::GraphicsView(MainWindow* window, QWidget *parent)
     : QGraphicsView(parent)
+    , m_mainWindow(window)
 {
     setBackgroundBrush(Qt::NoBrush);
 
@@ -213,10 +215,10 @@ void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
     connect(vert, &QAction::triggered, gScene, &GraphicsScene::slotVerticalAlignment);
 
     auto matrix = new QAction("I/O matrix view", menu);
-    connect(matrix, &QAction::triggered, this, &GraphicsView::slotMatrixView);
+    connect(matrix, &QAction::triggered, m_mainWindow, &MainWindow::onMatrixWindow);
 
     auto reachability = new QAction("Reachability", menu);
-    connect(reachability, &QAction::triggered, this, &GraphicsView::slotReachability);
+    connect(reachability, &QAction::triggered, m_mainWindow, &MainWindow::onReachabilityTree);
 
     auto invariants = new QAction("Invariants", menu);
     connect(invariants, &QAction::triggered, this, &GraphicsView::slotInvariants);
@@ -263,38 +265,12 @@ void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
     QGraphicsView::contextMenuEvent(event);
 }
 
-void GraphicsView::slotMatrixView(bool checked) {
-    Q_UNUSED(checked)
-
-    if (m_IOMatrixWindow)
-        m_IOMatrixWindow->activateWindow();
-    else {
-        auto matrix = dynamic_cast<GraphicsScene*>(scene())->net()->as_matrix();
-        m_IOMatrixWindow = new MatrixWindow(matrix.first, matrix.second);
-        connect(m_IOMatrixWindow, &MatrixWindow::onWindowClose, this, &GraphicsView::slotIOWindowClose);
-        m_IOMatrixWindow->show();
-    }
-}
-
-void GraphicsView::slotReachability(bool checked) {
-    Q_UNUSED(checked)
-    auto net = dynamic_cast<GraphicsScene*>(scene())->net();
-    auto reachability = net->reachability();
-    auto reachabilityWindow = new ReachabilityWindow(net, reachability);
-    reachabilityWindow->show();
-}
-
 void GraphicsView::slotInvariants(bool checked) {
     Q_UNUSED(checked)
     auto net = dynamic_cast<GraphicsScene*>(scene())->net();
     qDebug() << "P/T-invariants: ";
     net->p_invariant();
     net->t_invariant();
-}
-
-void GraphicsView::slotIOWindowClose(QWidget *window) {
-    qDebug() << "Remove widget: " << window;
-    m_IOMatrixWindow = nullptr;
 }
 
 void GraphicsView::slotDotVisualization(bool checked) {

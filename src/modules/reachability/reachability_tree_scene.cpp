@@ -26,7 +26,7 @@ ReachabilityTreeScene::ReachabilityTreeScene(rust::ReachabilityTree *tree, QObje
             auto from = m_nodes[prev];
             auto to = m_nodes.last();
 
-            // Переход есть всегда
+            // Transition always exists
             addEdge(from, to, marking->transition());
         }
     }

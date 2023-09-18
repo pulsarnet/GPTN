@@ -32,7 +32,8 @@ SynthesisWindow::SynthesisWindow(ffi::DecomposeContext *ctx, QVector<size_t> pro
             &SynthesisWindow::onSelectionChanged
             );
 
-    auto view = new GraphicsView(this);
+    // todo pass window
+    auto view = new GraphicsView(nullptr, this);
     view->setToolBoxVisibility(false);
 
     m_table = new DockWidget("Table");

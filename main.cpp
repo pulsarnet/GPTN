@@ -6,7 +6,7 @@
 #include <QFontDatabase>
 #include <QFile>
 #include <QSettings>
-#include "src/mainwindow.h"
+#include "src/MainWindow.h"
 #include "src/DockSystem/SplittableComponentsFactory.h"
 #include "src/Settings/RecentProjects.h"
 #include "src/Core/FFI/rust.h"

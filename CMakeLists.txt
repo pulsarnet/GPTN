@@ -92,7 +92,7 @@ set(SRC_FILES
         src/QwtExt/qwt_ext_plot_curve_labels.cpp
         src/Settings/RecentProjects.cpp
         src/WindowWidgets/NewProjectWindow.cpp
-        src/mainwindow.cpp
+        src/MainWindow.cpp
         src/modules/reachability/reachability_line.cpp
         src/modules/reachability/reachability_node.cpp
         src/modules/reachability/reachability_tree_scene.cpp
@@ -147,8 +147,8 @@ set(HEADERS
         src/Editor/Elements/petri_object.h
         src/Editor/Elements/position.h
         src/Editor/Elements/transition.h
-        src/Editor/GraphicSceneActions.cpp
-        src/Editor/GraphicSceneActions.h
+        src/Editor/GraphicsSceneActions.cpp
+        src/Editor/GraphicsSceneActions.h
         src/Editor/GraphicsScene.h
         src/Editor/GraphicsView.h
         src/Editor/GraphicsViewZoom.h
@@ -167,7 +167,7 @@ set(HEADERS
         src/QwtExt/qwt_ext_plot_curve_labels.h
         src/Settings/RecentProjects.h
         src/WindowWidgets/NewProjectWindow.h
-        src/mainwindow.h
+        src/MainWindow.h
         src/modules/reachability/reachability_line.h
         src/modules/reachability/reachability_node.h
         src/modules/reachability/reachability_tree_scene.h

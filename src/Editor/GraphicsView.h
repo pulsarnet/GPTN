@@ -16,6 +16,7 @@ class ToolBox;
 class GraphicsViewZoom;
 class MatrixWindow;
 class SimulationWidget;
+class MainWindow;
 
 class GraphicsView : public QGraphicsView {
 
@@ -23,7 +24,7 @@ class GraphicsView : public QGraphicsView {
 
 public:
 
-    explicit GraphicsView(QWidget* parent = nullptr);
+    explicit GraphicsView(MainWindow* window, QWidget* parent = nullptr);
     virtual ~GraphicsView() noexcept;
 
     void setToolBoxVisibility(bool visible = true);
@@ -58,11 +59,7 @@ protected slots:
     void removeChecked(bool checked);
     void markerChecked(bool checked);
 
-    void slotMatrixView(bool checked);
-    void slotReachability(bool checked);
     void slotInvariants(bool checked);
-
-    void slotIOWindowClose(QWidget*);
 
 private:
 
@@ -83,6 +80,8 @@ private:
 
     MatrixWindow* m_IOMatrixWindow = nullptr;
     SimulationWidget* m_simulationWidget = nullptr;
+
+    MainWindow* m_mainWindow;
 
 };
 

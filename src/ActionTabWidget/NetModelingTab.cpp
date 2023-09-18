@@ -4,16 +4,16 @@
 #include "../Editor/elements/position.h"
 #include "../Editor/elements/transition.h"
 #include "../Editor/elements/arrow_line.h"
-#include "../Core/ProjectMetadata.h"
+#include "../MainWindow.h"
 
-NetModelingTab::NetModelingTab(ProjectMetadata* metadata, QWidget *parent)
+NetModelingTab::NetModelingTab(MainWindow* window, QWidget *parent)
     : QWidget(parent)
-    ,m_metadata(metadata)
-    ,m_view(new GraphicsView(this))
+    ,m_mainWindow(window)
+    ,m_view(new GraphicsView(window, this))
 {
     setLayout(new QBoxLayout(QBoxLayout::TopToBottom));
 
-    auto scene = new GraphicsScene(metadata->context()->net());
+    auto scene = new GraphicsScene(m_mainWindow->metadata()->context()->net());
     scene->setAllowMods(GraphicsScene::A_Default);
 
     m_view->setScene(scene);
@@ -22,9 +22,6 @@ NetModelingTab::NetModelingTab(ProjectMetadata* metadata, QWidget *parent)
     layout()->setContentsMargins(0, 0, 0, 0);
 }
 
-ProjectMetadata *NetModelingTab::metadata() const {
-    return m_metadata;
-}
 
 GraphicsView* NetModelingTab::view() const {
     return m_view;

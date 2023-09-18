@@ -82,7 +82,6 @@ void ReachabilityNode::updateLayout() {
 
     auto info = (Agnodeinfo_t*)AGDATA(m_node);
     auto [x, y] = info->coord;
-
     setPos(x, y);
 
     qreal w = info->width * 72.;

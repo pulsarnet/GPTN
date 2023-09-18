@@ -6,11 +6,12 @@
 #define FFI_RUST_MATRIXWINDOW_H
 
 #include <QWidget>
+#include <QDialog>
 #include <QGridLayout>
 #include <QTableView>
 #include "../Core/FFI/rust.h"
 
-class MatrixWindow : public QWidget {
+class MatrixWindow : public QDialog {
 
     Q_OBJECT
 

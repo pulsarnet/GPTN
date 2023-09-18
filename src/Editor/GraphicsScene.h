@@ -8,7 +8,7 @@ class PetriObject;
 class Position;
 class Transition;
 class ArrowLine;
-class GraphicSceneActions;
+class GraphicsSceneActions;
 class QUndoCommand;
 class QUndoStack;
 
@@ -77,7 +77,7 @@ public:
     void setSimulation(ffi::Simulation*);
     ffi::Simulation* simulation() const;
 
-    GraphicSceneActions* actions();
+    GraphicsSceneActions* actions();
 
 public slots:
 
@@ -114,7 +114,7 @@ protected:
 private:
 
     QUndoStack* m_undoStack;
-    GraphicSceneActions* m_actions = nullptr;
+    GraphicsSceneActions* m_actions = nullptr;
 
     QList<Position*> m_positions;
     QList<Transition*> m_transition;

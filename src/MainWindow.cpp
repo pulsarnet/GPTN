@@ -1,11 +1,10 @@
-#include "mainwindow.h"
+#include "MainWindow.h"
 
 #include <QApplication>
 #include <QFileDialog>
 #include <QGraphicsDropShadowEffect>
 #include <QDockWidget>
 #include <QJsonDocument>
-#include <QTableView>
 #include <QMessageBox>
 #include <QProcess>
 #include "windows_types/close_on_inactive.h"
@@ -16,10 +15,13 @@
 #include "Core/ApplicationProjectController.h"
 #include "ActionTabWidget/ActionTabWidgetController.h"
 #include "Editor/GraphicsScene.h"
+#include "Core/FFI/rust.h"
+#include "modules/reachability/reachability_window.h"
+#include "ActionTabWidget/WrappedLayoutWidget.h"
+#include "overrides/MatrixWindow.h"
 
 /*
  * MainWindow содержит:
- * - Дерево модулей проекта MainTreeView
  * - Окно вкладок ActionTabWidget
  * - Меню приложения Menu
  */
@@ -32,6 +34,23 @@ MainWindow::MainWindow(ApplicationProjectController* controller, QWidget *parent
     createMenuBar();
     createStatusBar();
 }
+
+/**
+ * Выбрать и открыть файл.
+ *
+ * @return true - если открыт новый проект, false - если не удалось открыть
+ */
+bool MainWindow::open() {
+    QString filename = QFileDialog::getOpenFileName(this,
+                                                    tr("Open Petri Net"),
+                                                    "",
+                                                    tr("JSON Petri Net (*.json)"));
+    if (filename.isEmpty())
+        return false;
+
+    return mController->openProject(filename);
+}
+
 
 bool MainWindow::saveAs() {
     QString filename = QFileDialog::getSaveFileName(this,
@@ -74,22 +93,6 @@ bool MainWindow::saveFile() {
 }
 
 /**
- * Выбрать и открыть файл.
- *
- * @return true - если открыт новый проект, false - если не удалось открыть
- */
-bool MainWindow::open() {
-    QString filename = QFileDialog::getOpenFileName(this,
-                                                    tr("Open Petri Net"),
-                                                    "",
-                                                    tr("JSON Petri Net (*.json)"));
-    if (filename.isEmpty())
-        return false;
-
-    return mController->openProject(filename);
-}
-
-/**
  * Инициализирует проект в текущем окне
  */
 bool MainWindow::initProject(const QString &filename) {
@@ -109,7 +112,7 @@ bool MainWindow::initProject(const QString &filename) {
 
     // Установим metadata
     m_metadata = new ProjectMetadata(filename);
-    auto modelTab = new NetModelingTab(m_metadata);
+    auto modelTab = new NetModelingTab(this);
     auto scene = qobject_cast<GraphicsScene*>(modelTab->view()->scene());
     if (!scene->fromJson(document)) {
         delete modelTab;
@@ -118,14 +121,6 @@ bool MainWindow::initProject(const QString &filename) {
 
     mActionTabWidgetController->openTab("Model", QIcon(":/images/modeling.svg"), modelTab);
 
-    // Try add to tree
-//    auto treeItem = new MainTreeItem("Model", QIcon(":/images/modeling.svg"), modelTab);
-//    if (!mTreeController->addChildItem(treeItem)) {
-//        delete treeItem;
-//        return false;
-//    }
-
-    // Установим данные окна (todo: отдельная функция)
     this->setWindowTitle(this->m_metadata->projectName());
 
     RecentProjects::addRecentProject(filename);
@@ -306,31 +301,31 @@ void MainWindow::onQuit(bool checked) {
     QApplication::quit();
 }
 
-void MainWindow::tabWidgetCurrentChanged(int index) {
-    Q_UNUSED(index)
-    // set undo redo scene action for NetModelingTab scene only
-//    auto tab = m_tabWidget->widget(index);
-//
-//    // First: delete actions
-//    mEditMenu->removeAction(mUndoAction);
-//    mEditMenu->removeAction(mRedoAction);
-//    delete mUndoAction;
-//    delete mRedoAction;
-//
-//    if (auto netModelingTab = dynamic_cast<NetModelingTab*>(tab); netModelingTab) {
-//        auto scene = dynamic_cast<GraphicScene*>(netModelingTab->view()->scene());
-//        mUndoAction = scene->undoAction();
-//        mRedoAction = scene->redoAction();
-//    } else {
-//        mUndoAction = new QAction("Undo", this);
-//        mUndoAction->setShortcut(QKeySequence::Undo);
-//        mUndoAction->setEnabled(false);
-//
-//        mRedoAction = new QAction("Redo", this);
-//        mRedoAction->setShortcut(QKeySequence::Redo);
-//        mRedoAction->setEnabled(false);
-//    }
-//
-//    mEditMenu->addAction(mUndoAction);
-//    mEditMenu->addAction(mRedoAction);
+void MainWindow::onReachabilityTree(bool checked) {
+    Q_UNUSED(checked)
+    Q_ASSERT(m_metadata);
+
+    auto net = m_metadata->context()->net();
+    auto reachability = net->reachability();
+    auto reachabilityWindow = new WrappedLayoutWidget(new ReachabilityWindow(net, reachability));
+    mActionTabWidgetController->openTab("Reachability Tree", QIcon(":/images/tree.svg"), reachabilityWindow);
+}
+
+void MainWindow::onMatrixWindow(bool checked) {
+    Q_UNUSED(checked)
+    Q_ASSERT(m_metadata);
+
+    if (m_IOMatrixWindow) {
+        m_IOMatrixWindow->activateWindow();
+    } else {
+        auto matrix = m_metadata->context()->net()->as_matrix();
+        m_IOMatrixWindow = new MatrixWindow(matrix.first, matrix.second, this);
+        connect(m_IOMatrixWindow, &MatrixWindow::onWindowClose, this, &MainWindow::onMatrixWindowClose);
+        m_IOMatrixWindow->show();
+    }
+}
+
+void MainWindow::onMatrixWindowClose(QWidget* window) {
+    Q_UNUSED(window);
+    m_IOMatrixWindow = nullptr;
 }

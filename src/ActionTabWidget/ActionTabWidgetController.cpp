@@ -1,33 +1,36 @@
-//
-// Created by darkp on 16.09.2023.
-//
-
 #include "ActionTabWidgetController.h"
-#include "../mainwindow.h"
+#include "../MainWindow.h"
 #include "ActionTabWidget.h"
+#include "NetModelingTab.h"
+#include "../Editor/GraphicsScene.h"
+#include "../Editor/GraphicsSceneActions.h"
 
 ActionTabWidgetController::ActionTabWidgetController(MainWindow *parent)
     : QObject(nullptr)
     , m_mainWindow(parent)
 {
     m_actionTabWidget = new ActionTabWidget(m_mainWindow);
-    connect(m_actionTabWidget, &ActionTabWidget::currentChanged, parent, &MainWindow::tabWidgetCurrentChanged);
-
     m_mainWindow->setCentralWidget(m_actionTabWidget);
 }
-
 
 bool ActionTabWidgetController::openTab(const QString &name, const QIcon &icon, QWidget *widget) {
     if (auto index = m_actionTabWidget->findTabContainsWidget(widget); index >= 0) {
         m_actionTabWidget->setCurrentIndex(index);
     } else {
-        m_actionTabWidget->insertTab(
-                m_actionTabWidget->currentIndex() >= 0 ? m_actionTabWidget->currentIndex() : 0,
+        int pos = m_actionTabWidget->insertTab(
+                m_actionTabWidget->currentIndex() >= 0 ? m_actionTabWidget->currentIndex() + 1 : 0,
                 widget,
                 icon,
                 name
         );
+        m_actionTabWidget->setCurrentIndex(pos);
     }
     return true;
 }
 
+void ActionTabWidgetController::onTabChanged(int index) {
+    if (index == -1) {
+        return;
+    }
+
+}
