@@ -111,14 +111,16 @@ bool MainWindow::initProject(const QString &filename) {
 
     // Установим metadata
     m_metadata = new ProjectMetadata(filename);
-    auto modelTab = new NetModelingTab(this);
-    auto scene = qobject_cast<GraphicsScene*>(modelTab->view()->scene());
+    m_netModelingTab = new NetModelingTab(this);
+    auto scene = qobject_cast<GraphicsScene*>(m_netModelingTab->view()->scene());
     if (!scene->fromJson(document)) {
-        delete modelTab;
+        delete m_netModelingTab;
+        m_netModelingTab = nullptr;
         return false;
     }
 
-    mActionTabWidgetController->openTab("Model", QIcon(":/images/modeling.svg"), modelTab);
+    int idx = mActionTabWidgetController->addTab("Model", QIcon(":/images/modeling.svg"), m_netModelingTab);
+    mActionTabWidgetController->setTabCloseable(idx, false);
 
     this->setWindowTitle(this->m_metadata->projectName());
 
@@ -301,11 +303,19 @@ void MainWindow::onQuit(bool checked) {
 void MainWindow::onReachabilityTree(bool checked) {
     Q_UNUSED(checked)
     Q_ASSERT(m_metadata);
-
-    auto net = m_metadata->context()->net();
-    auto reachability = net->reachability();
-    auto reachabilityWindow = new WrappedLayoutWidget(new ReachabilityWindow(net, reachability));
-    mActionTabWidgetController->openTab("Reachability Tree", QIcon(":/images/tree.svg"), reachabilityWindow);
+    if (!m_reachabilityTab) {
+        // Если еще не был создан модуль Reachability
+        auto net = m_metadata->context()->net();
+        m_reachabilityTab = new ReachabilityWindow(net);
+        mActionTabWidgetController->addTab("Reachability Tree", QIcon(":/images/tree.svg"), m_reachabilityTab);
+    } else if (int index = mActionTabWidgetController->indexOf(m_reachabilityTab); index >= 0) {
+        // Модуль уже открыт
+        mActionTabWidgetController->setCurrentIndex(index);
+    } else {
+        // Модуль закрыт, но существует, добавим
+        mActionTabWidgetController->addTab("Reachability Tree", QIcon(":/images/tree.svg"), m_reachabilityTab);
+    }
+    m_reachabilityTab->reload();
 }
 
 void MainWindow::onMatrixWindow(bool checked) {

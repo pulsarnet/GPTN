@@ -175,17 +175,14 @@ void GraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
 void GraphicsScene::insertPosition(QGraphicsSceneMouseEvent *event) {
     auto position = new Position(event->scenePos(), m_net, m_net->add_position()->index());
     m_undoStack->push(new AddCommand(position, this));
-    //addPosition(-1, event->scenePos());
 }
 
 void GraphicsScene::insertTransition(QGraphicsSceneMouseEvent *event) {
     auto transition = new Transition(event->scenePos(), m_net, m_net->add_transition()->index());
     m_undoStack->push(new AddCommand(transition, this));
-    //addTransition(-1, event->scenePos());
 }
 
 void GraphicsScene::removeObject(QGraphicsSceneMouseEvent *event) {
-
     auto item = itemAt(event->scenePos(), QTransform());
     if (auto scenePetriObject = dynamic_cast<PetriObject*>(item); scenePetriObject) {
         m_undoStack->push(new RemoveCommand(scenePetriObject, this));
@@ -193,18 +190,15 @@ void GraphicsScene::removeObject(QGraphicsSceneMouseEvent *event) {
     else if (auto connection_line = dynamic_cast<ArrowLine*>(item); connection_line) {
         m_undoStack->push(ConnectCommand::disconnect(connection_line, this));
     }
-
 }
 
 void GraphicsScene::connectionStart(QGraphicsSceneMouseEvent *event) {
-
     auto item = itemAt(event->scenePos(), QTransform());
     if (auto petri = dynamic_cast<PetriObject*>(item); petri) {
         auto connection = new ArrowLine(petri, QLineF(item->scenePos(), event->scenePos()));
         addItem(connection);
         m_currentConnection = connection;
     }
-
 }
 
 void GraphicsScene::connectionCommit(QGraphicsSceneMouseEvent *event) {
@@ -245,7 +239,6 @@ void GraphicsScene::connectionCommit(QGraphicsSceneMouseEvent *event) {
 
 void GraphicsScene::connectionRollback(QGraphicsSceneMouseEvent *event) {
     Q_UNUSED(event)
-
     if (m_currentConnection) {
         removeItem(m_currentConnection);
         m_currentConnection = nullptr;
@@ -284,7 +277,6 @@ ffi::PetriNet *GraphicsScene::net() {
 void GraphicsScene::onSceneChanged() {
     if (m_restore)
         return;
-
     emit sceneChanged();
 }
 
@@ -548,7 +540,6 @@ Position *GraphicsScene::getPosition(int index) {
     auto it = std::find_if(m_positions.begin(), m_positions.end(), [=](Position* p) {
         return p->index() == index;
     });
-
     return it == m_positions.end() ? nullptr : *it;
 }
 
@@ -573,7 +564,6 @@ void GraphicsScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event) {
 }
 
 void GraphicsScene::dotVisualization(char* algorithm) {
-
     GraphVizWrapper graph;
     for (auto& element : this->positions()) {
         graph.addCircle(element->name().toLocal8Bit().data(), QSizeF(50., 50.));
@@ -598,7 +588,6 @@ void GraphicsScene::dotVisualization(char* algorithm) {
             transition->setPos(element.second);
         }
     }
-
 }
 
 void GraphicsScene::drawBackground(QPainter *painter, const QRectF &rect) {

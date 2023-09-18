@@ -24,6 +24,8 @@ class MainTreeItem;
 class ApplicationProjectController;
 class ActionTabWidgetController;
 class MatrixWindow;
+class NetModelingTab;
+class ReachabilityWindow;
 
 class MainWindow : public QMainWindow {
 
@@ -96,6 +98,9 @@ private:
     QMenu* mHelpMenu = nullptr;
 
     ProjectMetadata* m_metadata = nullptr;
+
+    NetModelingTab* m_netModelingTab = nullptr;
+    ReachabilityWindow* m_reachabilityTab = nullptr;
 
     MatrixWindow* m_IOMatrixWindow = nullptr;
 };

@@ -5,8 +5,9 @@
 #include "reachability_view.h"
 #include "../../Editor/GraphicsViewZoom.h"
 
-ReachabilityView::ReachabilityView(QWidget* parent): QGraphicsView(parent) {
-
+ReachabilityView::ReachabilityView(QWidget* parent)
+    : QGraphicsView(parent)
+{
     this->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     this->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     this->setViewportUpdateMode(QGraphicsView::BoundingRectViewportUpdate);
@@ -29,7 +30,6 @@ void ReachabilityView::mousePressEvent(QMouseEvent *event) {
         setCursor(QCursor(icon));
         setInteractive(false);
     }
-
     QGraphicsView::mousePressEvent(event);
 }
 
@@ -43,13 +43,11 @@ void ReachabilityView::mouseMoveEvent(QMouseEvent *event) {
 
         m_origin = event->pos();
     }
-
     QGraphicsView::mouseMoveEvent(event);
 }
 
 void ReachabilityView::mouseReleaseEvent(QMouseEvent *event) {
     setInteractive(true);
     setCursor(Qt::ArrowCursor);
-
     QGraphicsView::mouseReleaseEvent(event);
 }

@@ -21,17 +21,22 @@ class ReachabilityTreeScene : public QGraphicsScene {
 
 public:
 
-    explicit ReachabilityTreeScene(rust::ReachabilityTree* tree, QObject* parent = nullptr);
+    explicit ReachabilityTreeScene(QObject* parent = nullptr);
+
+    void setTree(rust::ReachabilityTree* tree);
 
 private:
 
     void addNode(QList<int32_t> data);
     void addEdge(ReachabilityNode* from, ReachabilityNode* to, ffi::VertexIndex transition);
+    void removeAll();
+    void reload();
 
 private:
 
     QList<ReachabilityNode*> m_nodes;
-    GraphVizWrapper wrapper;
+    rust::ReachabilityTree* m_tree = nullptr;
+    GraphVizWrapper* m_wrapper;
 
 };
 

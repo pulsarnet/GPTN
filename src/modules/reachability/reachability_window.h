@@ -22,12 +22,14 @@ class ReachabilityWindow : public QWidget {
 
 public:
 
-    explicit ReachabilityWindow(ffi::PetriNet*, rust::ReachabilityTree*, QWidget* parent = nullptr);
+    explicit ReachabilityWindow(ffi::PetriNet*, QWidget* parent = nullptr);
+
+    void reload();
 
 private:
     ffi::PetriNet* m_net;
-    rust::ReachabilityTree* m_reachability;
     ReachabilityView* m_view;
+    rust::ReachabilityTree* m_tree = nullptr;
 };
 
 
