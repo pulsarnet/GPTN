@@ -18,6 +18,7 @@
 #include "modules/reachability/reachability_window.h"
 #include "ActionTabWidget/WrappedLayoutWidget.h"
 #include "overrides/MatrixWindow.h"
+#include <QStandardPaths>
 
 /*
  * MainWindow содержит:
@@ -42,7 +43,7 @@ MainWindow::MainWindow(ApplicationProjectController* controller, QWidget *parent
 bool MainWindow::open() {
     QString filename = QFileDialog::getOpenFileName(this,
                                                     tr("Open Petri Net"),
-                                                    "",
+                                                    QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
                                                     tr("JSON Petri Net (*.json)"));
     if (filename.isEmpty())
         return false;
