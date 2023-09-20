@@ -20,7 +20,7 @@ public:
 
     MainWindow* createMainWindow(QWidget* parent = nullptr);
 
-    bool openProject(const QString& filename);
+    bool openProject(const QString& filename, MainWindow* parent);
     void closeProject(const QString& filename);
 
 private:

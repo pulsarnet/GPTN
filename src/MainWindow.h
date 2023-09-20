@@ -47,7 +47,8 @@ public:
     bool open();
     bool initProject(const QString &filename);
 
-    bool saveFile();
+    bool saveFile(const QString& filename);
+    bool saveFileInner(QFile& file);
     QMessageBox::StandardButton onSaveFileAsk();
 
     ProjectMetadata* metadata() const { return m_metadata; }
@@ -61,6 +62,7 @@ public slots:
     void onNewProject(bool checked);
     void onNewProjectCreate(const QDir& dir, const QString& name);
     void onQuit(bool checked);
+    void onDocumentChanged();
 
     // Net
     void onReachabilityTree(bool checked);

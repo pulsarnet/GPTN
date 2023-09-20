@@ -18,6 +18,7 @@
 #include "modules/reachability/reachability_window.h"
 #include "ActionTabWidget/WrappedLayoutWidget.h"
 #include "overrides/MatrixWindow.h"
+#include "Editor/GraphicsSceneActions.h"
 #include <QStandardPaths>
 
 /*
@@ -48,7 +49,7 @@ bool MainWindow::open() {
     if (filename.isEmpty())
         return false;
 
-    return mController->openProject(filename);
+    return mController->openProject(filename, this);
 }
 
 
@@ -60,36 +61,36 @@ bool MainWindow::saveAs() {
     if (filename.isEmpty())
         return false;
 
-    return saveFile();
+    if (saveFile(filename)) {
+        m_metadata->setFilename(filename);
+        return true;
+    }
+    return false;
 }
 
 bool MainWindow::save() {
-    return saveFile();
+    return saveFile(m_metadata->filename());
 }
 
-bool MainWindow::saveFile() {
-
-    // Get current tree project item
-    // Get filepath and save it
-    if (!m_metadata)
+bool MainWindow::saveFile(const QString& filename) {
+    QFile file(filename);
+    if (!file.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
+        QMessageBox::information(this,
+                                 QApplication::applicationDisplayName(),
+                                 tr("Unable to open file").arg(file.errorString()));
         return false;
+    }
+    return saveFileInner(file);
+}
 
-    // TODO: Переделать
-//    auto path = m_metadata->fileName();
-//    auto json =
-//            qobject_cast<GraphicScene*>(m_currentProject->modelItem()->netModelingTab()->view()->scene())->json();
-//
-//    QFile file(path);
-//    if (!file.open(QFile::WriteOnly)) {
-//        QMessageBox::warning(this, tr("Petri Net Editor"),
-//                             tr("Cannot write file %1:\n%2.")
-//                             .arg(QDir::toNativeSeparators(path), file.errorString()));
-//    }
-//
-//    file.write(json.toJson());
+bool MainWindow::saveFileInner(QFile& file) {
+    Q_ASSERT(file.isOpen());
 
+    auto json = qobject_cast<GraphicsScene*>(m_netModelingTab->view()->scene())->json();
+    QTextStream out(&file);
+    out << json.toJson(QJsonDocument::Compact);
+    out.flush();
     return true;
-
 }
 
 /**
@@ -99,15 +100,23 @@ bool MainWindow::initProject(const QString &filename) {
     // Open JSON
     QFile file(filename);
     if (!file.open(QIODevice::ReadOnly)) {
-        QMessageBox::information(this, tr("Unable to open file"),file.errorString());
+        QMessageBox::information(this,
+                                 QApplication::applicationDisplayName(),
+                                 tr("Unable to open file").arg(file.errorString()));
         return false;
     }
 
+    QByteArray objectData = file.readAll();
     QJsonParseError error;
-    QJsonDocument document = QJsonDocument::fromJson(file.readAll(), &error);
-    if (error.error != QJsonParseError::NoError) {
-        QMessageBox::information(this, tr("Failed parse json data"),error.errorString());
-        return false;
+    QJsonDocument document;
+    if (!objectData.isEmpty()) {
+        document = QJsonDocument::fromJson(objectData, &error);
+        if (error.error != QJsonParseError::NoError) {
+            QMessageBox::information(this,
+                                     QApplication::applicationDisplayName(),
+                                     tr("Invalid file data: %1").arg(error.errorString()));
+            return false;
+        }
     }
 
     // Установим metadata
@@ -120,6 +129,8 @@ bool MainWindow::initProject(const QString &filename) {
         return false;
     }
 
+    connect(scene, &GraphicsScene::sceneChanged, this, &MainWindow::onDocumentChanged);
+
     int idx = mActionTabWidgetController->addTab("Model", QIcon(":/images/modeling.svg"), m_netModelingTab);
     mActionTabWidgetController->setTabCloseable(idx, false);
 
@@ -129,10 +140,15 @@ bool MainWindow::initProject(const QString &filename) {
     return true;
 }
 
+void MainWindow::onDocumentChanged() {
+    qDebug() << "on document changed";
+    m_metadata->setChanged(true);
+}
+
 QMessageBox::StandardButton MainWindow::onSaveFileAsk() {
     return QMessageBox::warning(
             this,
-            m_metadata->fileName(),
+            m_metadata->filename(),
             tr("The document has been modified.\n"
                "Do you want to save your changes?"),
             QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
@@ -177,12 +193,10 @@ void MainWindow::createMenuBar() {
     mFileMenu->addAction(save_as_action);
     mFileMenu->addAction(quit_action);
 
-    // todo: СДЕЛАТЬ!!!!
-    //auto sceneActions = mTreeController->netModeling
-//    mEditMenu->addAction(mUndoAction);
-//    mEditMenu->addAction(mRedoAction);
-
-    //mViewMenu->addAction(mTreeController->toggleViewAction());
+    // on tab changed
+//    auto sceneActions = qobject_cast<GraphicsScene*>(m_netModelingTab->view()->scene())->actions();
+//    mEditMenu->addAction(sceneActions->undoAction());
+//    mEditMenu->addAction(sceneActions->redoAction());
 
     mMenuBar->addMenu(mFileMenu);
     mMenuBar->addMenu(mEditMenu);
@@ -201,11 +215,14 @@ void MainWindow::createStatusBar() {
 
 void MainWindow::onSaveFile(bool checked) {
     Q_UNUSED(checked)
+    if (!m_metadata) return;
     save();
 }
 
 void MainWindow::onSaveAsFile(bool checked) {
     Q_UNUSED(checked)
+    if (!m_metadata) return;
+    saveAs();
 }
 
 void MainWindow::onOpenFile(bool checked) {
@@ -231,7 +248,7 @@ void MainWindow::onOpenRecentProject() {
         return;
 
     QString path(action->data().toString());
-    if (!mController->openProject(path)) {
+    if (!mController->openProject(path, this)) {
         RecentProjects::removeRecentProject(path);
         return;
     }
@@ -247,18 +264,20 @@ void MainWindow::onNewProject(bool checked) {
 }
 
 void MainWindow::onNewProjectCreate(const QDir& dir, const QString& name) {
-    auto path = dir.absolutePath() + "/" + name + ".json";
     if (!dir.exists())
         dir.mkpath(dir.absolutePath());
 
-    // create
+    QDir finalDir = dir.filePath(name + ".json");
+    QString path = finalDir.path();
+    // try create
     QFile file(path);
     if (!file.open(QIODevice::WriteOnly)) {
         qDebug() << "Unable to create project";
         return;
     }
+    file.close();
 
-    if (!mController->openProject(path)) {
+    if (!mController->openProject(path, this)) {
         qDebug() << "Unable to create project";
         return;
     }
@@ -268,7 +287,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     qDebug() << "MainWindow::closeEvent(" << event << ")";
     if (saveOnExit()) {
         if (m_metadata) {
-            mController->closeProject(m_metadata->fileName());
+            mController->closeProject(m_metadata->filename());
         }
         event->accept();
     } else {

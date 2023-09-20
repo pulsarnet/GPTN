@@ -4,9 +4,7 @@
 
 #include "ApplicationProjectController.h"
 #include "../MainWindow.h"
-#include <filesystem>
-
-namespace fs = std::filesystem;
+#include <QApplication>
 
 ApplicationProjectController::ApplicationProjectController(QObject *parent)
     : QObject(parent)
@@ -27,17 +25,19 @@ MainWindow *ApplicationProjectController::createMainWindow(QWidget* parent) {
  * @param filename - абсолютный путь до файла проекта
  * @return true - если это успех, false - не удалось открыть проект
  */
-bool ApplicationProjectController::openProject(const QString &filename) {
+bool ApplicationProjectController::openProject(const QString &filename, MainWindow* parent) {
     // normalize path
-    auto filepath = fs::path(filename.toStdString());
-    if (!fs::exists(filepath)) {
-        qDebug() << "File: " << filepath << "not found!";
+    auto filepath = QDir(filename);
+    if (!QFileInfo::exists(filepath.path())) {
+        QMessageBox::warning(parent,
+                             QApplication::applicationDisplayName(),
+                             tr("File %1 not found!").arg(filepath.path()));
         return false;
     }
 
     // System representation
-    auto systemRepresentation = QString::fromStdString(filepath.generic_string());
-    auto it = mOpenedProjects.find(systemRepresentation);
+    auto path = filepath.path();
+    auto it = mOpenedProjects.find(path);
     if (it != mOpenedProjects.end()) {
         // Open existing opened project
         it->second->setFocus();
@@ -54,12 +54,13 @@ bool ApplicationProjectController::openProject(const QString &filename) {
     mAvailableWindows.pop_back();
 
     // Init project in window
-    if (!newWindow->initProject(systemRepresentation)) {
+    if (!newWindow->initProject(path)) {
         delete newWindow;
         return false;
     }
 
-    mOpenedProjects.insert({systemRepresentation, newWindow});
+    mOpenedProjects.insert({path, newWindow});
+    // todo https://forum.qt.io/topic/126868/i-need-to-include-qtplatformheaders-qwindowswindowfunctions/3
     newWindow->show();
     return true;
 }

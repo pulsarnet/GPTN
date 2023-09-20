@@ -27,7 +27,7 @@ public:
 
 private:
 
-    void addNode(QList<int32_t> data);
+    void addNode(QList<int32_t> data, std::optional<QList<ffi::VertexIndex>> headers = {});
     void addEdge(ReachabilityNode* from, ReachabilityNode* to, ffi::VertexIndex transition);
     void removeAll();
     void reload();

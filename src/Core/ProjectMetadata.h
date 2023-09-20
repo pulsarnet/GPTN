@@ -11,9 +11,10 @@ class ProjectMetadata {
 
 public:
 
-    explicit ProjectMetadata(const QString& fileName);
+    explicit ProjectMetadata(const QString& filename);
 
-    const QString& fileName() const noexcept { return this->mFilename; }
+    const QString& filename() const noexcept { return this->mFilename; }
+    void setFilename(const QString& filename) { this->mFilename = filename; }
     const QString& projectName() const noexcept { return this->mProjectName; }
     ffi::PetriNetContext* context() const noexcept { return this->mCtx; }
 

@@ -7,11 +7,13 @@
 
 #include <graphviz/gvc.h>
 #include <QGraphicsRectItem>
+#include "../../Core/FFI/rust.h"
 
 class ReachabilityNode : public QGraphicsItem {
 
 public:
     explicit ReachabilityNode(QList<int32_t> values, QGraphicsItem* parent = nullptr);
+    explicit ReachabilityNode(QList<int32_t> values, QList<ffi::VertexIndex> headers, QGraphicsItem* parent = nullptr);
 
     [[nodiscard]] const QString& text() const;
 
@@ -32,7 +34,9 @@ private:
 
     QPainterPath m_path;
 
-    Agnode_s* m_node;
+    Agnode_s* m_node = nullptr;
+
+    void paintField(QPainter *painter, field_t *fld);
 };
 
 

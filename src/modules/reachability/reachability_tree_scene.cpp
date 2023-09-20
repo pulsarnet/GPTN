@@ -10,8 +10,10 @@ ReachabilityTreeScene::ReachabilityTreeScene(QObject *parent)
     setSceneRect(-12500, -12500, 25000, 25000);
 }
 
-void ReachabilityTreeScene::addNode(QList<int32_t> data) {
-    auto node = new ReachabilityNode(std::move(data));
+void ReachabilityTreeScene::addNode(QList<int32_t> data, std::optional<QList<ffi::VertexIndex>> headers) {
+    auto node = headers.has_value()
+            ? new ReachabilityNode(std::move(data), std::move(headers.value()))
+            : new ReachabilityNode(std::move(data));
 
     // setup graphviz wrapper node
     auto index = QString("s%1").arg(m_nodes.length());
@@ -36,6 +38,7 @@ void ReachabilityTreeScene::addEdge(ReachabilityNode *from, ReachabilityNode *to
 }
 
 void ReachabilityTreeScene::setTree(rust::ReachabilityTree *tree) {
+    delete m_tree; // todo: проверить
     m_tree = tree;
     removeAll();
     reload();
@@ -54,13 +57,23 @@ void ReachabilityTreeScene::removeAll() {
 
 void ReachabilityTreeScene::reload() {
     auto markings = m_tree->marking();
+    Q_ASSERT(markings.size() > 0);
+    bool isFirst = true;
     for (auto marking : markings) {
         auto prev = marking->prev();
         auto data = marking->values();
 
         // create node from data
         auto list = QList(data.begin(), data.end());
-        addNode(list);
+        if (isFirst) {
+            auto indexes = m_tree->indexes();
+            auto headers = QList(indexes.begin(), indexes.end());
+            qDebug() << headers.size();
+            isFirst = false;
+            addNode(list, std::optional(headers));
+        } else {
+            addNode(list);
+        }
         // if prev != -1 then set line
         if (prev >= 0) {
             // create connection

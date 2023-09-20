@@ -158,6 +158,7 @@ impl From<DMatrix<i32>> for Marking {
 }
 
 pub struct Reachability {
+    positions: Vec<VertexIndex>,
     transitions: Vec<VertexIndex>,
     input: DMatrix<i32>,
     output: DMatrix<i32>,
@@ -171,6 +172,7 @@ impl Reachability {
         let marking = net.marking();
 
         Reachability {
+            positions: net.positions().keys().cloned().collect(),
             transitions: net.transitions().keys().cloned().collect(),
             input: input.matrix,
             output: output.matrix,
@@ -207,7 +209,7 @@ impl Reachability {
 
     /// Возвращает дерево достижимых разметок
     pub fn compute(&self) -> ReachabilityTree {
-        let mut tree = ReachabilityTree::new(self.marking.clone());
+        let mut tree = ReachabilityTree::new(self.marking.clone(), self.positions.clone());
         loop {
             // Когда все вершины дерева – терминальные, дублирующие или внутренние, алгоритм останавливается
             if !tree.has_boundary() {
@@ -277,12 +279,14 @@ impl Reachability {
 }
 
 pub struct ReachabilityTree {
+    positions: Vec<VertexIndex>,
     markings: Vec<Marking>,
 }
 
 impl ReachabilityTree {
-    fn new(init: Marking) -> Self {
+    fn new(init: Marking, positions: Vec<VertexIndex>) -> Self {
         ReachabilityTree {
+            positions,
             markings: vec![init],
         }
     }
@@ -323,6 +327,18 @@ impl IndexMut<usize> for ReachabilityTree {
         &mut self.markings[index]
     }
 }
+
+#[no_mangle]
+extern "C" fn reachability_positions(this: &ReachabilityTree, vec: &mut CVec<VertexIndex>) {
+    let result = this
+        .positions
+        .iter()
+        .copied()
+        .collect::<Vec<_>>();
+
+    unsafe { core::ptr::write_unaligned(vec, CVec::from(result)) };
+}
+
 
 #[no_mangle]
 extern "C" fn reachability_marking(this: &ReachabilityTree, vec: &mut CVec<*const Marking>) {

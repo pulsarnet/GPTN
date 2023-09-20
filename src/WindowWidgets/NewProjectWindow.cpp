@@ -9,6 +9,7 @@
 #include <QGridLayout>
 #include <Qlabel>
 #include <QSettings>
+#include <QStandardPaths>
 
 NewProjectWindow::NewProjectWindow(QWidget *parent)
     : QDialog(parent)
@@ -36,7 +37,8 @@ NewProjectWindow::NewProjectWindow(QWidget *parent)
 
     // From QSettings load FS/LastOpenedPath
     QSettings settings;
-    m_dirPath->setText(settings.value("FS/LastOpenedPath", QDir::currentPath()).toString());
+    QString path = settings.value("FS/LastOpenedPath", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
+    m_dirPath->setText(path);
 
     dirLayout->addWidget(dirLabel);
     dirLayout->addWidget(m_dirPath);
