@@ -63,6 +63,7 @@ GraphicsScene::GraphicsScene(ffi::PetriNet *net, QObject *parent)
     dotVisualization((char*)"dot");
 
     connect(this, &QGraphicsScene::selectionChanged, this, &GraphicsScene::onSelectionChanged);
+    connect(m_undoStack, &QUndoStack::indexChanged, this, &GraphicsScene::onSceneChanged);
 }
 
 
@@ -166,7 +167,6 @@ void GraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
 
         m_dragInProgress = false;
         m_draggedItems.clear();
-        onSceneChanged();
     }
 
     QGraphicsScene::mouseReleaseEvent(event);
@@ -175,24 +175,20 @@ void GraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
 void GraphicsScene::insertPosition(QGraphicsSceneMouseEvent *event) {
     auto position = new Position(event->scenePos(), m_net, m_net->add_position()->index());
     m_undoStack->push(new AddCommand(position, this));
-    onSceneChanged();
 }
 
 void GraphicsScene::insertTransition(QGraphicsSceneMouseEvent *event) {
     auto transition = new Transition(event->scenePos(), m_net, m_net->add_transition()->index());
     m_undoStack->push(new AddCommand(transition, this));
-    onSceneChanged();
 }
 
 void GraphicsScene::removeObject(QGraphicsSceneMouseEvent *event) {
     auto item = itemAt(event->scenePos(), QTransform());
     if (auto scenePetriObject = dynamic_cast<PetriObject*>(item); scenePetriObject) {
         m_undoStack->push(new RemoveCommand(scenePetriObject, this));
-        onSceneChanged();
     }
     else if (auto connection_line = dynamic_cast<ArrowLine*>(item); connection_line) {
         m_undoStack->push(ConnectCommand::disconnect(connection_line, this));
-        onSceneChanged();
     }
 }
 
@@ -219,10 +215,8 @@ void GraphicsScene::connectionCommit(QGraphicsSceneMouseEvent *event) {
                                                                     (int)existing->netItem(true)->weight() + 1,
                                                                     true,
                                                                     this));
-                        onSceneChanged();
                     } else {
                         m_undoStack->push(ConnectCommand::setBidirectional(existing, this));
-                        onSceneChanged();
                     }
 
                 } else {
@@ -230,12 +224,10 @@ void GraphicsScene::connectionCommit(QGraphicsSceneMouseEvent *event) {
                                                                 (int)existing->netItem()->weight() + 1,
                                                                 false,
                                                                 this));
-                    onSceneChanged();
                 }
             } else {
                 // create new connection
                 m_undoStack->push(ConnectCommand::connect(m_currentConnection->from(), petri, this));
-                onSceneChanged();
             }
         }
     }
@@ -273,7 +265,6 @@ void GraphicsScene::rotateObject(QGraphicsSceneMouseEvent *event) {
     if (item) {
         if (auto transition = dynamic_cast<Transition*>(item); transition) {
             m_undoStack->push(new RotateCommand(transition, 90));
-            onSceneChanged();
         }
     }
 }
