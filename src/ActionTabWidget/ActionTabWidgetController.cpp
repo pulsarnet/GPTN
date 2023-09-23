@@ -12,6 +12,7 @@ ActionTabWidgetController::ActionTabWidgetController(MainWindow *parent)
     m_actionTabWidget = new ActionTabWidget(m_mainWindow);
     m_actionTabWidget->setTabsClosable(true);
 
+    connect(m_actionTabWidget, &QTabWidget::currentChanged, m_mainWindow, &MainWindow::onTabChanged);
     connect(m_actionTabWidget, &QTabWidget::tabCloseRequested, this, &ActionTabWidgetController::onTabCloseRequested);
 
     m_mainWindow->setCentralWidget(m_actionTabWidget);

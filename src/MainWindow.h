@@ -70,6 +70,9 @@ public slots:
     void onMatrixWindow(bool checked);
     void onMatrixWindowClose(QWidget* window);
 
+    // Tab Changed
+    void onTabChanged(int);
+
 protected:
 
     void closeEvent(QCloseEvent* event) override;

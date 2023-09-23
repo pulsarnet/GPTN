@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 
+#include <QStyle>
 #include <QApplication>
 #include <QFileDialog>
 #include <QGraphicsDropShadowEffect>
@@ -51,7 +52,6 @@ bool MainWindow::open() {
 
     return mController->openProject(filename, this);
 }
-
 
 bool MainWindow::saveAs() {
     QString filename = QFileDialog::getSaveFileName(this,
@@ -139,6 +139,11 @@ bool MainWindow::initProject(const QString &filename) {
 
     this->setWindowTitle(this->m_metadata->projectName());
 
+    // load menu edit actions
+    auto actions = scene->actions();
+    mEditMenu->addAction(actions->undoAction());
+    mEditMenu->addAction(actions->redoAction());
+
     RecentProjects::addRecentProject(filename);
     return true;
 }
@@ -160,22 +165,15 @@ QMessageBox::StandardButton MainWindow::onSaveFileAsk() {
 void MainWindow::createMenuBar() {
     mMenuBar = new QMenuBar;
     mFileMenu = new QMenu(tr("&File"));
-    mRecentSubmenu = new QMenu(tr("Recent projects"));
     mEditMenu = new QMenu(tr("&Edit"));
     mViewMenu = new QMenu(tr("&View"));
     mToolsMenu = new QMenu(tr("&Tools"));
     mWindowMenu = new QMenu(tr("&Window"));
     mHelpMenu = new QMenu(tr("&Help"));
 
-    auto new_action = new QAction("&New", this);
-    new_action->setShortcut(QKeySequence::New);
-    connect(new_action, &QAction::triggered, this, &MainWindow::onNewProject);
-
     auto open_action = new QAction("&Open");
     open_action->setShortcut(QKeySequence::Open);
     connect(open_action, &QAction::triggered, this, &MainWindow::onOpenFile);
-
-    connect(mRecentSubmenu, &QMenu::aboutToShow, this, &MainWindow::onRecentProjects);
 
     auto save_action = new QAction("Save");
     save_action->setShortcut(QKeySequence::Save);
@@ -189,17 +187,33 @@ void MainWindow::createMenuBar() {
     quit_action->setShortcut(QKeySequence::Quit);
     connect(quit_action, &QAction::triggered, this, &MainWindow::onQuit);
 
-    mFileMenu->addAction(new_action);
-    mFileMenu->addAction(open_action);
-    mFileMenu->addMenu(mRecentSubmenu);
-    mFileMenu->addAction(save_action);
-    mFileMenu->addAction(save_as_action);
-    mFileMenu->addAction(quit_action);
+    auto newAction = mFileMenu->addAction( "&New", this, &MainWindow::onNewProject);
+    newAction->setToolTip(tr("Create New project"));
+    newAction->setShortcut(QKeySequence::New);
+
+    auto openAction = mFileMenu->addAction("&Open", this, &MainWindow::onOpenFile);
+    openAction->setToolTip(tr("Open project"));
+    openAction->setShortcut(QKeySequence::Open);
+
+    mRecentSubmenu = mFileMenu->addMenu(tr("Recent projects"));
+    connect(mRecentSubmenu, &QMenu::aboutToShow, this, &MainWindow::onRecentProjects);
+
+    auto saveAction = mFileMenu->addAction("&Save", this, &MainWindow::onSaveFile);
+    saveAction->setToolTip(tr("Save file"));
+    saveAction->setShortcut(QKeySequence::Save);
+
+    auto saveAsAction = mFileMenu->addAction("Save As", this, &MainWindow::onSaveAsFile);
+    saveAsAction->setToolTip(tr("Save project to new location"));
+    saveAsAction->setShortcut(QKeySequence::SaveAs);
+
+    auto closeAction = mFileMenu->addAction("&Close", this, &MainWindow::onSaveAsFile);
+    closeAction->setToolTip(tr("Close current project"));
+    closeAction->setShortcut(QKeySequence::Close);
 
     // on tab changed
-//    auto sceneActions = qobject_cast<GraphicsScene*>(m_netModelingTab->view()->scene())->actions();
-//    mEditMenu->addAction(sceneActions->undoAction());
-//    mEditMenu->addAction(sceneActions->redoAction());
+    //auto sceneActions = qobject_cast<GraphicsScene*>(m_netModelingTab->view()->scene())->actions();
+    //mEditMenu->addAction(sceneActions->undoAction());
+    //mEditMenu->addAction(sceneActions->redoAction());
 
     mMenuBar->addMenu(mFileMenu);
     mMenuBar->addMenu(mEditMenu);
@@ -358,4 +372,13 @@ void MainWindow::onMatrixWindow(bool checked) {
 void MainWindow::onMatrixWindowClose(QWidget* window) {
     Q_UNUSED(window);
     m_IOMatrixWindow = nullptr;
+}
+
+void MainWindow::onTabChanged(int index) {
+    // clear edit menu
+
+    if (index == -1)
+        return;
+
+
 }

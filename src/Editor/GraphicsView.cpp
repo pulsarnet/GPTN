@@ -25,15 +25,12 @@ GraphicsView::GraphicsView(MainWindow* window, QWidget *parent)
 
     this->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     this->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-
     this->setAttribute(Qt::WA_TranslucentBackground, true);
     this->setViewportUpdateMode(QGraphicsView::BoundingRectViewportUpdate);
     this->setWindowFlag(Qt::BypassGraphicsProxyWidget);
     this->setRubberBandSelectionMode(Qt::ContainsItemBoundingRect);
     this->setDragMode(QGraphicsView::RubberBandDrag);
-    //this->setOptimizationFlags(DontAdjustForAntialiasing | DontSavePainterState);
     this->setCacheMode(CacheBackground);
-
     this->setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
 
     zoom = new GraphicsViewZoom(this);
@@ -139,8 +136,6 @@ void GraphicsView::mousePressEvent(QMouseEvent *event) {
 
     if (event->button() == Qt::MiddleButton) {
         m_origin = event->pos();
-        //setCursor(QCursor(Qt::SizeAllCursor));
-
         auto icon = QPixmap(":/images/tools/move.svg");
 
         setCursor(QCursor(icon));
