@@ -171,22 +171,6 @@ void MainWindow::createMenuBar() {
     mWindowMenu = new QMenu(tr("&Window"));
     mHelpMenu = new QMenu(tr("&Help"));
 
-    auto open_action = new QAction("&Open");
-    open_action->setShortcut(QKeySequence::Open);
-    connect(open_action, &QAction::triggered, this, &MainWindow::onOpenFile);
-
-    auto save_action = new QAction("Save");
-    save_action->setShortcut(QKeySequence::Save);
-    connect(save_action, &QAction::triggered, this, &MainWindow::onSaveFile);
-
-    auto save_as_action = new QAction("Save as...");
-    save_as_action->setShortcut(QKeySequence::SaveAs);
-    connect(save_as_action, &QAction::triggered, this, &MainWindow::onSaveAsFile);
-
-    auto quit_action = new QAction("&Quit");
-    quit_action->setShortcut(QKeySequence::Quit);
-    connect(quit_action, &QAction::triggered, this, &MainWindow::onQuit);
-
     auto newAction = mFileMenu->addAction( "&New", this, &MainWindow::onNewProject);
     newAction->setToolTip(tr("Create New project"));
     newAction->setShortcut(QKeySequence::New);
@@ -206,7 +190,7 @@ void MainWindow::createMenuBar() {
     saveAsAction->setToolTip(tr("Save project to new location"));
     saveAsAction->setShortcut(QKeySequence::SaveAs);
 
-    auto closeAction = mFileMenu->addAction("&Close", this, &MainWindow::onSaveAsFile);
+    auto closeAction = mFileMenu->addAction("&Close", this, &MainWindow::onClose);
     closeAction->setToolTip(tr("Close current project"));
     closeAction->setShortcut(QKeySequence::Close);
 
@@ -332,9 +316,9 @@ bool MainWindow::saveOnExit() {
     return true;
 }
 
-void MainWindow::onQuit(bool checked) {
+void MainWindow::onClose(bool checked) {
     Q_UNUSED(checked)
-    QApplication::quit();
+    this->close();
 }
 
 void MainWindow::onReachabilityTree(bool checked) {

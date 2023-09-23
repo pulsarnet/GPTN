@@ -180,9 +180,7 @@ set(HEADERS
         src/synthesis/synthesis_window.h
 )
 
-link_directories("${CMAKE_SOURCE_DIR}/lib")
-
-if (APPLE)
+if (UNIX)
     add_executable(${TARGET_NAME}
             ${SRC_FILES}
             ${HEADERS}
@@ -191,7 +189,7 @@ if (APPLE)
             )
 else()
     add_executable(${TARGET_NAME}
-            #WIN32
+            WIN32
             ${SRC_FILES}
             ${HEADERS}
             mainwindow.ui
@@ -218,16 +216,28 @@ add_external_library(
 )
 # } RUST
 
-target_link_libraries(${TARGET_NAME} PRIVATE ptn_lib libopenblas ads::qt6advanceddocking gvc cgraph Qt6::Widgets Qt6::Core Qt6::Gui Qt6::Svg Qt6::DataVisualization)
+# https://github.com/microsoft/ELL/wiki/Building-OpenBlas-on-Windows
+find_package(BLAS)
+message( STATUS BLAS found: ${BLAS_LIBRARIES} )
+
 target_link_libraries(${TARGET_NAME} PRIVATE
         ptn_lib
+        ${BLAS_LIBRARIES}
+        ads::qt6advanceddocking
+        gvc
+        cgraph
+        Qt6::Widgets
+        Qt6::Core
+        Qt6::Gui
+        Qt6::Svg
+        Qt6::DataVisualization
+)
+target_link_libraries(${TARGET_NAME} PRIVATE
         optimized ${QWT_LIBRARY}
         debug ${QWT_LIBRARY_D}
         )
 
-qt6_import_plugins(${TARGET_NAME}
-        INCLUDE_BY_TYPE imageformats
-        )
+qt6_import_plugins(${TARGET_NAME} INCLUDE_BY_TYPE imageformats)
 
 set_target_properties(${TARGET_NAME} PROPERTIES
         AUTOMOC ON
@@ -258,8 +268,6 @@ endif()
 
 
 if (WIN32)
-    #set_property(TARGET ${TARGET_NAME} PROPERTY WIN32_EXECUTABLE true)
-
     include(InstallRequiredSystemLibraries)
     install(FILES
             # Copy Qt6 dlls

@@ -61,7 +61,7 @@ public slots:
     void onOpenRecentProject();
     void onNewProject(bool checked);
     void onNewProjectCreate(const QDir& dir, const QString& name);
-    void onQuit(bool checked);
+    void onClose(bool checked);
     void onDocumentChanged();
 
     // Net
