@@ -42,15 +42,6 @@ protected:
 
 protected slots:
 
-    void slotDotVisualization(bool checked);
-    void slotNeatoVisualization(bool checked);
-    void slotTwopiVisualization(bool checked);
-    void slotCircoVisualization(bool checked);
-    void slotFDPVisualization(bool checked);
-    void slotOsageVisualization(bool checked);
-    void slotPatchworkVisualization(bool checked);
-    void slotSFDPpVisualization(bool checked);
-
     void positionChecked(bool checked);
     void transitionChecked(bool checked);
     void moveChecked(bool checked);
@@ -58,8 +49,6 @@ protected slots:
     void rotateChecked(bool checked);
     void removeChecked(bool checked);
     void markerChecked(bool checked);
-
-    void slotInvariants(bool checked);
 
 private:
 

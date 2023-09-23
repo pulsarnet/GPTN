@@ -494,13 +494,21 @@ void GraphicsScene::slotHorizontalAlignment(bool triggered) {
         }
     }
 
+    QList<MoveCommandData> data;
     if (elements > 0) {
         y /= (qreal)elements;
         for (auto item : selectedItems()) {
-            if (dynamic_cast<PetriObject*>(item)) {
-                item->setPos(QPointF(item->pos().x(), y));
+            if (auto cast = dynamic_cast<PetriObject*>(item); cast) {
+                QPointF newPos(cast->pos().x(), y);
+                if (newPos != cast->pos()) {
+                    data.push_back({cast, cast->pos(), newPos});
+                }
             }
         }
+    }
+
+    if (!data.isEmpty()) {
+        m_undoStack->push(new MoveCommand(std::move(data)));
     }
 }
 
@@ -517,14 +525,25 @@ void GraphicsScene::slotVerticalAlignment(bool triggered) {
         }
     }
 
+    QList<MoveCommandData> data;
     if (elements > 0) {
-        x /= (qreal)elements;
-        for (auto item : selectedItems()) {
-            if (dynamic_cast<PetriObject*>(item)) {
-                item->setPos(QPointF(x, item->pos().y()));
+        if (elements > 0) {
+            x /= (qreal)elements;
+            for (auto item : selectedItems()) {
+                if (auto cast = dynamic_cast<PetriObject*>(item); cast) {
+                    QPointF newPos(x, cast->pos().y());
+                    if (newPos != cast->pos()) {
+                        data.push_back({cast, cast->pos(), newPos});
+                    }
+                }
             }
         }
     }
+
+    if (!data.isEmpty()) {
+        m_undoStack->push(new MoveCommand(std::move(data)));
+    }
+
 }
 
 Transition *GraphicsScene::getTransition(int index) {
@@ -577,16 +596,24 @@ void GraphicsScene::dotVisualization(char* algorithm) {
     }
 
     auto res = graph.save(algorithm);
+    QList<MoveCommandData> moveData;
     for (auto& element : res.elements) {
         if (element.first.startsWith("p")) {
             auto position = this->getPosition(element.first.mid(1).toInt());
-            position->setPos(element.second);
+            if (position->pos() != element.second) {
+                moveData.push_back({position, position->pos(), element.second});
+            }
         }
         else {
             auto transition = this->getTransition(element.first.mid(1).toInt());
-            transition->setPos(element.second);
+            if (transition->pos() != element.second) {
+                moveData.push_back({transition, transition->pos(), element.second});
+            }
         }
     }
+
+    if (!moveData.isEmpty())
+        m_undoStack->push(new MoveCommand(std::move(moveData)));
 }
 
 void GraphicsScene::drawBackground(QPainter *painter, const QRectF &rect) {

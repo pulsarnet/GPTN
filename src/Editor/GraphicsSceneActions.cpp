@@ -5,6 +5,7 @@
 #include "GraphicsSceneActions.h"
 #include "GraphicsScene.h"
 #include <QUndoStack>
+#include <QMenu>
 
 GraphicsSceneActions::GraphicsSceneActions(GraphicsScene *scene) {
     m_undoAction = scene->undoStack()->createUndoAction(scene, tr("&Undo"));
@@ -21,4 +22,12 @@ GraphicsSceneActions::GraphicsSceneActions(GraphicsScene *scene) {
     m_vAlignment = new QAction("Vertical alignment");
     m_vAlignment->setEnabled(hasSelection);
     connect(m_vAlignment, &QAction::triggered, scene, &GraphicsScene::slotVerticalAlignment);
+
+    m_graphVizMenu = new QMenu(tr("Graphviz algorithms"));
+    m_graphVizMenu->addAction(tr("dot"),[scene]() { scene->dotVisualization((char*)"dot"); });
+    m_graphVizMenu->addAction(tr("neato"),[scene]() { scene->dotVisualization((char*)"neato"); });
+    m_graphVizMenu->addAction(tr("twopi"),[scene]() { scene->dotVisualization((char*)"twopi"); });
+    m_graphVizMenu->addAction(tr("circo"),[scene]() { scene->dotVisualization((char*)"circo"); });
+    m_graphVizMenu->addAction(tr("fdp"),[scene]() { scene->dotVisualization((char*)"fdp"); });
+    m_graphVizMenu->addAction(tr("dot"),[scene]() { scene->dotVisualization((char*)"sfdp"); });
 }

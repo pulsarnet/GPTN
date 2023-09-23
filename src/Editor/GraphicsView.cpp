@@ -168,7 +168,6 @@ void GraphicsView::mouseReleaseEvent(QMouseEvent *event) {
 }
 
 void GraphicsView::resizeEvent(QResizeEvent *event) {
-    //m_toolBar->resizeEvent(event);
     m_mainToolBar->resizeEvent(event);
 
     auto geometry = m_simulationWidget->geometry();
@@ -193,111 +192,23 @@ void GraphicsView::paintEvent(QPaintEvent *event) {
 
 void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
     auto gScene = dynamic_cast<GraphicsScene*>(scene());
-    //auto item = gScene->netItemAt(mapToScene(event->pos()));
-    //if (!item) return;
 
-    auto menu = new QMenu;
-    menu->setWindowFlags(menu->windowFlags() | Qt::FramelessWindowHint);
-    menu->setAttribute(Qt::WA_TranslucentBackground);
-    menu->setAttribute(Qt::WA_DeleteOnClose);
+    QMenu menu;
+    menu.deleteLater();
+    menu.setWindowFlags(menu.windowFlags() | Qt::FramelessWindowHint);
+    menu.setAttribute(Qt::WA_TranslucentBackground);
+    menu.setAttribute(Qt::WA_DeleteOnClose);
 
-    auto matrix = new QAction("I/O matrix view", menu);
-    connect(matrix, &QAction::triggered, m_mainWindow, &MainWindow::onMatrixWindow);
+    menu.addAction(gScene->actions()->hAlignmentAction());
+    menu.addAction(gScene->actions()->vAlignmentAction());
 
-    auto reachability = new QAction("Reachability", menu);
-    connect(reachability, &QAction::triggered, m_mainWindow, &MainWindow::onReachabilityTree);
+    menu.addSeparator();
 
-    auto invariants = new QAction("Invariants", menu);
-    connect(invariants, &QAction::triggered, this, &GraphicsView::slotInvariants);
+    menu.addMenu(gScene->actions()->graphViz());
 
-    auto graphViz = new QMenu("GraphViz visualization", menu);
-
-    auto dot = new QAction("dot", menu);
-    auto neato = new QAction("neato", menu);
-    auto twopi = new QAction("twopi", menu);
-    auto circo = new QAction("circo", menu);
-    auto fdp = new QAction("fdp", menu);
-    auto osage = new QAction("osage", menu);
-    auto patchwork = new QAction("patchwork", menu);
-    auto sfdp = new QAction("sfdp", menu);
-
-
-    connect(dot, &QAction::triggered, this, &GraphicsView::slotDotVisualization);
-    connect(neato, &QAction::triggered, this, &GraphicsView::slotNeatoVisualization);
-    connect(twopi, &QAction::triggered, this, &GraphicsView::slotTwopiVisualization);
-    connect(circo, &QAction::triggered, this, &GraphicsView::slotCircoVisualization);
-    connect(fdp, &QAction::triggered, this, &GraphicsView::slotFDPVisualization);
-    connect(osage, &QAction::triggered, this, &GraphicsView::slotOsageVisualization);
-    connect(patchwork, &QAction::triggered, this, &GraphicsView::slotPatchworkVisualization);
-    connect(sfdp, &QAction::triggered, this, &GraphicsView::slotSFDPpVisualization);
-
-
-    graphViz->addAction(dot);
-    graphViz->addAction(neato);
-    graphViz->addAction(twopi);
-    graphViz->addAction(circo);
-    graphViz->addAction(fdp);
-    graphViz->addAction(osage);
-    graphViz->addAction(patchwork);
-    graphViz->addAction(sfdp);
-
-    menu->addAction(gScene->actions()->hAlignmentAction());
-    menu->addAction(gScene->actions()->vAlignmentAction());
-    menu->addAction(matrix);
-    menu->addAction(reachability);
-    menu->addAction(invariants);
-    menu->addMenu(graphViz);
-    menu->popup(event->globalPos());
+    menu.exec(event->globalPos());
 
     QGraphicsView::contextMenuEvent(event);
-}
-
-void GraphicsView::slotInvariants(bool checked) {
-    Q_UNUSED(checked)
-    auto net = dynamic_cast<GraphicsScene*>(scene())->net();
-    qDebug() << "P/T-invariants: ";
-    net->p_invariant();
-    net->t_invariant();
-}
-
-void GraphicsView::slotDotVisualization(bool checked) {
-    Q_UNUSED(checked)
-    dynamic_cast<GraphicsScene*>(scene())->dotVisualization((char *) "dot");
-}
-
-void GraphicsView::slotNeatoVisualization(bool checked) {
-    Q_UNUSED(checked)
-    dynamic_cast<GraphicsScene*>(scene())->dotVisualization((char *) "neato");
-}
-
-void GraphicsView::slotTwopiVisualization(bool checked) {
-    Q_UNUSED(checked)
-    dynamic_cast<GraphicsScene*>(scene())->dotVisualization((char *) "twopi");
-}
-
-void GraphicsView::slotCircoVisualization(bool checked) {
-    Q_UNUSED(checked)
-    dynamic_cast<GraphicsScene*>(scene())->dotVisualization((char *) "circo");
-}
-
-void GraphicsView::slotFDPVisualization(bool checked) {
-    Q_UNUSED(checked)
-    dynamic_cast<GraphicsScene*>(scene())->dotVisualization((char *) "fdp");
-}
-
-void GraphicsView::slotOsageVisualization(bool checked) {
-    Q_UNUSED(checked)
-    dynamic_cast<GraphicsScene*>(scene())->dotVisualization((char *) "osage");
-}
-
-void GraphicsView::slotPatchworkVisualization(bool checked) {
-    Q_UNUSED(checked)
-    dynamic_cast<GraphicsScene*>(scene())->dotVisualization((char *) "patchwork");
-}
-
-void GraphicsView::slotSFDPpVisualization(bool checked) {
-    Q_UNUSED(checked)
-    dynamic_cast<GraphicsScene*>(scene())->dotVisualization((char *) "sfdp");
 }
 
 GraphicsView::~GraphicsView() noexcept {

@@ -19,6 +19,7 @@ public:
     [[nodiscard]] QAction* redoAction() const { return m_redoAction; }
     [[nodiscard]] QAction* hAlignmentAction() const { return m_hAlignment; }
     [[nodiscard]] QAction* vAlignmentAction() const { return m_vAlignment; }
+    [[nodiscard]] QMenu* graphViz() const { return m_graphVizMenu; }
 
 private:
 
@@ -26,6 +27,8 @@ private:
     QAction* m_redoAction;
     QAction* m_hAlignment;
     QAction* m_vAlignment;
+
+    QMenu* m_graphVizMenu;
 };
 
 
