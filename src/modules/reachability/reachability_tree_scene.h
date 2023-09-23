@@ -25,6 +25,8 @@ public:
 
     void setTree(rust::ReachabilityTree* tree);
 
+    ~ReachabilityTreeScene() override;
+
 private:
 
     void addNode(QList<int32_t> data, std::optional<QList<ffi::VertexIndex>> headers = {});

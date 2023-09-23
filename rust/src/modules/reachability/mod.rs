@@ -352,8 +352,13 @@ extern "C" fn reachability_marking(this: &ReachabilityTree, vec: &mut CVec<*cons
 }
 
 #[no_mangle]
-unsafe extern "C" fn reachability_drop(this: *mut ReachabilityTree) {
-    let _ = Box::from_raw(this);
+extern "C" fn reachability_drop(this: *mut ReachabilityTree) {
+    if this.is_null() {
+        return
+    }
+    unsafe {
+        let _ = Box::from_raw(this);
+    }
 }
 
 #[no_mangle]

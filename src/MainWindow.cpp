@@ -80,7 +80,10 @@ bool MainWindow::saveFile(const QString& filename) {
                                  tr("Unable to open file").arg(file.errorString()));
         return false;
     }
-    return saveFileInner(file);
+
+    saveFileInner(file);
+    m_metadata->setChanged(false);
+    return true;
 }
 
 bool MainWindow::saveFileInner(QFile& file) {

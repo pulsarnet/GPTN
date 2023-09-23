@@ -38,7 +38,7 @@ void ReachabilityTreeScene::addEdge(ReachabilityNode *from, ReachabilityNode *to
 }
 
 void ReachabilityTreeScene::setTree(rust::ReachabilityTree *tree) {
-    delete m_tree; // todo: проверить
+    rust::reachability_tree_free(m_tree); // todo: проверить
     m_tree = tree;
     removeAll();
     reload();
@@ -92,4 +92,9 @@ void ReachabilityTreeScene::reload() {
     std::for_each(m_nodes.begin(), m_nodes.end(), [](ReachabilityNode* node) {
         node->updateLayout();
     });
+}
+
+ReachabilityTreeScene::~ReachabilityTreeScene() {
+    delete m_wrapper;
+    rust::reachability_tree_free(m_tree);
 }

@@ -41,6 +41,6 @@ CVec<Marking *> ReachabilityTree::marking() const {
     return marking;
 }
 
-ReachabilityTree::~ReachabilityTree() {
-    ::reachability_drop(this);
+void rust::reachability_tree_free(rust::ReachabilityTree *obj) {
+    ::reachability_drop(obj);
 }

@@ -20,8 +20,9 @@ namespace rust {
     struct ReachabilityTree {
         [[nodiscard]] ffi::CVec<ffi::VertexIndex> indexes() const;
         [[nodiscard]] ffi::CVec<Marking*> marking() const;
-        ~ReachabilityTree();
     };
+
+    void reachability_tree_free(ReachabilityTree*);
 }
 
 
