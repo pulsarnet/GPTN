@@ -53,6 +53,8 @@ public:
 
     ProjectMetadata* metadata() const { return m_metadata; }
 
+    void onProjectNameChanged();
+
 public slots:
     void onSaveFile(bool checked);
     void onSaveAsFile(bool checked);

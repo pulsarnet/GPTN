@@ -11,15 +11,15 @@ class ProjectMetadata {
 
 public:
 
-    explicit ProjectMetadata(const QString& filename);
+    explicit ProjectMetadata();
 
-    const QString& filename() const noexcept { return this->mFilename; }
-    void setFilename(const QString& filename) { this->mFilename = filename; }
-    const QString& projectName() const noexcept { return this->mProjectName; }
-    ffi::PetriNetContext* context() const noexcept { return this->mCtx; }
+    [[nodiscard]] const QString& filename() const noexcept { return this->mFilename; }
+    void setFilename(const QString& filename);
+    [[nodiscard]] const QString& projectName() const noexcept { return this->mProjectName; }
+    [[nodiscard]] ffi::PetriNetContext* context() const noexcept { return this->mCtx; }
 
     void setChanged(bool flag) { this->mChanged = flag; }
-    bool isChanged() const noexcept { return this->mChanged; }
+    [[nodiscard]] bool isChanged() const noexcept { return this->mChanged; }
 
 private:
     QString mFilename;

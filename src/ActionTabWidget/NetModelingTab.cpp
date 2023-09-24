@@ -15,6 +15,7 @@ NetModelingTab::NetModelingTab(MainWindow* window, QWidget *parent)
 
     auto scene = new GraphicsScene(m_mainWindow->metadata()->context()->net());
     scene->setAllowMods(GraphicsScene::A_Default);
+    connect(scene, &GraphicsScene::sceneChanged, m_mainWindow, &MainWindow::onDocumentChanged);
 
     m_view->setScene(scene);
 

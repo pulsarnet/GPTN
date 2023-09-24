@@ -32,6 +32,12 @@ MainWindow::MainWindow(ApplicationProjectController* controller, QWidget *parent
     , m_Controller(controller)
 {
     m_ActionTabWidgetController = new ActionTabWidgetController(this);
+    m_metadata = new ProjectMetadata();
+
+    // Init modeling tab
+    m_netModelingTab = new NetModelingTab(this);
+    int idx = m_ActionTabWidgetController->addTab("Model", QIcon(":/images/modeling.svg"), m_netModelingTab);
+    m_ActionTabWidgetController->setTabCloseable(idx, false);
 
     createMenuBar();
     createStatusBar();
@@ -56,6 +62,7 @@ bool MainWindow::open() {
 bool MainWindow::saveAs() {
     QString filename = QFileDialog::getSaveFileName(this,
                                                     tr("Save Petri network file"),
+                                                    QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
                                                     tr("Petri network file (*.json);;All Files (*)"));
 
     if (filename.isEmpty())
@@ -63,6 +70,7 @@ bool MainWindow::saveAs() {
 
     if (saveFile(filename)) {
         m_metadata->setFilename(filename);
+        onProjectNameChanged();
         return true;
     }
     return false;
@@ -122,30 +130,23 @@ bool MainWindow::initProject(const QString &filename) {
         }
     }
 
-    // Установим metadata
-    m_metadata = new ProjectMetadata(filename);
-    m_netModelingTab = new NetModelingTab(this);
-    auto scene = qobject_cast<GraphicsScene*>(m_netModelingTab->view()->scene());
-    if (!scene->fromJson(document)) {
-        delete m_netModelingTab;
-        m_netModelingTab = nullptr;
+    if (!qobject_cast<GraphicsScene*>(m_netModelingTab->view()->scene())->fromJson(document)) {
+        QMessageBox::information(this,
+                                 QApplication::applicationDisplayName(),
+                                 tr("Cannot load Petri Net: invalid structure."));
         return false;
     }
 
-    connect(scene, &GraphicsScene::sceneChanged, this, &MainWindow::onDocumentChanged);
-
-    int idx = m_ActionTabWidgetController->addTab("Model", QIcon(":/images/modeling.svg"), m_netModelingTab);
-    m_ActionTabWidgetController->setTabCloseable(idx, false);
-
-    this->setWindowTitle(this->m_metadata->projectName());
-
-    // load menu edit actions
-    auto actions = scene->actions();
-    m_EditMenu->addAction(actions->undoAction());
-    m_EditMenu->addAction(actions->redoAction());
+    // Установим metadata
+    m_metadata->setFilename(filename);
+    onProjectNameChanged();
 
     RecentProjects::addRecentProject(filename);
     return true;
+}
+
+void MainWindow::onProjectNameChanged() {
+    this->setWindowTitle(this->m_metadata->projectName());
 }
 
 void MainWindow::onDocumentChanged() {
@@ -192,6 +193,18 @@ void MainWindow::createMenuBar() {
     auto closeAction = m_FileMenu->addAction("&Close", this, &MainWindow::onClose);
     closeAction->setToolTip(tr("Close current project"));
     closeAction->setShortcut(QKeySequence::Close);
+
+    // load menu edit actions
+    auto scene = qobject_cast<GraphicsScene*>(m_netModelingTab->view()->scene());
+    auto actions = scene->actions();
+    m_EditMenu->addAction(actions->undoAction());
+    m_EditMenu->addAction(actions->redoAction());
+
+    m_ToolsMenu->addAction(actions->vAlignmentAction());
+    m_ToolsMenu->addAction(actions->hAlignmentAction());
+    m_ToolsMenu->addSeparator();
+    m_ToolsMenu->addAction(tr("Generate Reachability Tree"), this, &MainWindow::onReachabilityTree);
+    m_ToolsMenu->addAction(tr("I/O Matrix view"), this, &MainWindow::onMatrixWindow);
 
     m_MenuBar->addMenu(m_FileMenu);
     m_MenuBar->addMenu(m_EditMenu);
@@ -353,6 +366,7 @@ void MainWindow::onMatrixWindowClose(QWidget* window) {
 
 void MainWindow::onTabChanged(int index) {
     // clear edit menu
-    if (index == -1)
-        return;
+    if (index == -1) {
+
+    }
 }
