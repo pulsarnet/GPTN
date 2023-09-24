@@ -87,20 +87,19 @@ private:
 
 private:
 
-    ApplicationProjectController* mController;
-    ActionTabWidgetController* mActionTabWidgetController;
+    ApplicationProjectController* m_Controller;
+    ActionTabWidgetController* m_ActionTabWidgetController;
 
-    QStatusBar* statusBar = nullptr;
+    QStatusBar* m_statusBar = nullptr;
 
     // Menu bar
-    QMenuBar* mMenuBar = nullptr;
-    QMenu* mFileMenu = nullptr;
-    QMenu* mRecentSubmenu = nullptr;
-    QMenu* mEditMenu = nullptr;
-    QMenu* mViewMenu = nullptr;
-    QMenu* mToolsMenu = nullptr;
-    QMenu* mWindowMenu = nullptr;
-    QMenu* mHelpMenu = nullptr;
+    QMenuBar* m_MenuBar = nullptr;
+    QMenu* m_FileMenu = nullptr;
+    QMenu* m_RecentSubmenu = nullptr;
+    QMenu* m_EditMenu = nullptr;
+    QMenu* m_ToolsMenu = nullptr;
+    QMenu* m_WindowMenu = nullptr;
+    QMenu* m_HelpMenu = nullptr;
 
     ProjectMetadata* m_metadata = nullptr;
 

@@ -29,9 +29,9 @@
  */
 MainWindow::MainWindow(ApplicationProjectController* controller, QWidget *parent)
     : QMainWindow(parent)
-    , mController(controller)
+    , m_Controller(controller)
 {
-    mActionTabWidgetController = new ActionTabWidgetController(this);
+    m_ActionTabWidgetController = new ActionTabWidgetController(this);
 
     createMenuBar();
     createStatusBar();
@@ -50,7 +50,7 @@ bool MainWindow::open() {
     if (filename.isEmpty())
         return false;
 
-    return mController->openProject(filename, this);
+    return m_Controller->openProject(filename, this);
 }
 
 bool MainWindow::saveAs() {
@@ -134,15 +134,15 @@ bool MainWindow::initProject(const QString &filename) {
 
     connect(scene, &GraphicsScene::sceneChanged, this, &MainWindow::onDocumentChanged);
 
-    int idx = mActionTabWidgetController->addTab("Model", QIcon(":/images/modeling.svg"), m_netModelingTab);
-    mActionTabWidgetController->setTabCloseable(idx, false);
+    int idx = m_ActionTabWidgetController->addTab("Model", QIcon(":/images/modeling.svg"), m_netModelingTab);
+    m_ActionTabWidgetController->setTabCloseable(idx, false);
 
     this->setWindowTitle(this->m_metadata->projectName());
 
     // load menu edit actions
     auto actions = scene->actions();
-    mEditMenu->addAction(actions->undoAction());
-    mEditMenu->addAction(actions->redoAction());
+    m_EditMenu->addAction(actions->undoAction());
+    m_EditMenu->addAction(actions->redoAction());
 
     RecentProjects::addRecentProject(filename);
     return true;
@@ -163,55 +163,48 @@ QMessageBox::StandardButton MainWindow::onSaveFileAsk() {
 }
 
 void MainWindow::createMenuBar() {
-    mMenuBar = new QMenuBar;
-    mFileMenu = new QMenu(tr("&File"));
-    mEditMenu = new QMenu(tr("&Edit"));
-    mViewMenu = new QMenu(tr("&View"));
-    mToolsMenu = new QMenu(tr("&Tools"));
-    mWindowMenu = new QMenu(tr("&Window"));
-    mHelpMenu = new QMenu(tr("&Help"));
+    m_MenuBar = new QMenuBar;
+    m_FileMenu = new QMenu(tr("&File"));
+    m_EditMenu = new QMenu(tr("&Edit"));
+    m_ToolsMenu = new QMenu(tr("&Tools"));
+    m_WindowMenu = new QMenu(tr("&Window"));
+    m_HelpMenu = new QMenu(tr("&Help"));
 
-    auto newAction = mFileMenu->addAction( "&New", this, &MainWindow::onNewProject);
+    auto newAction = m_FileMenu->addAction("&New", this, &MainWindow::onNewProject);
     newAction->setToolTip(tr("Create New project"));
     newAction->setShortcut(QKeySequence::New);
 
-    auto openAction = mFileMenu->addAction("&Open", this, &MainWindow::onOpenFile);
+    auto openAction = m_FileMenu->addAction("&Open", this, &MainWindow::onOpenFile);
     openAction->setToolTip(tr("Open project"));
     openAction->setShortcut(QKeySequence::Open);
 
-    mRecentSubmenu = mFileMenu->addMenu(tr("Recent projects"));
-    connect(mRecentSubmenu, &QMenu::aboutToShow, this, &MainWindow::onRecentProjects);
+    m_RecentSubmenu = m_FileMenu->addMenu(tr("Recent projects"));
+    connect(m_RecentSubmenu, &QMenu::aboutToShow, this, &MainWindow::onRecentProjects);
 
-    auto saveAction = mFileMenu->addAction("&Save", this, &MainWindow::onSaveFile);
+    auto saveAction = m_FileMenu->addAction("&Save", this, &MainWindow::onSaveFile);
     saveAction->setToolTip(tr("Save file"));
     saveAction->setShortcut(QKeySequence::Save);
 
-    auto saveAsAction = mFileMenu->addAction("Save As", this, &MainWindow::onSaveAsFile);
+    auto saveAsAction = m_FileMenu->addAction("Save As", this, &MainWindow::onSaveAsFile);
     saveAsAction->setToolTip(tr("Save project to new location"));
     saveAsAction->setShortcut(QKeySequence::SaveAs);
 
-    auto closeAction = mFileMenu->addAction("&Close", this, &MainWindow::onClose);
+    auto closeAction = m_FileMenu->addAction("&Close", this, &MainWindow::onClose);
     closeAction->setToolTip(tr("Close current project"));
     closeAction->setShortcut(QKeySequence::Close);
 
-    // on tab changed
-    //auto sceneActions = qobject_cast<GraphicsScene*>(m_netModelingTab->view()->scene())->actions();
-    //mEditMenu->addAction(sceneActions->undoAction());
-    //mEditMenu->addAction(sceneActions->redoAction());
+    m_MenuBar->addMenu(m_FileMenu);
+    m_MenuBar->addMenu(m_EditMenu);
+    m_MenuBar->addMenu(m_ToolsMenu);
+    m_MenuBar->addMenu(m_WindowMenu);
+    m_MenuBar->addMenu(m_HelpMenu);
 
-    mMenuBar->addMenu(mFileMenu);
-    mMenuBar->addMenu(mEditMenu);
-    mMenuBar->addMenu(mViewMenu);
-    mMenuBar->addMenu(mToolsMenu);
-    mMenuBar->addMenu(mWindowMenu);
-    mMenuBar->addMenu(mHelpMenu);
-
-    this->setMenuBar(mMenuBar);
+    this->setMenuBar(m_MenuBar);
 }
 
 void MainWindow::createStatusBar() {
-    statusBar = new QStatusBar;
-    this->setStatusBar(statusBar);
+    m_statusBar = new QStatusBar;
+    this->setStatusBar(m_statusBar);
 }
 
 void MainWindow::onSaveFile(bool checked) {
@@ -232,14 +225,14 @@ void MainWindow::onOpenFile(bool checked) {
 }
 
 void MainWindow::onRecentProjects() {
-    mRecentSubmenu->clear();
+    m_RecentSubmenu->clear();
 
     auto recentFiles = RecentProjects::getRecentProjects();
     for (auto& file : recentFiles) {
         auto action = new QAction(file, this);
         action->setData(file);
         connect(action, &QAction::triggered, this, &MainWindow::onOpenRecentProject);
-        mRecentSubmenu->addAction(action);
+        m_RecentSubmenu->addAction(action);
     }
 }
 
@@ -249,7 +242,7 @@ void MainWindow::onOpenRecentProject() {
         return;
 
     QString path(action->data().toString());
-    if (!mController->openProject(path, this)) {
+    if (!m_Controller->openProject(path, this)) {
         RecentProjects::removeRecentProject(path);
         return;
     }
@@ -278,7 +271,7 @@ void MainWindow::onNewProjectCreate(const QDir& dir, const QString& name) {
     }
     file.close();
 
-    if (!mController->openProject(path, this)) {
+    if (!m_Controller->openProject(path, this)) {
         qDebug() << "Unable to create project";
         return;
     }
@@ -288,7 +281,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     qDebug() << "MainWindow::closeEvent(" << event << ")";
     if (saveOnExit()) {
         if (m_metadata) {
-            mController->closeProject(m_metadata->filename());
+            m_Controller->closeProject(m_metadata->filename());
         }
         event->accept();
     } else {
@@ -328,13 +321,13 @@ void MainWindow::onReachabilityTree(bool checked) {
         // Если еще не был создан модуль Reachability
         auto net = m_metadata->context()->net();
         m_reachabilityTab = new ReachabilityWindow(net);
-        mActionTabWidgetController->addTab("Reachability Tree", QIcon(":/images/tree.svg"), m_reachabilityTab);
-    } else if (int index = mActionTabWidgetController->indexOf(m_reachabilityTab); index >= 0) {
+        m_ActionTabWidgetController->addTab(tr("Reachability Tree"), QIcon(":/images/tree.svg"), m_reachabilityTab);
+    } else if (int index = m_ActionTabWidgetController->indexOf(m_reachabilityTab); index >= 0) {
         // Модуль уже открыт
-        mActionTabWidgetController->setCurrentIndex(index);
+        m_ActionTabWidgetController->setCurrentIndex(index);
     } else {
         // Модуль закрыт, но существует, добавим
-        mActionTabWidgetController->addTab("Reachability Tree", QIcon(":/images/tree.svg"), m_reachabilityTab);
+        m_ActionTabWidgetController->addTab(tr("Reachability Tree"), QIcon(":/images/tree.svg"), m_reachabilityTab);
     }
     m_reachabilityTab->reload();
 }
@@ -360,9 +353,6 @@ void MainWindow::onMatrixWindowClose(QWidget* window) {
 
 void MainWindow::onTabChanged(int index) {
     // clear edit menu
-
     if (index == -1)
         return;
-
-
 }

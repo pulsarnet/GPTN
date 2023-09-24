@@ -11,6 +11,7 @@ using namespace std;
 
 class MainWindow;
 class ActionTabWidget;
+class QMenu;
 
 class ActionTabWidgetController : public QObject {
 

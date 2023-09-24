@@ -12,7 +12,9 @@ class NetModelingTab;
 class DecomposeModelTab;
 
 class ActionTabWidget : public QTabWidget {
+
 public:
+
     explicit ActionTabWidget(QWidget *parent = nullptr);
 };
 
