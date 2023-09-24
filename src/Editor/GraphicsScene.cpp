@@ -67,6 +67,7 @@ GraphicsScene::GraphicsScene(ffi::PetriNet *net, QObject *parent)
 }
 
 
+// todo разобраться
 void GraphicsScene::setMode(Mode mod) {
     if (m_allowMods & mod) m_mode = mod;
     else qDebug() << "Mode " << mod << " not allowed!";
@@ -83,6 +84,8 @@ void GraphicsScene::onSelectionChanged() {
 }
 
 void GraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
+    if (m_simulation) return;
+
     if (event->button() == Qt::LeftButton) {
         switch (m_mode) {
             case A_Position:
@@ -121,16 +124,14 @@ void GraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
             default:
                 break;
         }
-    }
-    else if (event->button() == Qt::RightButton) {
+    } else if (event->button() == Qt::RightButton) {
         if (m_mode == A_Connection) connectionRollback(event);
         else QGraphicsScene::mousePressEvent(event);
     }
-
-    //QGraphicsScene::mousePressEvent(event);
 }
 
 void GraphicsScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
+    if (m_simulation) return;
 
     switch (m_mode) {
         case A_Connection:
@@ -145,11 +146,10 @@ void GraphicsScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
         default:
             break;
     }
-
-    //QGraphicsScene::mouseMoveEvent(event);
 }
 
 void GraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
+    if (m_simulation) return;
 
     if (m_dragInProgress) {
         if (!m_draggedItems.isEmpty()) {
@@ -527,14 +527,12 @@ void GraphicsScene::slotVerticalAlignment(bool triggered) {
 
     QList<MoveCommandData> data;
     if (elements > 0) {
-        if (elements > 0) {
-            x /= (qreal)elements;
-            for (auto item : selectedItems()) {
-                if (auto cast = dynamic_cast<PetriObject*>(item); cast) {
-                    QPointF newPos(x, cast->pos().y());
-                    if (newPos != cast->pos()) {
-                        data.push_back({cast, cast->pos(), newPos});
-                    }
+        x /= (qreal)elements;
+        for (auto item : selectedItems()) {
+            if (auto cast = dynamic_cast<PetriObject*>(item); cast) {
+                QPointF newPos(x, cast->pos().y());
+                if (newPos != cast->pos()) {
+                    data.push_back({cast, cast->pos(), newPos});
                 }
             }
         }
@@ -567,11 +565,7 @@ void GraphicsScene::markPosition(QGraphicsSceneMouseEvent *event) {
         if (event->buttons() | Qt::LeftButton) {
             bool sub = event->modifiers() & Qt::Modifier::SHIFT;
             if (!sub || position->markers() > 0) {
-                m_undoStack->push(new MarkCommand(
-                        position,
-                        !sub,
-                        this
-                ));
+                m_undoStack->push(new MarkCommand(position,!sub,this));
             }
         }
     }
@@ -666,8 +660,7 @@ void GraphicsScene::registerItem(QGraphicsItem *item) {
 void GraphicsScene::unregisterItem(QGraphicsItem *item) {
     if (auto position = dynamic_cast<Position*>(item); position) {
         m_positions.remove(m_positions.indexOf(position));
-    }
-    else if (auto transition = dynamic_cast<Transition*>(item); transition) {
+    } else if (auto transition = dynamic_cast<Transition*>(item); transition) {
         m_transition.remove(m_transition.indexOf(transition));
     } else if (auto connection = dynamic_cast<ArrowLine*>(item); connection) {
         m_connections.remove(m_connections.indexOf(connection));

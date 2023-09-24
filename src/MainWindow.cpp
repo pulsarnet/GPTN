@@ -155,11 +155,11 @@ void MainWindow::onDocumentChanged() {
 }
 
 QMessageBox::StandardButton MainWindow::onSaveFileAsk() {
-    return QMessageBox::warning(
+    return QMessageBox::information(
             this,
-            m_metadata->filename(),
+            tr("Save"),
             tr("The document has been modified.\n"
-               "Do you want to save your changes?"),
+               "Save file \"%1\"?").arg(m_metadata->filename()),
             QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
 }
 

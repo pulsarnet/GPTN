@@ -33,8 +33,8 @@ GraphicsView::GraphicsView(MainWindow* window, QWidget *parent)
     this->setCacheMode(CacheBackground);
     this->setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
 
-    zoom = new GraphicsViewZoom(this);
-    zoom->set_modifier(Qt::NoModifier);
+    m_zoom = new GraphicsViewZoom(this);
+    m_zoom->set_modifier(Qt::NoModifier);
 
     setTransformationAnchor(QGraphicsView::NoAnchor);
 
@@ -44,33 +44,23 @@ GraphicsView::GraphicsView(MainWindow* window, QWidget *parent)
     m_mainToolBar->setToolArea(ToolBox::TopLeft);
     m_mainToolBar->setButtonSize(QSize(40, 40));
 
-    actionGroup = new QActionGroup(m_mainToolBar);
+    m_actionGroup = new QActionGroup(m_mainToolBar);
+    m_positionAction = makeAction(QIcon(":/images/tools/position.svg"), tr("Position"), true, GraphicsScene::A_Position, m_actionGroup);
+    m_transitionAction = makeAction(QIcon(":/images/tools/transition.svg"), tr("Transition"), true, GraphicsScene::A_Transition, m_actionGroup);
+    m_moveAction = makeAction(QIcon(":/images/tools/move.svg"), tr("Move"), true, GraphicsScene::A_Move, m_actionGroup);
+    m_connectAction = makeAction(QIcon(":/images/tools/connect.svg"), tr("Connect"), true, GraphicsScene::A_Connection, m_actionGroup);
+    m_rotationAction = makeAction(QIcon(":/images/tools/rotation.svg"), tr("Rotate"), true, GraphicsScene::A_Rotation, m_actionGroup);
+    m_removeAction = makeAction(QIcon(":/images/tools/remove.svg"), tr("Remove"), true, GraphicsScene::A_Remove, m_actionGroup);
+    m_markerAction = makeAction(QIcon(":/images/tools/marker.svg"), tr("Marker"), true, GraphicsScene::A_Marker, m_actionGroup);
+    connect(m_actionGroup, &QActionGroup::triggered, this, &GraphicsView::onToolBoxAction);
 
-    position_action = makeAction("Position", QIcon(":/images/tools/position.svg"), true, actionGroup);
-    transition_action = makeAction("Transition", QIcon(":/images/tools/transition.svg"), true, actionGroup);
-    move_action = makeAction("Move", QIcon(":/images/tools/move.svg"), true, actionGroup);
-    connect_action = makeAction("Connect", QIcon(":/images/tools/connect.svg"), true, actionGroup);
-    rotation_action = makeAction("Rotate", QIcon(":/images/tools/rotation.svg"), true, actionGroup);
-    remove_action = makeAction("Remove", QIcon(":/images/tools/remove.svg"), true, actionGroup);
-    marker_action = makeAction("Marker", QIcon(":/images/tools/marker.svg"), true, actionGroup);
-
-
-    connect(position_action, &QAction::toggled, this, &GraphicsView::positionChecked);
-    connect(transition_action, &QAction::toggled, this, &GraphicsView::transitionChecked);
-    connect(move_action, &QAction::toggled, this, &GraphicsView::moveChecked);
-    connect(connect_action, &QAction::toggled, this, &GraphicsView::connectChecked);
-    connect(rotation_action, &QAction::toggled, this, &GraphicsView::rotateChecked);
-    connect(remove_action, &QAction::toggled, this, &GraphicsView::removeChecked);
-    connect(marker_action, &QAction::toggled, this, &GraphicsView::markerChecked);
-
-
-    m_mainToolBar->addTool(position_action);
-    m_mainToolBar->addTool(marker_action);
-    m_mainToolBar->addTool(transition_action);
-    m_mainToolBar->addTool(connect_action);
-    m_mainToolBar->addTool(remove_action);
-    m_mainToolBar->addTool(move_action);
-    m_mainToolBar->addTool(rotation_action);
+    m_mainToolBar->addTool(m_positionAction);
+    m_mainToolBar->addTool(m_markerAction);
+    m_mainToolBar->addTool(m_transitionAction);
+    m_mainToolBar->addTool(m_connectAction);
+    m_mainToolBar->addTool(m_removeAction);
+    m_mainToolBar->addTool(m_moveAction);
+    m_mainToolBar->addTool(m_rotationAction);
 
     m_simulationWidget = new SimulationWidget(this);
     auto geometry = m_simulationWidget->geometry();
@@ -93,44 +83,23 @@ void GraphicsView::setAllowSimulation(bool allow) {
     m_simulationWidget->setVisible(allow);
 }
 
-QAction* GraphicsView::makeAction(const QString &name, const QIcon &icon, bool checkable, QActionGroup *actionGroup_) {
-    auto action = new QAction(name);
-    action->setIcon(icon);
+QAction* GraphicsView::makeAction(const QIcon &icon, const QString &name, bool checkable, const QVariant& data_, QActionGroup *actionGroup_) {
+    Q_ASSERT(actionGroup_);
+    auto action = actionGroup_->addAction(icon, name);
     action->setCheckable(checkable);
-
-    if (actionGroup_) actionGroup_->addAction(action);
-
+    action->setData(data_);
     return action;
 }
 
-void GraphicsView::positionChecked(bool checked) {
-    dynamic_cast<GraphicsScene*>(scene())->setMode(checked ? GraphicsScene::A_Position : GraphicsScene::A_Nothing);
+void GraphicsView::onToolBoxAction(QAction* action) {
+    Q_UNUSED(action);
+    auto lScene = dynamic_cast<GraphicsScene*>(scene());
+    if (auto checked = m_actionGroup->checkedAction(); checked) {
+        lScene->setMode((GraphicsScene::Mode)checked->data().toInt());
+    } else {
+        lScene->setMode(GraphicsScene::Mode::A_Nothing);
+    }
 }
-
-void GraphicsView::transitionChecked(bool checked) {
-    dynamic_cast<GraphicsScene*>(scene())->setMode(checked ? GraphicsScene::A_Transition : GraphicsScene::A_Nothing);
-}
-
-void GraphicsView::moveChecked(bool checked) {
-    dynamic_cast<GraphicsScene*>(scene())->setMode(checked ? GraphicsScene::A_Move : GraphicsScene::A_Nothing);
-}
-
-void GraphicsView::connectChecked(bool checked) {
-    dynamic_cast<GraphicsScene*>(scene())->setMode(checked ? GraphicsScene::A_Connection : GraphicsScene::A_Nothing);
-}
-
-void GraphicsView::rotateChecked(bool checked) {
-    dynamic_cast<GraphicsScene*>(scene())->setMode(checked ? GraphicsScene::A_Rotation : GraphicsScene::A_Nothing);
-}
-
-void GraphicsView::removeChecked(bool checked) {
-    dynamic_cast<GraphicsScene*>(scene())->setMode(checked ? GraphicsScene::A_Remove : GraphicsScene::A_Nothing);
-}
-
-void GraphicsView::markerChecked(bool checked) {
-    dynamic_cast<GraphicsScene*>(scene())->setMode(checked ? GraphicsScene::A_Marker : GraphicsScene::A_Nothing);
-}
-
 
 void GraphicsView::mousePressEvent(QMouseEvent *event) {
 
