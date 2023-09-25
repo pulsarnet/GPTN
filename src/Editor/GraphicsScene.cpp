@@ -27,6 +27,7 @@ GraphicsScene::GraphicsScene(ffi::PetriNet *net, QObject *parent)
     , m_undoStack(new QUndoStack(this))
 {
     setSceneRect(-12500, -12500, 25000, 25000);
+    setBackgroundBrush(Qt::white);
 
     auto positions = m_net->positions();
     auto transitions = m_net->transitions();
@@ -613,7 +614,7 @@ void GraphicsScene::dotVisualization(char* algorithm) {
 
 void GraphicsScene::drawBackground(QPainter *painter, const QRectF &rect) {
     const int gridSize = 50.;
-
+    QGraphicsScene::drawBackground(painter, rect);
     QPen pen(QColor(0, 0, 0, 150), 1, Qt::DotLine);
     painter->setPen(pen);
     painter->setOpacity(0.5);
@@ -644,8 +645,6 @@ void GraphicsScene::drawBackground(QPainter *painter, const QRectF &rect) {
     }
 
     painter->drawLines(lines);
-
-    QGraphicsScene::drawBackground(painter, rect);
 }
 
 void GraphicsScene::registerItem(QGraphicsItem *item) {

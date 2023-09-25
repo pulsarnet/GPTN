@@ -21,8 +21,6 @@ GraphicsView::GraphicsView(MainWindow* window, QWidget *parent)
     : QGraphicsView(parent)
     , m_mainWindow(window)
 {
-    setBackgroundBrush(Qt::NoBrush);
-
     this->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     this->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     this->setAttribute(Qt::WA_TranslucentBackground, false);

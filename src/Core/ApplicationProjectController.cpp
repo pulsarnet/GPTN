@@ -48,6 +48,9 @@ bool ApplicationProjectController::openProject(const QString &filename, MainWind
     // Get free window or create new
     if (mAvailableWindows.empty()) {
         createMainWindow();
+    } else if (mAvailableWindows.back()->metadata()->isChanged()) {
+        mAvailableWindows.pop_back(); // todo: detach maybe
+        createMainWindow();
     }
 
     MainWindow* newWindow = mAvailableWindows.back();
