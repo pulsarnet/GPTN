@@ -2,9 +2,9 @@
 // Created by nmuravev on 12/14/2021.
 //
 
-#include "arrow_line.h"
-#include "petri_object.h"
-#include "transition.h"
+#include "ArrowLine.h"
+#include "PetriObject.h"
+#include "Transition.h"
 #include "../GraphicsScene.h"
 #include <QMatrix4x4>
 

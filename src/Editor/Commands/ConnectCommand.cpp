@@ -4,8 +4,8 @@
 
 #include "ConnectCommand.h"
 #include "../GraphicsScene.h"
-#include "../elements/petri_object.h"
-#include "../elements/arrow_line.h"
+#include "../elements/PetriObject.h"
+#include "../elements/ArrowLine.h"
 
 ConnectCommand::ConnectCommand(ArrowLine* connection, ConnectionType type, GraphicsScene *scene, QUndoCommand *parent)
     : QUndoCommand(parent)

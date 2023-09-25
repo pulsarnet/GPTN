@@ -4,8 +4,8 @@
 
 #include <QGraphicsTextItem>
 #include <QGraphicsScene>
-#include "position.h"
-#include "transition.h"
+#include "Position.h"
+#include "Transition.h"
 #include "../GraphicsScene.h"
 #include "../../Core/FFI/simulation.h"
 

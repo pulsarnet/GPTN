@@ -5,8 +5,8 @@
 #include <QTextDocument>
 #include <QApplication>
 #include "../GraphicsScene.h"
-#include "petri_object.h"
-#include "arrow_line.h"
+#include "PetriObject.h"
+#include "ArrowLine.h"
 #include "../../Core/FFI/rust.h"
 
 

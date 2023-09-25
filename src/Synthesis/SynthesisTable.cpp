@@ -5,8 +5,8 @@
 #include <QVBoxLayout>
 #include <QHeaderView>
 #include <QTableView>
-#include "synthesis_model.h"
-#include "synthesis_table.h"
+#include "SynthesisModel.h"
+#include "SynthesisTable.h"
 #include "../Core/FFI/rust.h"
 
 SynthesisTable::SynthesisTable(ffi::DecomposeContext *ctx, QVector<size_t> programs, QWidget *parent)

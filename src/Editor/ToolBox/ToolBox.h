@@ -9,7 +9,7 @@
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <QMenu>
-#include "tool.h"
+#include "Tool.h"
 
 class ToolBox : public QFrame {
 

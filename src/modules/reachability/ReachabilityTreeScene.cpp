@@ -1,7 +1,7 @@
 #include <QEvent>
-#include "reachability_tree_scene.h"
-#include "reachability_node.h"
-#include "reachability_line.h"
+#include "ReachabilityTreeScene.h"
+#include "ReachabilityNode.h"
+#include "ReachabilityLine.h"
 
 ReachabilityTreeScene::ReachabilityTreeScene(QObject *parent)
     : QGraphicsScene(parent)

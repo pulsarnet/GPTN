@@ -1,5 +1,5 @@
-#include "position.h"
-#include "transition.h"
+#include "Position.h"
+#include "Transition.h"
 #include "../GraphicsScene.h"
 #include <QFontMetrics>
 #include "../../Core/FFI/simulation.h"

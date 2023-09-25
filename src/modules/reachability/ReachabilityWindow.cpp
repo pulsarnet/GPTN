@@ -4,9 +4,9 @@
 
 #include <DockAreaWidget.h>
 #include <QGridLayout>
-#include "reachability_view.h"
-#include "reachability_tree_scene.h"
-#include "reachability_window.h"
+#include "ReachabilityView.h"
+#include "ReachabilityTreeScene.h"
+#include "ReachabilityWindow.h"
 #include "../../DockSystem/DockWidget.h"
 
 // todo: maybe rename to ReachabilityController which generate graph,tree.

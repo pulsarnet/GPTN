@@ -89,19 +89,19 @@ set(SRC_FILES
         src/QwtExt/CanvasPicker.cpp
         src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.cpp
         src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.cpp
-        src/QwtExt/qwt_ext_plot_curve_labels.cpp
+        src/QwtExt/QwtExtPlotCurveLabels.cpp
         src/Settings/RecentProjects.cpp
         src/WindowWidgets/NewProjectWindow.cpp
         src/MainWindow.cpp
-        src/modules/reachability/reachability_line.cpp
-        src/modules/reachability/reachability_node.cpp
-        src/modules/reachability/reachability_tree_scene.cpp
-        src/modules/reachability/reachability_view.cpp
-        src/modules/reachability/reachability_window.cpp
+        src/modules/reachability/ReachabilityLine.cpp
+        src/modules/reachability/ReachabilityNode.cpp
+        src/modules/reachability/ReachabilityTreeScene.cpp
+        src/modules/reachability/ReachabilityView.cpp
+        src/modules/reachability/ReachabilityWindow.cpp
         src/overrides/MatrixWindow.cpp
-        src/synthesis/synthesis_table.cpp
-        src/synthesis/synthesis_window.cpp
-        src/synthesis/synthesis_model.cpp
+        src/Synthesis/SynthesisTable.cpp
+        src/Synthesis/SynthesisWindow.cpp
+        src/Synthesis/SynthesisModel.cpp
         src/Editor/Commands/AddCommand.cpp
         src/Editor/Commands/ConnectCommand.cpp
         src/Editor/Commands/MarkCommand.cpp
@@ -112,10 +112,10 @@ set(SRC_FILES
         src/Editor/GraphicsView.cpp
         src/Editor/GraphicsViewZoom.cpp
         src/Editor/Simulation/SimulationWidget.cpp
-        src/Editor/Elements/arrow_line.cpp
-        src/Editor/Elements/petri_object.cpp
-        src/Editor/Elements/position.cpp
-        src/Editor/Elements/transition.cpp
+        src/Editor/Elements/ArrowLine.cpp
+        src/Editor/Elements/PetriObject.cpp
+        src/Editor/Elements/Position.cpp
+        src/Editor/Elements/Transition.cpp
 )
 
 set(HEADERS
@@ -143,18 +143,18 @@ set(HEADERS
         src/Editor/Commands/MoveCommand.h
         src/Editor/Commands/RemoveCommand.h
         src/Editor/Commands/RotateCommand.h
-        src/Editor/Elements/arrow_line.h
-        src/Editor/Elements/petri_object.h
-        src/Editor/Elements/position.h
-        src/Editor/Elements/transition.h
+        src/Editor/Elements/ArrowLine.h
+        src/Editor/Elements/PetriObject.h
+        src/Editor/Elements/Position.h
+        src/Editor/Elements/Transition.h
         src/Editor/GraphicsSceneActions.cpp
         src/Editor/GraphicsSceneActions.h
         src/Editor/GraphicsScene.h
         src/Editor/GraphicsView.h
         src/Editor/GraphicsViewZoom.h
         src/Editor/Simulation/SimulationWidget.h
-        src/Editor/ToolBox/tool.h
-        src/Editor/ToolBox/toolbox.h
+        src/Editor/ToolBox/Tool.h
+        src/Editor/ToolBox/ToolBox.h
 #        src/MainTree/MainTreeController.cpp
 #        src/MainTree/MainTreeController.h
 #        src/MainTree/MainTreeItem.h
@@ -164,20 +164,20 @@ set(HEADERS
         src/QwtExt/CanvasPicker.h
         src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.h
         src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.h
-        src/QwtExt/qwt_ext_plot_curve_labels.h
+        src/QwtExt/QwtExtPlotCurveLabels.h
         src/Settings/RecentProjects.h
         src/WindowWidgets/NewProjectWindow.h
         src/MainWindow.h
-        src/modules/reachability/reachability_line.h
-        src/modules/reachability/reachability_node.h
-        src/modules/reachability/reachability_tree_scene.h
-        src/modules/reachability/reachability_view.h
-        src/modules/reachability/reachability_window.h
-        src/named_matrix_model.h
+        src/modules/reachability/ReachabilityLine.h
+        src/modules/reachability/ReachabilityNode.h
+        src/modules/reachability/ReachabilityTreeScene.h
+        src/modules/reachability/ReachabilityView.h
+        src/modules/reachability/ReachabilityWindow.h
+        src/NamedMatrixModel.h
         src/overrides/MatrixWindow.h
-        src/synthesis/synthesis_model.h
-        src/synthesis/synthesis_table.h
-        src/synthesis/synthesis_window.h
+        src/Synthesis/SynthesisModel.h
+        src/Synthesis/SynthesisTable.h
+        src/Synthesis/SynthesisWindow.h
 )
 
 if (UNIX)

@@ -4,7 +4,7 @@
 
 #include "MarkCommand.h"
 #include "../GraphicsScene.h"
-#include "../elements/petri_object.h"
+#include "../elements/PetriObject.h"
 
 MarkCommand::MarkCommand(PetriObject* item, bool add, GraphicsScene *scene, QUndoCommand *parent)
     : QUndoCommand(parent)

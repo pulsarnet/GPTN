@@ -4,7 +4,7 @@
 
 #include <QPainter>
 #include <QFontMetrics>
-#include "qwt_ext_plot_curve_labels.h"
+#include "QwtExtPlotCurveLabels.h"
 #include <QwtPainter>
 #include <QwtScaleMap>
 #include <QwtPlot>

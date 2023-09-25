@@ -10,7 +10,7 @@
 #include <QStyleOptionGraphicsItem>
 #include <QtMath>
 #include <QGraphicsSceneMouseEvent>
-#include "petri_object.h"
+#include "PetriObject.h"
 
 
 class Position : public PetriObject {

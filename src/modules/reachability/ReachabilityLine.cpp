@@ -3,7 +3,7 @@
 //
 
 #include <QPainter>
-#include "reachability_line.h"
+#include "ReachabilityLine.h"
 
 ReachabilityLine::ReachabilityLine(Agedge_s *edge, QGraphicsItem *parent)
     : QGraphicsLineItem(parent)

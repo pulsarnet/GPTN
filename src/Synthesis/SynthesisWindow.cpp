@@ -8,9 +8,9 @@
 #include <DockAreaWidget.h>
 #include <QGridLayout>
 #include <QLabel>
-#include "synthesis_window.h"
-#include "synthesis_table.h"
-#include "synthesis_model.h"
+#include "SynthesisWindow.h"
+#include "SynthesisTable.h"
+#include "SynthesisModel.h"
 #include "../DockSystem/DockWidget.h"
 #include "../Editor/GraphicsScene.h"
 #include "../Editor/GraphicsView.h"

@@ -4,9 +4,9 @@
 
 #include "AddCommand.h"
 #include "../GraphicsScene.h"
-#include "../elements/petri_object.h"
-#include "../elements/position.h"
-#include "../elements/transition.h"
+#include "../elements/PetriObject.h"
+#include "../elements/Position.h"
+#include "../elements/Transition.h"
 
 AddCommand::AddCommand(PetriObject* item, GraphicsScene *scene, QUndoCommand *parent)
     : QUndoCommand(parent)

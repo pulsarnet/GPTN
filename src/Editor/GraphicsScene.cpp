@@ -12,10 +12,10 @@
 #include <QPixmapCache>
 #include "Commands.h"
 #include "GraphicsScene.h"
-#include "elements/petri_object.h"
-#include "elements/position.h"
-#include "elements/transition.h"
-#include "elements/arrow_line.h"
+#include "elements/PetriObject.h"
+#include "elements/Position.h"
+#include "elements/Transition.h"
+#include "elements/ArrowLine.h"
 #include "../Core/graphviz/GraphvizWrapper.h"
 #include "GraphicsSceneActions.h"
 

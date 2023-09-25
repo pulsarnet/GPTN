@@ -5,7 +5,7 @@
 #include "MoveCommand.h"
 
 #include <utility>
-#include "../elements/petri_object.h"
+#include "../elements/PetriObject.h"
 
 MoveCommand::MoveCommand(QList<MoveCommandData>&& items, QUndoCommand *parent)
     : QUndoCommand(parent)

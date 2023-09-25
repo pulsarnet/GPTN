@@ -1,9 +1,9 @@
 #include <QBoxLayout>
 #include "NetModelingTab.h"
 #include "../Editor/GraphicsScene.h"
-#include "../Editor/elements/position.h"
-#include "../Editor/elements/transition.h"
-#include "../Editor/elements/arrow_line.h"
+#include "../Editor/elements/Position.h"
+#include "../Editor/elements/Transition.h"
+#include "../Editor/elements/ArrowLine.h"
 #include "../MainWindow.h"
 
 NetModelingTab::NetModelingTab(MainWindow* window, QWidget *parent)

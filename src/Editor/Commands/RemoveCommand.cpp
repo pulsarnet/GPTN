@@ -4,8 +4,8 @@
 
 #include "RemoveCommand.h"
 #include "../GraphicsScene.h"
-#include "../elements/petri_object.h"
-#include "../elements/arrow_line.h"
+#include "../elements/PetriObject.h"
+#include "../elements/ArrowLine.h"
 
 RemoveCommand::RemoveCommand(PetriObject *item, GraphicsScene *scene, QUndoCommand *parent)
     : QUndoCommand(parent)

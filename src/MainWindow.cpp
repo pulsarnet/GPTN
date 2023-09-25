@@ -16,7 +16,7 @@
 #include "ActionTabWidget/ActionTabWidgetController.h"
 #include "Editor/GraphicsScene.h"
 #include "Core/FFI/rust.h"
-#include "modules/reachability/reachability_window.h"
+#include "modules/reachability/ReachabilityWindow.h"
 #include "ActionTabWidget/WrappedLayoutWidget.h"
 #include "overrides/MatrixWindow.h"
 #include "Editor/GraphicsSceneActions.h"

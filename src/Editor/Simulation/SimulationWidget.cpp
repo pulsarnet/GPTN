@@ -2,13 +2,13 @@
 #include "../GraphicsView.h"
 #include "../../Core/FFI/Simulation.h"
 #include "../GraphicsScene.h"
-#include "../elements/position.h"
+#include "../elements/Position.h"
 #include <QPushButton>
 #include <QLabel>
 #include <QHBoxLayout>
 #include <QGraphicsDropShadowEffect>
 #include <QStyleOptionFrame>
-#include "../elements/transition.h"
+#include "../elements/Transition.h"
 #include "../../QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.h"
 
 SimulationWidget::SimulationWidget(GraphicsView *parent)

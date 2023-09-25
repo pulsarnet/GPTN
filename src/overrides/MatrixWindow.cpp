@@ -5,7 +5,7 @@
 #include <QLabel>
 #include <QHeaderView>
 #include "MatrixWindow.h"
-#include "../named_matrix_model.h"
+#include "../NamedMatrixModel.h"
 
 using namespace ffi;
 

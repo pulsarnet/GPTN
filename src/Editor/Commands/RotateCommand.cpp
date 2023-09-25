@@ -3,7 +3,7 @@
 //
 
 #include "RotateCommand.h"
-#include "../elements/petri_object.h"
+#include "../elements/PetriObject.h"
 
 RotateCommand::RotateCommand(PetriObject *item, qreal angle, QUndoCommand *parent)
     : QUndoCommand(parent)

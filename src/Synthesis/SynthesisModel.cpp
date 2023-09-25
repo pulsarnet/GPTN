@@ -2,7 +2,7 @@
 // Created by nmuravev on 23.01.2022.
 //
 
-#include "synthesis_model.h"
+#include "SynthesisModel.h"
 
 #include <utility>
 #include "../Core/FFI/rust.h"

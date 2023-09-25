@@ -4,7 +4,7 @@
 
 #include "DecomposeModelTab.h"
 #include "../Editor/GraphicsScene.h"
-#include "../synthesis/synthesis_table.h"
+#include "../synthesis/SynthesisTable.h"
 #include "../DockSystem/DockToolbar.h"
 #include <QGridLayout>
 #include <QSplitter>
@@ -16,7 +16,7 @@
 #include <QwtPickerMachine>
 #include <QwtPlotGrid>
 #include <QElapsedTimer>
-#include "../synthesis/synthesis_window.h"
+#include "../synthesis/SynthesisWindow.h"
 #include "../DataVisualization/InputHandler3D.h"
 #include "../Core/ProjectMetadata.h"
 #include "../Core/FFI/rust.h"

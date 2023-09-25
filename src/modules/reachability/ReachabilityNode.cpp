@@ -5,7 +5,7 @@
 #include <QPainter>
 #include <QToolTip>
 #include <QStyleOptionGraphicsItem>
-#include "reachability_node.h"
+#include "ReachabilityNode.h"
 
 #define PEN_WIDTH 1
 

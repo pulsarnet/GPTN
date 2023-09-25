@@ -6,14 +6,14 @@
 #include <QActionGroup>
 
 #include "Simulation/SimulationWidget.h"
-#include "elements/position.h"
-#include "elements/arrow_line.h"
+#include "elements/Position.h"
+#include "elements/ArrowLine.h"
 #include "GraphicsView.h"
 #include "GraphicsViewZoom.h"
 #include "GraphicsScene.h"
-#include "toolbox/toolbox.h"
+#include "toolbox/ToolBox.h"
 #include "../overrides/MatrixWindow.h"
-#include "../modules/reachability/reachability_window.h"
+#include "../modules/reachability/ReachabilityWindow.h"
 #include "../MainWindow.h"
 #include "GraphicsSceneActions.h"
 

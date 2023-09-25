@@ -2,7 +2,7 @@
 // Created by darkp on 06.10.2022.
 //
 
-#include "reachability_view.h"
+#include "ReachabilityView.h"
 #include "../../Editor/GraphicsViewZoom.h"
 
 ReachabilityView::ReachabilityView(QWidget* parent)
