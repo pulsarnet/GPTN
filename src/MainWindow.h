@@ -60,7 +60,7 @@ public slots:
     void onSaveAsFile(bool checked);
     void onOpenFile(bool checked);
     void onRecentProjects();
-    void onOpenRecentProject();
+    void onOpenRecentProject(QAction* action);
     void onNewProject(bool checked);
     void onNewProjectCreate(const QDir& dir, const QString& name);
     void onClose(bool checked);

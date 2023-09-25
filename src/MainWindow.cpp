@@ -65,18 +65,19 @@ bool MainWindow::saveAs() {
                                                     QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
                                                     tr("Petri network file (*.json);;All Files (*)"));
 
-    if (filename.isEmpty())
+    if (filename.isEmpty() || !saveFile(filename))
         return false;
 
-    if (saveFile(filename)) {
-        m_metadata->setFilename(filename);
-        onProjectNameChanged();
-        return true;
-    }
-    return false;
+    m_metadata->setFilename(filename);
+    RecentProjects::addRecentProject(filename);
+    onProjectNameChanged();
+
+    return true;
 }
 
 bool MainWindow::save() {
+    if (m_metadata->filename().isEmpty())
+        return saveAs(); //redirect to save as
     return saveFile(m_metadata->filename());
 }
 
@@ -181,6 +182,7 @@ void MainWindow::createMenuBar() {
 
     m_RecentSubmenu = m_FileMenu->addMenu(tr("Recent projects"));
     connect(m_RecentSubmenu, &QMenu::aboutToShow, this, &MainWindow::onRecentProjects);
+    connect(m_RecentSubmenu, &QMenu::triggered, this, &MainWindow::onOpenRecentProject);
 
     auto saveAction = m_FileMenu->addAction("&Save", this, &MainWindow::onSaveFile);
     saveAction->setToolTip(tr("Save file"));
@@ -244,16 +246,12 @@ void MainWindow::onRecentProjects() {
     for (auto& file : recentFiles) {
         auto action = new QAction(file, this);
         action->setData(file);
-        connect(action, &QAction::triggered, this, &MainWindow::onOpenRecentProject);
         m_RecentSubmenu->addAction(action);
     }
 }
 
-void MainWindow::onOpenRecentProject() {
-    auto action = qobject_cast<QAction*>(sender());
-    if (!action)
-        return;
-
+void MainWindow::onOpenRecentProject(QAction* action) {
+    Q_ASSERT(action);
     QString path(action->data().toString());
     if (!m_Controller->openProject(path, this)) {
         RecentProjects::removeRecentProject(path);

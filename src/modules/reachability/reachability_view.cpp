@@ -20,7 +20,7 @@ ReachabilityView::ReachabilityView(QWidget* parent)
     setTransformationAnchor(QGraphicsView::NoAnchor);
 
     m_zoom = QPointer(new GraphicsViewZoom(this));
-    m_zoom->set_modifier(Qt::NoModifier);
+    m_zoom->setModifier(Qt::NoModifier);
 }
 
 void ReachabilityView::mousePressEvent(QMouseEvent *event) {

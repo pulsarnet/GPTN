@@ -23,17 +23,18 @@ void GraphicsViewZoom::gentleZoom(double factor) {
     emit zoomed();
 }
 
-void GraphicsViewZoom::set_modifier(Qt::KeyboardModifiers modifiers) {
+void GraphicsViewZoom::setModifier(Qt::KeyboardModifiers modifiers) {
     m_modifiers = modifiers;
 }
 
-void GraphicsViewZoom::set_zoom_factor_base(double value) {
+void GraphicsViewZoom::setZoomFactorBase(double value) {
     m_zoom_factor_base = value;
 }
 
 bool GraphicsViewZoom::eventFilter(QObject *object, QEvent *event) {
+    Q_UNUSED(object);
     if (event->type() == QEvent::MouseMove) {
-        QMouseEvent* mouse_event = static_cast<QMouseEvent*>(event);
+        auto mouse_event = dynamic_cast<QMouseEvent*>(event);
         QPointF delta = target_viewport_pos - mouse_event->pos();
         if (qAbs(delta.x()) > 5 || qAbs(delta.y()) > 5) {
             target_viewport_pos = mouse_event->pos();
@@ -41,7 +42,7 @@ bool GraphicsViewZoom::eventFilter(QObject *object, QEvent *event) {
         }
     }
     else if (event->type() == QEvent::Wheel) {
-        QWheelEvent* wheel_event = static_cast<QWheelEvent*>(event);
+        auto wheel_event = dynamic_cast<QWheelEvent*>(event);
         if (QApplication::keyboardModifiers() == m_modifiers && wheel_event->angleDelta().y() != 0) {
             double angle = wheel_event->angleDelta().y();
             double factor = qPow(m_zoom_factor_base, angle);
@@ -60,7 +61,5 @@ bool GraphicsViewZoom::eventFilter(QObject *object, QEvent *event) {
             }
         }
     }
-
-    Q_UNUSED(object);
     return false;
 }

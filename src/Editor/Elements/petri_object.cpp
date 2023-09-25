@@ -11,13 +11,11 @@
 
 
 PetriObject::PetriObject(ffi::PetriNet* net, ffi::VertexIndex _vertex, QGraphicsItem* parent)
-    : QGraphicsItem(parent),
-    m_net(net),
-    m_vertex(_vertex)
+    : QGraphicsItem(parent)
+    , m_net(net)
+    , m_vertex(_vertex)
 {
-    setFlags(ItemIsMovable | ItemSendsGeometryChanges | ItemIsSelectable | ItemUsesExtendedStyleOption);
-
-    m_labelItem = new QGraphicsTextItem(vertex()->get_name(false), this);
+    m_labelItem = new QGraphicsTextItem(vertex()->get_name(false), this );
     m_labelItem->setFlags(m_labelItem->flags() & 0);
     m_labelItem->setCacheMode(DeviceCoordinateCache);
     m_labelItem->setTextInteractionFlags(Qt::TextInteractionFlag::TextEditable);
@@ -30,11 +28,12 @@ PetriObject::PetriObject(ffi::PetriNet* net, ffi::VertexIndex _vertex, QGraphics
             .arg(this->index())
             .arg(this->vertex()->parent() == 0 ? "" : QString(".%1").arg(this->vertex()->parent()));
 
-    m_name = new QGraphicsTextItem(name, this);
-    m_name->setFlags(m_labelItem->flags() & 0);
+    m_name = new QGraphicsSimpleTextItem(name, this);
+    m_name->setFlags(m_name->flags() & 0);
     m_name->setCacheMode(DeviceCoordinateCache);
     m_name->setAcceptHoverEvents(false);
 
+    setFlags(ItemIsMovable | ItemSendsGeometryChanges | ItemIsSelectable | ItemUsesExtendedStyleOption);
     setCacheMode(DeviceCoordinateCache);
     setAcceptDrops(true);
 }

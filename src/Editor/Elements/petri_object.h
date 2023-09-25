@@ -101,7 +101,7 @@ protected:
     ffi::VertexIndex m_vertex;
 
     QGraphicsTextItem* m_labelItem;
-    QGraphicsTextItem* m_name;
+    QGraphicsSimpleTextItem* m_name;
 
 };
 

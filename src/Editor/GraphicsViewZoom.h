@@ -19,9 +19,9 @@ public:
 
     void gentleZoom(double factor);
 
-    void set_modifier(Qt::KeyboardModifiers modifiers);
+    void setModifier(Qt::KeyboardModifiers modifiers);
 
-    void set_zoom_factor_base(double value);
+    void setZoomFactorBase(double value);
 
 private:
 

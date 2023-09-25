@@ -25,7 +25,7 @@ GraphicsView::GraphicsView(MainWindow* window, QWidget *parent)
 
     this->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     this->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    this->setAttribute(Qt::WA_TranslucentBackground, true);
+    this->setAttribute(Qt::WA_TranslucentBackground, false);
     this->setViewportUpdateMode(QGraphicsView::BoundingRectViewportUpdate);
     this->setWindowFlag(Qt::BypassGraphicsProxyWidget);
     this->setRubberBandSelectionMode(Qt::ContainsItemBoundingRect);
@@ -34,7 +34,7 @@ GraphicsView::GraphicsView(MainWindow* window, QWidget *parent)
     this->setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
 
     m_zoom = new GraphicsViewZoom(this);
-    m_zoom->set_modifier(Qt::NoModifier);
+    m_zoom->setModifier(Qt::NoModifier);
 
     setTransformationAnchor(QGraphicsView::NoAnchor);
 
@@ -149,14 +149,6 @@ void GraphicsView::resizeEvent(QResizeEvent *event) {
     );
 
     QGraphicsView::resizeEvent(event);
-}
-
-void GraphicsView::paintEvent(QPaintEvent *event) {
-    QGraphicsView::paintEvent(event);
-
-    QPainter painter(viewport());
-    painter.setFont(QFont());
-    painter.drawText(int(rect().x() / 2.), int(rect().y() / 2.), rect().width(), 40, Qt::AlignCenter, this->windowTitle());
 }
 
 void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
