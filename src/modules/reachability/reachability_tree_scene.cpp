@@ -10,7 +10,7 @@ ReachabilityTreeScene::ReachabilityTreeScene(QObject *parent)
     setSceneRect(-12500, -12500, 25000, 25000);
 }
 
-void ReachabilityTreeScene::addNode(QList<int32_t> data, std::optional<QList<ffi::VertexIndex>> headers) {
+void ReachabilityTreeScene::addNode(QList<int32_t> data, rust::MarkingType type, std::optional<QList<ffi::VertexIndex>> headers) {
     auto node = headers.has_value()
             ? new ReachabilityNode(std::move(data), std::move(headers.value()))
             : new ReachabilityNode(std::move(data));
@@ -21,6 +21,7 @@ void ReachabilityTreeScene::addNode(QList<int32_t> data, std::optional<QList<ffi
     agsafeset(circle, (char*)"shape", (char*)"record", "");
     agsafeset(circle, (char*)"label", node->text().toUtf8().data(), "");
     node->setGraphVizNode(circle);
+    node->setType(type);
 
     m_nodes.push_back(node);
     addItem(node);
@@ -70,9 +71,9 @@ void ReachabilityTreeScene::reload() {
             auto headers = QList(indexes.begin(), indexes.end());
             qDebug() << headers.size();
             isFirst = false;
-            addNode(list, std::optional(headers));
+            addNode(list, marking->type(), std::optional(headers));
         } else {
-            addNode(list);
+            addNode(list, marking->type());
         }
         // if prev != -1 then set line
         if (prev >= 0) {

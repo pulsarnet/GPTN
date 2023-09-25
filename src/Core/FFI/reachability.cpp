@@ -14,6 +14,7 @@ extern "C" void reachability_drop(ReachabilityTree*);
 extern "C" void marking_values(const Marking&,  CVec<int32_t>&);
 extern "C" int32_t marking_previous(const Marking&);
 extern "C" ffi::VertexIndex marking_transition(const Marking&);
+extern "C" MarkingType marking_type(const Marking&);
 
 ffi::CVec<int32_t> Marking::values() const {
     CVec<int32_t> values{};
@@ -27,6 +28,10 @@ int32_t Marking::prev() const {
 
 ffi::VertexIndex Marking::transition() const {
     return ::marking_transition(*this);
+}
+
+MarkingType Marking::type() const {
+    return ::marking_type(*this);
 }
 
 ffi::CVec<VertexIndex> ReachabilityTree::indexes() const {

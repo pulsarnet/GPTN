@@ -66,6 +66,14 @@ Agnode_s* ReachabilityNode::graphVizNode() {
     return m_node;
 }
 
+void ReachabilityNode::setType(rust::MarkingType type) {
+    m_type = type;
+}
+
+rust::MarkingType ReachabilityNode::getType() const {
+    return m_type;
+}
+
 QRectF ReachabilityNode::boundingRect() const {
     return m_boundingRect;
 }
@@ -78,8 +86,23 @@ void ReachabilityNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *
         return;
     }
 
+    auto type = getType();
+    QColor penColor;
+    switch (type) {
+        case rust::MarkingType::Duplicate:
+            penColor = Qt::blue;
+            break;
+        case rust::MarkingType::DeadEnd:
+            penColor = Qt::red;
+            break;
+        case rust::MarkingType::Inner:
+        case rust::MarkingType::Boundary:
+        default:
+            penColor = Qt::black;
+    }
+
     painter->setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing | QPainter::SmoothPixmapTransform);
-    painter->setPen(QPen(Qt::black, PEN_WIDTH));
+    painter->setPen(QPen(penColor, PEN_WIDTH));
     painter->drawPath(m_path);
 
     auto fields = (field_t*)ND_shape_info(m_node);

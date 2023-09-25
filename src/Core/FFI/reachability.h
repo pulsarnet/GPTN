@@ -11,10 +11,18 @@
 #include "rust.h"
 
 namespace rust {
+    enum MarkingType {
+        DeadEnd = 0,
+        Inner = 1,
+        Boundary = 2,
+        Duplicate = 3,
+    };
+
     struct Marking {
         [[nodiscard]] ffi::CVec<int32_t> values() const;
         [[nodiscard]] int32_t prev() const;
         [[nodiscard]] ffi::VertexIndex transition() const;
+        [[nodiscard]] MarkingType type() const;
     };
 
     struct ReachabilityTree {

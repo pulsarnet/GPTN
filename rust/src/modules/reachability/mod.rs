@@ -15,11 +15,12 @@ mod simulation;
 pub use self::simulation::FiredTransition;
 
 #[derive(PartialEq, Clone, Debug, Copy)]
+#[repr(u8)]
 enum CovType {
-    DeadEnd,
-    Inner,
-    Boundary,
-    Duplicate,
+    DeadEnd = 0,
+    Inner = 1,
+    Boundary = 2,
+    Duplicate = 3,
 }
 
 #[derive(Clone, Debug)]
@@ -249,11 +250,18 @@ impl Reachability {
                     // then replace M'(p) by o for each p such that M'(p)>M"(p).
                     let mut index = Some((transition.clone(), marking));
                     while let Some((_, i)) = index {
+                        if i == 0 {
+                            // TODO:
+                            break;
+                        }
                         index = tree[i].prev;
                         if select.data.row(0) >= tree[i].data.row(0) && select.data.row(0) != tree[i].data.row(0) {
                             for position in 0..self.input.nrows() {
                                 if select.data[(0, position)] > tree[i].data[(0, position)] {
                                     select.data[(0, position)] = MarkerValue::Infinity;
+
+                                    // todo
+
                                 }
                             }
                         }
@@ -264,7 +272,12 @@ impl Reachability {
                 // направлена от вершины х к вершине z.
                 // Вершина х переопределяется как внутренняя, вершина z становится граничной.
                 for (transition, mut select) in selector.into_iter() {
-                    select.type_ = CovType::Boundary;
+                    let contains_w = select.data.iter().find(|w| **w == MarkerValue::Infinity).is_some();
+                    if contains_w {
+                        select.type_ = CovType::DeadEnd; // todo тупикова, дублирующая, омега (бесконечная)
+                    } else {
+                        select.type_ = CovType::Boundary;
+                    }
                     select.prev = Some((transition, marking));
                     tree.append(select);
 
@@ -371,6 +384,12 @@ extern "C" fn marking_values(this: *const Marking, vec: &mut CVec<i32>) {
         .map(MarkerValue::as_number)
         .collect::<Vec<_>>()
         .into();
+}
+
+#[no_mangle]
+extern "C" fn marking_type(this: *const Marking) -> CovType {
+    assert!(!this.is_null());
+    unsafe { &*this }.type_
 }
 
 #[no_mangle]

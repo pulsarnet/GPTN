@@ -8,6 +8,7 @@
 #include <graphviz/gvc.h>
 #include <QGraphicsRectItem>
 #include "../../Core/FFI/rust.h"
+#include "../../Core/FFI/reachability.h"
 
 class ReachabilityNode : public QGraphicsItem {
 
@@ -19,6 +20,9 @@ public:
 
     void setGraphVizNode(Agnode_s*);
     Agnode_s* graphVizNode();
+
+    void setType(rust::MarkingType);
+    rust::MarkingType getType() const;
 
     QRectF boundingRect() const override;
 
@@ -35,6 +39,8 @@ private:
     QPainterPath m_path;
 
     Agnode_s* m_node = nullptr;
+
+    rust::MarkingType m_type = rust::MarkingType::Inner;
 
     void paintField(QPainter *painter, field_t *fld);
 };
