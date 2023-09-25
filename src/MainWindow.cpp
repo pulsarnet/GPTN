@@ -182,6 +182,31 @@ void MainWindow::onWindowSubMenuAction(QAction *act) {
 #endif
 }
 
+void MainWindow::onAbout() {
+    QMessageBox::about(this,
+                       tr("About %1").arg(qApp->applicationDisplayName()),
+                       MainWindow::aboutText());
+}
+
+QString MainWindow::aboutText() {
+    return QString(
+            "<b>%1</b><br>"
+            "Version: %2<br>"
+            "<p>This is a free software.</p>"
+            "<hr>"
+            "<p>Credits:</p>"
+            "<br> - QT framework: <a href=\"http://qt.io\">Site</a>"
+            "<br> - OpenBlas: <a href=\"https://www.openblas.net\">Site</a>"
+            "<br> - Qt Advanced Docking System: <a href=\"https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System\">Site</a>"
+            "<br> - QWT project: <a href=\"http://qwt.sf.net\">Site</a>"
+            "<br> - Graphviz: <a href=\"https://graphviz.org/license/\">Site</a>"
+    )
+    .arg(
+         QApplication::applicationDisplayName(),
+         QApplication::applicationVersion()
+    );
+}
+
 QMessageBox::StandardButton MainWindow::onSaveFileAsk() {
     return QMessageBox::information(
             this,
@@ -240,6 +265,9 @@ void MainWindow::createMenuBar() {
 
     auto aboutQt = m_HelpMenu->addAction(tr("About Qt"), this, &QApplication::aboutQt);
     aboutQt->setToolTip(tr("Show dialog about qt"));
+
+    auto about = m_HelpMenu->addAction(tr("About"), this, &MainWindow::onAbout);
+    about->setToolTip(tr("Show about dialog"));
 
     m_MenuBar->addMenu(m_FileMenu);
     m_MenuBar->addMenu(m_EditMenu);

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.17.3)
-project(GPTN VERSION 0.1)
+project(GPTN VERSION 0.1.1)
 
 message(STATUS ${CMAKE_CXX_FLAGS})
 set(CMAKE_CXX_STANDARD 20)
@@ -11,6 +11,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${TARGET_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${TARGET_DIR}/lib)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 set(CMAKE_AUTORCC ON)
+set(VERSION_COMPONENT_BUILD 1)
 
 if (NOT GRAPHVIZ_DIR)
     message(FATAL_ERROR "Graphviz dir not set")
@@ -60,6 +61,11 @@ endif()
 if(NOT WIN32)
     #set(CMAKE_PREFIX_PATH "/Users/nikolajmuravev/Qt/6.2.1/macos/lib/cmake")
     add_compile_definitions(__cpp_lib_format=201907L)
+endif()
+
+if(WIN32)
+    configure_file(cmake/gptn.rc.cmake ${CMAKE_CURRENT_BINARY_DIR}/gptn.rc)
+    set(WIN_RC_FILE ${CMAKE_CURRENT_BINARY_DIR}/gptn.rc)
 endif()
 
 set(CMAKE_PREFIX_PATH ${Qt6_DIR})
@@ -184,7 +190,6 @@ if (UNIX)
     add_executable(${TARGET_NAME}
             ${SRC_FILES}
             ${HEADERS}
-            mainwindow.ui
             resources/resources.qrc
             )
 else()
@@ -192,7 +197,7 @@ else()
             WIN32
             ${SRC_FILES}
             ${HEADERS}
-            mainwindow.ui
+            ${WIN_RC_FILE}
             resources/resources.qrc
             )
 endif()
@@ -296,28 +301,31 @@ if (WIN32)
             "${QWT_BIN_DIR}/qwt.dll"
 
             # Copy QtAdvancedDockingSystem
-            "${Qt_ADVANCED_DOCKING_SYSTEM_BIN_DIR}/qtadvanceddocking.dll"
-            DESTINATION bin)
+            "${Qt_ADVANCED_DOCKING_SYSTEM_BIN_DIR}/qt6advanceddocking.dll"
+            DESTINATION .)
 
     # Copy Qt6 platform plugins
-    install(FILES "${QT6_MAIN_DIR}/plugins/platforms/qwindows.dll" DESTINATION bin/plugins/platforms)
+    install(FILES "${QT6_MAIN_DIR}/plugins/platforms/qwindows.dll" DESTINATION ./plugins/platforms)
     # Copy imageformats Qt
-    install(FILES "${QT6_MAIN_DIR}/plugins/imageformats/qsvg.dll" DESTINATION bin/plugins/imageformats)
+    install(FILES "${QT6_MAIN_DIR}/plugins/imageformats/qsvg.dll" DESTINATION ./plugins/imageformats)
     # Copy Qt6 styles
-    install(FILES "${QT6_MAIN_DIR}/plugins/styles/qwindowsvistastyle.dll" DESTINATION bin/plugins/styles)
+    install(FILES "${QT6_MAIN_DIR}/plugins/styles/qwindowsvistastyle.dll" DESTINATION ./plugins/styles)
 
     set(CPACK_PACKAGE_NAME "${TARGET_NAME}")
     set(CPACK_PACKAGE_DIRECTORY "packages")
     set(CPACK_PACKAGE_VENDOR "Nickolay Muraviev")
-    set(CPACK_PACKAGE_VERSION_MAJOR "0")
-    set(CPACK_PACKAGE_VERSION_MINOR "1")
-    set(CPACK_PACKAGE_VERSION_PATCH "1")
+    set(CPACK_PACKAGE_VERSION_MAJOR ${CMAKE_PROJECT_VERSION_MAJOR})
+    set(CPACK_PACKAGE_VERSION_MINOR ${CMAKE_PROJECT_VERSION_MINOR})
+    set(CPACK_PACKAGE_VERSION_PATCH ${CMAKE_PROJECT_VERSION_PATCH})
     set(CPACK_WIX_UPGRADE_GUID 193923F9-F4F0-4F30-B2CA-6C97C2D3FA45)
+    set(CPACK_CREATE_DESKTOP_LINKS "GPTN")
     set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
     set(CPACK_PACKAGE_INSTALL_DIRECTORY "GPTN")
     set(CPACK_GENERATOR WIX)
     set(CPACK_PACKAGE_EXECUTABLES ${TARGET_NAME} "GPTN")
-    install(TARGETS ${TARGET_NAME} RUNTIME DESTINATION bin)
+    # todo: разобраться с расширением
+    set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_SOURCE_DIR}/LICENSE.txt)
+    install(TARGETS ${TARGET_NAME} RUNTIME DESTINATION .)
     include(CPack)
 
     add_custom_command(

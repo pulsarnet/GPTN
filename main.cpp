@@ -16,11 +16,6 @@
 #include "src/Core/ApplicationProjectController.h"
 
 int main(int argc, char **argv) {
-    QCoreApplication::setOrganizationName("GPTN");
-    QCoreApplication::setOrganizationDomain("-");
-    QCoreApplication::setApplicationName("GPTN");
-    QGuiApplication::setApplicationDisplayName("Petri Net");
-
     ads::CDockManager::setConfigFlag(ads::CDockManager::DockAreaHasTabsMenuButton, false);
     ads::CDockManager::setConfigFlag(ads::CDockManager::DockAreaHasUndockButton, false);
     ads::CDockManager::setConfigFlag(ads::CDockManager::AlwaysShowTabs, true);

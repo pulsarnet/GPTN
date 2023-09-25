@@ -62,6 +62,8 @@ public slots:
 
     void onWindowSubMenu();
     void onWindowSubMenuAction(QAction*);
+    void onAbout();
+    static QString aboutText();
 
     // Net
     void onReachabilityTree(bool checked);
