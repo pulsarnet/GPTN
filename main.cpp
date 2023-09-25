@@ -86,8 +86,7 @@ int main(int argc, char **argv) {
     }
 
     ApplicationProjectController controller;
-    auto initialWindow = controller.createMainWindow();
-    initialWindow->show();
+    controller.emptyProject();
 
     return app.exec();
 }

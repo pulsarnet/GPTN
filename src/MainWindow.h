@@ -29,12 +29,6 @@ class ReachabilityWindow;
 
 class MainWindow : public QMainWindow {
 
-    enum SaveFileAnswer {
-        Save = 0,
-        NoSave,
-        Cancel
-    };
-
 public:
     MainWindow() = delete;
     MainWindow(const MainWindow&) = delete;
@@ -65,6 +59,9 @@ public slots:
     void onNewProjectCreate(const QDir& dir, const QString& name);
     void onClose(bool checked);
     void onDocumentChanged();
+
+    void onWindowSubMenu();
+    void onWindowSubMenuAction(QAction*);
 
     // Net
     void onReachabilityTree(bool checked);

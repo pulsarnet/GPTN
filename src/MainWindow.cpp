@@ -1,5 +1,7 @@
 #include "MainWindow.h"
-
+#if defined(Q_OS_WIN32) && !defined(Q_OS_CYGWIN)
+#include <Windows.h>
+#endif
 #include <QStyle>
 #include <QApplication>
 #include <QFileDialog>
@@ -21,6 +23,7 @@
 #include "overrides/MatrixWindow.h"
 #include "Editor/GraphicsSceneActions.h"
 #include <QStandardPaths>
+
 
 /*
  * MainWindow содержит:
@@ -155,6 +158,30 @@ void MainWindow::onDocumentChanged() {
     m_metadata->setChanged(true);
 }
 
+void MainWindow::onWindowSubMenu() {
+    qDebug() << "MainWindow::onWindowSubMenu(" << sender() << ")";
+    auto menu = static_cast<QMenu*>(sender());
+    menu->clear();
+    for (auto& [project, window] : m_Controller->openedProjects()) {
+        auto act = menu->addAction(window->metadata()->projectName());
+        act->setCheckable(true);
+        act->setChecked(m_metadata->filename() == project);
+        act->setData(window->winId());
+    }
+}
+
+void MainWindow::onWindowSubMenuAction(QAction *act) {
+    auto winID = act->data().toULongLong();
+    if (winID == winId()) {
+        return;
+    }
+
+    // todo: cross-platform
+#if defined (Q_OS_WINDOWS) && !defined(Q_OS_CYGWIN)
+    SetActiveWindow((HWND)winID);
+#endif
+}
+
 QMessageBox::StandardButton MainWindow::onSaveFileAsk() {
     return QMessageBox::information(
             this,
@@ -207,6 +234,12 @@ void MainWindow::createMenuBar() {
     m_ToolsMenu->addSeparator();
     m_ToolsMenu->addAction(tr("Generate Reachability Tree"), this, &MainWindow::onReachabilityTree);
     m_ToolsMenu->addAction(tr("I/O Matrix view"), this, &MainWindow::onMatrixWindow);
+
+    connect(m_WindowMenu, &QMenu::aboutToShow, this, &MainWindow::onWindowSubMenu);
+    connect(m_WindowMenu, &QMenu::triggered, this, &MainWindow::onWindowSubMenuAction);
+
+    auto aboutQt = m_HelpMenu->addAction(tr("About Qt"), this, &QApplication::aboutQt);
+    aboutQt->setToolTip(tr("Show dialog about qt"));
 
     m_MenuBar->addMenu(m_FileMenu);
     m_MenuBar->addMenu(m_EditMenu);
