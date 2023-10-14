@@ -10,7 +10,8 @@ pub use net::connection::Connection;
 pub use net::vertex::Vertex;
 use net::vertex::{VertexIndex, VertexType};
 use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use tracing::debug;
 
 pub use net::petri_net_vec::*;
 
@@ -26,49 +27,10 @@ pub struct PetriNet {
     connections: Vec<Connection>,
 
     /// Последняя добавленная позиция
-    position_index: Arc<RwLock<usize>>,
+    position_index: AtomicUsize,
 
     /// Последний добавленный переход
-    transition_index: Arc<RwLock<usize>>,
-
-    /// Является ли сеть циклом
-    is_loop: bool,
-}
-
-impl Clone for PetriNet {
-    fn clone(&self) -> Self {
-        let new_connections = self
-            .connections
-            .iter()
-            .map(|conn| {
-                let mut connect = Connection::new(conn.first().clone(), conn.second().clone());
-                connect.set_weight(conn.weight());
-                connect
-            })
-            .collect::<Vec<_>>();
-
-        PetriNet {
-            positions: self.positions.clone(),
-            transitions: self.transitions.clone(),
-            connections: new_connections,
-            position_index: Arc::new(RwLock::new(*self.position_index.read().unwrap())),
-            transition_index: Arc::new(RwLock::new(*self.transition_index.read().unwrap())),
-            is_loop: self.is_loop,
-        }
-    }
-}
-
-impl Default for PetriNet {
-    fn default() -> Self {
-        PetriNet {
-            positions: IndexMap::new(),
-            transitions: IndexMap::new(),
-            connections: vec![],
-            position_index: Arc::new(RwLock::new(1)),
-            transition_index: Arc::new(RwLock::new(1)),
-            is_loop: false,
-        }
-    }
+    transition_index: AtomicUsize,
 }
 
 impl PetriNet {
@@ -171,28 +133,22 @@ impl PetriNet {
 
     /// Добавить позицию по индексу [`VertexIndex`]
     pub fn add_position(&mut self, index: usize) -> &Vertex {
+        debug!("add new position with {index}");
+        // Если текущее значение меньше, тогда установить новое
+        self.position_index.fetch_max(index + 1, Ordering::SeqCst);
         self.positions
             .entry(VertexIndex::position(index))
-            .or_insert_with(|| Vertex::position(index));
-
-        if index >= self.get_position_index() {
-            *(*self.position_index).write().unwrap() = index + 1;
-        }
-        self.positions.get(&VertexIndex::position(index)).unwrap()
+            .or_insert_with(|| Vertex::position(index))
     }
 
     /// Добавить переход по индексу [`VertexIndex`]
     pub fn add_transition(&mut self, index: usize) -> &Vertex {
+        debug!("add new transition with {index}");
+        // Если текущее значение меньше, тогда установить новое
+        self.transition_index.fetch_max(index + 1, Ordering::SeqCst);
         self.transitions
             .entry(VertexIndex::transition(index))
-            .or_insert_with(|| Vertex::transition(index));
-
-        if index >= self.get_transition_index() {
-            *(*self.transition_index).write().unwrap() = index + 1;
-        }
-        self.transitions
-            .get(&VertexIndex::transition(index))
-            .unwrap()
+            .or_insert_with(|| Vertex::transition(index))
     }
 
     /// Вставить позицию
@@ -206,12 +162,11 @@ impl PetriNet {
             true => self.positions.get(&element.index()).unwrap(),
             false => {
                 let index = element.index();
-                if index.id >= self.get_position_index() {
-                    *(*self.position_index).write().unwrap() = index.id + 1;
-                }
+                // Если текущее значение меньше, тогда установить новое
+                self.position_index.fetch_max(index.id + 1, Ordering::SeqCst);
 
                 if let Some(parent_index) = element.get_parent() {
-                    // Найдем индекс родителя
+                    // Найдем индекс родителя и вставим позицию после
                     match self
                         .positions
                         .iter()
@@ -239,12 +194,11 @@ impl PetriNet {
             true => self.transitions.get(&element.index()).unwrap(),
             false => {
                 let index = element.index();
-                if index.id >= self.get_transition_index() {
-                    *(*self.transition_index).write().unwrap() = index.id + 1;
-                }
+                // Если текущее значение меньше, тогда установить новое
+                self.transition_index.fetch_max(index.id + 1, Ordering::SeqCst);
 
                 if let Some(parent_index) = element.get_parent() {
-                    // Найдем индекс родителя
+                    // Найдем индекс родителя и вставим переход после
                     match self
                         .transitions
                         .iter()
@@ -268,7 +222,6 @@ impl PetriNet {
     }
 
     pub fn insert(&mut self, element: Vertex) -> &Vertex {
-        // todo Сделать выбор по типу
         match element.is_position() {
             true => self.insert_position(element),
             false => self.insert_transition(element),
@@ -305,19 +258,18 @@ impl PetriNet {
     }
 
     #[inline]
-    pub fn update_position_index(&self) {
-        *(*self.position_index).write().unwrap() += 1;
+    #[must_use]
+    pub fn update_position_index(&self) -> usize {
+        self.position_index.fetch_add(1, Ordering::SeqCst)
     }
 
     #[inline]
     pub fn get_position_index(&self) -> usize {
-        *(*self.position_index).read().unwrap()
+        self.position_index.load(Ordering::SeqCst)
     }
 
     pub fn next_position_index(&self) -> usize {
-        let ret = self.get_position_index();
-        self.update_position_index();
-        ret
+        self.update_position_index()
     }
 
     pub fn as_matrix(&self) -> (CNamedMatrix, CNamedMatrix) {
@@ -440,19 +392,18 @@ impl PetriNet {
     }
 
     #[inline]
-    pub fn update_transition_index(&self) {
-        *(*self.transition_index).write().unwrap() += 1;
+    #[must_use]
+    pub fn update_transition_index(&self) -> usize {
+        self.transition_index.fetch_add(1, Ordering::SeqCst)
     }
 
     #[inline]
     pub fn get_transition_index(&self) -> usize {
-        *self.transition_index.read().unwrap()
+        self.transition_index.load(Ordering::SeqCst)
     }
 
     pub fn next_transition_index(&self) -> usize {
-        let ret = self.get_transition_index();
-        self.update_transition_index();
-        ret
+        self.update_transition_index()
     }
 
     pub fn normalize(&mut self) {
@@ -513,10 +464,10 @@ impl PetriNet {
 
     pub fn remove_part(&mut self, part: &Vec<VertexIndex>) -> Self {
         let mut result = PetriNet::new();
-        result.position_index = self.position_index.clone();
-        result.transition_index = self.transition_index.clone();
+        result.position_index = AtomicUsize::new(self.position_index.load(Ordering::SeqCst));
+        result.transition_index = AtomicUsize::new(self.transition_index.load(Ordering::SeqCst));
 
-        log::info!("PART => {part:?}");
+        debug!("PART => {part:?}");
 
         // Fill result with loop elements
         part.iter().for_each(|element| {
@@ -580,11 +531,13 @@ impl PetriNet {
                 match loop_element.type_ {
                     VertexType::Position => {
                         self.insert_position(new_element.clone());
-                        self.update_position_index();
+                        let next = self.update_position_index();
+                        debug!("next position index: {}", next);
                     }
                     VertexType::Transition => {
                         self.insert_transition(new_element.clone());
-                        self.update_transition_index();
+                        let next = self.update_transition_index();
+                        debug!("next transition index: {}", next);
                     }
                 };
 
@@ -644,8 +597,8 @@ impl PetriNet {
             };
         }
 
-        log::info!("PART RESULT => {result:?}");
-        log::info!("SELF => {self:?}");
+        debug!("PART RESULT => {result:?}");
+        debug!("SELF => {self:?}");
         result
     }
 
@@ -666,4 +619,34 @@ impl PetriNet {
             .map(|conn| conn.second())
             .collect()
     }
+}
+
+impl Default for PetriNet {
+    fn default() -> Self {
+        PetriNet {
+            positions: IndexMap::new(),
+            transitions: IndexMap::new(),
+            connections: vec![],
+            position_index: AtomicUsize::new(1),
+            transition_index: AtomicUsize::new(1),
+        }
+    }
+}
+
+impl Clone for PetriNet {
+    fn clone(&self) -> Self {
+        Self {
+            positions: self.positions.clone(),
+            transitions: self.transitions.clone(),
+            connections: self.connections.clone(),
+            position_index: AtomicUsize::new(self.position_index.load(Ordering::SeqCst)),
+            transition_index: AtomicUsize::new(self.transition_index.load(Ordering::SeqCst)),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+
 }

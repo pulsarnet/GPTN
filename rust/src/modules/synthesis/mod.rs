@@ -9,6 +9,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::thread::sleep;
 use std::time::Duration;
 use rayon::ThreadPoolBuilder;
+use tracing::debug;
 
 pub struct SynthesisProgram {
     data: Vec<u16>,
@@ -116,8 +117,8 @@ pub fn synthesis_program(programs: &DecomposeContext, index: usize) -> PetriNet 
     let (t_sets, p_sets) = program.sets(&pos_indexes_vec, &tran_indexes_vec);
     let (t_sets_size, p_sets_size) = (t_sets.len(), p_sets.len());
 
-    log::error!("PSET => {:?}", p_sets);
-    log::error!("TSET => {:?}", t_sets);
+    debug!("PSET => {:?}", p_sets);
+    debug!("TSET => {:?}", t_sets);
 
     for t_set in t_sets.into_iter() {
         programs.transition_synthesis_program(&t_set, &mut adjacency_input, &mut adjacency_output);
@@ -250,7 +251,7 @@ pub fn synthesis_program(programs: &DecomposeContext, index: usize) -> PetriNet 
 
     let mut pos_new_indexes = HashMap::new();
     for (index, position) in new_net.positions_mut().values_mut().enumerate() {
-        log::info!("SET MARKERS: {} <= {}", index, markers.row(index)[0]);
+        debug!("SET MARKERS: {} <= {}", index, markers.row(index)[0]);
         position.set_markers(markers.row(index)[0].max(0.) as usize);
         pos_new_indexes.insert(position.index(), index);
     }

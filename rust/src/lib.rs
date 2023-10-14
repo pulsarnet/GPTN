@@ -1,8 +1,6 @@
 extern crate chrono;
 extern crate indexmap;
 extern crate libc;
-extern crate log;
-extern crate log4rs;
 extern crate nalgebra;
 extern crate ndarray;
 extern crate ndarray_linalg;
@@ -10,15 +8,13 @@ extern crate num;
 extern crate num_traits;
 extern crate rand;
 extern crate rayon;
+extern crate tracing;
+extern crate tracing_subscriber;
 
 use libc::c_char;
-use log::LevelFilter;
-use log4rs::append::file::FileAppender;
-use log4rs::config::{Appender, Root};
-use log4rs::encode::pattern::PatternEncoder;
-use log4rs::{config::Logger, Config};
 use nalgebra::DMatrix;
 use std::ffi::CString;
+use std::fmt::Debug;
 use std::ops::Deref;
 use std::sync::Arc;
 
@@ -30,6 +26,7 @@ mod modules;
 mod net;
 
 mod core;
+mod logger;
 
 use net::{PetriNet, PetriNetVec, Vertex};
 
@@ -44,34 +41,6 @@ macro_rules! profile {
             (_instant.elapsed(), _result)
         }
     }
-}
-
-#[no_mangle]
-extern "C" fn init() {
-    let f = format!(
-        "log/{}.log",
-        chrono::Local::now().format("%d-%m-%YT%H_%M_%S")
-    );
-    let requests = FileAppender::builder()
-        .encoder(Box::new(PatternEncoder::new("{m}{n}")))
-        .build(f)
-        .unwrap();
-
-    let config = Config::builder()
-        .appender(Appender::builder().build("requests", Box::new(requests)))
-        .logger(
-            Logger::builder()
-                .appender("requests")
-                .build("app::requests", LevelFilter::Error),
-        )
-        .build(
-            Root::builder()
-                .appender("requests")
-                .build(LevelFilter::Error),
-        )
-        .unwrap();
-
-    log4rs::init_config(config).unwrap();
 }
 
 #[derive(Debug, Clone)]

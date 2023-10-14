@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::iter::FromIterator;
+use tracing::debug;
 
 use net::vertex::VertexIndex;
 use net::PetriNet;
@@ -55,9 +56,8 @@ impl NetPaths {
         let mut stack = vec![];
         for vert in input_positions.iter() {
             visited.values_mut().for_each(|m| *m = NodeMark::None);
-            if let Err(_) = NetPaths::process_dfs(net, *vert, &mut visited, &mut paths, &mut stack)
-            {
-                log::error!("Cycle detected");
+            if let Err(_) = NetPaths::process_dfs(net, *vert, &mut visited, &mut paths, &mut stack) {
+                debug!("Cycle detected");
                 return NetPaths::default();
             }
         }

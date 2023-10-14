@@ -4,7 +4,6 @@
 
 #include <QApplication>
 #include <QFontDatabase>
-#include <QGuiApplication>
 #include <QFile>
 #include <QSettings>
 #include "src/MainWindow.h"
@@ -15,7 +14,38 @@
 #include <DockComponentsFactory.h>
 #include "src/Core/ApplicationProjectController.h"
 
+#define QT_MESSAGELOGCONTEXT
+
+extern "C" void external_debug_log(const char* msg);
+extern "C" void external_info_log(const char* msg);
+extern "C" void external_warn_log(const char* msg);
+extern "C" void external_error_log(const char* msg);
+
+void customMessageOutput(QtMsgType type, const QMessageLogContext&, const QString &msg)
+{
+    const char* localMsg = msg.toLocal8Bit().data();
+    switch (type) {
+        case QtDebugMsg:
+            external_debug_log(localMsg);
+            break;
+        case QtInfoMsg:
+            external_info_log(localMsg);
+            break;
+        case QtWarningMsg:
+            external_warn_log(localMsg);
+            break;
+        case QtCriticalMsg:
+            external_error_log(localMsg);
+            break;
+        case QtFatalMsg:
+            external_error_log(localMsg);
+            abort();
+    }
+}
+
 int main(int argc, char **argv) {
+    qInstallMessageHandler(customMessageOutput);
+
     ads::CDockManager::setConfigFlag(ads::CDockManager::DockAreaHasTabsMenuButton, false);
     ads::CDockManager::setConfigFlag(ads::CDockManager::DockAreaHasUndockButton, false);
     ads::CDockManager::setConfigFlag(ads::CDockManager::AlwaysShowTabs, true);
@@ -25,9 +55,9 @@ int main(int argc, char **argv) {
 
     ads::CDockComponentsFactory::setFactory(new SplittableComponentsFactory);
 
-    #ifdef QT_DEBUG
+    //#ifdef QT_DEBUG
         ffi::init();
-    #endif
+    //#endif
 
     QApplication app(argc, argv);
     auto palette = QApplication::palette();

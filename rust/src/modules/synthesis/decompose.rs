@@ -7,6 +7,7 @@ use crate::CMatrix;
 use nalgebra::base::DMatrix;
 use ndarray::{Array1, Array2};
 use ndarray_linalg::Solve;
+use tracing::info;
 
 /// Контекст декомпозиции
 ///
@@ -364,7 +365,7 @@ impl DecomposeContext {
 
         let (t_sets, p_sets) = program.sets(pos_indexes_vec, tran_indexes_vec);
 
-        log::error!(
+        info!(
             "{:?}\n{:?}\n{:?}\n{:?}",
             t_sets,
             p_sets,
