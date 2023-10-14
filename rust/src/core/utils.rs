@@ -1,21 +1,26 @@
 use nalgebra::DMatrix;
-use num_traits::Zero;
 
-pub fn logical_row_add<T: Copy + Zero + PartialEq>(matrix: &mut DMatrix<T>, a: usize, b: usize) {
+pub fn logical_row_add<T: Copy + PartialOrd>(matrix: &mut DMatrix<T>, a: usize, b: usize) {
     for col in 0..matrix.ncols() {
-        let value = matrix[(b, col)];
-        if value != T::zero() {
-            matrix[(a, col)] = value;
-        }
+        let max = complex_max(matrix[(a, col)], matrix[(b, col)]);
+        matrix[(a, col)] = max;
+        matrix[(b, col)] = max;
     }
 }
 
-pub fn logical_column_add<T: Copy + Zero + PartialEq>(matrix: &mut DMatrix<T>, a: usize, b: usize) {
+pub fn logical_column_add<T: Copy + PartialOrd>(matrix: &mut DMatrix<T>, a: usize, b: usize) {
     for row in 0..matrix.nrows() {
-        let value = matrix[(row, b)];
-        if value != T::zero() {
-            matrix[(row, a)] = value;
-        }
+        let max = complex_max(matrix[(row, a)], matrix[(row, b)]);
+        matrix[(row, a)] = max;
+        matrix[(row, b)] = max;
+    }
+}
+
+fn complex_max<T: Copy + PartialOrd>(a: T, b: T) -> T {
+    if a > b {
+        a
+    } else {
+        b
     }
 }
 
@@ -29,7 +34,7 @@ mod tests {
         logical_row_add(&mut matrix, 0, 1);
         assert_eq!(
             matrix,
-            DMatrix::from_row_slice(3, 3, &[1, 1, 0, 0, 1, 0, 0, 0, 1])
+            DMatrix::from_row_slice(3, 3, &[1, 1, 0, 1, 1, 0, 0, 0, 1])
         );
     }
 
@@ -39,7 +44,7 @@ mod tests {
         logical_column_add(&mut matrix, 0, 1);
         assert_eq!(
             matrix,
-            DMatrix::from_row_slice(3, 3, &[1, 0, 0, 1, 1, 0, 0, 0, 1])
+            DMatrix::from_row_slice(3, 3, &[1, 1, 0, 1, 1, 0, 0, 0, 1])
         );
     }
 }

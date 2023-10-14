@@ -10,6 +10,7 @@ extern crate rand;
 extern crate rayon;
 extern crate tracing;
 extern crate tracing_subscriber;
+extern crate intel_mkl_src;
 
 use libc::c_char;
 use nalgebra::DMatrix;

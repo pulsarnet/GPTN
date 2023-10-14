@@ -80,6 +80,7 @@ impl NetCycles {
 mod tests {
     use super::NetCycles;
     use net::PetriNet;
+    use net::vertex::VertexIndex;
 
     #[test]
     fn test_dfs() {
@@ -100,6 +101,15 @@ mod tests {
         net.connect(t3, p1);
 
         let cycles = NetCycles::find(&net);
-        println!("{cycles:?}");
+        assert_eq!(cycles.cycles.len(), 1);
+
+        let cycle = cycles.cycles.get(0).unwrap();
+        assert_eq!(cycle.len(), 6);
+        assert_eq!(cycle[0], VertexIndex::position(1));
+        assert_eq!(cycle[1], VertexIndex::transition(1));
+        assert_eq!(cycle[2], VertexIndex::position(2));
+        assert_eq!(cycle[3], VertexIndex::transition(2));
+        assert_eq!(cycle[4], VertexIndex::position(3));
+        assert_eq!(cycle[5], VertexIndex::transition(3));
     }
 }

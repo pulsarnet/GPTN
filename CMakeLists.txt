@@ -194,7 +194,7 @@ if (UNIX)
             )
 else()
     add_executable(${TARGET_NAME}
-            WIN32
+            #WIN32
             ${SRC_FILES}
             ${HEADERS}
             ${WIN_RC_FILE}
@@ -221,13 +221,9 @@ add_external_library(
 )
 # } RUST
 
-# https://github.com/microsoft/ELL/wiki/Building-OpenBlas-on-Windows
-find_package(BLAS)
-message( STATUS BLAS found: ${BLAS_LIBRARIES} )
 
 target_link_libraries(${TARGET_NAME} PRIVATE
         ptn_lib
-        ${BLAS_LIBRARIES}
         ads::qt6advanceddocking
         gvc
         cgraph

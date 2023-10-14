@@ -71,20 +71,18 @@ impl Eq for Vertex {}
 
 impl Debug for Vertex {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let name = match self.type_ {
-            VertexType::Position => format!("p{}", self.id),
-            VertexType::Transition => format!("t{}", self.id),
+        let index = match self.type_ {
+            VertexType::Position => VertexIndex::position(self.id),
+            VertexType::Transition => VertexIndex::transition(self.id),
         };
 
-        f.pad(name.as_str())
+        write!(f, "{}", index)
     }
 }
 
 impl Display for Vertex {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let name = self.label(false);
-
-        f.pad(name.as_str())
+        write!(f, "{}", self.label(false))
     }
 }
 

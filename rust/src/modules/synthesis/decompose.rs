@@ -438,24 +438,14 @@ impl DecomposeContext {
         assert!(t_set.len() > 1);
 
         let first = t_set[0];
-        for t in t_set.iter().skip(1) {
-            logical_column_add(adjacency_input, first, *t);
-            logical_column_add(adjacency_output, first, *t);
-            // let column_input = adjacency_input.column(*t).clone_owned();
-            // adjacency_input.column_mut(first).add_assign(column_input);
-            //
-            // let column_output = adjacency_output.column(*t).clone_owned();
-            // adjacency_output.column_mut(first).add_assign(column_output);
+        for &t in t_set.iter().skip(1) {
+            logical_column_add(adjacency_input, first, t);
+            logical_column_add(adjacency_output, first, t);
         }
 
-        for t in t_set.iter().skip(1) {
-            logical_column_add(adjacency_input, *t, first);
-            logical_column_add(adjacency_output, *t, first);
-            // let vector = Vector::from_data(adjacency_input.column(first).clone_owned().data);
-            // adjacency_input.set_column(*t, &vector);
-            //
-            // let vector = Vector::from_data(adjacency_output.column(first).clone_owned().data);
-            // adjacency_output.set_column(*t, &vector);
+        for &t in t_set.iter().skip(1) {
+            logical_column_add(adjacency_input, t, first);
+            logical_column_add(adjacency_output, t, first);
         }
     }
 
@@ -470,24 +460,12 @@ impl DecomposeContext {
         for p in p_set.iter().skip(1) {
             logical_row_add(adjacency_input, first, *p);
             logical_row_add(adjacency_output, first, *p);
-            // let row = adjacency_input.row(*p).clone_owned();
-            // adjacency_input.row_mut(first).add_assign(row);
-            //
-            // let row = adjacency_output.row(*p).clone_owned();
-            // adjacency_output.row_mut(first).add_assign(row);
-
             d_markers[(first, 0)] = d_markers[(*p, 0)].max(d_markers[(first, 0)]);
         }
 
         for p in p_set.iter().skip(1) {
             logical_row_add(adjacency_input, *p, first);
             logical_row_add(adjacency_output, *p, first);
-            // let row = RowVector::from_data(adjacency_input.row(first).clone_owned().data);
-            // adjacency_input.set_row(*p, &row);
-            //
-            // let row = RowVector::from_data(adjacency_output.row(first).clone_owned().data);
-            // adjacency_output.set_row(*p, &row);
-
             d_markers[(*p, 0)] = d_markers[(first, 0)];
         }
     }
