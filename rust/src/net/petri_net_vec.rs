@@ -59,27 +59,26 @@ impl PetriNetVec {
                     .iter()
                     .filter(|c| c.first().eq(&transition.index()));
 
-                while let Some(f) = from.next() {
-                    if result.positions.get(&f.second()).is_some() {
+                while let Some(from_t) = from.next() {
+                    if result.positions.get(&from_t.second()).is_some() {
                         continue;
                     }
 
                     let mut to = net.connections.iter().filter(|c| {
-                        c.first().ne(&f.second()) && c.second().eq(&transition.index())
+                        c.first().ne(&from_t.second()) && c.second().eq(&transition.index())
                     });
 
-                    while let Some(t) = to.next() {
-                        if result.positions.get(&t.first()).is_some() {
+                    while let Some(to_t) = to.next() {
+                        if result.positions.get(&to_t.first()).is_some() {
                             continue;
                         }
 
-                        result.insert(net.get_position(t.first().id).unwrap().clone());
-                        result.insert(net.get_transition(f.first().id).unwrap().clone());
-                        result.insert(net.get_position(f.second().id).unwrap().clone());
+                        result.insert(net.get(to_t.first()).unwrap().clone());
+                        result.insert(net.get(from_t.first()).unwrap().clone());
+                        result.insert(net.get(from_t.second()).unwrap().clone());
 
-                        // TODO: Как соединять веса
-                        result.connect(t.first(), f.first().clone());
-                        result.connect(f.first(), f.second().clone());
+                        result.connect(to_t.first(), from_t.first().clone(), 1); // to_t.weight()
+                        result.connect(from_t.first(), from_t.second().clone(), 1); // from_t.weight()
                         continue 'brk;
                     }
                 }
@@ -92,6 +91,7 @@ impl PetriNetVec {
     /// Возвращает матрицы D(I) и D(O) для примитивной системы
     /// Элементы данных матриц, это положительные числа
     pub fn primitive_matrix(&self) -> (DMatrix<i32>, DMatrix<i32>) {
+        // todo переписать
         let positions = self.position_indexes();
         let transitions = self.transition_indexes();
         let mut d_input = DMatrix::<i32>::zeros(positions.len(), transitions.len());
@@ -103,12 +103,12 @@ impl PetriNetVec {
                 VertexType::Transition => {
                     d_output.column_mut(*transitions.get(&connection.first()).unwrap())
                         [*positions.get(&connection.second()).unwrap()] =
-                        connection.weight() as i32;
+                        1 //connection.weight() as i32; BUG!!!!! Compute
                 }
                 _ => {
                     d_input.row_mut(*positions.get(&connection.first()).unwrap())
                         [*transitions.get(&connection.second()).unwrap()] =
-                        connection.weight() as i32;
+                        1 //connection.weight() as i32;
                 }
             }
         }

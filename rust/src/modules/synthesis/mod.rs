@@ -278,15 +278,10 @@ pub fn synthesis_program(programs: &DecomposeContext, index: usize) -> PetriNet 
             for (index, &el) in column.iter().enumerate().filter(|e| e.1.ne(&0.)) {
                 let pos = pos_indexes_vec[index].clone();
                 if el < 0. {
-                    connections.push(Connection::new(pos.index(), transition.index()));
+                    connections.push(Connection::new(pos.index(), transition.index(), el.abs() as usize));
                 } else {
-                    connections.push(Connection::new(transition.index(), pos.index()));
+                    connections.push(Connection::new(transition.index(), pos.index(), el.abs() as usize));
                 }
-
-                connections
-                    .last_mut()
-                    .unwrap()
-                    .set_weight(el.abs() as usize);
             }
         }
     }

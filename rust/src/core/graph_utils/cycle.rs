@@ -93,12 +93,12 @@ mod tests {
         let t2 = net.add_transition(2).index();
         let t3 = net.add_transition(3).index();
 
-        net.connect(p1, t1);
-        net.connect(t1, p2);
-        net.connect(p2, t2);
-        net.connect(t2, p3);
-        net.connect(p3, t3);
-        net.connect(t3, p1);
+        net.connect(p1, t1, 1);
+        net.connect(t1, p2, 1);
+        net.connect(p2, t2, 1);
+        net.connect(t2, p3, 1);
+        net.connect(p3, t3, 1);
+        net.connect(t3, p1, 1);
 
         let cycles = NetCycles::find(&net);
         assert_eq!(cycles.cycles.len(), 1);

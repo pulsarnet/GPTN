@@ -26,6 +26,7 @@ class ActionTabWidgetController;
 class MatrixWindow;
 class NetModelingTab;
 class ReachabilityWindow;
+class DecomposeModelTab;
 
 class MainWindow : public QMainWindow {
 
@@ -71,6 +72,8 @@ public slots:
     void onMatrixWindow(bool checked);
     void onMatrixWindowClose(QWidget* window);
 
+    void onSynthesis();
+
     // Tab Changed
     void onTabChanged(int);
 
@@ -106,6 +109,7 @@ private:
 
     NetModelingTab* m_netModelingTab = nullptr;
     ReachabilityWindow* m_reachabilityTab = nullptr;
+    DecomposeModelTab* m_decomposeTab = nullptr;
 
     MatrixWindow* m_IOMatrixWindow = nullptr;
 };

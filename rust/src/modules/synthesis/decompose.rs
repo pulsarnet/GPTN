@@ -7,7 +7,10 @@ use crate::CMatrix;
 use nalgebra::base::DMatrix;
 use ndarray::{Array1, Array2};
 use ndarray_linalg::Solve;
-use tracing::info;
+use tracing::{debug, info};
+use core::{NetCycles, NetPaths};
+use net::Connection;
+use net::vertex::{VertexIndex, VertexType};
 
 /// Контекст декомпозиции
 ///
@@ -196,8 +199,8 @@ impl DecomposeContextBuilder {
         let primitive_net = parts.primitive_net();
         //let adjacency_primitive = primitive_net.adjacency_matrix();
         let adjacency_primitive = primitive_net.adjacency_matrices();
-        println!("adjacency_primitive 0: {}", adjacency_primitive.0);
-        println!("adjacency_primitive 1: {}", adjacency_primitive.1);
+        debug!("adjacency_primitive 0: {}", adjacency_primitive.0);
+        debug!("adjacency_primitive 1: {}", adjacency_primitive.1);
 
         let (primitive_input, primitive_output) = parts.primitive_matrix();
         let linear_base_fragments_matrix = parts.equivalent_matrix();
@@ -253,21 +256,13 @@ impl DecomposeContext {
         let mut net = net.clone();
         let mut parts = vec![];
 
-        while let Some(l) = net.get_loop() {
-            parts.push(net.remove_part(&l));
-        }
-
-        while let Some(p) = net.get_part() {
-            parts.push(net.remove_part(&p));
-        }
-
-        parts.iter_mut().for_each(|net| net.normalize());
+        parts.extend(extract_loops(&mut net));
+        parts.extend(extract_paths(&mut net));
+        parts.iter_mut().for_each(|net| normalize_net(net));
 
         let parts = PetriNetVec(parts);
 
         DecomposeContextBuilder::new(parts).build()
-        //res.add_synthesis_programs();
-        //res
     }
 
     pub fn marking(&self) -> DMatrix<f64> {
@@ -275,7 +270,6 @@ impl DecomposeContext {
         for (i, p) in self.positions.iter().enumerate() {
             marking[(i, 0)] = p.markers() as f64;
         }
-
         marking
     }
 
@@ -310,6 +304,7 @@ impl DecomposeContext {
                             .find(|(k, _)| *k == column)
                             .map(|(_, k)| k.index())
                             .unwrap(),
+                        1
                     )
                 }
 
@@ -327,6 +322,7 @@ impl DecomposeContext {
                             .find(|(k, _)| *k == row)
                             .map(|(_, k)| k.index())
                             .unwrap(),
+                        1
                     )
                 }
             }
@@ -464,9 +460,205 @@ impl DecomposeContext {
         }
 
         for p in p_set.iter().skip(1) {
-            logical_row_add(adjacency_input, *p, first);
-            logical_row_add(adjacency_output, *p, first);
+            // logical_row_add(adjacency_input, *p, first);
+            // logical_row_add(adjacency_output, *p, first);
             d_markers[(*p, 0)] = d_markers[(first, 0)];
         }
+    }
+}
+
+/// Нормализует линейно-базовый фрагмент так, чтобы
+/// позиции находящиеся между двумя переходами дублировались
+fn normalize_net(net: &mut PetriNet) {
+    // todo tests
+    let mut positions = vec![];
+    let mut connections = vec![];
+    for (&idx, position) in net.positions() {
+        // Проверим, что позиция не является входной или выходной, т.е. находится между двумя переходами
+        let Some(input) = net.connections().iter().find(|conn| conn.second() == idx) else { continue };
+        let Some(output) = net.connections().iter().find(|conn| conn.first() == idx) else { continue };
+
+        // Создадим новую позицию с родителем
+        let new_pos = position.split(net.next_position_index());
+        let new_pos_index = new_pos.index();
+        positions.push(new_pos);
+
+        // Соединим новую позицию с переходами
+        connections.push(Connection::new(input.first(), new_pos_index, input.weight()));
+        connections.push(Connection::new(new_pos_index, output.second(), output.weight()));
+    }
+
+    for pos in positions.into_iter() {
+        // Добавим позиции в сеть
+        net.insert(pos);
+    }
+
+    for conn in connections.into_iter() {
+        // Добавим соединения
+        net.connect(conn.first(), conn.second(), conn.weight());
+    }
+}
+
+/// Удаляет вершины из сети Петри, таким образом, что если
+/// на вершину ссылаются элементы не входящие в массив удаляемых вершин, то она дублируется
+///
+/// # Important
+/// Вершины в массиве должны чередоваться T/P или P/T
+///
+/// # Возвращает удаленную сеть
+fn extract_part(net: &mut PetriNet, remove: &[VertexIndex]) -> PetriNet {
+    debug!("remove part {remove:?}");
+    let mut result = PetriNet::new();
+
+    // Добавим вершины в новую сеть
+    for &index in remove {
+        result.insert(net.get(index).unwrap().clone());
+    }
+
+    // Соединим добавленные вершины и удалим соединения из текущей сети
+    for connect in remove.windows(2) {
+        assert_ne!(connect[0].type_, connect[1].type_, "vertices must be different types");
+        // удалим соединение в текущей сети
+        let removed = net.disconnect(connect[0], connect[1])
+            .expect("BUG: the connection must exists in net");
+        result.connect(removed.first(), removed.second(), removed.weight());
+    }
+
+    // Проверим, что это цикл: если типы 1 элемента и последнего неравны, то это цикл
+    if remove[0].type_ != remove[remove.len() - 1].type_ {
+        let removed = net.disconnect(remove[0], remove[remove.len() - 1])
+            .expect("BUG: the connection must exists in net");
+        result.connect(removed.first(), removed.second(), removed.weight())
+    }
+
+    // Для каждого удаляемого элемента проверим:
+    // если остались соединения, тогда дублируем элемент и соединения и затем удаляем
+    for &index in remove {
+        let found = net.connections().iter()
+            .find(|conn| conn.first() == index || conn.second() == index)
+            .is_some();
+
+        // Если нашли, что у элемента есть соединение, то делим его и удаляем
+        if found {
+            let split = split_element(net, index);
+
+            // Когда делимый элемент является переходом, то проверяем, чтобы из него выходило соединение
+            // В ином случае необходимо вернуть позицию в которую входит родительский элемент и тоже её разделить
+            if VertexType::Transition == split.type_ {
+                if let None = net.connections().iter().find(|conn| conn.first() == index) {
+                    let connection = result.connections().iter().find(|conn| conn.first() == index)
+                        .copied()
+                        .expect("an output position must exists");
+
+                    let position = result.get(connection.second())
+                        .expect("an position must exists")
+                        .split(net.next_position_index());
+
+                    let idx = net.insert(position).index();
+                    net.connect(split, idx, connection.weight());
+                }
+            }
+        }
+
+        net.remove(index);
+    }
+
+    result
+}
+
+// Делит элемент в сети на 2 элемента, также копирует соединения
+fn split_element(net: &mut PetriNet, index: VertexIndex) -> VertexIndex {
+    let element = net.get(index)
+        .expect("when this method call, net always contains element by index");
+
+    let new_element = match index.type_ {
+        VertexType::Position => element.split(net.next_position_index()),
+        VertexType::Transition => element.split(net.next_transition_index())
+    };
+    let new_element_index = new_element.index();
+    net.insert(new_element); // добавляем новый элемент
+
+    // Скопировать соединения
+    let connections = net.connections().iter()
+        .filter_map(|conn| {
+            if conn.first() == index {
+                Some(Connection::new(new_element_index, conn.second(), conn.weight()))
+            } else if conn.second() == index {
+                Some(Connection::new(conn.first(), new_element_index, conn.weight()))
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<_>>();
+
+    for conn in connections {
+        net.connect(conn.first(), conn.second(), conn.weight());
+    }
+
+    new_element_index
+}
+
+/// Удаляет из сети Петри все циклы (начиная с самого большого)
+fn extract_loops(net: &mut PetriNet) -> Vec<PetriNet> {
+    let mut loops = vec![];
+    loop {
+        let net_loops = NetCycles::find(net);
+        match net_loops.get_longest() {
+            None => break,
+            Some(l) => loops.push(extract_part(net, l)),
+        }
+    }
+    loops
+}
+
+/// Удаляет из сети Петри все прямые пути (начиная с самого большого)
+fn extract_paths(net: &mut PetriNet) -> Vec<PetriNet> {
+    let mut paths = vec![];
+    loop {
+        let net_paths = NetPaths::find(net);
+        match net_paths.get_longest() {
+            None => break,
+            Some(l) => paths.push(extract_part(net, l)),
+        }
+    }
+    paths
+}
+
+
+#[cfg(test)]
+mod tests {
+    use modules::synthesis::decompose::{extract_loops, extract_paths};
+    use net::{PetriNet, Vertex};
+    use net::vertex::VertexIndex;
+
+    #[test]
+    fn test_extract_path_1() {
+        // p1 -> t1 -> p2
+        //        \->  p3
+
+        let mut net = PetriNet::new();
+        let p1 = net.add_position(1).index();
+        let t1 = net.add_transition(1).index();
+        net.connect(p1, t1, 1);
+
+        let p2 = net.add_position(2).index();
+        let p3 = net.add_position(3).index();
+        net.connect(t1, p2, 1);
+        net.connect(t1, p3, 1);
+
+        let loops = extract_loops(&mut net);
+        assert!(loops.is_empty());
+
+        let paths = extract_paths(&mut net);
+        assert_eq!(paths.len(), 2);
+
+        // todo дописать
+        let path1 = &paths[0];
+        assert_eq!(path1.positions().len(), 2);
+        assert_eq!(path1.transitions().len(), 1);
+        assert_eq!(path1.connections().len(), 1);
+        assert_eq!(path1.get(p1).cloned(), Some(Vertex::position(1)));
+        assert_eq!(path1.get(t1).cloned(), Some(Vertex::transition(1)));
+        assert_eq!(path1.get(p2).cloned(), Some(Vertex::position(2)));
     }
 }

@@ -1,35 +1,35 @@
 use net::vertex::VertexIndex;
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Copy)]
 pub struct Connection {
-    a: VertexIndex,
-    b: VertexIndex,
+    from: VertexIndex,
+    to: VertexIndex,
     weight: usize,
 }
 
 impl Connection {
-    pub fn new(from: VertexIndex, to: VertexIndex) -> Self {
+    pub fn new(from: VertexIndex, to: VertexIndex, weight: usize) -> Self {
         Connection {
-            a: from,
-            b: to,
-            weight: 1,
+            from,
+            to,
+            weight,
         }
     }
 
     pub fn first(&self) -> VertexIndex {
-        self.a
+        self.from
     }
 
     pub fn first_mut(&mut self) -> &mut VertexIndex {
-        &mut self.a
+        &mut self.from
     }
 
     pub fn second(&self) -> VertexIndex {
-        self.b
+        self.to
     }
 
     pub fn second_mut(&mut self) -> &mut VertexIndex {
-        &mut self.b
+        &mut self.to
     }
 
     pub fn increment(&mut self) {

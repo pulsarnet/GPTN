@@ -3,7 +3,6 @@ mod petri_net_vec;
 pub mod vertex;
 
 use crate::ffi::matrix::CNamedMatrix;
-use core::{NetCycles, NetPaths};
 use indexmap::map::IndexMap;
 use nalgebra::DMatrix;
 pub use net::connection::Connection;
@@ -11,7 +10,7 @@ pub use net::vertex::Vertex;
 use net::vertex::{VertexIndex, VertexType};
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use tracing::debug;
+use tracing::{debug, trace};
 
 pub use net::petri_net_vec::*;
 
@@ -77,6 +76,14 @@ impl PetriNet {
         post_c
     }
 
+    /// Получить элемент по индексу [`VertexIndex`]
+    pub fn get(&self, index: VertexIndex) -> Option<&Vertex> {
+        match index.type_ {
+            VertexType::Position => self.get_position(index.id),
+            VertexType::Transition => self.get_transition(index.id)
+        }
+    }
+
     /// Количество входных позиций (т.е. позиций без входных дуг)
     ///
     /// TODO: сделать итератор (input_positions_iter, input_positions - коллекция)
@@ -110,11 +117,13 @@ impl PetriNet {
 
     /// Удалить позицию по индексу [`VertexIndex`]
     pub fn remove_position(&mut self, index: usize) {
-        let position = self.get_position(index).unwrap().index();
-        self.connections
-            .retain(|c| c.first().ne(&position) && c.second().ne(&position));
-            //.drain_filter(|c| c.first().eq(&position) || c.second().eq(&position));
-        self.positions.remove(&position);
+        trace!("remove position at {index}");
+        if let Some(position) = self.get_position(index).map(|v| v.index()) {
+            self.connections
+                .retain(|c| c.first().ne(&position) && c.second().ne(&position));
+            self.positions.remove(&position);
+            debug!("removed position {position}");
+        }
     }
 
     /// Получить переход по индексу [`VertexIndex`]
@@ -124,16 +133,26 @@ impl PetriNet {
 
     /// Удалить переход по индексу [`VertexIndex`]
     pub fn remove_transition(&mut self, index: usize) {
-        let transition = self.get_transition(index).unwrap().index();
-        self.connections
-            .retain(|c| c.first().ne(&transition) && c.second().ne(&transition));
-            //.drain_filter(|c| c.first().eq(&transition) || c.second().eq(&transition));
-        self.transitions.remove(&transition);
+        trace!("remove transition at {index}");
+        if let Some(transition) = self.get_transition(index).map(|v| v.index()) {
+            self.connections
+                .retain(|c| c.first().ne(&transition) && c.second().ne(&transition));
+            self.transitions.remove(&transition);
+            debug!("removed transition {transition}");
+        }
+    }
+
+    /// Удалить элемент по индексу [`VertexIndex`]
+    pub fn remove(&mut self, index: VertexIndex) {
+        match index.type_ {
+            VertexType::Position => self.remove_position(index.id),
+            VertexType::Transition => self.remove_transition(index.id)
+        }
     }
 
     /// Добавить позицию по индексу [`VertexIndex`]
     pub fn add_position(&mut self, index: usize) -> &Vertex {
-        debug!("add new position with {index}");
+        debug!("add new position p{index}");
         // Если текущее значение меньше, тогда установить новое
         self.position_index.fetch_max(index + 1, Ordering::SeqCst);
         self.positions
@@ -143,7 +162,7 @@ impl PetriNet {
 
     /// Добавить переход по индексу [`VertexIndex`]
     pub fn add_transition(&mut self, index: usize) -> &Vertex {
-        debug!("add new transition with {index}");
+        debug!("add new transition t{index}");
         // Если текущее значение меньше, тогда установить новое
         self.transition_index.fetch_max(index + 1, Ordering::SeqCst);
         self.transitions
@@ -158,8 +177,12 @@ impl PetriNet {
     /// # Return
     /// Ссылку на добавленный или существующий [`Vertex`]
     pub fn insert_position(&mut self, element: Vertex) -> &Vertex {
+        trace!("insert position {}", element.index());
         match self.positions.contains_key(&element.index()) {
-            true => self.positions.get(&element.index()).unwrap(),
+            true => {
+                debug!("position {} already exists. no inserted", element.index());
+                self.positions.get(&element.index()).unwrap()
+            },
             false => {
                 let index = element.index();
                 // Если текущее значение меньше, тогда установить новое
@@ -190,8 +213,12 @@ impl PetriNet {
     }
 
     pub fn insert_transition(&mut self, element: Vertex) -> &Vertex {
+        trace!("insert transition {}", element.index());
         match self.transitions.contains_key(&element.index()) {
-            true => self.transitions.get(&element.index()).unwrap(),
+            true => {
+                debug!("transition {} already exists. no inserted", element.index());
+                self.transitions.get(&element.index()).unwrap()
+            },
             false => {
                 let index = element.index();
                 // Если текущее значение меньше, тогда установить новое
@@ -228,33 +255,31 @@ impl PetriNet {
         }
     }
 
-    /// Соединить две вершины
+    /// Добавляет соединение в структуру сети Петри
     ///
-    /// # Panic
-    /// Метод паникует, если вершины одного типа
-    pub fn connect(&mut self, a: VertexIndex, b: VertexIndex) {
-        if a.type_ == b.type_ {
-            panic!("Vertex {} has same type as {}", a, b);
+    /// Если соединение существует, то изменяет его вес на новый
+    pub fn connect(&mut self, from: VertexIndex, to: VertexIndex, weight: usize) {
+        if from.type_ == to.type_ {
+            panic!("{} and {} has same type", from, to);
         }
 
         match self
             .connections
             .iter_mut()
-            .find(|c| c.first() == a && c.second() == b)
+            .find(|c| c.first() == from && c.second() == to)
         {
-            Some(connection) => connection.increment(),
-            None => self.connections.push(Connection::new(a, b)),
+            Some(connection) => connection.set_weight(weight),
+            None => self.connections.push(Connection::new(from, to, weight)),
         }
     }
 
-    pub fn get_loop(&self) -> Option<Vec<VertexIndex>> {
-        let cycles = NetCycles::find(self);
-        cycles.get_longest().map(Vec::from)
-    }
-
-    pub fn get_part(&self) -> Option<Vec<VertexIndex>> {
-        let paths = NetPaths::find(self);
-        paths.get_longest().map(Vec::from)
+    /// Удаляет соединение из `from` в `to` и возвращает его
+    pub fn disconnect(&mut self, from: VertexIndex, to: VertexIndex) -> Option<Connection> {
+        if let Some(index) = self.connections.iter().position(|c| c.first() == from && c.second() == to) {
+            Some(self.connections.remove(index))
+        } else {
+            None
+        }
     }
 
     #[inline]
@@ -404,202 +429,6 @@ impl PetriNet {
 
     pub fn next_transition_index(&self) -> usize {
         self.update_transition_index()
-    }
-
-    pub fn normalize(&mut self) {
-        let positions = self.positions.len();
-        let transitions = self.transitions.len();
-
-        if positions == 2 * transitions {
-            return;
-        }
-
-        // NEED = 2 * T - P
-        let mut need = 2 * transitions - positions;
-        let mut conns = vec![];
-        let mut positions = vec![];
-
-        for position in self.positions.values() {
-            if need == 0 {
-                break;
-            }
-
-            let connections = self
-                .connections
-                .iter()
-                .filter(|conn| {
-                    conn.first().eq(&position.index()) || conn.second().eq(&position.index())
-                })
-                .collect::<Vec<_>>();
-
-            if connections.len() < 2 {
-                continue;
-            }
-
-            let new_pos = position.split(self.next_position_index());
-            positions.push(new_pos.clone());
-
-            for conn in connections.into_iter() {
-                match conn.first().type_ {
-                    VertexType::Transition => {
-                        conns.push(Connection::new(conn.first().clone(), new_pos.index()))
-                    }
-                    VertexType::Position => {
-                        conns.push(Connection::new(new_pos.index(), conn.second().clone()))
-                    }
-                }
-
-                // Установим вес соединения
-                conns.last_mut().unwrap().set_weight(conn.weight());
-            }
-
-            need -= 1;
-        }
-
-        positions.into_iter().for_each(|p| {
-            self.insert_position(p);
-        });
-        conns.into_iter().for_each(|c| self.connections.push(c));
-    }
-
-    pub fn remove_part(&mut self, part: &Vec<VertexIndex>) -> Self {
-        let mut result = PetriNet::new();
-        result.position_index = AtomicUsize::new(self.position_index.load(Ordering::SeqCst));
-        result.transition_index = AtomicUsize::new(self.transition_index.load(Ordering::SeqCst));
-
-        debug!("PART => {part:?}");
-
-        // Fill result with loop elements
-        part.iter().for_each(|element| {
-            match element.type_ {
-                VertexType::Position => {
-                    result.insert(self.get_position(element.id).unwrap().clone())
-                }
-                VertexType::Transition => {
-                    result.insert(self.get_transition(element.id).unwrap().clone())
-                }
-            };
-        });
-
-        for connection in part.windows(2) {
-            let from = connection[0];
-            let to = connection[1];
-
-            result.connect(from, to);
-            self.connections
-                .retain(|conn| conn.first().ne(&from) || conn.second().ne(&to));
-                //.drain_filter(|conn| conn.first().eq(&from) && conn.second().eq(&to));
-        }
-
-        // todo заменить на сравнение равенства типов first и last
-        if (part.first().unwrap().type_ == VertexType::Position
-            && part.last().unwrap().type_ == VertexType::Transition)
-            || (part.first().unwrap().type_ == VertexType::Transition
-                && part.last().unwrap().type_ == VertexType::Position)
-        {
-            // Это цикл
-            result.connect(*part.last().unwrap(), *part.first().unwrap());
-            self.connections
-                .retain(|conn| conn.first().ne(part.last().unwrap()) || conn.second().ne(part.first().unwrap()));
-                //.drain_filter(|conn| { conn.first().eq(part.last().unwrap()) && conn.second().eq(part.first().unwrap()) });
-        }
-
-        for loop_element in part.iter() {
-            let new_element = match loop_element.type_ {
-                VertexType::Position => result
-                    .get_position(loop_element.id)
-                    .unwrap()
-                    .split(self.get_position_index()),
-                VertexType::Transition => result
-                    .get_transition(loop_element.id)
-                    .unwrap()
-                    .split(self.get_transition_index()),
-            };
-
-            let mut add_element = false;
-            for connection in self.connections.iter_mut() {
-                if connection.first().eq(loop_element) {
-                    *connection.first_mut() = new_element.index();
-                    add_element = true;
-                } else if connection.second().eq(loop_element) {
-                    *connection.second_mut() = new_element.index();
-                    add_element = true;
-                }
-            }
-
-            if add_element {
-                match loop_element.type_ {
-                    VertexType::Position => {
-                        self.insert_position(new_element.clone());
-                        let next = self.update_position_index();
-                        debug!("next position index: {}", next);
-                    }
-                    VertexType::Transition => {
-                        self.insert_transition(new_element.clone());
-                        let next = self.update_transition_index();
-                        debug!("next transition index: {}", next);
-                    }
-                };
-
-                if new_element.is_transition() {
-                    // Если переход не имеет выходных соединений
-                    if let None = self
-                        .connections
-                        .iter()
-                        .find(|c| c.first().eq(&new_element.index()))
-                    {
-                        let parent = new_element.get_parent().unwrap();
-                        if let Some(mut conn) = result
-                            .connections
-                            .iter()
-                            .find(|c| c.first().eq(&parent))
-                            .cloned()
-                        {
-                            let index = self.next_position_index();
-                            let pos = self.insert_position(
-                                result.get_position(conn.second().id).unwrap().split(index),
-                            );
-                            *conn.first_mut() = new_element.index();
-                            *conn.second_mut() = pos.index();
-                            self.connections.push(conn);
-                        }
-                    }
-
-                    if let None = self
-                        .connections
-                        .iter()
-                        .find(|c| c.second().eq(&new_element.index()))
-                    {
-                        let parent = new_element.get_parent().unwrap();
-                        if let Some(mut conn) = result
-                            .connections
-                            .iter()
-                            .find(|c| {
-                                c.second().type_ == VertexType::Transition && c.second().eq(&parent)
-                            })
-                            .cloned()
-                        {
-                            let index = self.next_position_index();
-                            let pos = self.insert_position(
-                                result.get_position(conn.first().id).unwrap().split(index),
-                            );
-                            *conn.first_mut() = pos.index();
-                            *conn.second_mut() = new_element.index();
-                            self.connections.push(conn);
-                        }
-                    }
-                }
-            }
-
-            match loop_element.type_ {
-                VertexType::Position => self.positions.remove(loop_element),
-                VertexType::Transition => self.transitions.remove(loop_element),
-            };
-        }
-
-        debug!("PART RESULT => {result:?}");
-        debug!("SELF => {self:?}");
-        result
     }
 
     pub fn marking(&self) -> DMatrix<i32> {

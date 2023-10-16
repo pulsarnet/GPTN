@@ -259,6 +259,7 @@ void MainWindow::createMenuBar() {
     m_ToolsMenu->addSeparator();
     m_ToolsMenu->addAction(tr("Generate Reachability Tree"), this, &MainWindow::onReachabilityTree);
     m_ToolsMenu->addAction(tr("I/O Matrix view"), this, &MainWindow::onMatrixWindow);
+    m_ToolsMenu->addAction(tr("Synthesis"), this, &MainWindow::onSynthesis);
 
     connect(m_WindowMenu, &QMenu::aboutToShow, this, &MainWindow::onWindowSubMenu);
     connect(m_WindowMenu, &QMenu::triggered, this, &MainWindow::onWindowSubMenuAction);
@@ -421,6 +422,13 @@ void MainWindow::onMatrixWindow(bool checked) {
 void MainWindow::onMatrixWindowClose(QWidget* window) {
     Q_UNUSED(window);
     m_IOMatrixWindow = nullptr;
+}
+
+void MainWindow::onSynthesis() {
+    if (!m_decomposeTab) {
+        m_decomposeTab = new DecomposeModelTab(m_metadata);
+        m_ActionTabWidgetController->addTab(tr("Decompose and Synthesis"), QIcon(":/images/decompose.svg"), m_decomposeTab);
+    }
 }
 
 void MainWindow::onTabChanged(int index) {

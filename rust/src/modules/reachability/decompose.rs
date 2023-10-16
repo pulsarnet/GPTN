@@ -66,9 +66,9 @@ impl PrimitiveDecomposition {
 
                 connections.into_iter().for_each(|connection| {
                     if connection.first().eq(index) {
-                        net.connect(new_index, connection.second());
+                        net.connect(new_index, connection.second(), connection.weight());
                     } else {
-                        net.connect(connection.first(), new_index);
+                        net.connect(connection.first(), new_index, connection.weight());
                     }
                 });
 
@@ -104,11 +104,13 @@ impl PrimitiveDecomposition {
                     primitive_net.connect(
                         net.transitions()[column_index].index(),
                         net.positions()[row_index].index(),
+                        value as usize
                     )
                 } else if value < 0 {
                     primitive_net.connect(
                         net.transitions()[column_index].index(),
                         net.positions()[row_index].index(),
+                        (-value) as usize
                     )
                 }
             }

@@ -145,7 +145,7 @@ pub unsafe extern "C" fn connect_vertexes(
     from: *const Vertex,
     to: *const Vertex,
 ) {
-    net.connect((&*from).index(), (&*to).index());
+    net.connect((&*from).index(), (&*to).index(), 1);
 }
 
 /// Удаляет все соединения вершин, которые выходят из from и входят в to
