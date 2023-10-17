@@ -60,9 +60,7 @@ pub unsafe extern "C" fn net_connections(net: &mut PetriNet, ret: &mut CVec<*con
 
 #[no_mangle]
 pub unsafe extern "C" fn clear_net(v: &mut PetriNet) {
-    v.positions_mut().clear();
-    v.transitions_mut().clear();
-    v.connections_mut().clear();
+    (*v) = PetriNet::new();
 }
 
 #[no_mangle]
@@ -155,12 +153,10 @@ pub unsafe extern "C" fn remove_connection(
     from: *const Vertex,
     to: *const Vertex,
 ) {
+    // todo: pass VertexIndex
     let from = &*from;
     let to = &*to;
-    net.connections_mut()
-        .retain(|c| c.first().ne(&from.index()) || c.second().ne(&to.index()));
-    // net.connections_mut()
-    //     .drain_filter(|c| c.first().eq(&from.index()) && c.second().eq(&to.index()));
+    net.disconnect(from.index(), to.index());
 }
 
 #[no_mangle]

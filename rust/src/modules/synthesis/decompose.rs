@@ -1,8 +1,10 @@
+// TODO: падает при нескольких ЛБФ
+
 use crate::core::SetPartitionMesh;
 use crate::core::{logical_column_add, logical_row_add};
 use crate::modules::synthesis::SynthesisProgram;
 use crate::net::vertex::Vertex;
-use crate::net::{PetriNet, PetriNetVec};
+use crate::net::PetriNet;
 use crate::CMatrix;
 use nalgebra::base::DMatrix;
 use ndarray::{Array1, Array2};
@@ -18,11 +20,11 @@ use net::vertex::{VertexIndex, VertexType};
 /// и сеть Петри в примитивной системе координат
 
 pub struct DecomposeContextBuilder {
-    pub parts: PetriNetVec,
+    pub parts: PetriNet,
 }
 
 impl DecomposeContextBuilder {
-    pub fn new(parts: PetriNetVec) -> Self {
+    pub fn new(parts: PetriNet) -> Self {
         DecomposeContextBuilder { parts }
     }
 
@@ -132,9 +134,9 @@ impl DecomposeContextBuilder {
     pub fn calculate_c_matrix(
         positions: usize,
         transitions: usize,
-        linear_base_fragments: &(DMatrix<i32>, DMatrix<i32>),
-        primitive_matrix: DMatrix<i32>,
-        mu: &DMatrix<i32>,
+        linear_base_fragments: &(DMatrix<f64>, DMatrix<f64>),
+        primitive_matrix: DMatrix<f64>,
+        mu: &DMatrix<f64>,
     ) -> DMatrix<f64> {
         let mut c_matrix = nalgebra::DMatrix::<f64>::zeros(positions, positions);
         let d_matrix = linear_base_fragments.1.clone() - linear_base_fragments.0.clone();
@@ -148,16 +150,16 @@ impl DecomposeContextBuilder {
                     &primitive_matrix
                         .column(col)
                         .iter()
-                        .map(|&x| x as f64)
+                        .copied()
                         .collect::<Array1<f64>>(),
                 );
-                array_b[col] = d_matrix[(row, col)] as f64;
+                array_b[col] = d_matrix[(row, col)];
             }
 
             // set mu equation
             array_a
                 .row_mut(transitions)
-                .assign(&mu.row(0).iter().map(|&x| x as f64).collect::<Array1<f64>>());
+                .assign(&mu.row(0).iter().copied().collect::<Array1<f64>>());
             array_b[transitions] = mu[(0, row)] as f64;
 
             let solution = DecomposeContextBuilder::solve(array_a, array_b);
@@ -179,57 +181,44 @@ impl DecomposeContextBuilder {
         c_matrix
     }
 
-    pub fn build(mut self) -> DecomposeContext {
-        self.parts.sort();
+    pub fn build(self) -> DecomposeContext {
+        let mut parts = self.parts;
+        let positions = parts.positions().values().cloned().collect::<Vec<_>>();
+        let transitions = parts.transitions().values().cloned().collect::<Vec<_>>();
 
-        let parts = self.parts;
-        let positions = parts
-            .0
-            .iter()
-            .flat_map(|net| net.positions().values())
-            .cloned()
-            .collect::<Vec<_>>();
-        let transitions = parts
-            .0
-            .iter()
-            .flat_map(|net| net.transitions().values())
-            .cloned()
-            .collect::<Vec<_>>();
+        let primitive_net = primitive_net(&mut parts);
+        let adjacency_primitive = primitive_net.one_zero_adjacency_matrices();
 
-        let primitive_net = parts.primitive_net();
-        //let adjacency_primitive = primitive_net.adjacency_matrix();
-        let adjacency_primitive = primitive_net.adjacency_matrices();
-        debug!("adjacency_primitive 0: {}", adjacency_primitive.0);
-        debug!("adjacency_primitive 1: {}", adjacency_primitive.1);
-
-        let (primitive_input, primitive_output) = parts.primitive_matrix();
-        let linear_base_fragments_matrix = parts.equivalent_matrix();
+        let linear_base_fragments_matrix = parts.one_zero_adjacency_matrices();
+        let linear_base_fragments_matrix_f64 = parts.one_zero_adjacency_matrices();
         let mu = DMatrix::from_row_slice(
             1,
             positions.len(),
             &positions
                 .iter()
-                .map(|x| x.markers() as i32)
+                .map(|x| x.markers() as f64)
                 .collect::<Vec<_>>(),
         );
+
+        debug!("input: {} output: {}", adjacency_primitive.1, adjacency_primitive.0);
+        debug!("input: {} output: {}", linear_base_fragments_matrix.1, linear_base_fragments_matrix.0);
         let c_matrix = DecomposeContextBuilder::calculate_c_matrix(
             positions.len(),
             transitions.len(),
             &linear_base_fragments_matrix,
-            primitive_output.clone() - primitive_input.clone(),
+            adjacency_primitive.1.clone() - adjacency_primitive.0.clone(),
             &mu,
         );
 
         let (pos, tran) = (positions.len(), transitions.len());
         DecomposeContext {
-            parts,
             positions,
             transitions,
             primitive_net,
             primitive_matrix: adjacency_primitive,
             linear_base_fragments_matrix: (
-                CMatrix::from(linear_base_fragments_matrix.0),
-                CMatrix::from(linear_base_fragments_matrix.1),
+                CMatrix::from(linear_base_fragments_matrix_f64.0),
+                CMatrix::from(linear_base_fragments_matrix_f64.1),
             ),
             c_matrix,
             programs: SetPartitionMesh::new(pos, tran),
@@ -239,7 +228,6 @@ impl DecomposeContextBuilder {
 
 #[derive(Debug, Clone)]
 pub struct DecomposeContext {
-    pub parts: PetriNetVec,
     pub positions: Vec<Vertex>,
     pub transitions: Vec<Vertex>,
     pub primitive_net: PetriNet,
@@ -258,11 +246,17 @@ impl DecomposeContext {
 
         parts.extend(extract_loops(&mut net));
         parts.extend(extract_paths(&mut net));
-        parts.iter_mut().for_each(|net| normalize_net(net));
 
-        let parts = PetriNetVec(parts);
+        let mut lbf_net = PetriNet::new();
+        for part in parts {
+            part.positions().iter().for_each(|(_, v)| { lbf_net.insert(v.clone()); });
+            part.transitions().iter().for_each(|(_, v)| { lbf_net.insert(v.clone()); });
+            part.connections().iter().for_each(|conn| { lbf_net.connect(conn.first(), conn.second(), conn.weight()); });
+        }
 
-        DecomposeContextBuilder::new(parts).build()
+        normalize_net(&mut lbf_net);
+
+        DecomposeContextBuilder::new(lbf_net).build()
     }
 
     pub fn marking(&self) -> DMatrix<f64> {
@@ -359,7 +353,7 @@ impl DecomposeContext {
         let program =
             SynthesisProgram::new_with(self.programs.get_partition(index), tran_indexes_vec.len());
 
-        let (t_sets, p_sets) = program.sets(pos_indexes_vec, tran_indexes_vec);
+        let (t_sets, p_sets) = program.sets();
 
         info!(
             "{:?}\n{:?}\n{:?}\n{:?}",
@@ -470,7 +464,6 @@ impl DecomposeContext {
 /// Нормализует линейно-базовый фрагмент так, чтобы
 /// позиции находящиеся между двумя переходами дублировались
 fn normalize_net(net: &mut PetriNet) {
-    // todo tests
     let mut positions = vec![];
     let mut connections = vec![];
     for (&idx, position) in net.positions() {
@@ -505,7 +498,8 @@ fn normalize_net(net: &mut PetriNet) {
 /// # Important
 /// Вершины в массиве должны чередоваться T/P или P/T
 ///
-/// # Возвращает удаленную сеть
+/// # Возвращает
+/// [`PetriNet`] - извлеченная сеть
 fn extract_part(net: &mut PetriNet, remove: &[VertexIndex]) -> PetriNet {
     debug!("remove part {remove:?}");
     let mut result = PetriNet::new();
@@ -526,7 +520,7 @@ fn extract_part(net: &mut PetriNet, remove: &[VertexIndex]) -> PetriNet {
 
     // Проверим, что это цикл: если типы 1 элемента и последнего неравны, то это цикл
     if remove[0].type_ != remove[remove.len() - 1].type_ {
-        let removed = net.disconnect(remove[0], remove[remove.len() - 1])
+        let removed = net.disconnect(remove[remove.len() - 1], remove[0])
             .expect("BUG: the connection must exists in net");
         result.connect(removed.first(), removed.second(), removed.weight())
     }
@@ -538,7 +532,7 @@ fn extract_part(net: &mut PetriNet, remove: &[VertexIndex]) -> PetriNet {
             .find(|conn| conn.first() == index || conn.second() == index)
             .is_some();
 
-        // Если нашли, что у элемента есть соединение, то делим его и удаляем
+        // Если нашли, что у элемента есть соединение, то делим его и потом удаляем родительский элемент
         if found {
             let split = split_element(net, index);
 
@@ -622,6 +616,45 @@ fn extract_paths(net: &mut PetriNet) -> Vec<PetriNet> {
         }
     }
     paths
+}
+
+fn primitive_net(net: &mut PetriNet) -> PetriNet {
+    let mut result = PetriNet::new();
+
+    let transitions = net.transitions();
+
+    'brk: for transition in transitions.values() {
+        let mut from = net
+            .connections()
+            .iter()
+            .filter(|c| c.first().eq(&transition.index()));
+
+        while let Some(from_t) = from.next() {
+            if result.positions().get(&from_t.second()).is_some() {
+                continue;
+            }
+
+            let mut to = net.connections().iter().filter(|c| {
+                c.first().ne(&from_t.second()) && c.second().eq(&transition.index())
+            });
+
+            while let Some(to_t) = to.next() {
+                if result.positions().get(&to_t.first()).is_some() {
+                    continue;
+                }
+
+                result.insert(net.get(to_t.first()).unwrap().clone());
+                result.insert(net.get(from_t.first()).unwrap().clone());
+                result.insert(net.get(from_t.second()).unwrap().clone());
+
+                result.connect(to_t.first(), from_t.first().clone(), 1); // to_t.weight()
+                result.connect(from_t.first(), from_t.second().clone(), 1); // from_t.weight()
+                continue 'brk;
+            }
+        }
+    }
+
+    result
 }
 
 

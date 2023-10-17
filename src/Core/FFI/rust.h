@@ -113,7 +113,6 @@ namespace ffi {
     struct DecomposeContext {
 
         static DecomposeContext* init(PetriNet*);
-        static DecomposeContext* fromNets(const QVector<PetriNet*>&);
         usize positions();
         usize transitions();
         PetriNet* primitive_net();
@@ -131,8 +130,6 @@ namespace ffi {
         usize transition_united(usize index);
         usize position_united(usize index);
         void calculate_all() const;
-
-        CVec<PetriNet*> parts() const;
     };
 
     struct CMatrix {

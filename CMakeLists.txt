@@ -29,6 +29,14 @@ if (NOT QWT_DIR)
     message(FATAL_ERROR "QWT_DIR not set")
 endif()
 
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+    message(STATUS "[RUST] Detected release build")
+    set(CARGO_ARGS ${CARGO_ARGS} --release)
+    set(RUST_OUTDIR release/)
+else ()
+    set(RUST_OUTDIR debug/)
+endif ()
+
 set(QT6_MAIN_DIR ${Qt6_DIR})
 set(QT6_BIN_DIR "${Qt6_DIR}/bin")
 set(GRAPHVIZ_BIN_DIR "${GRAPHVIZ_DIR}/bin")
@@ -194,7 +202,7 @@ if (UNIX)
             )
 else()
     add_executable(${TARGET_NAME}
-            #WIN32
+            WIN32
             ${SRC_FILES}
             ${HEADERS}
             ${WIN_RC_FILE}
@@ -210,11 +218,11 @@ else()
     set(FFI_LIBRARY_NAME "ptn_lib.lib")
 endif()
 set(FFI_SOURCE_DIR "${CMAKE_SOURCE_DIR}/rust")
-set(FFI_TARGET_DIR ${FFI_SOURCE_DIR}/target/release)
+set(FFI_TARGET_DIR ${FFI_SOURCE_DIR}/target/${RUST_OUTDIR})
 set(FFI_OUTPUT_PATH "${FFI_TARGET_DIR}/${FFI_LIBRARY_NAME}")
 add_external_library(
         TARGET            ptn_lib
-        COMMAND           cargo build --release
+        COMMAND           cargo build ${CARGO_ARGS}
         WORKING_DIRECTORY "${FFI_SOURCE_DIR}"
         OUTPUT            "${FFI_OUTPUT_PATH}"
         COMMENT           "Cargo build ptn_lib"

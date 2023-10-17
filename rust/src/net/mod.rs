@@ -1,18 +1,17 @@
 mod connection;
-mod petri_net_vec;
 pub mod vertex;
 
 use crate::ffi::matrix::CNamedMatrix;
 use indexmap::map::IndexMap;
-use nalgebra::DMatrix;
+use nalgebra::{DMatrix, Scalar};
 pub use net::connection::Connection;
 pub use net::vertex::Vertex;
 use net::vertex::{VertexIndex, VertexType};
 use std::collections::HashMap;
+use std::fmt::Debug;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use num_traits::{One, Zero};
 use tracing::{debug, trace};
-
-pub use net::petri_net_vec::*;
 
 #[derive(Debug)]
 pub struct PetriNet {
@@ -55,10 +54,6 @@ impl PetriNet {
 
     pub fn connections(&self) -> &[Connection] {
         &self.connections
-    }
-
-    pub fn connections_mut(&mut self) -> &mut Vec<Connection> {
-        &mut self.connections
     }
 
     /// Количество выходных позиций (т.е. позиций без выходных дуг)
@@ -273,6 +268,22 @@ impl PetriNet {
         }
     }
 
+    /// Прибавляет вес к соединению, или создает новое
+    pub fn update_connect(&mut self, from: VertexIndex, to: VertexIndex, weight: usize) {
+        if from.type_ == to.type_ {
+            panic!("{} and {} has same type", from, to);
+        }
+
+        match self
+            .connections
+            .iter_mut()
+            .find(|c| c.first() == from && c.second() == to)
+        {
+            Some(connection) => connection.set_weight(connection.weight() + weight),
+            None => self.connections.push(Connection::new(from, to, weight)),
+        }
+    }
+
     /// Удаляет соединение из `from` в `to` и возвращает его
     pub fn disconnect(&mut self, from: VertexIndex, to: VertexIndex) -> Option<Connection> {
         if let Some(index) = self.connections.iter().position(|c| c.first() == from && c.second() == to) {
@@ -409,6 +420,33 @@ impl PetriNet {
                     let place_index = self.positions.get_index_of(&conn.first()).unwrap();
                     let transition_index = self.transitions.get_index_of(&conn.second()).unwrap();
                     adjacency_input[(place_index, transition_index)] = -(conn.weight() as f64);
+                }
+            }
+        }
+
+        (adjacency_input, adjacency_output)
+    }
+
+    pub fn one_zero_adjacency_matrices<T>(&self) -> (DMatrix<T>, DMatrix<T>)
+        where
+            T: Debug + PartialEq + Scalar + Clone + Zero + One
+    {
+        let mut adjacency_input =
+            DMatrix::<T>::zeros(self.positions.len(), self.transitions.len());
+        let mut adjacency_output =
+            DMatrix::<T>::zeros(self.positions.len(), self.transitions.len());
+
+        for conn in self.connections.iter() {
+            match conn.first().type_ {
+                VertexType::Transition => {
+                    let place_index = self.positions.get_index_of(&conn.second()).unwrap();
+                    let transition_index = self.transitions.get_index_of(&conn.first()).unwrap();
+                    adjacency_output[(place_index, transition_index)] = T::one();
+                }
+                VertexType::Position => {
+                    let place_index = self.positions.get_index_of(&conn.first()).unwrap();
+                    let transition_index = self.transitions.get_index_of(&conn.second()).unwrap();
+                    adjacency_input[(place_index, transition_index)] = T::one();
                 }
             }
         }

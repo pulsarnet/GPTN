@@ -1,8 +1,8 @@
 mod decompose;
 
 pub use self::decompose::*;
-use net::{Connection, PetriNet, Vertex};
-use std::collections::{HashMap, HashSet};
+use net::PetriNet;
+use std::collections::HashMap;
 use std::hint::black_box;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -15,117 +15,67 @@ pub struct SynthesisProgram {
     data: Vec<u16>,
 
     transitions: usize,
-    //net_after: Option<PetriNet>
+
+    transitions_united: usize,
+    positions_united: usize,
 }
 
 impl SynthesisProgram {
+
+    /// Создает SynthesisProgram
+    ///
+    /// Принимает массив, максимальный элемент которого не превышает размер массива
     pub fn new_with(data: Vec<u16>, transitions: usize) -> Self {
+        let transitions_united = count_duplicates(data[0..transitions].to_vec());
+        let positions_united = count_duplicates(data[transitions..].to_vec());
+
         SynthesisProgram {
             data,
             transitions,
-            //net_after: None
+            transitions_united,
+            positions_united
         }
     }
 
     pub fn transitions_united(&self) -> usize {
-        let mut counts = HashMap::with_capacity(self.transitions);
-        self.data
-            .iter()
-            .take(self.transitions)
-            .for_each(|el| *counts.entry(*el).or_insert_with(|| 0 as usize) += 1);
-        counts.values().filter(|v| **v > 1).count()
+        self.transitions_united
     }
 
     pub fn positions_united(&self) -> usize {
-        let mut counts = HashMap::with_capacity(self.data.len() - self.transitions);
-        self.data
-            .iter()
-            .skip(self.transitions)
-            .for_each(|el| *counts.entry(*el).or_insert_with(|| 0 as usize) += 1);
-        counts.values().filter(|v| **v > 1).count()
+        self.positions_united
     }
 
-    pub fn sets(
-        &self,
-        pos_indexes_vec: &Vec<Vertex>,
-        tran_indexes_vec: &Vec<Vertex>,
-    ) -> (Vec<Vec<usize>>, Vec<Vec<usize>>) {
-        let mut t_sets = vec![];
-        let mut p_sets = vec![];
-        let mut searched = vec![].into_iter().collect::<HashSet<u16>>();
-
-        for index_a in 0..tran_indexes_vec.len() {
-            let search_number = self.data[index_a];
-            if searched.contains(&search_number) {
-                continue;
-            }
-            let mut indexes = vec![];
-            for index_b in (0..tran_indexes_vec.len()).filter(|e| self.data[*e] == search_number) {
-                if index_a == index_b {
-                    continue;
-                }
-                indexes.push(index_b);
-            }
-            if indexes.len() > 0 {
-                indexes.push(index_a);
-                t_sets.push(indexes);
-            }
-            searched.insert(search_number);
-        }
-
-        let offset = tran_indexes_vec.len();
-        let mut searched = vec![].into_iter().collect::<HashSet<u16>>();
-        for index_a in offset..(offset + pos_indexes_vec.len()) {
-            let search_number = self.data[index_a];
-            if searched.contains(&search_number) {
-                continue;
-            }
-            let mut indexes = vec![];
-            for index_b in (offset..(offset + pos_indexes_vec.len()))
-                .filter(|e| self.data[*e] == search_number)
-            {
-                if index_a == index_b {
-                    continue;
-                }
-                indexes.push(index_b - offset);
-            }
-            if indexes.len() > 0 {
-                indexes.push(index_a - offset);
-                p_sets.push(indexes);
-            }
-            searched.insert(search_number);
-        }
-
-        (t_sets, p_sets)
+    pub fn sets(&self) -> (Vec<Vec<usize>>, Vec<Vec<usize>>) {
+        (
+            sets_of_duplicate_indexes(&self.data[0..self.transitions]),
+            sets_of_duplicate_indexes(&self.data[self.transitions..])
+        )
     }
 }
 
-pub fn synthesis_program(programs: &DecomposeContext, index: usize) -> PetriNet {
-    let mut pos_indexes_vec = programs.positions().clone();
-    let mut tran_indexes_vec = programs.transitions().clone();
+pub fn synthesis_program(context: &DecomposeContext, index: usize) -> PetriNet {
+    let mut pos_indexes_vec = context.positions().clone();
+    let mut tran_indexes_vec = context.transitions().clone();
 
-    let c_matrix = programs.c_matrix.clone();
-    let (mut adjacency_input, mut adjacency_output) = programs.primitive_matrix.clone();
+    let c_matrix = context.c_matrix.clone();
+    let (mut adjacency_input, mut adjacency_output) = context.primitive_matrix.clone();
 
-    let mut markers = programs.marking();
+    let mut markers = context.marking();
 
     let program = SynthesisProgram::new_with(
-        programs.programs.get_partition(index),
+        context.programs.get_partition(index),
         tran_indexes_vec.len(),
     );
 
-    let (t_sets, p_sets) = program.sets(&pos_indexes_vec, &tran_indexes_vec);
+    let (t_sets, p_sets) = program.sets();
     let (t_sets_size, p_sets_size) = (t_sets.len(), p_sets.len());
 
-    debug!("PSET => {:?}", p_sets);
-    debug!("TSET => {:?}", t_sets);
-
     for t_set in t_sets.into_iter() {
-        programs.transition_synthesis_program(&t_set, &mut adjacency_input, &mut adjacency_output);
+        context.transition_synthesis_program(&t_set, &mut adjacency_input, &mut adjacency_output);
     }
 
     for p_set in p_sets.into_iter() {
-        programs.position_synthesis_program(
+        context.position_synthesis_program(
             &p_set,
             &mut adjacency_input,
             &mut adjacency_output,
@@ -134,8 +84,8 @@ pub fn synthesis_program(programs: &DecomposeContext, index: usize) -> PetriNet 
     }
 
     if t_sets_size == 0 && p_sets_size == 0 {
-        println!("adjacency_input BEFORE => {}", adjacency_input);
-        println!("adjacency_output BEFORE => {}", adjacency_output);
+        debug!("adjacency_input BEFORE => {}", adjacency_input);
+        debug!("adjacency_output BEFORE => {}", adjacency_output);
     }
 
     adjacency_input = &c_matrix * adjacency_input;
@@ -143,8 +93,8 @@ pub fn synthesis_program(programs: &DecomposeContext, index: usize) -> PetriNet 
     markers = &c_matrix * markers;
 
     if t_sets_size == 0 && p_sets_size == 0 {
-        println!("adjacency_input => {}", adjacency_input);
-        println!("adjacency_output => {}", adjacency_output);
+        debug!("adjacency_input => {}", adjacency_input);
+        debug!("adjacency_output => {}", adjacency_output);
     }
 
     let mut fract = true;
@@ -266,27 +216,24 @@ pub fn synthesis_program(programs: &DecomposeContext, index: usize) -> PetriNet 
         trans_new_indexes.insert(transition.index(), index);
     }
 
-    let mut connections = vec![];
-    for transition in new_net.transitions().values() {
+    for (vtx_idx, idx) in trans_new_indexes {
         for i in 0..2 {
             let column = match i {
-                0 => adjacency_input.column(*trans_new_indexes.get(&transition.index()).unwrap()),
-                1 => adjacency_output.column(*trans_new_indexes.get(&transition.index()).unwrap()),
-                _ => panic!("Invalid column index"),
+                0 => adjacency_input.column(idx),
+                1 => adjacency_output.column(idx),
+                _ => unreachable!()
             };
 
             for (index, &el) in column.iter().enumerate().filter(|e| e.1.ne(&0.)) {
                 let pos = pos_indexes_vec[index].clone();
-                if el < 0. {
-                    connections.push(Connection::new(pos.index(), transition.index(), el.abs() as usize));
-                } else {
-                    connections.push(Connection::new(transition.index(), pos.index(), el.abs() as usize));
+                if (el > 0. && i == 0) || (el < 0. && i == 1) {
+                    new_net.update_connect(pos.index(), vtx_idx, el.abs() as usize);
+                } else if (el > 0. && i == 1) || (el < 0. && i == 0) {
+                    new_net.update_connect(vtx_idx, pos.index(), el.abs() as usize);
                 }
             }
         }
     }
-
-    *new_net.connections_mut() = connections;
 
     new_net
 }
@@ -309,7 +256,23 @@ pub fn synthesis_all_programs(ctx: Arc<DecomposeContext>) -> usize {
         sleep(Duration::from_micros(1000))
     }
 
-    //println!("counter: {}", counter.load(Ordering::SeqCst));
-    //Arc::try_unwrap(result).unwrap().into_inner().unwrap()
     counter.load(Ordering::SeqCst)
+}
+
+fn count_duplicates(mut data: Vec<u16>) -> usize {
+    let len = data.len();
+    for i in 0..len {
+        let idx = data[i] as usize % len;
+        data[idx] += len as u16;
+    }
+    data.iter().filter(|&&v| (v / len as u16) >= 2).count()
+}
+
+fn sets_of_duplicate_indexes(slice: &[u16]) -> Vec<Vec<usize>> {
+    let mut set = vec![vec![]; slice.len()];
+    for (idx, &search_number) in slice.iter().enumerate() {
+        set[search_number as usize].push(idx);
+    }
+    set.retain(|array| array.len() > 1);
+    set
 }

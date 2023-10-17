@@ -68,7 +68,6 @@ extern "C" {
 
     // DecomposeContext
     DecomposeContext* decompose_context_init(PetriNet&);
-    DecomposeContext* decompose_context_from_nets(PetriNet* const *, usize);
     void decompose_context_delete(DecomposeContext*);
     usize decompose_context_positions(DecomposeContext&);
     usize decompose_context_transitions(DecomposeContext&);
@@ -308,10 +307,6 @@ DecomposeContext *DecomposeContext::init(PetriNet *net) {
     return ::decompose_context_init(*net);
 }
 
-DecomposeContext *DecomposeContext::fromNets(const QVector<PetriNet *>& data) {
-    return ::decompose_context_from_nets(data.data(), data.size());
-}
-
 usize DecomposeContext::positions() {
     return ::decompose_context_positions(*this);
 }
@@ -334,12 +329,6 @@ usize DecomposeContext::transition_index(usize i) {
 
 PetriNet *DecomposeContext::linear_base_fragments() {
     return ::decompose_context_linear_base_fragments(*this);
-}
-
-CVec<PetriNet *> DecomposeContext::parts() const {
-    CVec<PetriNet*> result${};
-    ::decompose_context_parts(*this, &result$);
-    return result$;
 }
 
 void DecomposeContext::calculate_all() const {

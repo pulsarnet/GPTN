@@ -20,7 +20,7 @@ use std::ops::Deref;
 use std::sync::Arc;
 
 use ffi::vec::CVec;
-use modules::synthesis::{synthesis_program, DecomposeContext, DecomposeContextBuilder, SynthesisProgram, synthesis_all_programs};
+use modules::synthesis::{synthesis_program, DecomposeContext, SynthesisProgram, synthesis_all_programs};
 
 pub mod ffi;
 mod modules;
@@ -29,7 +29,7 @@ mod net;
 mod core;
 mod logger;
 
-use net::{PetriNet, PetriNetVec, Vertex};
+use net::{PetriNet, Vertex};
 
 macro_rules! profile {
     ($($token:tt)+) => {
@@ -64,37 +64,8 @@ impl From<DMatrix<i32>> for CMatrix {
 }
 
 #[no_mangle]
-pub extern "C" fn decompose_context_parts(
-    ctx: &DecomposeContext,
-    parts: &mut CVec<*const PetriNet>,
-) {
-    let result = ctx
-        .parts
-        .0
-        .iter()
-        .map(|p| p as *const PetriNet)
-        .collect::<Vec<_>>();
-
-    unsafe { std::ptr::write_unaligned(parts, CVec::from(result)) };
-}
-
-#[no_mangle]
 pub extern "C" fn decompose_context_init(net: &PetriNet) -> *mut DecomposeContext {
     Box::into_raw(Box::new(DecomposeContext::init(net)))
-}
-
-#[no_mangle]
-pub extern "C" fn decompose_context_from_nets(
-    nets: *mut *mut PetriNet,
-    len: usize,
-) -> *mut DecomposeContext {
-    let mut parts_m = vec![];
-    for i in 0..len {
-        parts_m.push(unsafe { &**nets.offset(i as isize) }.clone());
-    }
-    Box::into_raw(Box::new(
-        DecomposeContextBuilder::new(PetriNetVec(parts_m)).build(),
-    ))
 }
 
 #[no_mangle]
