@@ -1,5 +1,4 @@
-// TODO: падает при нескольких ЛБФ
-
+use std::ops::{AddAssign, MulAssign, SubAssign};
 use crate::core::SetPartitionMesh;
 use crate::core::{logical_column_add, logical_row_add};
 use crate::modules::synthesis::SynthesisProgram;
@@ -7,8 +6,8 @@ use crate::net::vertex::Vertex;
 use crate::net::PetriNet;
 use crate::CMatrix;
 use nalgebra::base::DMatrix;
-use ndarray::{Array1, Array2};
-use ndarray_linalg::Solve;
+use ndarray::{Array1, Array2, Axis, s};
+use ndarray_linalg::{LeastSquaresSvd, Solve};
 use tracing::{debug, info};
 use core::{NetCycles, NetPaths};
 use net::Connection;
@@ -29,18 +28,20 @@ impl DecomposeContextBuilder {
     }
 
     fn solve_with_mu(mut a: Array2<f64>, mut b: Array1<f64>) -> Array1<f64> {
-        // find all negative in n/2 eqution
+        // find all negative in n/2 equation
         let mu_equation_index = a.nrows() / 2;
         for i in 0..mu_equation_index {
             for j in 0..a.ncols() {
                 if a[(i, j)] == -1. && a[(mu_equation_index, j)] != 0. {
-                    a[(mu_equation_index, j)] = 0.;
-                    for k in 0..a.ncols() {
-                        if a[(i, k)] == 1. {
-                            a[(mu_equation_index, k)] += 1.;
-                            b[mu_equation_index] += b[i];
-                        }
-                    }
+                    let multiplier = a[(mu_equation_index, j)];
+                    a.row_mut(i).mul_assign(multiplier);
+                    b[i] *= multiplier;
+
+                    let a_row = a.row(i).into_owned();
+                    let mut mu_row = a.row_mut(mu_equation_index);
+                    mu_row.add_assign(&a_row);
+
+                    b[mu_equation_index] += b[i];
                 }
             }
         }
@@ -64,31 +65,28 @@ impl DecomposeContextBuilder {
             }
 
             for j in 0..a.ncols() {
-                if b[i] > 0. && a[(i, j)] == 1. {
-                    a[(next_equation_index, j)] = 1.;
+                if b[i] > 0. && a[(i, j)] > 0. {
+                    a[(next_equation_index, j)] = a[(i, j)];
                     b[next_equation_index] = b[i];
                     next_equation_index += 1;
                     break;
-                } else if b[i] < 0. && a[(i, j)] == -1. {
-                    a[(next_equation_index, j)] = 1.;
+                } else if b[i] < 0. && a[(i, j)] < 0. {
+                    a[(next_equation_index, j)] = a[(i, j)].abs();
                     b[next_equation_index] -= b[i];
                     next_equation_index += 1;
                     break;
-                } else if a[(i, j)] == -1. {
-                    a[(next_equation_index, j)] = 1.;
+                } else if a[(i, j)] < 0. {
+                    a[(next_equation_index, j)] = a[(i, j)].abs();
                     next_equation_index += 1;
                     break;
                 }
-                // if a[(i, j)] == -1.{
-                //     a[(next_equation_index, j)] = 1.;
-                //     next_equation_index += 1;
-                // }
             }
         }
 
-        println!("a: {}", a);
-        // solve
-        a.solve(&b).unwrap()
+        debug!("Solve: {a} and {b} =");
+        let solution = a.solve(&b).unwrap();
+        debug!("{solution}");
+        solution
     }
 
     fn solve_without_mu(mut a: Array2<f64>, mut b: Array1<f64>) -> Array1<f64> {
@@ -118,7 +116,9 @@ impl DecomposeContextBuilder {
             }
         }
 
-        a.solve(&b).unwrap()
+        let solution = a.solve(&b).unwrap();
+        debug!("Solve: {a} and {b} = {solution}");
+        solution
     }
 
     fn solve(a: Array2<f64>, b: Array1<f64>) -> Array1<f64> {
@@ -160,7 +160,7 @@ impl DecomposeContextBuilder {
             array_a
                 .row_mut(transitions)
                 .assign(&mu.row(0).iter().copied().collect::<Array1<f64>>());
-            array_b[transitions] = mu[(0, row)] as f64;
+            array_b[transitions] = mu[(0, row)];
 
             let solution = DecomposeContextBuilder::solve(array_a, array_b);
             c_matrix
@@ -168,15 +168,13 @@ impl DecomposeContextBuilder {
                 .copy_from_slice(solution.as_slice().unwrap());
         }
 
-        println!("{}", c_matrix);
+        debug!("Tensor C: {}", c_matrix);
 
         c_matrix.iter_mut().for_each(|x| {
             if x.fract() == 0. && *x == 0. {
                 *x = 0.
             }
         });
-
-        println!("{}", c_matrix);
 
         c_matrix
     }
@@ -200,8 +198,8 @@ impl DecomposeContextBuilder {
                 .collect::<Vec<_>>(),
         );
 
-        debug!("input: {} output: {}", adjacency_primitive.1, adjacency_primitive.0);
-        debug!("input: {} output: {}", linear_base_fragments_matrix.1, linear_base_fragments_matrix.0);
+        debug!("input: {} output: {}", adjacency_primitive.0, adjacency_primitive.1);
+        debug!("input: {} output: {}", linear_base_fragments_matrix.0, linear_base_fragments_matrix.1);
         let c_matrix = DecomposeContextBuilder::calculate_c_matrix(
             positions.len(),
             transitions.len(),
