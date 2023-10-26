@@ -1,73 +1,28 @@
 cmake_minimum_required(VERSION 3.17.3)
 project(GPTN VERSION 0.1.1)
 
-message(STATUS ${CMAKE_CXX_FLAGS})
 set(CMAKE_CXX_STANDARD 20)
+
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 set(TARGET_NAME GPTN)
 set(TARGET_DIR ${CMAKE_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TARGET_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${TARGET_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${TARGET_DIR}/lib)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 set(CMAKE_AUTORCC ON)
 set(VERSION_COMPONENT_BUILD 1)
 
-if (NOT GRAPHVIZ_DIR)
-    message(FATAL_ERROR "Graphviz dir not set")
-endif()
-
-if (NOT Qt6_DIR)
-    message(FATAL_ERROR "Qt6_DIR not set")
-endif()
-
-if (NOT Qt_ADVANCED_DOCKING_SYSTEM_DIR)
-    message(FATAL_ERROR "Qt_ADVANCED_DOCKING_SYSTEM_DIR not set")
-endif()
-
-if (NOT QWT_DIR)
-    message(FATAL_ERROR "QWT_DIR not set")
-endif()
-
-if (CMAKE_BUILD_TYPE STREQUAL "Release")
-    message(STATUS "[RUST] Detected release build")
-    set(CARGO_ARGS ${CARGO_ARGS} --release)
-    set(RUST_OUTDIR release/)
-else ()
-    set(RUST_OUTDIR debug/)
-endif ()
-
-set(QT6_MAIN_DIR ${Qt6_DIR})
-set(QT6_BIN_DIR "${Qt6_DIR}/bin")
-set(GRAPHVIZ_BIN_DIR "${GRAPHVIZ_DIR}/bin")
-set(QWT_BIN_DIR "${QWT_DIR}/lib")
-set(Qt_ADVANCED_DOCKING_SYSTEM_BIN_DIR "${Qt_ADVANCED_DOCKING_SYSTEM_DIR}/bin")
-
-include_directories(${GRAPHVIZ_DIR}/include/)
-link_directories(${GRAPHVIZ_DIR}/lib/)
+find_package(Graphviz REQUIRED COMPONENTS gvc pathplan)
+find_package(qt6advanceddocking REQUIRED)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Core Gui Svg Charts DataVisualization)
+find_package(Qwt REQUIRED)
 
 add_compile_definitions(QWT_DLL)
-find_library(QWT_LIBRARY
-        NAMES qwt
-        HINTS ${QWT_DIR}/lib
-        REQUIRED)
 
-find_library(QWT_LIBRARY_D
-        NAMES qwtd
-        HINTS ${QWT_DIR}/lib
-        REQUIRED)
-
-if(QWT_LIBRARY)
-    include_directories(${QWT_DIR}/include)
-    message("QWT optimized found: ${QWT_LIBRARY}")
-endif()
-
-if(QWT_LIBRARY_D)
-    message("QWT debug found: ${QWT_LIBRARY_D}")
-endif()
+set(QT6_MAIN_DIR ${Qt6_DIR})
 
 if(NOT WIN32)
-    #set(CMAKE_PREFIX_PATH "/Users/nikolajmuravev/Qt/6.2.1/macos/lib/cmake")
     add_compile_definitions(__cpp_lib_format=201907L)
 endif()
 
@@ -75,12 +30,6 @@ if(WIN32)
     configure_file(cmake/gptn.rc.cmake ${CMAKE_CURRENT_BINARY_DIR}/gptn.rc)
     set(WIN_RC_FILE ${CMAKE_CURRENT_BINARY_DIR}/gptn.rc)
 endif()
-
-set(CMAKE_PREFIX_PATH ${Qt6_DIR})
-find_package(Qt6 REQUIRED COMPONENTS Widgets Core Gui Svg Charts DataVisualization)
-
-set(CMAKE_PREFIX_PATH ${Qt_ADVANCED_DOCKING_SYSTEM_DIR})
-find_package(qt6advanceddocking)
 
 set(SRC_FILES
         main.cpp
@@ -211,21 +160,11 @@ else()
 endif()
 
 # RUST {
-include(AddExternalLibrary)
-if(APPLE)
-    set(FFI_LIBRARY_NAME "libptn_lib.a")
-else()
-    set(FFI_LIBRARY_NAME "ptn_lib.lib")
-endif()
-set(FFI_SOURCE_DIR "${CMAKE_SOURCE_DIR}/rust")
-set(FFI_TARGET_DIR ${FFI_SOURCE_DIR}/target/${RUST_OUTDIR})
-set(FFI_OUTPUT_PATH "${FFI_TARGET_DIR}/${FFI_LIBRARY_NAME}")
-add_external_library(
-        TARGET            ptn_lib
-        COMMAND           cargo build ${CARGO_ARGS}
-        WORKING_DIRECTORY "${FFI_SOURCE_DIR}"
-        OUTPUT            "${FFI_OUTPUT_PATH}"
-        COMMENT           "Cargo build ptn_lib"
+include(AddRustLibrary)
+build_rust_library(
+        TARGET       ptn_lib
+        SOURCE_DIR   "${CMAKE_SOURCE_DIR}/rust"
+        LIB_FILENAME ptn_lib.lib
 )
 # } RUST
 
@@ -233,18 +172,16 @@ add_external_library(
 target_link_libraries(${TARGET_NAME} PRIVATE
         ptn_lib
         ads::qt6advanceddocking
-        gvc
-        cgraph
+        Graphviz::cgraph
+        Graphviz::gvc
+        Graphviz::pathplan
         Qt6::Widgets
         Qt6::Core
         Qt6::Gui
         Qt6::Svg
         Qt6::DataVisualization
+        Qwt::Qwt
 )
-target_link_libraries(${TARGET_NAME} PRIVATE
-        optimized ${QWT_LIBRARY}
-        debug ${QWT_LIBRARY_D}
-        )
 
 qt6_import_plugins(${TARGET_NAME} INCLUDE_BY_TYPE imageformats)
 
@@ -257,56 +194,23 @@ set_target_properties(${TARGET_NAME} PROPERTIES
         CXX_EXTENSIONS OFF
         )
 
-if (APPLE)
-    set(APPS ${CMAKE_INSTALL_PREFIX_DIR}/${PROJECT_NAME}.app)
-
-    if(CMAKE_PREFIX_PATH)
-        foreach(dir ${CMAKE_PREFIX_PATH})
-            list(APPEND DIRS "${dir}/bin" "${dir}/lib")
-        endforeach()
-    endif()
-    set_target_properties(${TARGET_NAME} PROPERTIES
-            BUNDLE True
-            )
-
-    install(CODE "
-        include(BundleUtilites)
-        fixup_bundle(\"\" \"${QWT_LIBRARY}\" \"${QWT_LIBRARY}\")
-    ")
-endif()
-
 
 if (WIN32)
     include(InstallRequiredSystemLibraries)
-    install(FILES
-            # Copy Qt6 dlls
-            "${QT6_BIN_DIR}/Qt6Core.dll"
-            "${QT6_BIN_DIR}/Qt6Gui.dll"
-            "${QT6_BIN_DIR}/Qt6Widgets.dll"
-            "${QT6_BIN_DIR}/Qt6Svg.dll"
-            "${QT6_BIN_DIR}/Qt6OpenGLWidgets.dll"
-            "${QT6_BIN_DIR}/Qt6OpenGL.dll"
-            "${QT6_BIN_DIR}/Qt6DataVisualization.dll"
-
-            # Copy Graphviz
-            "${GRAPHVIZ_BIN_DIR}/cgraph.dll"
-            "${GRAPHVIZ_BIN_DIR}/gvc.dll"
-            "${GRAPHVIZ_BIN_DIR}/pathplan.dll"
-            "${GRAPHVIZ_BIN_DIR}/expat.dll"
-            "${GRAPHVIZ_BIN_DIR}/cdt.dll"
-            "${GRAPHVIZ_BIN_DIR}/gvplugin_core.dll"
-            "${GRAPHVIZ_BIN_DIR}/gvplugin_dot_layout.dll"
-            "${GRAPHVIZ_BIN_DIR}/gvplugin_neato_layout.dll"
-            "${GRAPHVIZ_BIN_DIR}/gvplugin_pango.dll"
-            "${GRAPHVIZ_BIN_DIR}/xdot.dll"
-            "${GRAPHVIZ_BIN_DIR}/config6"
-
-            # Copy Qwt
-            "${QWT_BIN_DIR}/qwt.dll"
-
-            # Copy QtAdvancedDockingSystem
-            "${Qt_ADVANCED_DOCKING_SYSTEM_BIN_DIR}/qt6advanceddocking.dll"
-            DESTINATION .)
+    install(IMPORTED_RUNTIME_ARTIFACTS
+            Qt6::Core
+            Qt6::Widgets
+            Qt6::Gui
+            Qt6::Svg
+            Qt6::Charts
+            Qt6::DataVisualization
+            Graphviz::cgraph
+            Graphviz::cdt
+            Graphviz::gvc
+            Graphviz::pathplan
+            Qwt::Qwt
+            ads::qt6advanceddocking
+            RUNTIME DESTINATION .)
 
     # Copy Qt6 platform plugins
     install(FILES "${QT6_MAIN_DIR}/plugins/platforms/qwindows.dll" DESTINATION ./plugins/platforms)
@@ -356,23 +260,17 @@ if (WIN32)
             $<TARGET_FILE:Qt6::QWindowsVistaStylePlugin>
             $<TARGET_FILE_DIR:${TARGET_NAME}>/plugins/styles/
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${GRAPHVIZ_BIN_DIR}/cgraph.dll"
-            "${GRAPHVIZ_BIN_DIR}/gvc.dll"
-            "${GRAPHVIZ_BIN_DIR}/pathplan.dll"
-            "${GRAPHVIZ_BIN_DIR}/expat.dll"
-            "${GRAPHVIZ_BIN_DIR}/cdt.dll"
-            "${GRAPHVIZ_BIN_DIR}/gvplugin_core.dll"
-            "${GRAPHVIZ_BIN_DIR}/gvplugin_dot_layout.dll"
-            "${GRAPHVIZ_BIN_DIR}/gvplugin_neato_layout.dll"
-            "${GRAPHVIZ_BIN_DIR}/gvplugin_pango.dll"
-            "${GRAPHVIZ_BIN_DIR}/xdot.dll"
-            "${GRAPHVIZ_BIN_DIR}/config6"
+            $<TARGET_FILE:Graphviz::gvc>
+            $<TARGET_FILE:Graphviz::cgraph>
+            $<TARGET_FILE:Graphviz::cdt>
+            $<TARGET_FILE:Graphviz::pathplan>
+            ${GRAPHVIZ_CONFIG}
             $<TARGET_FILE_DIR:${TARGET_NAME}>
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${QWT_BIN_DIR}/qwt$<$<CONFIG:Debug>:d>.dll"
+            $<TARGET_FILE:Qwt::Qwt>
             $<TARGET_FILE_DIR:${TARGET_NAME}>
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:ads::qt6advanceddocking>"
+            $<TARGET_FILE:ads::qt6advanceddocking>
             $<TARGET_FILE_DIR:${TARGET_NAME}>
     )
 endif()
