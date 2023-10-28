@@ -30,6 +30,7 @@ GraphicsView::GraphicsView(MainWindow* window, QWidget *parent)
     this->setDragMode(QGraphicsView::RubberBandDrag);
     //this->setCacheMode(CacheBackground);
     this->setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
+    this->setContextMenuPolicy(Qt::ContextMenuPolicy::NoContextMenu);
 
     m_zoom = new GraphicsViewZoom(this);
     m_zoom->setModifier(Qt::NoModifier);
@@ -109,6 +110,8 @@ void GraphicsView::mousePressEvent(QMouseEvent *event) {
 
         setCursor(QCursor(icon));
         setInteractive(false);
+    } else if (event->button() == Qt::RightButton) {
+        this->contextMenu();
     }
 
     QGraphicsView::mousePressEvent(event);
@@ -151,7 +154,7 @@ void GraphicsView::resizeEvent(QResizeEvent *event) {
     QGraphicsView::resizeEvent(event);
 }
 
-void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
+void GraphicsView::contextMenu() {
     auto gScene = dynamic_cast<GraphicsScene*>(scene());
 
     QMenu menu;
@@ -167,9 +170,7 @@ void GraphicsView::contextMenuEvent(QContextMenuEvent *event) {
 
     menu.addMenu(gScene->actions()->graphViz());
 
-    menu.exec(event->globalPos());
-
-    QGraphicsView::contextMenuEvent(event);
+    menu.exec(QCursor::pos());
 }
 
 GraphicsView::~GraphicsView() noexcept {

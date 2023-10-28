@@ -37,7 +37,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
 
-    void contextMenuEvent(QContextMenuEvent *event) override;
+    void contextMenu();
 
 protected slots:
 
