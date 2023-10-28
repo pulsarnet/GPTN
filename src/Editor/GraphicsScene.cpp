@@ -68,10 +68,14 @@ GraphicsScene::GraphicsScene(ffi::PetriNet *net, QObject *parent)
 }
 
 
-// todo разобраться
-void GraphicsScene::setMode(Mode mod) {
-    if (m_allowMods & mod) m_mode = mod;
-    else qDebug() << "Mode " << mod << " not allowed!";
+void GraphicsScene::setMode(Mode mode) {
+    if (m_allowMods & mode) {
+        m_mode = mode;
+        qDebug() << "Change scene mode to" << mode;
+    }
+    else {
+        qDebug() << "Mode" << mode << "not allowed!";
+    }
 }
 
 void GraphicsScene::setAllowMods(Modes mods) {
