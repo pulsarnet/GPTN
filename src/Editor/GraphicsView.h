@@ -45,7 +45,7 @@ protected slots:
 
 private:
 
-    QAction* makeAction(const QIcon &icon, const QString &name, bool checkable, const QVariant& data, QActionGroup *actionGroup);
+    QAction* makeAction(const QIcon &icon, const QString &name, bool checkable, const QVariant& data, QActionGroup *actionGroup, const QKeySequence&);
 
     GraphicsViewZoom* m_zoom = nullptr;
     QPointF m_origin;

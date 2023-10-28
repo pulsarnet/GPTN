@@ -46,26 +46,10 @@ public:
         m_toolArea = area;
     }
 
-    void addTool(QAction* tool) {
-        auto button = new Tool;
-        dynamic_cast<QVBoxLayout*>(this->layout())->addWidget(button);
-        button->setDefaultAction(tool);
+    void addTool(QAction* tool, const QString& description) {
+        auto button = new Tool(tool, description);
+        dynamic_cast<QVBoxLayout*>(this->layout())->addWidget(button);;
         button->setSize(m_buttonSize);
-        m_buttons.push_back(button);
-
-        resizeEvent(nullptr);
-    }
-
-    void addTool(QMenu* menu) {
-        auto button = new Tool;
-        menu->setWindowFlags(menu->windowFlags() | Qt::FramelessWindowHint);
-        menu->setAttribute(Qt::WA_TranslucentBackground);
-
-        dynamic_cast<QVBoxLayout*>(this->layout())->addWidget(button);
-        button->setDefaultAction(new QAction);
-        button->setMenu(menu);
-        button->setSize(m_buttonSize);
-        button->setPopupMode(QToolButton::InstantPopup);
         m_buttons.push_back(button);
 
         resizeEvent(nullptr);
