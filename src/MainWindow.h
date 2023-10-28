@@ -20,7 +20,6 @@
 #include "core/ProjectMetadata.h"
 
 class ActionTabWidget;
-class MainTreeItem;
 class ApplicationProjectController;
 class ActionTabWidgetController;
 class MatrixWindow;

@@ -28,7 +28,7 @@ GraphicsView::GraphicsView(MainWindow* window, QWidget *parent)
     this->setWindowFlag(Qt::BypassGraphicsProxyWidget);
     this->setRubberBandSelectionMode(Qt::ContainsItemBoundingRect);
     this->setDragMode(QGraphicsView::RubberBandDrag);
-    this->setCacheMode(CacheBackground);
+    //this->setCacheMode(CacheBackground);
     this->setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
 
     m_zoom = new GraphicsViewZoom(this);
