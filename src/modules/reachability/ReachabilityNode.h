@@ -14,7 +14,7 @@ class ReachabilityNode : public QGraphicsItem {
 
 public:
     explicit ReachabilityNode(QList<int32_t> values, QGraphicsItem* parent = nullptr);
-    explicit ReachabilityNode(QList<int32_t> values, QList<ffi::VertexIndex> headers, QGraphicsItem* parent = nullptr);
+    explicit ReachabilityNode(QList<int32_t> values, const QList<ffi::VertexIndex>& headers, QGraphicsItem* parent = nullptr);
 
     [[nodiscard]] const QString& text() const;
 

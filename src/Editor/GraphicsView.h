@@ -60,7 +60,6 @@ private:
     QAction* m_markerAction = nullptr;
     QActionGroup* m_actionGroup = nullptr;
 
-    MatrixWindow* m_IOMatrixWindow = nullptr;
     SimulationWidget* m_simulationWidget = nullptr;
 
     MainWindow* m_mainWindow;

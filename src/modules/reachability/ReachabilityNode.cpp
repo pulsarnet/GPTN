@@ -46,7 +46,7 @@ ReachabilityNode::ReachabilityNode(QList<int32_t> values, QGraphicsItem *parent)
     setAcceptHoverEvents(true);
 }
 
-ReachabilityNode::ReachabilityNode(QList<int32_t> values, QList<ffi::VertexIndex> headers, QGraphicsItem *parent): QGraphicsItem(parent) {
+ReachabilityNode::ReachabilityNode(QList<int32_t> values, const QList<ffi::VertexIndex>& headers, QGraphicsItem *parent): QGraphicsItem(parent) {
     m_values = std::move(values);
     m_text = create_text_with_headers(m_values, headers);
 

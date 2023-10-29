@@ -103,7 +103,6 @@ void GraphicsView::onToolBoxAction(QAction* action) {
 }
 
 void GraphicsView::mousePressEvent(QMouseEvent *event) {
-
     if (event->button() == Qt::MiddleButton) {
         m_origin = event->pos();
         auto icon = QPixmap(":/images/tools/move.svg");
@@ -174,6 +173,6 @@ void GraphicsView::contextMenu() {
 }
 
 GraphicsView::~GraphicsView() noexcept {
-    if (m_IOMatrixWindow)
-        m_IOMatrixWindow->close();
+    delete m_actionGroup;
+    delete m_simulationWidget;
 }
