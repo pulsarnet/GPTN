@@ -18,6 +18,7 @@ namespace rust {
 
 class ReachabilityView;
 
+// todo move to ActionTabWideget directory
 class ReachabilityWindow : public QWidget {
 
 public:

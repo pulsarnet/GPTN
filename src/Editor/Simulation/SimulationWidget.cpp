@@ -116,7 +116,6 @@ void SimulationWidget::runSimulation() {
     // Создание объекта ffi симуляции сети
     if (m_state != State::Paused) {
         this->initSimulation();
-        this->openPlot();
     }
 
     m_timer->start();
@@ -150,7 +149,6 @@ void SimulationWidget::stepSimulation() {
     // Выполнение одного цикла симуляции
     if (m_state != State::Paused) {
         this->initSimulation();
-        this->openPlot();
     }
     this->simulate();
 
@@ -272,7 +270,6 @@ void SimulationWidget::cancelSimulation() {
 
     updateScene();
     updateLabel();
-    closePlot();
 
     scene->update();
 }
@@ -285,14 +282,4 @@ void SimulationWidget::updatePlot() {
             m_plot->registerFire(transition, m_simulation->cycles());
         }
     }
-}
-
-void SimulationWidget::openPlot() {
-    // Открытие графика
-    m_plot->show();
-}
-
-void SimulationWidget::closePlot() {
-    // Закрытие графика
-    m_plot->hide();
 }

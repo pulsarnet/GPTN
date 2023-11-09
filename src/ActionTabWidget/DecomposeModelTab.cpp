@@ -1,22 +1,13 @@
-//
-// Created by nmuravev on 3/20/2022.
-//
-
 #include "DecomposeModelTab.h"
-#include "../Editor/GraphicsScene.h"
-#include "../synthesis/SynthesisTable.h"
-#include "../DockSystem/DockToolbar.h"
 #include <QGridLayout>
 #include <QSplitter>
 #include <DockAreaWidget.h>
-#include <QLabel>
-#include <unordered_map>
-
 #include <Q3DScatter>
-#include <QwtPickerMachine>
-#include <QwtPlotGrid>
 #include <QElapsedTimer>
 #include "../synthesis/SynthesisWindow.h"
+#include "../Editor/GraphicsScene.h"
+#include "../Editor/GraphicsView.h"
+#include "../DockSystem/DockWidget.h"
 #include "../DataVisualization/InputHandler3D.h"
 #include "../Core/ProjectMetadata.h"
 #include "../Core/FFI/rust.h"
@@ -27,7 +18,7 @@ inline size_t qHash(const QVector3D &v)
 }
 
 DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
-    : QWidget(parent)
+    : BaseTab(parent)
     , m_metadata(metadata)
     , m_dockManager(new ads::CDockManager(this))
 {

@@ -30,6 +30,8 @@ public:
     void setToolBoxVisibility(bool visible = true);
     void setAllowSimulation(bool allow = true);
 
+    SimulationWidget* simulationWidget() { return m_simulationWidget; }
+
 protected:
 
     void mousePressEvent(QMouseEvent *event) override;

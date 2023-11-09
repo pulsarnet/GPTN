@@ -1,10 +1,8 @@
 #ifndef FFI_RUST_RUST_H
 #define FFI_RUST_RUST_H
 
-#include <array>
 #include <qvariant.h>
 #include "vec.h"
-#include "types.h"
 
 namespace rust {
     struct ReachabilityTree;

@@ -6,10 +6,11 @@
 #define FFI_RUST_TRANSITION_H
 
 #include <QGraphicsItem>
-#include <QPainter>
-#include <QStyleOptionGraphicsItem>
-#include <QtMath>
-#include <QGraphicsSceneMouseEvent>
+#include "PetriObject.h"
+#include "../../Core/FFI/rust.h"
+
+
+
 
 class Transition : public PetriObject {
 

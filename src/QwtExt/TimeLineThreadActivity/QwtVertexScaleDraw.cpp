@@ -24,7 +24,7 @@ QwtText QwtVertexScaleDraw::label(double value) const {
             return m_data[point];
         }
     }
-    return QwtText();
+    return {};
 }
 
 void QwtVertexScaleDraw::drawLabel(QPainter *painter, double value) const {

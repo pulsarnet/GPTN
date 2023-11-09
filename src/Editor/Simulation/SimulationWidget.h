@@ -45,6 +45,8 @@ public:
 
     State state() const;
 
+    QwtTimeLineTransitionActivity* plot() { return m_plot; }
+
 public slots:
 
     void runSimulation();
@@ -65,8 +67,6 @@ private:
     void cancelSimulation();
 
     void updatePlot();
-    void openPlot();
-    void closePlot();
 
 private:
 

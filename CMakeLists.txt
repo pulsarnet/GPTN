@@ -36,7 +36,6 @@ set(SRC_FILES
         src/ActionTabWidget/ActionTabWidget.cpp
         src/ActionTabWidget/DecomposeModelTab.cpp
         src/ActionTabWidget/NetModelingTab.cpp
-        src/ActionTabWidget/WrappedLayoutWidget.cpp
         src/Core/FFI/reachability.cpp
         src/Core/FFI/rust.cpp
         src/Core/FFI/simulation.cpp
@@ -44,11 +43,8 @@ set(SRC_FILES
         src/Core/Graphviz/GraphvizWrapper.cpp
         src/Core/ProjectMetadata.cpp
         src/DataVisualization/InputHandler3D.cpp
-        src/DockSystem/DockToolbar.cpp
         src/DockSystem/DockWidget.cpp
         src/DockSystem/SplittableComponentsFactory.cpp
-        src/MainTree/MainTreeItem.cpp
-        src/MainTree/MainTreeModel.cpp
         src/QwtExt/CanvasPicker.cpp
         src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.cpp
         src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.cpp
@@ -87,7 +83,6 @@ set(HEADERS
         src/ActionTabWidget/ActionTabWidgetController.h
         src/ActionTabWidget/DecomposeModelTab.h
         src/ActionTabWidget/NetModelingTab.h
-        src/ActionTabWidget/WrappedLayoutWidget.h
         src/Core/ApplicationProjectController.cpp
         src/Core/ApplicationProjectController.h
         src/Core/FFI/reachability.h
@@ -96,7 +91,6 @@ set(HEADERS
         src/Core/Graphviz/GraphvizWrapper.h
         src/Core/ProjectMetadata.h
         src/DataVisualization/InputHandler3D.h
-        src/DockSystem/DockToolbar.h
         src/DockSystem/DockWidget.h
         src/DockSystem/SplittableComponentsFactory.h
         src/Editor/Commands.h
@@ -118,12 +112,6 @@ set(HEADERS
         src/Editor/Simulation/SimulationWidget.h
         src/Editor/ToolBox/Tool.h
         src/Editor/ToolBox/ToolBox.h
-#        src/MainTree/MainTreeController.cpp
-#        src/MainTree/MainTreeController.h
-#        src/MainTree/MainTreeItem.h
-#        src/MainTree/MainTreeModel.h
-#        src/MainTree/MainTreeView.cpp
-#        src/MainTree/MainTreeView.h
         src/QwtExt/CanvasPicker.h
         src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.h
         src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.h
@@ -141,6 +129,8 @@ set(HEADERS
         src/Synthesis/SynthesisModel.h
         src/Synthesis/SynthesisTable.h
         src/Synthesis/SynthesisWindow.h
+        src/ActionTabWidget/BaseTab.cpp
+        src/ActionTabWidget/BaseTab.h
 )
 
 if (UNIX)
@@ -151,7 +141,7 @@ if (UNIX)
             )
 else()
     add_executable(${TARGET_NAME}
-            WIN32
+            #WIN32
             ${SRC_FILES}
             ${HEADERS}
             ${WIN_RC_FILE}

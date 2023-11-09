@@ -11,6 +11,8 @@
 #include <QMessageBox>
 #include <QProcess>
 #include "ActionTabWidget/ActionTabWidget.h"
+#include "ActionTabWidget/NetModelingTab.h"
+#include "Editor/GraphicsView.h"
 #include "ActionTabWidget/DecomposeModelTab.h"
 #include "WindowWidgets/NewProjectWindow.h"
 #include "Settings/RecentProjects.h"
@@ -19,7 +21,6 @@
 #include "Editor/GraphicsScene.h"
 #include "Core/FFI/rust.h"
 #include "modules/reachability/ReachabilityWindow.h"
-#include "ActionTabWidget/WrappedLayoutWidget.h"
 #include "overrides/MatrixWindow.h"
 #include "Editor/GraphicsSceneActions.h"
 #include <QStandardPaths>

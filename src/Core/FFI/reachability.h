@@ -1,13 +1,6 @@
-//
-// Created by darkp on 26.09.2022.
-//
-
 #ifndef FFI_RUST_REACHABILITY_H
 #define FFI_RUST_REACHABILITY_H
 
-#include <vector>
-#include "types.h"
-#include "vec.h"
 #include "rust.h"
 
 namespace rust {
