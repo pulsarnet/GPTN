@@ -11,6 +11,7 @@
 #include <QtMath>
 #include <QGraphicsSceneMouseEvent>
 #include "../../Core/FFI/rust.h"
+#include <vertex.h>
 
 class ArrowLine;
 class GraphicsScene;
@@ -98,7 +99,7 @@ protected:
     QList<ArrowLine*> m_connections;
 
     ffi::PetriNet* m_net;
-    ffi::VertexIndex m_vertex;
+    ptn::net::vertex::VertexIndex m_vertex;
 
     QGraphicsTextItem* m_labelItem;
     QGraphicsSimpleTextItem* m_name;

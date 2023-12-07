@@ -1,15 +1,8 @@
-//
-// Created by Николай Муравьев on 13.01.2022.
-//
-
-
 #include <QMenu>
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QJsonObject>
 #include <QJsonDocument>
-#include <QUndoStack>
-#include <QPixmapCache>
 #include "Commands.h"
 #include "GraphicsScene.h"
 #include "elements/PetriObject.h"
@@ -51,8 +44,7 @@ GraphicsScene::GraphicsScene(ffi::PetriNet *net, QObject *parent)
             auto connectionLine = new ArrowLine(position, transition);
             connectionLine->createInNet(false);
             addItem(connectionLine);
-        }
-        else {
+        } else {
             auto transition = getTransition((int)from.id);
             auto position = getPosition((int)to.id);
             auto connectionLine = new ArrowLine(transition, position);
