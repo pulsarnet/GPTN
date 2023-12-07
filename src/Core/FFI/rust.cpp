@@ -49,16 +49,16 @@ extern "C" {
     void petri_net_t_invariant(const PetriNet&);
 
     // Vertex
-    VertexIndex vertex_index(const Vertex&);
-    usize vertex_markers(const Vertex&);
-    void vertex_add_marker(Vertex&);
-    void vertex_remove_marker(Vertex&);
-    void vertex_set_markers(Vertex&, usize);
-    char* vertex_label(const Vertex&, bool);
-    void vertex_set_label(Vertex&, char*);
-    VertexType vertex_type(const Vertex&);
-    usize vertex_parent(const Vertex&);
-    void vertex_set_parent(Vertex&, VertexIndex);
+    VertexIndex ptn$net$vertex$index(const Vertex&);
+    usize ptn$net$vertex$markers(const Vertex&);
+    void ptn$net$vertex$add_marker(Vertex&);
+    void ptn$net$vertex$remove_marker(Vertex&);
+    void ptn$net$vertex$set_markers(Vertex&, usize);
+    char* ptn$net$vertex$label(const Vertex&, bool);
+    void ptn$net$vertex$set_label(Vertex&, char*);
+    VertexType ptn$net$vertex$type(const Vertex&);
+    usize ptn$net$vertex$parent(const Vertex&);
+    void ptn$net$vertex$set_parent(Vertex&, VertexIndex);
 
     // Connection
     VertexIndex connection_from(const Connection& self);
@@ -248,43 +248,43 @@ void PetriNet::t_invariant() const {
 }
 
 VertexIndex Vertex::index() const {
-    return ::vertex_index(*this);
+    return ptn$net$vertex$index(*this);
 }
 
 usize Vertex::markers() const {
-    return ::vertex_markers(*this);
+    return ptn$net$vertex$markers(*this);
 }
 
 void Vertex::add_marker() {
-    ::vertex_add_marker(*this);
+    ptn$net$vertex$add_marker(*this);
 }
 
 void Vertex::remove_marker() {
-    ::vertex_remove_marker(*this);
+    ::ptn$net$vertex$remove_marker(*this);
 }
 
 void Vertex::set_markers(ffi::usize markers) {
-    ::vertex_set_markers(*this, markers);
+    ::ptn$net$vertex$set_markers(*this, markers);
 }
 
 char *Vertex::get_name(bool show_parent) const {
-    return ::vertex_label(*this, show_parent);
+    return ::ptn$net$vertex$label(*this, show_parent);
 }
 
 void Vertex::set_name(char *name) {
-    ::vertex_set_label(*this, name);
+    ::ptn$net$vertex$set_label(*this, name);
 }
 
 VertexType Vertex::type() const {
-    return ::vertex_type(*this);
+    return ::ptn$net$vertex$type(*this);
 }
 
 void Vertex::set_parent(VertexIndex index) {
-    ::vertex_set_parent(*this, index);
+    ::ptn$net$vertex$set_parent(*this, index);
 }
 
 usize Vertex::parent() const {
-    return ::vertex_parent(*this);
+    return ::ptn$net$vertex$parent(*this);
 }
 
 VertexIndex Connection::from() const {

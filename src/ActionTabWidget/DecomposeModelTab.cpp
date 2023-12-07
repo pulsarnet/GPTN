@@ -42,7 +42,6 @@ DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
     m_primitiveNetView->setWidget(primitiveNetView);
 
     Q3DScatter* scatter = new Q3DScatter();
-    //scatter->setFlags(scatter->flags() ^ Qt::FramelessWindowHint);
     scatter->axisX()->setTitle("Positions");
     scatter->axisX()->setTitleVisible(true);
 
@@ -74,9 +73,6 @@ DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
 
         auto program = decomposeContext()->eval_program(i);
 
-        //auto x_axis = program->input_positions() + 2 * program->output_positions();
-        //auto y_axis = program->positions().size() + program->transitions().size();
-
         auto x_axis = program->positions().size();
         auto y_axis = program->transitions().size();
 
@@ -93,8 +89,7 @@ DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
         QVector3D point(x_axis, y_axis, weight);
         auto it = m_graphPoints.find(point);
         if (it == m_graphPoints.end()) {
-            //qDebug() << "New point: " << point << " size: " << m_graphPoints.size();
-            m_graphPoints.insert(point, QVector<std::size_t>{(std::size_t)i});
+            m_graphPoints.insert(point, QVector{i});
             scatterDataArray << QVector3D(x_axis, y_axis, weight);
         } else {
             it.value().push_back(i);

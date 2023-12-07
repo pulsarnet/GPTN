@@ -14,6 +14,7 @@
 #include <DockComponentsFactory.h>
 #include "src/Core/ApplicationProjectController.h"
 
+
 #define QT_MESSAGELOGCONTEXT
 
 extern "C" void external_debug_log(const char* msg);

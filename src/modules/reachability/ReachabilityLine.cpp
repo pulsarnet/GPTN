@@ -1,7 +1,3 @@
-//
-// Created by darkp on 05.10.2022.
-//
-
 #include <QPainter>
 #include "ReachabilityLine.h"
 

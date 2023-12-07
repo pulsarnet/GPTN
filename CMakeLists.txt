@@ -150,17 +150,18 @@ else()
 endif()
 
 # RUST {
-include(AddRustLibrary)
-build_rust_library(
-        TARGET       ptn_lib
-        SOURCE_DIR   "${CMAKE_SOURCE_DIR}/rust"
-        LIB_FILENAME ptn_lib.lib
-)
+#include(AddRustLibrary)
+#build_rust_library(
+#        TARGET       ptn_lib
+#        SOURCE_DIR   "${CMAKE_SOURCE_DIR}/rust"
+#        LIB_FILENAME ptn_lib.lib
+#)
 # } RUST
 
+add_subdirectory(rust/ptn-sys)
 
 target_link_libraries(${TARGET_NAME} PRIVATE
-        ptn_lib
+        ptn
         ads::qt6advanceddocking
         Graphviz::cgraph
         Graphviz::gvc
