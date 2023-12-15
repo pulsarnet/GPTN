@@ -1,7 +1,7 @@
 pipeline {
     agent {
         kubernetes {
-            containerTemplate: 'rust'
+            defaultContainer 'rust'
         }
     }
 
