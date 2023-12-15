@@ -1,6 +1,7 @@
 pipeline {
     agent {
         kubernetes {
+            label 'jenkins-jenkins-agent'
             defaultContainer 'rust'
         }
     }
