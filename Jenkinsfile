@@ -1,19 +1,7 @@
 pipeline {
     agent {
         kubernetes {
-            cloud 'kubernetes'
-            containerTemplate(
-                name: 'rust',
-                image: 'rust:1.74.1',
-                command: 'cat',
-                ttyEnabled: true,
-                resourceRequestCpu: '1',
-                resourceLimitCpu: '4',
-                resourceRequestMemory: '512Mi',
-                resourceLimitMemory: '2Gi',
-            )
-            defaultContainer 'rust'
-            inheritFrom 'default'
+            inheritFrom 'rust'
         }
     }
 
