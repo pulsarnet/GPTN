@@ -6,6 +6,11 @@ pipeline {
     }
 
     stages {
+        stage('Download Rustup') {
+            steps {
+                sh 'rustup update'
+            }
+        }
         stage('Сборка') {
             steps {
                 dir('rust') {
