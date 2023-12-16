@@ -129,3 +129,10 @@ macro_rules! rust_vec {
 
 rust_vec!(bool);
 rust_vec!(u8);
+rust_vec!(u16);
+rust_vec!(u32);
+rust_vec!(u64);
+rust_vec!(i8);
+rust_vec!(i16);
+rust_vec!(i32);
+rust_vec!(i64);
