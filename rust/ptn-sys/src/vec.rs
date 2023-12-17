@@ -136,3 +136,7 @@ rust_vec!(i8);
 rust_vec!(i16);
 rust_vec!(i32);
 rust_vec!(i64);
+rust_vec!(usize);
+
+rust_vec_shims!("const_vertex_ptr", *const ptn::net::Vertex);
+rust_vec_shims!("const_edge_ptr", *const ptn::net::Connection);

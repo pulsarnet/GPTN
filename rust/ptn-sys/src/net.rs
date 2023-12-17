@@ -79,11 +79,6 @@ extern "C" fn insert_position(net: &mut PetriNet, index: usize, parent: isize) -
     net.add_position(index) as *const Vertex
 }
 
-#[export_name = "ptn$net$position"]
-extern "C" fn get_position(net: &mut PetriNet, index: usize) -> *const Vertex {
-    net.get_position(index).unwrap() as *const Vertex
-}
-
 #[export_name = "ptn$net$remove"]
 extern "C" fn remove(net: &mut PetriNet, vertex: VertexIndex) {
     net.remove(vertex);
@@ -103,14 +98,8 @@ extern "C" fn insert_transition(net: &mut PetriNet, index: usize, parent: isize)
     net.add_transition(index) as *const Vertex
 }
 
-#[export_name = "ptn$net$transition"]
-extern "C" fn get_transition(net: &mut PetriNet, index: usize) -> *const Vertex {
-    let transition = net.get_transition(index).unwrap();
-    transition as *const Vertex
-}
-
-#[export_name = "ptn$net$make_edge"]
-extern "C" fn make_edge(net: &mut PetriNet, from: VertexIndex, to: VertexIndex) {
+#[export_name = "ptn$net$add_edge"]
+extern "C" fn add_edge(net: &mut PetriNet, from: VertexIndex, to: VertexIndex) {
     net.connect(from, to, 1);
 }
 

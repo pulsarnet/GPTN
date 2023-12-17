@@ -32,12 +32,14 @@ TEST_CASE("Work with vertecies of Petri Net") {
         REQUIRE(position);
         constexpr auto p_idx = vertex::VertexIndex { vertex::VertexType::Position, 1 };
         REQUIRE(net->vertex(p_idx) == position);
+        REQUIRE(net->positions().size() == 1);
     }
     SECTION("add transition to net") {
         auto transition = net->add_transition();
         REQUIRE(transition);
         constexpr auto t_idx = vertex::VertexIndex { vertex::VertexType::Transition, 1 };
         REQUIRE(net->vertex(t_idx) == transition);
+        REQUIRE(net->transitions().size() == 1);
     }
     SECTION("benchmark") {
         // BENCHMARK

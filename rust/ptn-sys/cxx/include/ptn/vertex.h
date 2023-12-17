@@ -1,9 +1,9 @@
 #ifndef PTN_NET_VERTEX
 #define PTN_NET_VERTEX
 
-namespace ptn::net::vertex {
+#include <ptn/types.h>
 
-    typedef unsigned long long usize;
+namespace ptn::net::vertex {
 
     enum VertexType {
         Position,

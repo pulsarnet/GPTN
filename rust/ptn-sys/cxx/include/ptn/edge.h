@@ -5,15 +5,15 @@
 
 namespace ptn::net::edge {
 
-    struct Connection; //todo rename to Edge
+    struct Connection {
+        [[nodiscard]] vertex::VertexIndex from() const;
 
-    vertex::VertexIndex from(const Connection* edge);
+        [[nodiscard]] vertex::VertexIndex to() const;
 
-    vertex::VertexIndex to(const Connection* edge);
+        [[nodiscard]] usize weight() const;
 
-    vertex::usize weight(const Connection* edge);
-
-    void set_weight(Connection* edge, vertex::usize weight);
+        void set_weight(usize weight);
+    };
 
 }
 

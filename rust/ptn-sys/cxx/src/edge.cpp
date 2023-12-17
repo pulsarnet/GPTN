@@ -7,22 +7,22 @@ namespace edge = ptn::net::edge;
 extern "C" {
     vertex::VertexIndex ptn$net$edge$from(const edge::Connection* edge);
     vertex::VertexIndex ptn$net$edge$to(const edge::Connection* edge);
-    vertex::usize ptn$net$edge$weight(const edge::Connection* edge);
-    void ptn$net$edge$set_weight(edge::Connection* edge, vertex::usize weight);
+    usize ptn$net$edge$weight(const edge::Connection* edge);
+    void ptn$net$edge$set_weight(edge::Connection* edge, usize weight);
 }
 
-vertex::VertexIndex edge::from(const edge::Connection* edge) {
-    return ptn$net$edge$from(edge);
+vertex::VertexIndex edge::Connection::from() const {
+    return ptn$net$edge$from(this);
 }
 
-vertex::VertexIndex edge::to(const edge::Connection* edge) {
-    return ptn$net$edge$from(edge);
+vertex::VertexIndex edge::Connection::to() const {
+    return ptn$net$edge$from(this);
 }
 
-vertex::usize edge::weight(const edge::Connection* edge) {
-    return ptn$net$edge$weight(edge);
+usize edge::Connection::weight() const {
+    return ptn$net$edge$weight(this);
 }
 
-void edge::set_weight(edge::Connection* edge, vertex::usize weight) {
-    return ptn$net$edge$set_weight(edge, weight);
+void edge::Connection::set_weight(const usize weight) {
+    return ptn$net$edge$set_weight(this, weight);
 }

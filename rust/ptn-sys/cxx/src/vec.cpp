@@ -1,50 +1,55 @@
 #include <ptn/vec.h>
 #include <ptn/types.h>
+#include <ptn/vertex.h>
+#include <ptn/edge.h>
 
 namespace vec = ptn::alloc::vec;
+namespace vertex = ptn::net::vertex;
+namespace edge = ptn::net::edge;
 
-#define IMPL_FOR_TYPE(type) \
+#define IMPL_FOR_TYPE_INNER(type, name) \
     extern "C" { \
-        void ptn$vec$##type##$new(vec::RustVec<type>*); \
-        void ptn$vec$##type##$drop(vec::RustVec<type>*); \
-        std::size_t ptn$vec$##type##$len(const vec::RustVec<type>*); \
-        std::size_t ptn$vec$##type##$capacity(const vec::RustVec<type>*); \
-        void ptn$vec$##type##$resize(vec::RustVec<type>*, std::size_t); \
-        void ptn$vec$##type##$reserve(vec::RustVec<type>*, std::size_t); \
-        vec::RustVec<type>::const_pointer_type ptn$vec$##type##$data(const vec::RustVec<type>*); \
+        void ptn$vec$##name##$new(vec::RustVec<type>*); \
+        void ptn$vec$##name##$drop(vec::RustVec<type>*); \
+        std::size_t ptn$vec$##name##$len(const vec::RustVec<type>*); \
+        std::size_t ptn$vec$##name##$capacity(const vec::RustVec<type>*); \
+        void ptn$vec$##name##$resize(vec::RustVec<type>*, std::size_t); \
+        void ptn$vec$##name##$reserve(vec::RustVec<type>*, std::size_t); \
+        vec::RustVec<type>::const_pointer_type ptn$vec$##name##$data(const vec::RustVec<type>*); \
     } \
     \
     template<> \
     vec::RustVec<type>::RustVec() noexcept { \
-        ptn$vec$##type##$new(this); \
+        ptn$vec$##name##$new(this); \
     } \
     \
     template<> \
     void vec::RustVec<type>::drop() { \
-        ptn$vec$##type##$drop(this); \
+        ptn$vec$##name##$drop(this); \
     } \
     \
     template<> \
     std::size_t vec::RustVec<type>::size() const noexcept { \
-        return ptn$vec$##type##$len(this); \
+        return ptn$vec$##name##$len(this); \
     } \
     template<> \
     std::size_t vec::RustVec<type>::capacity() const noexcept { \
-        return ptn$vec$##type##$capacity(this); \
+        return ptn$vec$##name##$capacity(this); \
     } \
     template<> \
     void vec::RustVec<type>::resize(std::size_t size) { \
-        ptn$vec$##type##$resize(this, size); \
+        ptn$vec$##name##$resize(this, size); \
     } \
     template<> \
     void vec::RustVec<type>::reserve(std::size_t cap) { \
-        ptn$vec$##type##$reserve(this, cap); \
+        ptn$vec$##name##$reserve(this, cap); \
     } \
     template<> \
     vec::RustVec<type>::const_pointer_type vec::RustVec<type>::data() const noexcept { \
-        return ptn$vec$##type##$data(this); \
+        return ptn$vec$##name##$data(this); \
     } \
 
+#define IMPL_FOR_TYPE(type) IMPL_FOR_TYPE_INNER(type, type)
 
 IMPL_FOR_TYPE(bool)
 IMPL_FOR_TYPE(u8)
@@ -55,3 +60,6 @@ IMPL_FOR_TYPE(u32)
 IMPL_FOR_TYPE(i32)
 IMPL_FOR_TYPE(u64)
 IMPL_FOR_TYPE(i64)
+
+IMPL_FOR_TYPE_INNER(const vertex::Vertex*, const_vertex_ptr)
+IMPL_FOR_TYPE_INNER(const edge::Connection*, const_edge_ptr)
