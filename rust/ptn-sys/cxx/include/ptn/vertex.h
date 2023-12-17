@@ -16,10 +16,18 @@ namespace ptn::net::vertex {
     };
 
 
-    struct Vertex;
-
-    VertexIndex index(const Vertex *v);
-    usize markers(const Vertex *v);
+    struct Vertex {
+        [[nodiscard]] VertexIndex index() const;
+        [[nodiscard]] usize markers() const;
+        void add_marker();
+        void remove_marker();
+        void set_markers(usize);
+        [[nodiscard]] char* label(bool) const;
+        void set_label(char*);
+        [[nodiscard]] VertexType type() const;
+        [[nodiscard]] VertexIndex parent() const;
+        void set_parent(usize);
+    };
 
 }
 
