@@ -21,7 +21,7 @@ pub mod net;
 
 mod core;
 
-use net::{PetriNet, Vertex};
+use net::Vertex;
 
 #[derive(Debug, Clone)]
 pub struct CMatrix {
@@ -50,7 +50,8 @@ impl From<DMatrix<i32>> for CMatrix {
 
 #[cfg(test)]
 mod tests {
-    // test SynthesisProgram
+    use modules::synthesis::SynthesisProgram;
+
     use super::*;
 
     #[test]

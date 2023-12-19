@@ -8,37 +8,32 @@
 #include "src/MainWindow.h"
 #include "src/DockSystem/SplittableComponentsFactory.h"
 #include "src/Settings/RecentProjects.h"
-#include "src/Core/FFI/rust.h"
+#include <ptn/logger.h>
 #include <DockManager.h>
 #include <DockComponentsFactory.h>
 #include "src/Core/ApplicationProjectController.h"
 
-
 #define QT_MESSAGELOGCONTEXT
-
-extern "C" void external_debug_log(const char* msg);
-extern "C" void external_info_log(const char* msg);
-extern "C" void external_warn_log(const char* msg);
-extern "C" void external_error_log(const char* msg);
 
 void customMessageOutput(QtMsgType type, const QMessageLogContext&, const QString &msg)
 {
+    namespace logger = ptn::logger;
     const char* localMsg = msg.toLocal8Bit().data();
     switch (type) {
         case QtDebugMsg:
-            external_debug_log(localMsg);
+            logger::debug(localMsg);
             break;
         case QtInfoMsg:
-            external_info_log(localMsg);
+            logger::info(localMsg);
             break;
         case QtWarningMsg:
-            external_warn_log(localMsg);
+            logger::warn(localMsg);
             break;
         case QtCriticalMsg:
-            external_error_log(localMsg);
+            logger::error(localMsg);
             break;
         case QtFatalMsg:
-            external_error_log(localMsg);
+            logger::error(localMsg);
             abort();
     }
 }
@@ -56,9 +51,7 @@ int main(int argc, char **argv) {
 
     ads::CDockComponentsFactory::setFactory(new SplittableComponentsFactory);
 
-    //#ifdef QT_DEBUG
-        ffi::init();
-    //#endif
+    ptn::logger::init();
 
     QApplication app(argc, argv);
     auto palette = QApplication::palette();

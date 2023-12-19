@@ -1,16 +1,13 @@
-//
-// Created by darkp on 22.10.2022.
-//
-
 #include "QwtTimeLineTransitionActivity.h"
-#include "../../Core/FFI/simulation.h"
 #include "QwtVertexScaleDraw.h"
+#include <ptn/simulation.h>
 #include <QTimer>
 #include <QwtPlotShapeItem>
 #include <QPainterPath>
 #include <QPen>
 #include <QwtPlotGrid>
 #include <QwtPlotLegendItem>
+#include <ptn/net.h>
 
 QwtTimeLineTransitionActivity::QwtTimeLineTransitionActivity(QWidget* parent)
     : QwtPlot(parent)
@@ -54,7 +51,7 @@ QwtTimeLineTransitionActivity::QwtTimeLineTransitionActivity(QWidget* parent)
     resetPlot();
 }
 
-void QwtTimeLineTransitionActivity::setSimulation(ffi::Simulation *simulation) {
+void QwtTimeLineTransitionActivity::setSimulation(ptn::modules::simulation::Simulation *simulation) {
     m_simulation = simulation;
     resetPlot();
 }
@@ -119,7 +116,7 @@ void QwtTimeLineTransitionActivity::resetPlot() {
     replot();
 }
 
-void QwtTimeLineTransitionActivity::registerFire(ffi::VertexIndex index, int cycle) {
+void QwtTimeLineTransitionActivity::registerFire(ptn::net::vertex::VertexIndex index, int cycle) {
     // Получить item
     auto item = m_shapes.find(index);
     if (item == m_shapes.end()) {

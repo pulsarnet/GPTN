@@ -36,10 +36,6 @@ set(SRC_FILES
         src/ActionTabWidget/ActionTabWidget.cpp
         src/ActionTabWidget/DecomposeModelTab.cpp
         src/ActionTabWidget/NetModelingTab.cpp
-        src/Core/FFI/reachability.cpp
-        src/Core/FFI/rust.cpp
-        src/Core/FFI/simulation.cpp
-        src/Core/FFI/vec.cpp
         src/Core/Graphviz/GraphvizWrapper.cpp
         src/Core/ProjectMetadata.cpp
         src/DataVisualization/InputHandler3D.cpp
@@ -85,9 +81,6 @@ set(HEADERS
         src/ActionTabWidget/NetModelingTab.h
         src/Core/ApplicationProjectController.cpp
         src/Core/ApplicationProjectController.h
-        src/Core/FFI/reachability.h
-        src/Core/FFI/rust.h
-        src/Core/FFI/simulation.h
         src/Core/Graphviz/GraphvizWrapper.h
         src/Core/ProjectMetadata.h
         src/DataVisualization/InputHandler3D.h
@@ -150,15 +143,8 @@ else()
 endif()
 
 # RUST {
-#include(AddRustLibrary)
-#build_rust_library(
-#        TARGET       ptn_lib
-#        SOURCE_DIR   "${CMAKE_SOURCE_DIR}/rust"
-#        LIB_FILENAME ptn_lib.lib
-#)
-# } RUST
-
 add_subdirectory(rust/ptn-sys)
+# } RUST
 
 target_link_libraries(${TARGET_NAME} PRIVATE
         ptn

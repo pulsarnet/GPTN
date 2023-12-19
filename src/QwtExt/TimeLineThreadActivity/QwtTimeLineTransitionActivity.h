@@ -1,16 +1,12 @@
-//
-// Created by darkp on 22.10.2022.
-//
-
 #ifndef FFI_RUST_QWTTIMELINETRANSITIONACTIVITY_H
 #define FFI_RUST_QWTTIMELINETRANSITIONACTIVITY_H
 
 #include <QwtPlot>
-#include "../../Core/FFI/rust.h"
+#include <ptn/vertex.h>
 
 class QwtPlotShapeItem;
 
-namespace ffi {
+namespace ptn::modules::simulation {
     struct Simulation;
 }
 
@@ -21,9 +17,9 @@ public:
     explicit QwtTimeLineTransitionActivity(QWidget* parent = nullptr);
 
     // set net item
-    void setSimulation(ffi::Simulation* simulation);
+    void setSimulation(ptn::modules::simulation::Simulation* simulation);
 
-    void registerFire(ffi::VertexIndex, int);
+    void registerFire(ptn::net::vertex::VertexIndex, int);
 
 protected slots:
 
@@ -33,12 +29,10 @@ private:
 
     void resetPlot();
 
-private:
-
-    ffi::Simulation* m_simulation;
+    ptn::modules::simulation::Simulation* m_simulation;
     QTimer* m_timer;
-    QHash<ffi::VertexIndex, QwtPlotShapeItem*> m_shapes;
-    QHash<ffi::VertexIndex, int> m_plotMapper;
+    QHash<ptn::net::vertex::VertexIndex, QwtPlotShapeItem*> m_shapes;
+    QHash<ptn::net::vertex::VertexIndex, int> m_plotMapper;
     int m_cycle;
     bool m_updated;
 

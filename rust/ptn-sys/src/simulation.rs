@@ -3,8 +3,8 @@ use ptn::modules::reachability::simulation::Simulation;
 use ptn::net::vertex::VertexIndex;
 use vec::RustVec;
 
-#[export_name = "ptn$modules$simulation$new"]
-extern "C" fn new(net: &PetriNet) -> *mut Simulation {
+#[export_name = "ptn$modules$simulation$init"]
+extern "C" fn init(net: &PetriNet) -> *mut Simulation {
     Box::into_raw(Box::new(Simulation::new(net)))
 }
 

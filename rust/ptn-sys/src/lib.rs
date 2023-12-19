@@ -21,6 +21,7 @@ mod reachability;
 mod simulation;
 mod logger;
 mod invariant;
+mod decompose;
 
 macro_rules! profile {
     ($($token:tt)+) => {
@@ -35,51 +36,8 @@ macro_rules! profile {
     }
 }
 
-#[no_mangle]
-pub extern "C" fn decompose_context_init(net: &PetriNet) -> *mut DecomposeContext {
-    Box::into_raw(Box::new(DecomposeContext::init(net)))
-}
 
-#[no_mangle]
-pub extern "C" fn decompose_context_positions(ctx: &DecomposeContext) -> usize {
-    ctx.positions.len()
-}
 
-#[no_mangle]
-pub extern "C" fn decompose_context_transitions(ctx: &DecomposeContext) -> usize {
-    ctx.transitions.len()
-}
-
-#[no_mangle]
-extern "C" fn decompose_context_primitive_net(ctx: &DecomposeContext) -> *const PetriNet {
-    &ctx.primitive_net as *const PetriNet
-}
-
-#[no_mangle]
-extern "C" fn decompose_context_linear_base_fragments(ctx: &DecomposeContext) -> *mut PetriNet {
-    Box::into_raw(Box::new(ctx.linear_base_fragments()))
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn decompose_context_position_index(
-    ctx: &DecomposeContext,
-    index: usize,
-) -> usize {
-    ctx.positions[index].index().id as usize
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn decompose_context_transition_index(
-    ctx: &DecomposeContext,
-    index: usize,
-) -> usize {
-    ctx.transitions[index].index().id as usize
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn decompose_context_delete(ctx: *mut DecomposeContext) {
-    let _ = Box::from_raw(ctx);
-}
 
 
 #[no_mangle]
@@ -176,9 +134,7 @@ extern "C" fn synthesis_eval_program(ctx: &mut DecomposeContext, index: usize) -
 #[no_mangle]
 unsafe  extern "C" fn synthesis_all_programs_ext(ctx: &mut DecomposeContext) {
     let ctx = Arc::new(ctx.clone());
-
     println!("Start calc {} programs", ctx.programs.max());
     let (dur, result) = profile!(synthesis_all_programs(ctx));
     println!("Synthesis time {:?} of {} programs Rust parallel", dur, result);
-
 }

@@ -1,16 +1,12 @@
-//
-// Created by darkp on 06.10.2022.
-//
-
 #include <DockAreaWidget.h>
 #include <QGridLayout>
 #include "ReachabilityView.h"
 #include "ReachabilityTreeScene.h"
 #include "ReachabilityWindow.h"
-#include "../../DockSystem/DockWidget.h"
+#include <ptn/net.h>
 
 // todo: maybe rename to ReachabilityController which generate graph,tree.
-ReachabilityWindow::ReachabilityWindow(ffi::PetriNet *net, QWidget *parent)
+ReachabilityWindow::ReachabilityWindow(ptn::net::PetriNet *net, QWidget *parent)
     : QWidget(parent)
     , m_net(net)
 {

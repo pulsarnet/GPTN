@@ -1,27 +1,14 @@
-//
-// Created by darkp on 20.10.2022.
-//
-// Действия
-// 1. Запуск симуляции
-// 2. Пауза
-// 3. Остановка
-// 4. Шаг симуляции
-// 5. Ускорение
-// 6. Замедление
-// 7. Счетчик циклов
-
 #ifndef FFI_RUST_SIMULATIONWIDGET_H
 #define FFI_RUST_SIMULATIONWIDGET_H
 
 #include <QFrame>
-#include "../../Core/FFI/rust.h"
 
 class QLabel;
 class QPushButton;
 class GraphicsView;
 class QwtTimeLineTransitionActivity;
 
-namespace ffi {
+namespace ptn::modules::simulation {
     struct Simulation;
 }
 
@@ -66,7 +53,7 @@ private:
     void simulate();
     void cancelSimulation();
 
-    void updatePlot();
+    void updatePlot() const;
 
 private:
 
@@ -83,7 +70,7 @@ private:
 
     State m_state;
 
-    ffi::Simulation* m_simulation;
+    ptn::modules::simulation::Simulation* m_simulation;
 
     QwtTimeLineTransitionActivity* m_plot;
 

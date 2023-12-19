@@ -1,7 +1,3 @@
-//
-// Created by nmuravev on 12/15/2021.
-//
-
 #include <QtMath>
 #include <QApplication>
 #include "GraphicsViewZoom.h"

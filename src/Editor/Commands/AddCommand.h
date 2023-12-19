@@ -12,9 +12,6 @@
 class PetriObject;
 class GraphicsScene;
 
-namespace ffi {
-    struct PetriNet;
-}
 
 class AddCommand : public QUndoCommand {
 

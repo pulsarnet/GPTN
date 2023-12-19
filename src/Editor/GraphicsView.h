@@ -1,7 +1,3 @@
-//
-// Created by nmuravev on 12/13/2021.
-//
-
 #ifndef FFI_RUST_GRAPHICSVIEW_H
 #define FFI_RUST_GRAPHICSVIEW_H
 
@@ -9,7 +5,6 @@
 #include <QMouseEvent>
 #include <QTimer>
 #include <QScrollBar>
-#include <QTransform>
 #include <QAction>
 
 class ToolBox;

@@ -1,16 +1,8 @@
-//
-// Created by Николай Муравьев on 10.01.2022.
-//
-
 #ifndef FFI_RUST_TRANSITION_H
 #define FFI_RUST_TRANSITION_H
 
 #include <QGraphicsItem>
 #include "PetriObject.h"
-#include "../../Core/FFI/rust.h"
-
-
-
 
 class Transition : public PetriObject {
 
@@ -21,13 +13,13 @@ public:
     };
 
     explicit Transition(const QPointF& origin,
-                        ffi::PetriNet* net,
-                        ffi::VertexIndex transition,
+                        net::PetriNet* net,
+                        vertex::VertexIndex transition,
                         QGraphicsItem *parent = nullptr);
 
     explicit Transition(const QPointF& origin,
-                        ffi::PetriNet* net,
-                        ffi::VertexIndex transition,
+                        net::PetriNet* net,
+                        vertex::VertexIndex transition,
                         TransitionState* state,
                         QGraphicsItem *parent = nullptr);
 

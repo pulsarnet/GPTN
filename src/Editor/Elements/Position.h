@@ -11,7 +11,10 @@
 #include <QtMath>
 #include <QGraphicsSceneMouseEvent>
 #include "PetriObject.h"
+#include <ptn/net.h>
 
+namespace net = ptn::net;
+namespace vertex = net::vertex;
 
 class Position : public PetriObject {
 
@@ -22,9 +25,9 @@ public:
         int parent;
     };
 
-    explicit Position(const QPointF& origin, ffi::PetriNet* net, ffi::VertexIndex position, QGraphicsItem* parent = nullptr);
+    explicit Position(const QPointF& origin, net::PetriNet* net, vertex::VertexIndex position, QGraphicsItem* parent = nullptr);
 
-    explicit Position(const QPointF& origin, ffi::PetriNet* net, ffi::VertexIndex position, PositionState* state, QGraphicsItem* parent = nullptr);
+    explicit Position(const QPointF& origin, net::PetriNet* net, vertex::VertexIndex position, PositionState* state, QGraphicsItem* parent = nullptr);
 
     [[nodiscard]] QRectF boundingRect() const override;
 

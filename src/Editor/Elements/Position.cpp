@@ -2,17 +2,16 @@
 #include "Transition.h"
 #include "../GraphicsScene.h"
 #include <QFontMetrics>
-#include "../../Core/FFI/simulation.h"
 
-Position::Position(const QPointF& origin, ffi::PetriNet* net, ffi::VertexIndex position, QGraphicsItem* parent)
+Position::Position(const QPointF& origin, net::PetriNet* net, vertex::VertexIndex position, QGraphicsItem* parent)
     : PetriObject(net, position, parent)
 {
     this->setPos(origin);
 }
 
 Position::Position(const QPointF &origin,
-                   ffi::PetriNet* net,
-                   ffi::VertexIndex position,
+                   net::PetriNet* net,
+                   vertex::VertexIndex position,
                    PositionState* state,
                    QGraphicsItem *parent)
     : PetriObject(net, position, parent)
@@ -171,7 +170,7 @@ void Position::onAddToScene(GraphicsScene* scene) {
         auto net = scene->net();
         auto position = net->add_position_with(m_vertex.id);
         position->set_markers(m_state->markers);
-        position->set_parent({ffi::VertexType::Position, (ffi::usize)m_state->parent});
+        position->set_parent({vertex::VertexType::Position, (usize)m_state->parent});
     }
 
     PetriObject::onAddToScene(scene);

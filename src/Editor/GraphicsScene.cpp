@@ -266,7 +266,7 @@ void GraphicsScene::rotateObject(QGraphicsSceneMouseEvent *event) {
     }
 }
 
-ffi::PetriNet *GraphicsScene::net() {
+net::PetriNet *GraphicsScene::net() {
     return m_net;
 }
 

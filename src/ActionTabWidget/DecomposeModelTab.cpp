@@ -10,7 +10,8 @@
 #include "../DockSystem/DockWidget.h"
 #include "../DataVisualization/InputHandler3D.h"
 #include "../Core/ProjectMetadata.h"
-#include "../Core/FFI/rust.h"
+
+#include <ptn/context.h>
 
 inline size_t qHash(const QVector3D &v)
 {
@@ -144,6 +145,6 @@ void DecomposeModelTab::selectedPoint(int idx) {
     }
 }
 
-ffi::DecomposeContext *DecomposeModelTab::decomposeContext() const noexcept {
+ptn::modules::decompose::DecomposeContext *DecomposeModelTab::decomposeContext() const noexcept {
     return m_metadata->context()->decompose_ctx();
 }

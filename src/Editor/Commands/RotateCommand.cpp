@@ -1,7 +1,3 @@
-//
-// Created by darkp on 15.10.2022.
-//
-
 #include "RotateCommand.h"
 #include "../elements/PetriObject.h"
 

@@ -1,7 +1,3 @@
-//
-// Created by darkp on 17.09.2023.
-//
-
 #include "GraphicsSceneActions.h"
 #include "GraphicsScene.h"
 #include <QUndoStack>

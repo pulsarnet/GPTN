@@ -18,6 +18,7 @@ namespace ptn::net {
         vertex::Vertex* insert_position(usize, isize);
         vertex::Vertex* add_transition();
         vertex::Vertex* insert_transition(usize, isize);
+        void remove(vertex::VertexIndex);
 
         // edges
         void add_edge(vertex::VertexIndex, vertex::VertexIndex);

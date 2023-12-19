@@ -1,17 +1,10 @@
-//
-// Created by Николай Муравьев on 10.01.2022.
-//
-
 #ifndef FFI_RUST_PETRI_OBJECT_H
 #define FFI_RUST_PETRI_OBJECT_H
 
 #include <QGraphicsItem>
 #include <QPainter>
 #include <QStyleOptionGraphicsItem>
-#include <QtMath>
-#include <QGraphicsSceneMouseEvent>
-#include "../../Core/FFI/rust.h"
-#include <vertex.h>
+#include <ptn/vertex.h>
 
 class ArrowLine;
 class GraphicsScene;
@@ -28,7 +21,7 @@ public:
         Transition
     };
 
-    explicit PetriObject(ffi::PetriNet* net, ffi::VertexIndex vertex, QGraphicsItem* parent = nullptr);
+    explicit PetriObject(ptn::net::PetriNet* net, ptn::net::vertex::VertexIndex vertex, QGraphicsItem* parent = nullptr);
 
 protected:
 
@@ -59,8 +52,8 @@ public:
 
     virtual bool allowConnection(PetriObject* other) = 0;
 
-    ffi::Vertex* vertex() const;
-    ffi::VertexIndex vertexIndex() const;
+    [[nodiscard]] ptn::net::vertex::Vertex* vertex() const;
+    [[nodiscard]] ptn::net::vertex::VertexIndex vertexIndex() const;
 
     void setColored(bool colored) {
         m_colored = colored;
@@ -76,9 +69,9 @@ public:
     void removeConnectionLine(ArrowLine* line);
     void updateLabelPosition();
     void updateConnections();
-    const QList<ArrowLine*>& connections() const { return m_connections; };
+    [[nodiscard]] const QList<ArrowLine*>& connections() const { return m_connections; };
 
-    GraphicsScene* graphicScene() const;
+    [[nodiscard]] GraphicsScene* graphicScene() const;
 
     ~PetriObject();
 
@@ -98,7 +91,7 @@ protected:
     bool m_colored = false;
     QList<ArrowLine*> m_connections;
 
-    ffi::PetriNet* m_net;
+    ptn::net::PetriNet* m_net;
     ptn::net::vertex::VertexIndex m_vertex;
 
     QGraphicsTextItem* m_labelItem;

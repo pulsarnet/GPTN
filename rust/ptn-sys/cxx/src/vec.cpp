@@ -2,10 +2,12 @@
 #include <ptn/types.h>
 #include <ptn/vertex.h>
 #include <ptn/edge.h>
+#include <ptn/reachability.h>
 
 namespace vec = ptn::alloc::vec;
 namespace vertex = ptn::net::vertex;
 namespace edge = ptn::net::edge;
+namespace reachability = ptn::modules::reachability;
 
 #define IMPL_FOR_TYPE_INNER(type, name) \
     extern "C" { \
@@ -63,3 +65,5 @@ IMPL_FOR_TYPE(i64)
 
 IMPL_FOR_TYPE_INNER(const vertex::Vertex*, const_vertex_ptr)
 IMPL_FOR_TYPE_INNER(const edge::Connection*, const_edge_ptr)
+IMPL_FOR_TYPE_INNER(const reachability::Marking*, const_marking_ptr)
+IMPL_FOR_TYPE_INNER(vertex::VertexIndex, vertex_index)

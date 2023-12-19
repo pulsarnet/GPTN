@@ -19,11 +19,12 @@
 #include "Core/ApplicationProjectController.h"
 #include "ActionTabWidget/ActionTabWidgetController.h"
 #include "Editor/GraphicsScene.h"
-#include "Core/FFI/rust.h"
 #include "modules/reachability/ReachabilityWindow.h"
 #include "overrides/MatrixWindow.h"
 #include "Editor/GraphicsSceneActions.h"
 #include <QStandardPaths>
+#include <ptn/context.h>
+#include <ptn/net.h>
 
 
 /*

@@ -1,6 +1,5 @@
 #include "SimulationWidget.h"
 #include "../GraphicsView.h"
-#include "../../Core/FFI/Simulation.h"
 #include "../GraphicsScene.h"
 #include "../elements/Position.h"
 #include <QPushButton>
@@ -10,11 +9,12 @@
 #include <QStyleOptionFrame>
 #include "../elements/Transition.h"
 #include "../../QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.h"
+#include <ptn/simulation.h>
 
 SimulationWidget::SimulationWidget(GraphicsView *parent)
     : QFrame(parent)
     , m_timer(new QTimer(this))
-    , m_state(State::Stopped)
+    , m_state(Stopped)
     , m_simulation(nullptr)
 {
     setSizePolicy(QSizePolicy::Policy::Preferred, QSizePolicy::Policy::Preferred);
@@ -25,7 +25,7 @@ SimulationWidget::SimulationWidget(GraphicsView *parent)
                   "}");
     setFrameStyle(StyledPanel | Plain);
     //shadow
-    QGraphicsDropShadowEffect* shadow = new QGraphicsDropShadowEffect(this);
+    auto* shadow = new QGraphicsDropShadowEffect(this);
     shadow->setBlurRadius(10);
     shadow->setOffset(0, 0);
     shadow->setColor(QColor(0, 0, 0, 150));
@@ -229,7 +229,7 @@ void SimulationWidget::initSimulation() {
     auto parent = qobject_cast<GraphicsView*>(this->parent());
     auto scene = qobject_cast<GraphicsScene*>(parent->scene());
 
-    m_simulation = ffi::Simulation::create(scene->net());
+    m_simulation = ptn::modules::simulation::Simulation::init(scene->net());
     scene->setSimulation(m_simulation);
     m_plot->setSimulation(m_simulation);
 
@@ -238,7 +238,7 @@ void SimulationWidget::initSimulation() {
 
 void SimulationWidget::simulate() {
     // Выполнение одного цикла симуляции
-    int fired = m_simulation->simulate();
+    int fired = m_simulation->step();
     if (fired == 0) {
         this->pauseSimulation();
         return;
@@ -265,7 +265,7 @@ void SimulationWidget::cancelSimulation() {
     m_plot->setSimulation(nullptr);
 
     // simulation
-    m_simulation->destroy();
+    m_simulation->drop();
     m_simulation = nullptr;
 
     updateScene();
@@ -274,11 +274,11 @@ void SimulationWidget::cancelSimulation() {
     scene->update();
 }
 
-void SimulationWidget::updatePlot() {
+void SimulationWidget::updatePlot() const {
     // Обновление графика
     if (m_simulation) {
         auto firedTransitions = m_simulation->fired();
-        for (auto transition : firedTransitions) {
+        for (const auto transition : firedTransitions) {
             m_plot->registerFire(transition, m_simulation->cycles());
         }
     }

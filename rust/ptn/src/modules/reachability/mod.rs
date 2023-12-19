@@ -262,7 +262,7 @@ impl Reachability {
                     let mut index = Some((transition.clone(), marking));
                     while let Some((_, i)) = index {
                         if i == 0 {
-                            // TODO:
+                            // TODO: если это root дерева то его не учитываем
                             break;
                         }
                         index = tree[i].prev;

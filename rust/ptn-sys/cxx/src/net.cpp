@@ -16,6 +16,7 @@ extern "C" {
     vertex::Vertex* ptn$net$insert_position(net::PetriNet*, usize, isize);
     vertex::Vertex* ptn$net$add_transition(net::PetriNet*);
     vertex::Vertex* ptn$net$insert_transition(net::PetriNet*, usize, isize);
+    void ptn$net$remove(net::PetriNet*, vertex::VertexIndex);
 
     void ptn$net$add_edge(net::PetriNet*, vertex::VertexIndex, vertex::VertexIndex);
     void ptn$net$remove_edge(net::PetriNet*, vertex::VertexIndex, vertex::VertexIndex);
@@ -65,6 +66,11 @@ vertex::Vertex* net::PetriNet::add_transition() {
 vertex::Vertex* net::PetriNet::insert_transition(usize idx, isize parent) {
     return ptn$net$insert_transition(this, idx, parent);
 }
+
+void net::PetriNet::remove(const vertex::VertexIndex index) {
+    ptn$net$remove(this, index);
+}
+
 
 void net::PetriNet::add_edge(const vertex::VertexIndex from, const vertex::VertexIndex to) {
     ptn$net$add_edge(this, from, to);

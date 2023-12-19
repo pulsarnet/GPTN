@@ -1,9 +1,4 @@
-//
-// Created by darkp on 15.09.2023.
-//
-
 #include "ProjectMetadata.h"
-#include "FFI/rust.h"
 #include <filesystem>
 #include <string>
 #include <QDir>
