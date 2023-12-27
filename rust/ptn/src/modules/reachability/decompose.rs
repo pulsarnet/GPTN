@@ -1,5 +1,5 @@
 use nalgebra::DMatrix;
-use {PetriNet, Vertex};
+use crate::net::{PetriNet, Vertex};
 
 pub struct PrimitiveDecomposition {
     net: PetriNet,

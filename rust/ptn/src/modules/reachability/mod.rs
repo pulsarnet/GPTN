@@ -1,8 +1,9 @@
-use nalgebra::DMatrix;
+use nalgebra::{DMatrix, SimdValue};
 use net::vertex::VertexIndex;
 use net::PetriNet;
 use std::cmp::Ordering;
 use std::fmt::{Display, Formatter};
+use std::io::Write;
 use std::ops::{Add, AddAssign, Index, IndexMut, SubAssign};
 use std::slice::Iter;
 
@@ -20,13 +21,15 @@ pub enum CovType {
     Duplicate = 3,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum MarkerValue {
     Value(i32),
     Infinity,
 }
 
 impl MarkerValue {
+    /// -1 - inf
+    /// 0..=i32::MAX - number
     pub fn as_number(&self) -> i32 {
         match self {
             MarkerValue::Value(v) => *v,
@@ -34,6 +37,19 @@ impl MarkerValue {
         }
     }
 }
+
+impl Ord for MarkerValue {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match (self, other) {
+            (MarkerValue::Value(a), MarkerValue::Value(b)) => a.cmp(b),
+            (MarkerValue::Infinity, MarkerValue::Infinity) => Ordering::Less,
+            (MarkerValue::Value(_), MarkerValue::Infinity) => Ordering::Less,
+            (MarkerValue::Infinity, MarkerValue::Value(_)) => Ordering::Greater,
+        }
+    }
+}
+
+impl Eq for MarkerValue {}
 
 impl PartialEq for MarkerValue {
     fn eq(&self, other: &Self) -> bool {
@@ -74,6 +90,7 @@ impl PartialOrd<i32> for MarkerValue {
         }
     }
 }
+
 
 impl Add for MarkerValue {
     type Output = Self;
@@ -220,10 +237,13 @@ impl Reachability {
     }
 
     /// Возвращает дерево достижимых разметок
-    pub fn compute(&self) -> ReachabilityTree {
+    pub fn compute(&self) -> Option<ReachabilityTree> {
         let mut tree = ReachabilityTree::new(self.marking.clone(), self.positions.clone());
         loop {
             // Когда все вершины дерева – терминальные, дублирующие или внутренние, алгоритм останавливается
+            if tree.count() > 5000 {
+                return None;
+            }
             if !tree.has_boundary() {
                 break;
             }
@@ -298,7 +318,7 @@ impl Reachability {
                 }
             }
         }
-        tree
+        Some(tree)
     }
 }
 

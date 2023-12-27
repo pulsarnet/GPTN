@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 use net::vertex::VertexIndex;
-use PetriNet;
+use crate::net::PetriNet;
 
 #[repr(C)]
 pub struct UpdateMarking {

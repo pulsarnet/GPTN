@@ -1,7 +1,7 @@
 extern crate chrono;
 extern crate indexmap;
 extern crate libc;
-extern crate nalgebra;
+pub extern crate nalgebra;
 extern crate ndarray;
 extern crate ndarray_linalg;
 extern crate num;
@@ -12,16 +12,16 @@ extern crate tracing;
 extern crate tracing_subscriber;
 extern crate intel_mkl_src;
 
-use nalgebra::DMatrix;
+pub use nalgebra as alg;
 use std::fmt::Debug;
 use std::ops::{Deref, DerefMut};
+use nalgebra::DMatrix;
 
 pub mod modules;
 pub mod net;
 
 mod core;
 
-use net::Vertex;
 
 #[derive(Debug, Clone)]
 pub struct CMatrix {

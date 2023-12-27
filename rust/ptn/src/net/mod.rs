@@ -78,6 +78,13 @@ impl PetriNet {
         }
     }
 
+    /// Установить разметку
+    pub fn set_marking(&mut self, index: VertexIndex, marking: usize) {
+        self.positions.get_mut(&index)
+            .unwrap()
+            .set_markers(marking);
+    }
+
     /// Количество входных позиций (т.е. позиций без входных дуг)
     ///
     /// TODO: сделать итератор (input_positions_iter, input_positions - коллекция)
@@ -481,6 +488,34 @@ impl PetriNet {
             .filter(|conn| conn.first() == vertex)
             .map(|conn| conn.second())
             .collect()
+    }
+
+    pub fn from_matrix(adjacent: DMatrix<i32>, marking: Vec<i32>) -> PetriNet {
+        let mut net = PetriNet::new();
+        let mut positions = vec![];
+        let mut transitions = vec![];
+
+        for (i, _) in adjacent.row_iter().enumerate() {
+            let position = net.add_position(i).index();
+            positions.push(position);
+            net.set_marking(position, marking[i] as usize)
+        }
+
+        for (i, _) in adjacent.column_iter().enumerate() {
+            transitions.push(net.add_transition(i).index());
+        }
+
+        for (i, row) in adjacent.row_iter().enumerate() {
+            for (j, _) in adjacent.column_iter().enumerate() {
+                if row[j] > 0 {
+                    net.connect(positions[i], transitions[j], row[j] as usize);
+                } else if row[j] < 0 {
+                    net.connect(transitions[j], positions[i], (-row[j]) as usize);
+                }
+            }
+        }
+
+        net
     }
 }
 

@@ -1,5 +1,6 @@
 [workspace]
 members = [
     "ptn",
-    "ptn-sys"
+    "ptn-sys",
+    "ptn-dataset-gen"
 ]
