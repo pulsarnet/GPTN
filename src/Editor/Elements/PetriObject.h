@@ -9,6 +9,10 @@
 class ArrowLine;
 class GraphicsScene;
 
+namespace ptn::net {
+    struct PetriNet;
+}
+
 class PetriObject : public QObject, public QGraphicsItem {
 
     Q_OBJECT

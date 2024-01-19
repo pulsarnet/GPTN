@@ -1,6 +1,5 @@
 use std::ops::{AddAssign, MulAssign};
 use crate::core::SetPartitionMesh;
-use crate::core::{logical_column_add, logical_row_add};
 use crate::modules::synthesis::SynthesisProgram;
 use crate::net::vertex::Vertex;
 use crate::net::PetriNet;
@@ -9,7 +8,7 @@ use nalgebra::base::DMatrix;
 use ndarray::{Array1, Array2};
 use ndarray_linalg::Solve;
 use tracing::{debug, info};
-use core::{NetCycles, NetPaths};
+use core::{MatrixExt, NetCycles, NetPaths};
 use net::Connection;
 use net::vertex::{VertexIndex, VertexType};
 
@@ -427,13 +426,15 @@ impl DecomposeContext {
 
         let first = t_set[0];
         for &t in t_set.iter().skip(1) {
-            logical_column_add(adjacency_input, first, t);
-            logical_column_add(adjacency_output, first, t);
+            adjacency_input.logical_column_add(first, t);
+            adjacency_output.logical_column_add(first, t);
+            // logical_column_add(adjacency_input, first, t);
+            // logical_column_add(adjacency_output, first, t);
         }
 
         for &t in t_set.iter().skip(1) {
-            logical_column_add(adjacency_input, t, first);
-            logical_column_add(adjacency_output, t, first);
+            adjacency_input.logical_column_add(t, first);
+            adjacency_output.logical_column_add(t, first);
         }
     }
 
@@ -446,8 +447,10 @@ impl DecomposeContext {
     ) {
         let first = p_set[0];
         for p in p_set.iter().skip(1) {
-            logical_row_add(adjacency_input, first, *p);
-            logical_row_add(adjacency_output, first, *p);
+            adjacency_input.logical_row_add(first, *p);
+            adjacency_output.logical_row_add(first, *p);
+            // logical_row_add(adjacency_input, first, *p);
+            // logical_row_add(adjacency_output, first, *p);
             d_markers[(first, 0)] = d_markers[(*p, 0)].max(d_markers[(first, 0)]);
         }
 
@@ -525,6 +528,8 @@ fn extract_part(net: &mut PetriNet, remove: &[VertexIndex]) -> PetriNet {
 
     // Для каждого удаляемого элемента проверим:
     // если остались соединения, тогда дублируем элемент и соединения и затем удаляем
+    // TODO: По хорошему в найденном цикле могут быть обратные дуги, их бы тоже удалить (ЗАЧЕМ? ОБОСНОВАНИЕ?).
+    // TODO: то есть для элемента могли остаться обратные соединения
     for &index in remove {
         let found = net.connections().iter()
             .find(|conn| conn.first() == index || conn.second() == index)

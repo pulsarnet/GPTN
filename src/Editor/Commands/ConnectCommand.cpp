@@ -1,11 +1,8 @@
-//
-// Created by darkp on 15.10.2022.
-//
-
 #include "ConnectCommand.h"
 #include "../GraphicsScene.h"
 #include "../elements/PetriObject.h"
 #include "../elements/ArrowLine.h"
+#include <ptn/net.h>
 
 ConnectCommand::ConnectCommand(ArrowLine* connection, ConnectionType type, GraphicsScene *scene, QUndoCommand *parent)
     : QUndoCommand(parent)
@@ -47,7 +44,7 @@ void ConnectCommand::redo() {
             break;
         case Bidirectional:
             // Добавить обратное соединение в объект net, для правильного отображения
-            m_scene->net()->connect(m_connection->to()->vertex(), m_connection->from()->vertex());
+            m_scene->net()->add_edge(m_connection->to()->vertexIndex(), m_connection->from()->vertexIndex());
             m_connection->setBidirectional(true);
             break;
     }
@@ -66,7 +63,7 @@ void ConnectCommand::undo() {
             break;
         case Bidirectional:
             // Сначала удалить обратное соединение из объекта net, для правильного отображения
-            m_scene->net()->remove_connection(m_connection->to()->vertex(), m_connection->from()->vertex());
+            m_scene->net()->remove_edge(m_connection->to()->vertexIndex(), m_connection->from()->vertexIndex());
             m_connection->setBidirectional(false);
             break;
     }

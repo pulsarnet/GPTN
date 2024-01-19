@@ -10,7 +10,7 @@ class QScatter3DSeries;
 class ProjectMetadata;
 class DockWidget;
 
-namespace ffi {
+namespace ptn::modules::decompose {
     struct DecomposeContext;
 }
 
@@ -26,7 +26,7 @@ public slots:
 
 protected:
 
-    ffi::DecomposeContext* decomposeContext() const noexcept;
+    ptn::modules::decompose::DecomposeContext* decomposeContext() const noexcept;
 
 private:
 

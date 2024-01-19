@@ -9,11 +9,11 @@
 
 #include <QGraphicsScene>
 #include "../../Core/graphviz/GraphvizWrapper.h"
-#include "../../Core/FFI/reachability.h"
+#include <ptn/reachability.h>
 
 class ReachabilityNode;
 
-namespace rust {
+namespace ptn::modules::reachability {
     struct ReachabilityTree;
 }
 
@@ -23,21 +23,21 @@ public:
 
     explicit ReachabilityTreeScene(QObject* parent = nullptr);
 
-    void setTree(rust::ReachabilityTree* tree);
+    void setTree(ptn::modules::reachability::ReachabilityTree* tree);
 
     ~ReachabilityTreeScene() override;
 
 private:
 
-    void addNode(QList<int32_t> data, rust::MarkingType type, std::optional<QList<ffi::VertexIndex>> headers = {});
-    void addEdge(ReachabilityNode* from, ReachabilityNode* to, ffi::VertexIndex transition);
+    void addNode(QList<int32_t> data, ptn::modules::reachability::CovType type, std::optional<QList<ptn::net::vertex::VertexIndex>> headers = {});
+    void addEdge(ReachabilityNode* from, ReachabilityNode* to, ptn::net::vertex::VertexIndex transition);
     void removeAll();
     void reload();
 
 private:
 
     QList<ReachabilityNode*> m_nodes;
-    rust::ReachabilityTree* m_tree = nullptr;
+    ptn::modules::reachability::ReachabilityTree* m_tree = nullptr;
     GraphVizWrapper* m_wrapper;
 
 };

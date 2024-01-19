@@ -16,3 +16,4 @@ libc = "0.2.150"
 cxx = "1.0.110"
 tracing = "0.1.39"
 tracing-subscriber = { version = "0.3.17", features = [] }
+num-traits = "0.2.18"

@@ -44,7 +44,7 @@ public:
     Q_DECLARE_FLAGS(Modes, Mode);
     Q_ENUM(Mode)
 
-    explicit GraphicsScene(ffi::PetriNet* net, QObject* parent = nullptr);
+    explicit GraphicsScene(ptn::net::PetriNet* net, QObject* parent = nullptr);
 
     void setAllowMods(Modes mods);
 

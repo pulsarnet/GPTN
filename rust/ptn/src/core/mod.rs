@@ -3,7 +3,6 @@ mod graph_utils;
 mod mesh;
 mod utils;
 
-pub use self::counter::*;
 pub use self::graph_utils::*;
 pub use self::mesh::*;
 pub use self::utils::*;

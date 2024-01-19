@@ -1,8 +1,3 @@
-//
-// Created by nmuravev on 1/18/2022.
-//
-
-
 #include "GraphvizWrapper.h"
 #include <QObject>
 #include <QJsonObject>

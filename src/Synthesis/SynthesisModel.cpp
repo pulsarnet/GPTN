@@ -1,13 +1,7 @@
-//
-// Created by nmuravev on 23.01.2022.
-//
-
 #include "SynthesisModel.h"
-
 #include <utility>
-#include "../Core/FFI/rust.h"
 
-SynthesisModel::SynthesisModel(ffi::DecomposeContext *ctx, QVector<size_t> programs, QObject *parent)
+SynthesisModel::SynthesisModel(ptn::modules::decompose::DecomposeContext *ctx, QVector<size_t> programs, QObject *parent)
     : QAbstractTableModel(parent)
     , m_ctx(ctx)
     , m_programs(std::move(programs))

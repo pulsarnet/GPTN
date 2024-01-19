@@ -415,7 +415,7 @@ void MainWindow::onMatrixWindow(bool checked) {
         m_IOMatrixWindow->activateWindow();
     } else {
         auto matrix = m_metadata->context()->net()->as_matrix();
-        m_IOMatrixWindow = new MatrixWindow(matrix.first, matrix.second, this);
+        m_IOMatrixWindow = new MatrixWindow(std::move(std::get<0>(matrix)), std::move(std::get<1>(matrix)), this);
         connect(m_IOMatrixWindow, &MatrixWindow::onWindowClose, this, &MainWindow::onMatrixWindowClose);
         m_IOMatrixWindow->show();
     }

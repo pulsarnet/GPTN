@@ -1,4 +1,5 @@
 use std::ptr;
+use matrix::RustMatrix;
 use crate::vec::RustVec;
 
 use ptn::net::PetriNet;
@@ -55,6 +56,13 @@ unsafe extern "C" fn net_edges(net: &mut PetriNet, ret: &mut RustVec<*const Conn
     );
 }
 
+#[export_name = "ptn$net$edge"]
+unsafe extern "C" fn net_edge(net: &mut PetriNet, from: VertexIndex, to: VertexIndex) -> *const Connection {
+    net.connections().iter().find(|conn| conn.first() == from && conn.second() == to)
+        .map(|conn| conn as _)
+        .unwrap_or(ptr::null())
+}
+
 #[export_name = "ptn$net$clear"]
 extern "C" fn net_clear(v: &mut PetriNet) {
     (*v) = PetriNet::new();
@@ -73,7 +81,7 @@ extern "C" fn add_position(net: &mut PetriNet) -> *const Vertex {
 #[export_name = "ptn$net$insert_position"]
 extern "C" fn insert_position(net: &mut PetriNet, index: usize, parent: isize) -> *const Vertex {
     let mut vertex = Vertex::position(index);
-    if parent >= 0 {
+    if parent > 0 {
         vertex.set_parent(parent as usize)
     }
     net.add_position(index) as *const Vertex
@@ -92,7 +100,7 @@ extern "C" fn add_transition(net: &mut PetriNet) -> *const Vertex {
 #[export_name = "ptn$net$insert_transition"]
 extern "C" fn insert_transition(net: &mut PetriNet, index: usize, parent: isize) -> *const Vertex {
     let mut vertex = Vertex::transition(index);
-    if parent >= 0 {
+    if parent > 0 {
         vertex.set_parent(parent as usize)
     }
     net.add_transition(index) as *const Vertex
@@ -107,4 +115,13 @@ extern "C" fn add_edge(net: &mut PetriNet, from: VertexIndex, to: VertexIndex) {
 #[export_name = "ptn$net$remove_edge"]
 extern "C" fn remove_edge(net: &mut PetriNet, from: VertexIndex, to: VertexIndex) {
     net.disconnect(from, to);
+}
+
+#[export_name = "ptn$net$as_matrix"]
+extern "C" fn as_matrix(net: &PetriNet, input: &mut RustMatrix<i32>, output: &mut RustMatrix<i32>) {
+    let (i, o) = net.incidence_matrix();
+    unsafe {
+        ptr::write(input, RustMatrix::from(i));
+        ptr::write(output, RustMatrix::from(o));
+    }
 }

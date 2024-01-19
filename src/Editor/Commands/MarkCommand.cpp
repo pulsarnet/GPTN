@@ -1,10 +1,7 @@
-//
-// Created by darkp on 15.10.2022.
-//
-
 #include "MarkCommand.h"
 #include "../GraphicsScene.h"
 #include "../elements/PetriObject.h"
+#include <ptn/net.h>
 
 MarkCommand::MarkCommand(PetriObject* item, bool add, GraphicsScene *scene, QUndoCommand *parent)
     : QUndoCommand(parent)
@@ -17,9 +14,9 @@ MarkCommand::MarkCommand(PetriObject* item, bool add, GraphicsScene *scene, QUnd
 
 void MarkCommand::redo() {
     if (m_add) {
-        m_scene->net()->getVertex(m_item->vertexIndex())->add_marker();
+        m_scene->net()->vertex(m_item->vertexIndex())->add_marker();
     } else {
-        m_scene->net()->getVertex(m_item->vertexIndex())->remove_marker();
+        m_scene->net()->vertex(m_item->vertexIndex())->remove_marker();
     }
 
     m_item->update();
@@ -27,9 +24,9 @@ void MarkCommand::redo() {
 
 void MarkCommand::undo() {
     if (m_add) {
-        m_scene->net()->getVertex(m_item->vertexIndex())->remove_marker();
+        m_scene->net()->vertex(m_item->vertexIndex())->remove_marker();
     } else {
-        m_scene->net()->getVertex(m_item->vertexIndex())->add_marker();
+        m_scene->net()->vertex(m_item->vertexIndex())->add_marker();
     }
 
     m_item->update();

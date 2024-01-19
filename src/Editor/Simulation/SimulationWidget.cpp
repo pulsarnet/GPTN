@@ -8,7 +8,6 @@
 #include <QGraphicsDropShadowEffect>
 #include <QStyleOptionFrame>
 #include "../elements/Transition.h"
-#include "../../QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.h"
 #include <ptn/simulation.h>
 
 SimulationWidget::SimulationWidget(GraphicsView *parent)
@@ -91,9 +90,6 @@ SimulationWidget::SimulationWidget(GraphicsView *parent)
 
     m_timer->setInterval(1000);
     connect(m_timer, &QTimer::timeout, this, &SimulationWidget::simulate);
-
-    m_plot = new QwtTimeLineTransitionActivity();
-
 }
 
 void SimulationWidget::paintEvent(QPaintEvent *event) {
@@ -206,7 +202,7 @@ void SimulationWidget::updateButtonState() {
 }
 
 void SimulationWidget::updateLabel() {
-    int cycles = m_simulation ? m_simulation->cycles() : 0;
+    size_t cycles = m_simulation ? m_simulation->cycles() : 0;
     m_cycleCounterLabel->setText("Cycles: " + QString::number(cycles));
 }
 
@@ -231,7 +227,6 @@ void SimulationWidget::initSimulation() {
 
     m_simulation = ptn::modules::simulation::Simulation::init(scene->net());
     scene->setSimulation(m_simulation);
-    m_plot->setSimulation(m_simulation);
 
     updateLabel();
 }
@@ -248,7 +243,6 @@ void SimulationWidget::simulate() {
     auto scene = qobject_cast<GraphicsScene*>(parent->scene());
 
     updateScene();
-    updatePlot();
     updateLabel();
 
     scene->update();
@@ -261,9 +255,6 @@ void SimulationWidget::cancelSimulation() {
     auto scene = qobject_cast<GraphicsScene*>(parent->scene());
     scene->setSimulation(nullptr);
 
-    // plot
-    m_plot->setSimulation(nullptr);
-
     // simulation
     m_simulation->drop();
     m_simulation = nullptr;
@@ -272,14 +263,4 @@ void SimulationWidget::cancelSimulation() {
     updateLabel();
 
     scene->update();
-}
-
-void SimulationWidget::updatePlot() const {
-    // Обновление графика
-    if (m_simulation) {
-        auto firedTransitions = m_simulation->fired();
-        for (const auto transition : firedTransitions) {
-            m_plot->registerFire(transition, m_simulation->cycles());
-        }
-    }
 }

@@ -32,8 +32,6 @@ public:
 
     State state() const;
 
-    QwtTimeLineTransitionActivity* plot() { return m_plot; }
-
 public slots:
 
     void runSimulation();
@@ -53,8 +51,6 @@ private:
     void simulate();
     void cancelSimulation();
 
-    void updatePlot() const;
-
 private:
 
     QTimer* m_timer;
@@ -71,8 +67,6 @@ private:
     State m_state;
 
     ptn::modules::simulation::Simulation* m_simulation;
-
-    QwtTimeLineTransitionActivity* m_plot;
 
 };
 

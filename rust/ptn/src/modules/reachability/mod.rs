@@ -1,9 +1,8 @@
-use nalgebra::{DMatrix, SimdValue};
+use nalgebra::DMatrix;
 use net::vertex::VertexIndex;
 use net::PetriNet;
 use std::cmp::Ordering;
 use std::fmt::{Display, Formatter};
-use std::io::Write;
 use std::ops::{Add, AddAssign, Index, IndexMut, SubAssign};
 use std::slice::Iter;
 

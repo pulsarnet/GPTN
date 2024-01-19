@@ -20,11 +20,9 @@ ReachabilityWindow::ReachabilityWindow(ptn::net::PetriNet *net, QWidget *parent)
 }
 
 void ReachabilityWindow::reload() {
-    // todo delete old
-    auto old = m_tree;
-    Q_UNUSED(old);
+    m_tree->drop();
+    m_tree = nullptr;
 
-    m_tree = m_net->reachability();
-    auto scene = static_cast<ReachabilityTreeScene*>(m_view->scene());
-    scene->setTree(m_tree);
+    m_tree = ptn::modules::reachability::ReachabilityTree::build(m_net);
+    static_cast<ReachabilityTreeScene*>(m_view->scene())->setTree(m_tree);
 }

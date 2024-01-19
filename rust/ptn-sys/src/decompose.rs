@@ -1,4 +1,4 @@
-use ptn::modules::synthesis::DecomposeContext;
+use ptn::modules::synthesis::{DecomposeContext, synthesis_program};
 use ptn::net::PetriNet;
 
 #[export_name = "ptn$modules$decompose$init"]
@@ -22,7 +22,7 @@ extern "C" fn decompose_context_primitive_net(ctx: &DecomposeContext) -> *const 
 }
 
 #[export_name = "ptn$modules$decompose$lbf"]
-extern "C" fn decompose_context_linear_base_fragments(ctx: &DecomposeContext) -> *mut PetriNet {
+extern "C" fn decompose_context_linear_base_fragments(ctx: &DecomposeContext) -> *const PetriNet {
     Box::into_raw(Box::new(ctx.linear_base_fragments()))
 }
 
@@ -34,6 +34,16 @@ extern "C" fn decompose_context_position_index(ctx: &DecomposeContext, index: us
 #[export_name = "ptn$modules$decompose$transition_at"]
 extern "C" fn decompose_context_transition_index(ctx: &DecomposeContext, index: usize) -> usize {
     ctx.transitions[index].index().id as usize
+}
+
+#[export_name = "ptn$modules$decompose$programs"]
+extern "C" fn decompose_context_programs(ctx: &DecomposeContext) -> usize {
+    ctx.programs.max()
+}
+
+#[export_name = "ptn$modules$decompose$eval_program"]
+extern "C" fn decompose_context_eval_program(ctx: &DecomposeContext, index: usize) -> *const PetriNet {
+    Box::into_raw(Box::new(synthesis_program(ctx, index))) as *const PetriNet
 }
 
 #[export_name = "ptn$modules$decompose$drop"]

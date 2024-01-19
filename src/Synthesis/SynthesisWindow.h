@@ -9,7 +9,7 @@ class GraphicsView;
 class DockWidget;
 class QLabel;
 
-namespace ffi {
+namespace ptn::modules::decompose {
     struct DecomposeContext;
 }
 
@@ -19,7 +19,7 @@ class SynthesisWindow : public QWidget {
 
 public:
 
-    explicit SynthesisWindow(ffi::DecomposeContext* m_ctx, QVector<size_t> programs, QWidget* parent = nullptr);
+    explicit SynthesisWindow(ptn::modules::decompose::DecomposeContext* m_ctx, QVector<size_t> programs, QWidget* parent = nullptr);
 
 public slots:
 
@@ -35,7 +35,7 @@ private:
     QLabel* label();
     const QLabel* label() const;
 
-    ffi::DecomposeContext* m_ctx;
+    ptn::modules::decompose::DecomposeContext* m_ctx;
     ads::CDockManager* m_manager;
 
     DockWidget* m_table;

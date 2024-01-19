@@ -1,28 +1,23 @@
-//
-// Created by darkp on 28.09.2022.
-//
-
 #ifndef FFI_RUST_REACHABILITY_NODE_H
 #define FFI_RUST_REACHABILITY_NODE_H
 
-#include <graphviz/gvc.h>
+#include <gvc/gvc.h>
 #include <QGraphicsRectItem>
-#include "../../Core/FFI/rust.h"
-#include "../../Core/FFI/reachability.h"
+#include <ptn/reachability.h>
 
 class ReachabilityNode : public QGraphicsItem {
 
 public:
     explicit ReachabilityNode(QList<int32_t> values, QGraphicsItem* parent = nullptr);
-    explicit ReachabilityNode(QList<int32_t> values, const QList<ffi::VertexIndex>& headers, QGraphicsItem* parent = nullptr);
+    explicit ReachabilityNode(QList<int32_t> values, const QList<ptn::net::vertex::VertexIndex>& headers, QGraphicsItem* parent = nullptr);
 
     [[nodiscard]] const QString& text() const;
 
     void setGraphVizNode(Agnode_s*);
     Agnode_s* graphVizNode();
 
-    void setType(rust::MarkingType);
-    rust::MarkingType getType() const;
+    void setType(ptn::modules::reachability::CovType);
+    ptn::modules::reachability::CovType getType() const;
 
     QRectF boundingRect() const override;
 
@@ -40,7 +35,7 @@ private:
 
     Agnode_s* m_node = nullptr;
 
-    rust::MarkingType m_type = rust::MarkingType::Inner;
+    ptn::modules::reachability::CovType m_type = ptn::modules::reachability::CovType::Inner;
 
     void paintField(QPainter *painter, field_t *fld);
 };

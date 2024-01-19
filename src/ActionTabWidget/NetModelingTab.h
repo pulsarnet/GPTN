@@ -29,7 +29,6 @@ private:
 
     ads::CDockManager* m_dockManager;
     ads::CDockWidget* m_view;
-    ads::CDockWidget* m_timeLine;
 
 };
 

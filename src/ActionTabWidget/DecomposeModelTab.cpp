@@ -12,9 +12,10 @@
 #include "../Core/ProjectMetadata.h"
 
 #include <ptn/context.h>
+#include <ptn/decompose.h>
+#include <ptn/net.h>
 
-inline size_t qHash(const QVector3D &v)
-{
+inline size_t qHash(const QVector3D &v) {
     return qHash(QString("%1x%2x%3" ).arg(v.x()).arg(v.y()).arg(v.z()) );
 }
 
@@ -26,7 +27,7 @@ DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
     // TODO: make return error if error
     m_metadata->context()->decompose();
 
-    auto linearBaseFragmentsScene = new GraphicsScene(decomposeContext()->linear_base_fragments());
+    auto linearBaseFragmentsScene = new GraphicsScene(decomposeContext()->lbf());
     auto linearBaseFragmentsView = new GraphicsView(nullptr);
     linearBaseFragmentsView->setScene(linearBaseFragmentsScene);
     linearBaseFragmentsView->setToolBoxVisibility(false);
@@ -34,7 +35,7 @@ DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
     m_linearBaseFragmentsView = new DockWidget("LBF");
     m_linearBaseFragmentsView->setWidget(linearBaseFragmentsView);
 
-    auto primitiveNetScene = new GraphicsScene(decomposeContext()->primitive_net());
+    auto primitiveNetScene = new GraphicsScene(decomposeContext()->primitive());
     auto primitiveNetView = new GraphicsView(nullptr);
     primitiveNetView->setScene(primitiveNetScene);
     primitiveNetView->setToolBoxVisibility(false);
@@ -61,9 +62,6 @@ DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
 
     connect(m_series, &QScatter3DSeries::selectedItemChanged, this, &DecomposeModelTab::selectedPoint);
 
-    // mesure
-    decomposeContext()->calculate_all();
-
     // Plot
     QElapsedTimer timer;
     timer.start();
@@ -81,8 +79,8 @@ DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
             continue;
         }
 
-        auto connections = program->connections();
-        int weight = 0;
+        auto connections = program->edges();
+        size_t weight = 0;
         for (auto& connection : connections) {
             weight += connection->weight();
         }

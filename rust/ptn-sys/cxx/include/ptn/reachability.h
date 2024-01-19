@@ -2,6 +2,7 @@
 
 #define PTN_REACHABILITY_H
 
+#include "net.h"
 #include "opaque.h"
 #include "types.h"
 #include "vec.h"
@@ -25,8 +26,10 @@ namespace ptn::modules::reachability {
     };
 
     struct ReachabilityTree: public Opaque {
-        alloc::vec::RustVec<net::vertex::VertexIndex> positions() const;
-        alloc::vec::RustVec<const Marking*> marking() const;
+
+        static ReachabilityTree* build(net::PetriNet*);
+        [[nodiscard]] alloc::vec::RustVec<net::vertex::VertexIndex> positions() const;
+        [[nodiscard]] alloc::vec::RustVec<const Marking*> marking() const;
         void drop();
 
         ~ReachabilityTree() = delete;

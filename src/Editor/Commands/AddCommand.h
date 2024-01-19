@@ -1,19 +1,13 @@
-//
-// Created by darkp on 15.10.2022.
-//
-
 #ifndef FFI_RUST_ADDCOMMAND_H
 #define FFI_RUST_ADDCOMMAND_H
 
 #include <QUndoCommand>
-#include <QPointF>
-#include "../../Core/FFI/rust.h"
 
 class PetriObject;
 class GraphicsScene;
 
 
-class AddCommand : public QUndoCommand {
+class AddCommand final : public QUndoCommand {
 
 public:
 
@@ -24,7 +18,7 @@ public:
     void undo() override;
     void redo() override;
 
-    ~AddCommand();
+    ~AddCommand() override;
 
 private:
 

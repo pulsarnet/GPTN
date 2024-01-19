@@ -9,7 +9,9 @@ FetchContent_MakeAvailable(Catch2)
 add_executable(ptn_tests
         net.cpp
         vec.cpp
+        matrix.cpp
 )
+
 target_link_libraries(ptn_tests PRIVATE ptn Catch2::Catch2WithMain)
 
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)

@@ -3,6 +3,7 @@ extern crate ptn;
 extern crate tracing;
 extern crate tracing_subscriber;
 extern crate cxx;
+extern crate num_traits;
 
 use ptn::modules::synthesis::synthesis_all_programs;
 use std::ffi::CString;
@@ -22,6 +23,7 @@ mod simulation;
 mod logger;
 mod invariant;
 mod decompose;
+mod matrix;
 
 macro_rules! profile {
     ($($token:tt)+) => {

@@ -7,7 +7,7 @@ namespace ptn::net {
     struct PetriNet;
 }
 
-namespace ptn::net::modules::decompose {
+namespace ptn::modules::decompose {
     struct DecomposeContext;
 }
 
@@ -16,11 +16,13 @@ namespace ptn::net::context {
     struct PetriNetContext : public Opaque {
         static PetriNetContext* create();
         [[nodiscard]] PetriNet* net() const;
-        [[nodiscard]] modules::decompose::DecomposeContext* decompose_ctx() const;
+        [[nodiscard]] ptn::modules::decompose::DecomposeContext* decompose_ctx() const;
         void decompose();
         void set_decompose_ctx(modules::decompose::DecomposeContext* ctx);
 
         void drop();
+
+        ~PetriNetContext() = delete;
     };
 
 }

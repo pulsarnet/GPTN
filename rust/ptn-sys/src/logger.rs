@@ -2,6 +2,7 @@ use std::ffi::CStr;
 use libc::c_char;
 use tracing::{debug, error, info, warn};
 use tracing_subscriber::{filter, Layer};
+use tracing_subscriber::fmt::FormatFields;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
@@ -9,7 +10,7 @@ use tracing_subscriber::util::SubscriberInitExt;
 extern "C" fn init() {
     let stdout_write = tracing_subscriber::fmt::layer()
         .with_ansi(true)
-        .with_file(true)
+        .with_thread_ids(true)
         .with_target(true)
         .pretty();
 
@@ -21,10 +22,26 @@ extern "C" fn init() {
         .init();
 }
 
+fn try_char_to_str(msg: *const c_char) -> Option<&'static str> {
+    if msg.is_null() {
+        return None
+    }
+
+    unsafe { CStr::from_ptr(msg) }.to_str().ok()
+}
+
 #[export_name = "ptn$logger$debug"]
-extern "C" fn external_debug_log(msg: *const c_char) {
-    let msg = unsafe { CStr::from_ptr(msg) }.to_str().unwrap_or_default();
-    debug!(target: "external", "{msg}");
+extern "C" fn external_debug_log(msg: *const c_char, function: *const c_char, filename: *const c_char, line: i32) {
+    let msg = try_char_to_str(msg).unwrap_or_default();
+    let function = try_char_to_str(function);
+    let filename = try_char_to_str(filename);
+    
+    debug!(target: "external", 
+        function = ?function, 
+        filename = ?filename, 
+        line = line, 
+        "{msg}"
+    );
 }
 
 #[export_name = "ptn$logger$info"]

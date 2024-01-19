@@ -5,6 +5,8 @@
 #include <ptn/vec.h>
 #include <ptn/edge.h>
 
+#include "matrix.h"
+
 namespace ptn::net {
 
     struct PetriNet final: public Opaque {
@@ -21,8 +23,12 @@ namespace ptn::net {
         void remove(vertex::VertexIndex);
 
         // edges
+        [[nodiscard]] edge::Connection* edge(vertex::VertexIndex, vertex::VertexIndex) const;
         void add_edge(vertex::VertexIndex, vertex::VertexIndex);
         void remove_edge(vertex::VertexIndex, vertex::VertexIndex);
+
+        // representation
+        [[nodiscard]] std::tuple<matrix::RustMatrix<i32>, matrix::RustMatrix<i32>> as_matrix() const;
 
         void clear();
         void drop();

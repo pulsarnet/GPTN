@@ -3,7 +3,7 @@
 
 namespace ptn::logger {
     void init();
-    void debug(const char* msg);
+    void debug(const char* msg, const char* function, const char* filename, int line);
     void info(const char* msg);
     void warn(const char* msg);
     void error(const char* msg);

@@ -6,7 +6,7 @@
 #define FFI_RUST_REACHABILITY_LINE_H
 
 #include <QGraphicsLineItem>
-#include <graphviz/gvc.h>
+#include <gvc/gvc.h>
 
 class ReachabilityLine: public QGraphicsLineItem {
 

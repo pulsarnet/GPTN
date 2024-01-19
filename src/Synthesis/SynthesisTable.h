@@ -3,8 +3,11 @@
 
 #include <QWidget>
 
-namespace ffi {
+namespace ptn::net {
     struct PetriNet;
+}
+
+namespace ptn::modules::decompose {
     struct DecomposeContext;
 }
 
@@ -19,7 +22,7 @@ class SynthesisTable : public QWidget {
 
 public:
 
-    explicit SynthesisTable(ffi::DecomposeContext* ctx, QVector<size_t> programs, QWidget* parent = nullptr);
+    explicit SynthesisTable(ptn::modules::decompose::DecomposeContext* ctx, QVector<size_t> programs, QWidget* parent = nullptr);
 
     SynthesisModel* model() const;
 

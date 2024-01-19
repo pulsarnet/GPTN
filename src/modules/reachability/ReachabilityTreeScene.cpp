@@ -10,14 +10,14 @@ ReachabilityTreeScene::ReachabilityTreeScene(QObject *parent)
     setSceneRect(-12500, -12500, 25000, 25000);
 }
 
-void ReachabilityTreeScene::addNode(QList<int32_t> data, rust::MarkingType type, std::optional<QList<ffi::VertexIndex>> headers) {
-    auto node = headers.has_value()
+void ReachabilityTreeScene::addNode(QList<int32_t> data, ptn::modules::reachability::CovType type, std::optional<QList<ptn::net::vertex::VertexIndex>> headers) {
+    const auto node = headers.has_value()
             ? new ReachabilityNode(std::move(data), std::move(headers.value()))
             : new ReachabilityNode(std::move(data));
 
     // setup graphviz wrapper node
-    auto index = QString("s%1").arg(m_nodes.length());
-    auto circle = m_wrapper->addCircle(index.toUtf8().data(), QSize(30, 30));
+    const auto index = QString("s%1").arg(m_nodes.length());
+    const auto circle = m_wrapper->addCircle(index.toUtf8().data(), QSize(30, 30));
     agsafeset(circle, (char*)"shape", (char*)"record", "");
     agsafeset(circle, (char*)"label", node->text().toUtf8().data(), "");
     node->setGraphVizNode(circle);
@@ -27,26 +27,26 @@ void ReachabilityTreeScene::addNode(QList<int32_t> data, rust::MarkingType type,
     addItem(node);
 }
 
-void ReachabilityTreeScene::addEdge(ReachabilityNode *from, ReachabilityNode *to, ffi::VertexIndex transition) {
+void ReachabilityTreeScene::addEdge(ReachabilityNode *from, ReachabilityNode *to, ptn::net::vertex::VertexIndex transition) {
     if (!from || !to) return;
 
-    auto from_node = from->graphVizNode();
-    auto to_node = to->graphVizNode();
-    auto edge = m_wrapper->addEdge(from_node, to_node);
+    const auto from_node = from->graphVizNode();
+    const auto to_node = to->graphVizNode();
+    const auto edge = m_wrapper->addEdge(from_node, to_node);
     addItem(new ReachabilityLine(edge));
 
     m_wrapper->setEdgeLabel(edge, QString("T%1").arg(transition.id).toUtf8().data());
 }
 
-void ReachabilityTreeScene::setTree(rust::ReachabilityTree *tree) {
-    rust::reachability_tree_free(m_tree); // todo: проверить
+void ReachabilityTreeScene::setTree(ptn::modules::reachability::ReachabilityTree *tree) {
+    m_tree->drop();
     m_tree = tree;
     removeAll();
     reload();
 }
 
 void ReachabilityTreeScene::removeAll() {
-    for (auto item : items()) {
+    for (const auto item : items()) {
         removeItem(item);
     }
     m_nodes.clear();
@@ -58,18 +58,17 @@ void ReachabilityTreeScene::removeAll() {
 
 void ReachabilityTreeScene::reload() {
     auto markings = m_tree->marking();
-    Q_ASSERT(markings.size() > 0);
+    Q_ASSERT(!markings.empty());
     bool isFirst = true;
-    for (auto marking : markings) {
-        auto prev = marking->prev();
+    for (const auto marking : markings) {
+        const auto prev = marking->prev();
         auto data = marking->values();
 
         // create node from data
         auto list = QList(data.begin(), data.end());
         if (isFirst) {
-            auto indexes = m_tree->indexes();
+            auto indexes = m_tree->positions();
             auto headers = QList(indexes.begin(), indexes.end());
-            qDebug() << headers.size();
             isFirst = false;
             addNode(list, marking->type(), std::optional(headers));
         } else {
@@ -97,5 +96,5 @@ void ReachabilityTreeScene::reload() {
 
 ReachabilityTreeScene::~ReachabilityTreeScene() {
     delete m_wrapper;
-    rust::reachability_tree_free(m_tree);
+    m_tree->drop();
 }

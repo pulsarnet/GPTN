@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.17.3)
-project(GPTN VERSION 0.1.1)
+cmake_minimum_required(VERSION 3.21)
+project(GPTN VERSION 0.1.1 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -12,155 +12,64 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${TARGET_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${TARGET_DIR}/lib)
 set(CMAKE_AUTORCC ON)
 set(VERSION_COMPONENT_BUILD 1)
+set(CMAKE_VERBOSE_MAKEFILE on)
 
-find_package(Graphviz REQUIRED COMPONENTS gvc pathplan)
-find_package(qt6advanceddocking REQUIRED)
-find_package(Qt6 REQUIRED COMPONENTS Widgets Core Gui Svg Charts DataVisualization)
-find_package(Qwt REQUIRED)
+if(WIN32)
+    set(CMAKE_INSTALL_BINDIR ".")
+    set(CMAKE_INSTALL_LIBDIR ".")
+    set(CMAKE_INSTALL_INCLUDEDIR "include")
+    set(CMAKE_INSTALL_DATADIR ".")
+    set(CMAKE_INSTALL_DOCDIR ".")
+endif ()
 
-add_compile_definitions(QWT_DLL)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-set(QT6_MAIN_DIR ${Qt6_DIR})
+find_package(Qt6 REQUIRED COMPONENTS Widgets Core Gui Svg DataVisualization)
+get_target_property(QT_WIDGETS_LOCATION Qt6::Widgets IMPORTED_LOCATION)
+get_filename_component(_qt_bin_path ${QT_WIDGETS_LOCATION} DIRECTORY)
+set(QT_BIN_PATH "${_qt_bin_path}" CACHE INTERNAL "Path to qmake, macdeployqt, windeployqt, and other Qt utilities.")
 
-if(NOT WIN32)
-    add_compile_definitions(__cpp_lib_format=201907L)
-endif()
+add_subdirectory(thirdparty)
+add_subdirectory(rust/ptn-sys)
 
 if(WIN32)
     configure_file(cmake/gptn.rc.cmake ${CMAKE_CURRENT_BINARY_DIR}/gptn.rc)
     set(WIN_RC_FILE ${CMAKE_CURRENT_BINARY_DIR}/gptn.rc)
-endif()
-
-set(SRC_FILES
-        main.cpp
-        src/ActionTabWidget/ActionTabWidget.cpp
-        src/ActionTabWidget/DecomposeModelTab.cpp
-        src/ActionTabWidget/NetModelingTab.cpp
-        src/Core/Graphviz/GraphvizWrapper.cpp
-        src/Core/ProjectMetadata.cpp
-        src/DataVisualization/InputHandler3D.cpp
-        src/DockSystem/DockWidget.cpp
-        src/DockSystem/SplittableComponentsFactory.cpp
-        src/QwtExt/CanvasPicker.cpp
-        src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.cpp
-        src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.cpp
-        src/QwtExt/QwtExtPlotCurveLabels.cpp
-        src/Settings/RecentProjects.cpp
-        src/WindowWidgets/NewProjectWindow.cpp
-        src/MainWindow.cpp
-        src/modules/reachability/ReachabilityLine.cpp
-        src/modules/reachability/ReachabilityNode.cpp
-        src/modules/reachability/ReachabilityTreeScene.cpp
-        src/modules/reachability/ReachabilityView.cpp
-        src/modules/reachability/ReachabilityWindow.cpp
-        src/overrides/MatrixWindow.cpp
-        src/Synthesis/SynthesisTable.cpp
-        src/Synthesis/SynthesisWindow.cpp
-        src/Synthesis/SynthesisModel.cpp
-        src/Editor/Commands/AddCommand.cpp
-        src/Editor/Commands/ConnectCommand.cpp
-        src/Editor/Commands/MarkCommand.cpp
-        src/Editor/Commands/MoveCommand.cpp
-        src/Editor/Commands/RemoveCommand.cpp
-        src/Editor/Commands/RotateCommand.cpp
-        src/Editor/GraphicsScene.cpp
-        src/Editor/GraphicsView.cpp
-        src/Editor/GraphicsViewZoom.cpp
-        src/Editor/Simulation/SimulationWidget.cpp
-        src/Editor/Elements/ArrowLine.cpp
-        src/Editor/Elements/PetriObject.cpp
-        src/Editor/Elements/Position.cpp
-        src/Editor/Elements/Transition.cpp
-)
-
-set(HEADERS
-        src/ActionTabWidget/ActionTabWidget.h
-        src/ActionTabWidget/ActionTabWidgetController.cpp
-        src/ActionTabWidget/ActionTabWidgetController.h
-        src/ActionTabWidget/DecomposeModelTab.h
-        src/ActionTabWidget/NetModelingTab.h
-        src/Core/ApplicationProjectController.cpp
-        src/Core/ApplicationProjectController.h
-        src/Core/Graphviz/GraphvizWrapper.h
-        src/Core/ProjectMetadata.h
-        src/DataVisualization/InputHandler3D.h
-        src/DockSystem/DockWidget.h
-        src/DockSystem/SplittableComponentsFactory.h
-        src/Editor/Commands.h
-        src/Editor/Commands/AddCommand.h
-        src/Editor/Commands/ConnectCommand.h
-        src/Editor/Commands/MarkCommand.h
-        src/Editor/Commands/MoveCommand.h
-        src/Editor/Commands/RemoveCommand.h
-        src/Editor/Commands/RotateCommand.h
-        src/Editor/Elements/ArrowLine.h
-        src/Editor/Elements/PetriObject.h
-        src/Editor/Elements/Position.h
-        src/Editor/Elements/Transition.h
-        src/Editor/GraphicsSceneActions.cpp
-        src/Editor/GraphicsSceneActions.h
-        src/Editor/GraphicsScene.h
-        src/Editor/GraphicsView.h
-        src/Editor/GraphicsViewZoom.h
-        src/Editor/Simulation/SimulationWidget.h
-        src/Editor/ToolBox/Tool.h
-        src/Editor/ToolBox/ToolBox.h
-        src/QwtExt/CanvasPicker.h
-        src/QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.h
-        src/QwtExt/TimeLineThreadActivity/QwtVertexScaleDraw.h
-        src/QwtExt/QwtExtPlotCurveLabels.h
-        src/Settings/RecentProjects.h
-        src/WindowWidgets/NewProjectWindow.h
-        src/MainWindow.h
-        src/modules/reachability/ReachabilityLine.h
-        src/modules/reachability/ReachabilityNode.h
-        src/modules/reachability/ReachabilityTreeScene.h
-        src/modules/reachability/ReachabilityView.h
-        src/modules/reachability/ReachabilityWindow.h
-        src/NamedMatrixModel.h
-        src/overrides/MatrixWindow.h
-        src/Synthesis/SynthesisModel.h
-        src/Synthesis/SynthesisTable.h
-        src/Synthesis/SynthesisWindow.h
-        src/ActionTabWidget/BaseTab.cpp
-        src/ActionTabWidget/BaseTab.h
-)
-
-if (UNIX)
-    add_executable(${TARGET_NAME}
-            ${SRC_FILES}
-            ${HEADERS}
-            resources/resources.qrc
-            )
+    add_definitions(-DGVDLL)
 else()
-    add_executable(${TARGET_NAME}
-            #WIN32
-            ${SRC_FILES}
-            ${HEADERS}
-            ${WIN_RC_FILE}
-            resources/resources.qrc
-            )
+    add_compile_definitions(__cpp_lib_format=201907L)
 endif()
 
-# RUST {
-add_subdirectory(rust/ptn-sys)
-# } RUST
+file(GLOB_RECURSE SOURCE_FILES src/*.cpp)
+file(GLOB_RECURSE HEADER_FILES src/*.h)
+file(GLOB_RECURSE QRC_FILES resources/*.qrc)
+
+
+qt_add_resources(QT_RESOURCES ${QRC_FILES})
+qt_add_executable(${TARGET_NAME}
+        WIN32
+        MACOSX_BUNDLE
+        ${SOURCE_FILES}
+        ${HEADER_FILES}
+        ${QT_RESOURCES}
+        ${WIN_RC_FILE}
+)
+qt_import_plugins(${TARGET_NAME} INCLUDE Qt::Svg NO_DEFAULT)
 
 target_link_libraries(${TARGET_NAME} PRIVATE
         ptn
-        ads::qt6advanceddocking
-        Graphviz::cgraph
-        Graphviz::gvc
-        Graphviz::pathplan
+        qt6advanceddocking
+        gvc
+        cgraph
+        xdot
+        gvplugin_core
+        gvplugin_dot_layout
         Qt6::Widgets
         Qt6::Core
         Qt6::Gui
         Qt6::Svg
         Qt6::DataVisualization
-        Qwt::Qwt
 )
-
-qt6_import_plugins(${TARGET_NAME} INCLUDE_BY_TYPE imageformats)
 
 set_target_properties(${TARGET_NAME} PROPERTIES
         AUTOMOC ON
@@ -169,89 +78,61 @@ set_target_properties(${TARGET_NAME} PROPERTIES
         CXX_STANDART 20
         CXX_STANDART_REQUIRED ON
         CXX_EXTENSIONS OFF
-        )
+)
 
-
-if (WIN32)
-    include(InstallRequiredSystemLibraries)
-    install(IMPORTED_RUNTIME_ARTIFACTS
-            Qt6::Core
-            Qt6::Widgets
-            Qt6::Gui
-            Qt6::Svg
-            Qt6::Charts
-            Qt6::DataVisualization
-            Graphviz::cgraph
-            Graphviz::cdt
-            Graphviz::gvc
-            Graphviz::pathplan
-            Qwt::Qwt
-            ads::qt6advanceddocking
-            RUNTIME DESTINATION .)
-
-    # Copy Qt6 platform plugins
-    install(FILES "${QT6_MAIN_DIR}/plugins/platforms/qwindows.dll" DESTINATION ./plugins/platforms)
-    # Copy imageformats Qt
-    install(FILES "${QT6_MAIN_DIR}/plugins/imageformats/qsvg.dll" DESTINATION ./plugins/imageformats)
-    # Copy Qt6 styles
-    install(FILES "${QT6_MAIN_DIR}/plugins/styles/qwindowsvistastyle.dll" DESTINATION ./plugins/styles)
-
-    set(CPACK_PACKAGE_NAME "${TARGET_NAME}")
-    set(CPACK_PACKAGE_DIRECTORY "packages")
-    set(CPACK_PACKAGE_VENDOR "Nickolay Muraviev")
-    set(CPACK_PACKAGE_VERSION_MAJOR ${CMAKE_PROJECT_VERSION_MAJOR})
-    set(CPACK_PACKAGE_VERSION_MINOR ${CMAKE_PROJECT_VERSION_MINOR})
-    set(CPACK_PACKAGE_VERSION_PATCH ${CMAKE_PROJECT_VERSION_PATCH})
-    set(CPACK_WIX_UPGRADE_GUID 193923F9-F4F0-4F30-B2CA-6C97C2D3FA45)
-    set(CPACK_CREATE_DESKTOP_LINKS "GPTN")
-    set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
-    set(CPACK_PACKAGE_INSTALL_DIRECTORY "GPTN")
-    set(CPACK_GENERATOR WIX)
-    set(CPACK_PACKAGE_EXECUTABLES ${TARGET_NAME} "GPTN")
-    # todo: разобраться с расширением
-    set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_SOURCE_DIR}/LICENSE.txt)
-    install(TARGETS ${TARGET_NAME} RUNTIME DESTINATION .)
-    include(CPack)
-
-    add_custom_command(
-            TARGET ${TARGET_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${TARGET_NAME}>/plugins/platforms
-            COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${TARGET_NAME}>/plugins/styles
-            COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${TARGET_NAME}>/plugins/imageformats
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:Qt6::Widgets>
-            $<TARGET_FILE:Qt6::Core>
-            $<TARGET_FILE:Qt6::Gui>
-            $<TARGET_FILE:Qt6::Svg>
-            $<TARGET_FILE:Qt6::DataVisualization>
-            $<TARGET_FILE:Qt6::OpenGL>
-            $<TARGET_FILE:Qt6::OpenGLWidgets>
-            $<TARGET_FILE_DIR:${TARGET_NAME}>
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:Qt6::QWindowsIntegrationPlugin>
-            $<TARGET_FILE_DIR:${TARGET_NAME}>/plugins/platforms/
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:Qt6::QSvgPlugin>
-            $<TARGET_FILE_DIR:${TARGET_NAME}>/plugins/imageformats/
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:Qt6::QWindowsVistaStylePlugin>
-            $<TARGET_FILE_DIR:${TARGET_NAME}>/plugins/styles/
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:Graphviz::gvc>
-            $<TARGET_FILE:Graphviz::cgraph>
-            $<TARGET_FILE:Graphviz::cdt>
-            $<TARGET_FILE:Graphviz::pathplan>
-            ${GRAPHVIZ_CONFIG}
-            $<TARGET_FILE_DIR:${TARGET_NAME}>
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:Qwt::Qwt>
-            $<TARGET_FILE_DIR:${TARGET_NAME}>
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:ads::qt6advanceddocking>
-            $<TARGET_FILE_DIR:${TARGET_NAME}>
-    )
-endif()
 
 if(MSVC)
     target_compile_options(${TARGET_NAME} PRIVATE /W4 /WX)
 endif()
+
+
+if (WIN32)
+    set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION ${CMAKE_INSTALL_BINDIR})
+    include(InstallRequiredSystemLibraries)
+
+    find_program(QT_WINDEPLOYQT_EXECUTABLE "windeployqt" HINTS ${QT_BIN_PATH} REQUIRED)
+    add_custom_target(copy_qt_dlls ALL)
+    set_target_properties(copy_qt_dlls PROPERTIES FOLDER "Copy Tasks")
+    add_custom_command(TARGET copy_qt_dlls
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E rm -rRf "${CMAKE_CURRENT_BINARY_DIR}/windeployqt"
+            COMMAND set "PATH=${QT_BIN_PATH};%PATH%"
+            COMMAND "${QT_WINDEPLOYQT_EXECUTABLE}"
+            --dir "${CMAKE_CURRENT_BINARY_DIR}/windeployqt"
+            --no-compiler-runtime
+            --no-opengl-sw
+            --no-translations
+            --no-system-d3d-compiler
+            --no-quick-import
+            --no-network
+            --skip-plugin-types networkinformation,tls,iconengines,generic
+            --verbose 0
+            "$<TARGET_FILE:${TARGET_NAME}>"
+            COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different "${CMAKE_CURRENT_BINARY_DIR}/windeployqt/" "$<TARGET_FILE_DIR:${TARGET_NAME}>"
+            VERBATIM
+    )
+
+    add_custom_target(copy_graphviz_dlls ALL)
+    set_target_properties(copy_graphviz_dlls PROPERTIES FOLDER "Copy Tasks")
+    add_dependencies(copy_graphviz_dlls ${TARGET_NAME})
+    add_custom_command(TARGET copy_graphviz_dlls POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/thirdparty/graphviz/build/ $<TARGET_FILE_DIR:${TARGET_NAME}>
+            COMMAND_EXPAND_LISTS
+    )
+    add_custom_command(
+            TARGET copy_graphviz_dlls POST_BUILD
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/thirdparty/graphviz/build/
+            COMMAND $<TARGET_FILE:dot> ARGS -c -v
+            VERBATIM
+    )
+
+    install(TARGETS ${TARGET_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/thirdparty/graphviz/build/ DESTINATION ${CMAKE_INSTALL_BINDIR} FILES_MATCHING REGEX ".*.dll|config6")
+    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/windeployqt/ DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
+
+
+# -----------------------------------------------------------------------------
+# Packaging (CPack)
+# -----------------------------------------------------------------------------
+include(ConfigCPack.cmake)

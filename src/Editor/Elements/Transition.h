@@ -4,6 +4,9 @@
 #include <QGraphicsItem>
 #include "PetriObject.h"
 
+namespace net = ptn::net;
+namespace vertex = net::vertex;
+
 class Transition : public PetriObject {
 
 public:

@@ -18,8 +18,11 @@ extern "C" {
     vertex::Vertex* ptn$net$insert_transition(net::PetriNet*, usize, isize);
     void ptn$net$remove(net::PetriNet*, vertex::VertexIndex);
 
+    edge::Connection* ptn$net$edge(const net::PetriNet*, vertex::VertexIndex, vertex::VertexIndex);
     void ptn$net$add_edge(net::PetriNet*, vertex::VertexIndex, vertex::VertexIndex);
     void ptn$net$remove_edge(net::PetriNet*, vertex::VertexIndex, vertex::VertexIndex);
+
+    void ptn$net$as_matrix(const net::PetriNet*, ptn::matrix::RustMatrix<i32>&, ptn::matrix::RustMatrix<i32>&);
 
     void ptn$net$clear(net::PetriNet*);
     void ptn$net$drop(net::PetriNet*);
@@ -71,6 +74,9 @@ void net::PetriNet::remove(const vertex::VertexIndex index) {
     ptn$net$remove(this, index);
 }
 
+edge::Connection* net::PetriNet::edge(const vertex::VertexIndex from, const vertex::VertexIndex to) const {
+    return ptn$net$edge(this, from, to);
+}
 
 void net::PetriNet::add_edge(const vertex::VertexIndex from, const vertex::VertexIndex to) {
     ptn$net$add_edge(this, from, to);
@@ -78,6 +84,13 @@ void net::PetriNet::add_edge(const vertex::VertexIndex from, const vertex::Verte
 
 void net::PetriNet::remove_edge(const vertex::VertexIndex from, const vertex::VertexIndex to) {
     ptn$net$remove_edge(this, from, to);
+}
+
+std::tuple<ptn::matrix::RustMatrix<i32>, ptn::matrix::RustMatrix<i32>> net::PetriNet::as_matrix() const {
+    matrix::RustMatrix<i32> input;
+    matrix::RustMatrix<i32> output;
+    ptn$net$as_matrix(this, input, output);
+    return std::make_tuple(std::move(input), std::move(output));
 }
 
 void net::PetriNet::clear() {

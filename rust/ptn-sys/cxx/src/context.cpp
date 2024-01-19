@@ -3,7 +3,7 @@
 namespace ptn::net::context {
 
     extern "C" {
-        PetriNetContext* ptn$net$context$create();
+        PetriNetContext* ptn$net$context$new();
         PetriNet* ptn$net$context$net(const PetriNetContext*);
         modules::decompose::DecomposeContext* ptn$net$context$decompose_ctx(const PetriNetContext*);
         void ptn$net$context$decompose(PetriNetContext*);
@@ -12,14 +12,14 @@ namespace ptn::net::context {
     }
 
     PetriNetContext* PetriNetContext::create() {
-        return ptn$net$context$create();
+        return ptn$net$context$new();
     }
 
     PetriNet* PetriNetContext::net() const {
         return ptn$net$context$net(this);
     }
 
-    modules::decompose::DecomposeContext* PetriNetContext::decompose_ctx() const {
+    ptn::modules::decompose::DecomposeContext* PetriNetContext::decompose_ctx() const {
         return ptn$net$context$decompose_ctx(this);
     }
 

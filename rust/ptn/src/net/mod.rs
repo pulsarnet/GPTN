@@ -217,7 +217,7 @@ impl PetriNet {
         trace!("insert transition {}", element.index());
         match self.transitions.contains_key(&element.index()) {
             true => {
-                debug!("transition {} already exists. no inserted", element.index());
+                debug!("transition {} already exists", element.index());
                 self.transitions.get(&element.index()).unwrap()
             },
             false => {

@@ -1,5 +1,6 @@
 #include <QBoxLayout>
 #include <QSplitter>
+#include <ptn/context.h>
 #include "NetModelingTab.h"
 #include "../Editor/GraphicsScene.h"
 #include "../Editor/GraphicsView.h"
@@ -8,7 +9,6 @@
 #include <DockAreaWidget.h>
 #include "../DockSystem/DockWidget.h"
 #include "../Editor/Simulation/SimulationWidget.h"
-#include "../QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.h"
 
 using namespace ads;
 
@@ -29,17 +29,6 @@ NetModelingTab::NetModelingTab(MainWindow* window, QWidget *parent)
 
     // add to dock
     m_dockManager->setCentralWidget(m_view);
-
-    /************************* CREATE TIMELINE *************************/
-    auto timeLine = view->simulationWidget()->plot();
-    m_timeLine = new DockWidget("Time line");
-    m_timeLine->setWidget(timeLine);
-    // add action to view tab
-    addViewAction(m_timeLine->toggleViewAction());
-
-    // add to dock
-    auto areaTimeLine = m_dockManager->addDockWidget(DockWidgetArea::BottomDockWidgetArea, m_timeLine);
-    areaTimeLine->setAllowedAreas(DockWidgetArea::BottomDockWidgetArea);
 
     /************************* CREATE LAYOUT *************************/
     setLayout(new QGridLayout(this));

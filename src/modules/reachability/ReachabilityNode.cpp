@@ -21,7 +21,7 @@ QString create_text(const QList<int32_t>& values) {
     return result;
 }
 
-QString create_text_with_headers(const QList<int32_t>& values, const QList<ffi::VertexIndex>& headers) {
+QString create_text_with_headers(const QList<int32_t>& values, const QList<ptn::net::vertex::VertexIndex>& headers) {
     Q_ASSERT(values.size() == headers.size());
     QString result;
     auto it_h = QListIterator(headers);
@@ -46,7 +46,7 @@ ReachabilityNode::ReachabilityNode(QList<int32_t> values, QGraphicsItem *parent)
     setAcceptHoverEvents(true);
 }
 
-ReachabilityNode::ReachabilityNode(QList<int32_t> values, const QList<ffi::VertexIndex>& headers, QGraphicsItem *parent): QGraphicsItem(parent) {
+ReachabilityNode::ReachabilityNode(QList<int32_t> values, const QList<ptn::net::vertex::VertexIndex>& headers, QGraphicsItem *parent): QGraphicsItem(parent) {
     m_values = std::move(values);
     m_text = create_text_with_headers(m_values, headers);
 
@@ -66,11 +66,11 @@ Agnode_s* ReachabilityNode::graphVizNode() {
     return m_node;
 }
 
-void ReachabilityNode::setType(rust::MarkingType type) {
+void ReachabilityNode::setType(ptn::modules::reachability::CovType type) {
     m_type = type;
 }
 
-rust::MarkingType ReachabilityNode::getType() const {
+ptn::modules::reachability::CovType ReachabilityNode::getType() const {
     return m_type;
 }
 
@@ -89,14 +89,14 @@ void ReachabilityNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *
     auto type = getType();
     QColor penColor;
     switch (type) {
-        case rust::MarkingType::Duplicate:
+        case ptn::modules::reachability::CovType::Duplicate:
             penColor = Qt::blue;
             break;
-        case rust::MarkingType::DeadEnd:
+        case ptn::modules::reachability::CovType::DeadEnd:
             penColor = Qt::red;
             break;
-        case rust::MarkingType::Inner:
-        case rust::MarkingType::Boundary:
+        case ptn::modules::reachability::CovType::Inner:
+        case ptn::modules::reachability::CovType::Boundary:
         default:
             penColor = Qt::black;
     }

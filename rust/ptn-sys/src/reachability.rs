@@ -1,6 +1,12 @@
-use ptn::modules::reachability::{CovType, MarkerValue, Marking, ReachabilityTree};
+use ptn::modules::reachability::{CovType, MarkerValue, Marking, Reachability, ReachabilityTree};
+use ptn::net::PetriNet;
 use ptn::net::vertex::VertexIndex;
 use vec::RustVec;
+
+#[export_name = "ptn$modules$reachability$build"]
+extern "C" fn build(net: &PetriNet) -> *const ReachabilityTree {
+    Box::into_raw(Box::new(Reachability::new(net).compute().unwrap()))
+}
 
 #[export_name = "ptn$modules$reachability$positions"]
 extern "C" fn positions(this: &ReachabilityTree, vec: &mut RustVec<VertexIndex>) {

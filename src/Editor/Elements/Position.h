@@ -1,7 +1,3 @@
-//
-// Created by nmuravev on 12/13/2021.
-//
-
 #ifndef FFI_RUST_POSITION_H
 #define FFI_RUST_POSITION_H
 
@@ -47,10 +43,10 @@ public:
         return other->objectType() == PetriObject::Transition;
     }
 
-    int markers() const;
+    size_t markers() const;
     void setMarkers(int markers);
 
-    virtual QString name() const override;
+    QString name() const override;
 
 protected:
 

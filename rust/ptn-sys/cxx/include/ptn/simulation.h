@@ -24,6 +24,8 @@ namespace ptn::modules::simulation {
         [[nodiscard]] bool is_fired(vertex::VertexIndex) const;
         [[nodiscard]] net::PetriNet* net() const;
         void drop();
+
+        ~Simulation() = delete;
     };
 
 }

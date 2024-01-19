@@ -7,7 +7,7 @@ namespace ptn::net {
     struct PetriNet;
 }
 
-namespace rust {
+namespace ptn::modules::reachability {
     struct ReachabilityTree;
 }
 
@@ -25,7 +25,7 @@ public:
 private:
     ptn::net::PetriNet* m_net;
     ReachabilityView* m_view;
-    rust::ReachabilityTree* m_tree = nullptr;
+    ptn::modules::reachability::ReachabilityTree* m_tree = nullptr;
 };
 
 

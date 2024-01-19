@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <array>
 #include <iterator>
+#include <cstdint>
 
 namespace ptn::alloc::vec {
     template<typename T>
