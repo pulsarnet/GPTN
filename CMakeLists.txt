@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(GPTN VERSION 0.1.1 LANGUAGES C CXX)
+project(GPTN VERSION 0.1.2 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 
