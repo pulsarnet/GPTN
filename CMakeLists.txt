@@ -33,17 +33,19 @@ add_subdirectory(thirdparty)
 add_subdirectory(rust/ptn-sys)
 
 if(WIN32)
-    configure_file(cmake/gptn.rc.cmake ${CMAKE_CURRENT_BINARY_DIR}/gptn.rc)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/gptn.rc.cmake ${CMAKE_CURRENT_BINARY_DIR}/gptn.rc)
     set(WIN_RC_FILE ${CMAKE_CURRENT_BINARY_DIR}/gptn.rc)
     add_definitions(-DGVDLL)
 else()
     add_compile_definitions(__cpp_lib_format=201907L)
 endif()
 
+# configure config.h.cmake
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.h.cmake ${CMAKE_BINARY_DIR}/config.h)
+
 file(GLOB_RECURSE SOURCE_FILES src/*.cpp)
 file(GLOB_RECURSE HEADER_FILES src/*.h)
 file(GLOB_RECURSE QRC_FILES resources/*.qrc)
-
 
 qt_add_resources(QT_RESOURCES ${QRC_FILES})
 qt_add_executable(${TARGET_NAME}
@@ -84,6 +86,8 @@ set_target_properties(${TARGET_NAME} PROPERTIES
 if(MSVC)
     target_compile_options(${TARGET_NAME} PRIVATE /W4 /WX)
 endif()
+
+include_directories(${CMAKE_BINARY_DIR})
 
 
 if (WIN32)

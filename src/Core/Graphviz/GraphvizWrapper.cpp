@@ -1,9 +1,6 @@
 #include "GraphvizWrapper.h"
-#include <QObject>
-#include <QJsonObject>
 #include <QJsonDocument>
 #include <QWidget>
-#include <QJsonArray>
 
 GraphVizWrapper::GraphVizWrapper() {
     m_context = gvContext();
@@ -81,18 +78,21 @@ void GraphVizWrapper::setRankDir(GraphVizWrapper::RankDir dir) {
     }
 }
 
-GraphModel GraphVizWrapper::save(char* algorithm) {
+GraphModel GraphVizWrapper::build(char* algorithm) {
     gvLayout(m_context, m_graph, algorithm);
 
-    GraphModel net;
-    for (Agnode_t* node = agfstnode(m_graph); node != NULL; node = agnxtnode(m_graph, node)) {
-        auto name = QString(((Agnodeinfo_t*)AGDATA(node))->label->text);
-        auto x = ((Agnodeinfo_t*)AGDATA(node))->coord.x * 1.73;
-        auto y = ((Agnodeinfo_t*)AGDATA(node))->coord.y * 1.73;
-        net.elements.push_back({name, QPointF(x, y)});
+    GraphModel model;
+    for (Agnode_t* node = agfstnode(m_graph); node; node = agnxtnode(m_graph, node)) {
+        QString name;
+        if (GD_has_labels(node) && GD_label(node)->text) {
+            name = QString(GD_label(node)->text);
+        }
+        auto x = ND_coord(node).x * 1.73;
+        auto y = ND_coord(node).y * 1.73;
+        model.elements.push_back({name, QPointF(x, y)});
     }
 
-    return net;
+    return model;
 }
 
 GraphVizWrapper::~GraphVizWrapper() {

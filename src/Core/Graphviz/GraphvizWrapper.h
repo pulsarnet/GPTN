@@ -34,7 +34,7 @@ public:
     void setRankDir(RankDir dir);
 
     GraphVizWrapper subGraph(char* name);
-    GraphModel save(char* algorithm);
+    GraphModel build(char* algorithm);
 
     ~GraphVizWrapper();
 

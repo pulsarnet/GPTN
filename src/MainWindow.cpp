@@ -25,6 +25,7 @@
 #include <QStandardPaths>
 #include <ptn/context.h>
 #include <ptn/net.h>
+#include <config.h>
 
 
 /*
@@ -198,14 +199,14 @@ QString MainWindow::aboutText() {
             "<hr>"
             "<p>Credits:</p>"
             "<br> - QT framework: <a href=\"http://qt.io\">Site</a>"
-            "<br> - OpenBlas: <a href=\"https://www.openblas.net\">Site</a>"
+           // "<br> - OpenBlas: <a href=\"https://www.openblas.net\">Site</a>"
             "<br> - Qt Advanced Docking System: <a href=\"https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System\">Site</a>"
-            "<br> - QWT project: <a href=\"http://qwt.sf.net\">Site</a>"
+           // "<br> - QWT project: <a href=\"http://qwt.sf.net\">Site</a>"
             "<br> - Graphviz: <a href=\"https://graphviz.org/license/\">Site</a>"
     )
     .arg(
          QApplication::applicationDisplayName(),
-         QApplication::applicationVersion()
+         VERSION
     );
 }
 

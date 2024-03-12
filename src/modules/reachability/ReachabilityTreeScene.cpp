@@ -86,7 +86,7 @@ void ReachabilityTreeScene::reload() {
     }
 
     m_wrapper->setRankDir(GraphVizWrapper::BottomToTop);
-    m_wrapper->save((char*)"dot");
+    m_wrapper->build((char*)"dot");
 
     // Обновим все элементы
     std::for_each(m_nodes.begin(), m_nodes.end(), [](ReachabilityNode* node) {

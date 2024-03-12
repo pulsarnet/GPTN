@@ -589,7 +589,7 @@ void GraphicsScene::dotVisualization(char* algorithm) {
         graph.addEdge(conn->from()->name(), conn->to()->name());
     }
 
-    auto res = graph.save(algorithm);
+    auto res = graph.build(algorithm);
     QList<MoveCommandData> moveData;
     for (auto& element : res.elements) {
         if (element.first.startsWith("p")) {
