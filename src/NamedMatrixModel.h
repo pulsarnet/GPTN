@@ -6,13 +6,16 @@
 #define FFI_RUST_NAMED_MATRIX_MODEL_H
 
 #include <QAbstractTableModel>
-#include "Core/FFI/rust.h"
+#include <ptn/matrix.h>
 
 class NamedMatrixModel : public QAbstractTableModel {
 
 public:
 
-    explicit NamedMatrixModel(ffi::CNamedMatrix* matrix, QObject* parent = nullptr): QAbstractTableModel(parent), m_matrix(matrix) {
+    explicit NamedMatrixModel(ptn::matrix::RustMatrix<i32>&& matrix, QObject* parent = nullptr)
+        : QAbstractTableModel(parent)
+        , m_matrix(std::move(matrix))
+    {
 
     }
 
@@ -32,30 +35,30 @@ public:
 
     [[nodiscard]] int rowCount(const QModelIndex &parent) const override {
         Q_UNUSED(parent)
-        return (int)m_matrix->rows();
+        return (int)m_matrix.nrows();
     }
 
     [[nodiscard]] int columnCount(const QModelIndex &parent) const override {
         Q_UNUSED(parent)
-        return (int)m_matrix->columns();
+        return (int)m_matrix.ncols();
     }
 
     [[nodiscard]] QVariant data(const QModelIndex &index, int role) const override {
         if (role == Qt::DisplayRole) {
-            return m_matrix->index(index.row(), index.column());
+            return m_matrix[{ (size_t)index.row(), (size_t)index.column() }];
         }
 
         return {};
     }
 
     [[nodiscard]] QVariant headerData(int section, Qt::Orientation orientation, int role) const override {
+        Q_UNUSED(section)
+        Q_UNUSED(orientation)
         if (role == Qt::DisplayRole) {
-            if (orientation == Qt::Orientation::Horizontal) {
-                return m_matrix->horizontalHeader(section);
-            }
-            else {
-                return m_matrix->verticalHeader(section);
-            }
+            // todo вернуть
+            // if (orientation == Qt::Orientation::Horizontal)
+            //     return m_matrix->horizontalHeader(section);
+            // return m_matrix->verticalHeader(section);
         }
 
         return {};
@@ -73,7 +76,7 @@ public:
 
 private:
 
-    ffi::CNamedMatrix* m_matrix;
+    ptn::matrix::RustMatrix<i32> m_matrix;
 
 };
 

@@ -1,15 +1,11 @@
-//
-// Created by Николай Муравьев on 10.01.2022.
-//
-
 #ifndef FFI_RUST_TRANSITION_H
 #define FFI_RUST_TRANSITION_H
 
 #include <QGraphicsItem>
-#include <QPainter>
-#include <QStyleOptionGraphicsItem>
-#include <QtMath>
-#include <QGraphicsSceneMouseEvent>
+#include "PetriObject.h"
+
+namespace net = ptn::net;
+namespace vertex = net::vertex;
 
 class Transition : public PetriObject {
 
@@ -20,13 +16,13 @@ public:
     };
 
     explicit Transition(const QPointF& origin,
-                        ffi::PetriNet* net,
-                        ffi::VertexIndex transition,
+                        net::PetriNet* net,
+                        vertex::VertexIndex transition,
                         QGraphicsItem *parent = nullptr);
 
     explicit Transition(const QPointF& origin,
-                        ffi::PetriNet* net,
-                        ffi::VertexIndex transition,
+                        net::PetriNet* net,
+                        vertex::VertexIndex transition,
                         TransitionState* state,
                         QGraphicsItem *parent = nullptr);
 

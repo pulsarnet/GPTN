@@ -1,7 +1,3 @@
-//
-// Created by nmuravev on 12/13/2021.
-//
-
 #ifndef FFI_RUST_GRAPHICSVIEW_H
 #define FFI_RUST_GRAPHICSVIEW_H
 
@@ -9,7 +5,6 @@
 #include <QMouseEvent>
 #include <QTimer>
 #include <QScrollBar>
-#include <QTransform>
 #include <QAction>
 
 class ToolBox;
@@ -30,6 +25,8 @@ public:
     void setToolBoxVisibility(bool visible = true);
     void setAllowSimulation(bool allow = true);
 
+    SimulationWidget* simulationWidget() { return m_simulationWidget; }
+
 protected:
 
     void mousePressEvent(QMouseEvent *event) override;
@@ -37,7 +34,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
 
-    void contextMenuEvent(QContextMenuEvent *event) override;
+    void contextMenu();
 
 protected slots:
 
@@ -45,7 +42,7 @@ protected slots:
 
 private:
 
-    QAction* makeAction(const QIcon &icon, const QString &name, bool checkable, const QVariant& data, QActionGroup *actionGroup);
+    QAction* makeAction(const QIcon &icon, const QString &name, bool checkable, const QVariant& data, QActionGroup *actionGroup, const QKeySequence&);
 
     GraphicsViewZoom* m_zoom = nullptr;
     QPointF m_origin;
@@ -60,7 +57,6 @@ private:
     QAction* m_markerAction = nullptr;
     QActionGroup* m_actionGroup = nullptr;
 
-    MatrixWindow* m_IOMatrixWindow = nullptr;
     SimulationWidget* m_simulationWidget = nullptr;
 
     MainWindow* m_mainWindow;

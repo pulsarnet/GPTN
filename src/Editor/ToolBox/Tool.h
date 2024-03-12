@@ -11,15 +11,22 @@
 #include <QCursor>
 #include <QToolTip>
 #include <QStyleOptionToolButton>
+#include <QGuiApplication>
+#include <QApplication>
+
+#include <QScreen>
 
 class Tool : public QToolButton {
 
 public:
 
-    explicit Tool(QWidget* parent = nullptr) : QToolButton(parent) {
+    explicit Tool(QAction* action, const QString& description = QString(), QWidget* parent = nullptr)
+        : QToolButton(parent)
+        , mDescription(description)
+    {
+        this->setDefaultAction(action);
         this->setMouseTracking(true);
         this->setAttribute(Qt::WA_Hover);
-        this->setToolTipDuration(500);
     }
 
     void setSize(const QSize& size) {
@@ -52,10 +59,30 @@ public:
 
         QRect iconRect = rect().adjusted(5, 5, -5, -5);
         if (defaultAction()) defaultAction()->icon().paint(&painter, iconRect);
-
     }
 
 protected:
+    bool event(QEvent *e) override {
+        if (e->type() == QEvent::ToolTip) {
+            auto tooltipPos = QPoint(
+                    this->pos().x() + this->geometry().width() + 5,
+                    this->pos().y() - 16
+                    );
+
+            QString toolTipText = QString("<b>%1</b>").arg(toolTip());
+            if (!mDescription.isEmpty()) {
+                toolTipText.append(QString("<p>%1</p>").arg(mDescription));
+            }
+            if (QAction* action = this->defaultAction(); action && !action->shortcut().isEmpty()) {
+                toolTipText.append(QString("<p><i>Shortcut: %1<i></p>").arg(action->shortcut().toString(QKeySequence::NativeText)));
+            }
+
+            QToolTip::showText(this->parentWidget()->mapToGlobal(tooltipPos), toolTipText, this, QRect(), toolTipDuration());
+            return true;
+        }
+
+        return QToolButton::event(e);
+    }
 
     void enterEvent(QEnterEvent *) override {
         setCursor(Qt::PointingHandCursor);
@@ -64,6 +91,10 @@ protected:
     void leaveEvent(QEvent *) override {
         setCursor(Qt::ArrowCursor);
     }
+
+private:
+
+    QString mDescription;
 
 };
 

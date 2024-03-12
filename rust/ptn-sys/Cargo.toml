@@ -1,0 +1,19 @@
+[package]
+name = "ptn-sys" # the name of the package
+version = "0.1.0"    # the current version, obeying semver
+
+[lib]
+crate-type = ["staticlib"]
+
+[build-dependencies]
+cc = "1.0.72"
+cmake = "0.1.50"
+cxx-build = "1.0.110"
+
+[dependencies]
+ptn = { version = "0.1.0", path = "../ptn" }
+libc = "0.2.150"
+cxx = "1.0.110"
+tracing = "0.1.39"
+tracing-subscriber = { version = "0.3.17", features = [] }
+num-traits = "0.2.18"

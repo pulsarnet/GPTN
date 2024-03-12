@@ -1,20 +1,17 @@
-//
-// Created by nmuravev on 23.01.2022.
-//
-
 #include <QVBoxLayout>
 #include <QHeaderView>
 #include <QTableView>
+#include <ptn/decompose.h>
 #include "SynthesisModel.h"
 #include "SynthesisTable.h"
-#include "../Core/FFI/rust.h"
 
-SynthesisTable::SynthesisTable(ffi::DecomposeContext *ctx, QVector<size_t> programs, QWidget *parent)
+
+SynthesisTable::SynthesisTable(ptn::modules::decompose::DecomposeContext *ctx, QVector<size_t> programs, QWidget *parent)
     : QWidget(parent)
 {
     setLayout(new QVBoxLayout(this));
 
-    auto model = new SynthesisModel(ctx, std::move(programs));
+    const auto model = new SynthesisModel(ctx, std::move(programs));
     m_table = new QTableView(this);
     m_table->setModel(model);
     m_table->setSelectionBehavior(QAbstractItemView::SelectRows);

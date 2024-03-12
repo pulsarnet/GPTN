@@ -7,7 +7,7 @@
 
 #include <QAbstractTableModel>
 
-namespace ffi {
+namespace ptn::modules::decompose {
     struct DecomposeContext;
 }
 
@@ -15,7 +15,7 @@ class SynthesisModel : public QAbstractTableModel {
 
 public:
 
-    explicit SynthesisModel(ffi::DecomposeContext* ctx, QVector<size_t>, QObject* parent = nullptr);
+    explicit SynthesisModel(ptn::modules::decompose::DecomposeContext* ctx, QVector<size_t>, QObject* parent = nullptr);
 
     int columnCount(const QModelIndex &parent) const override;
 
@@ -25,13 +25,13 @@ public:
 
     QVariant data(const QModelIndex &index, int role) const override;
 
-    ffi::DecomposeContext* ctx() {
+    ptn::modules::decompose::DecomposeContext* ctx() {
         return m_ctx;
     }
 
 private:
 
-    ffi::DecomposeContext* m_ctx;
+    ptn::modules::decompose::DecomposeContext* m_ctx;
     QVector<size_t> m_programs;
 
 };

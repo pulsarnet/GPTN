@@ -1,12 +1,8 @@
-//
-// Created by nmuravev on 1/18/2022.
-//
-#pragma once
 #ifndef GRAPH_GRAPHVIZ_WRAPPER_H
 #define GRAPH_GRAPHVIZ_WRAPPER_H
 
-#include <graphviz/gvc.h>
-#include <QString>
+#include <gvc/gvc.h>
+#include <cgraph/cgraph.h>
 #include <QPainter>
 #include <qmap.h>
 
@@ -38,7 +34,7 @@ public:
     void setRankDir(RankDir dir);
 
     GraphVizWrapper subGraph(char* name);
-    GraphModel save(char* algorithm);
+    GraphModel build(char* algorithm);
 
     ~GraphVizWrapper();
 

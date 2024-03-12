@@ -1,40 +1,33 @@
-//
-// Created by nmuravev on 3/20/2022.
-//
-
 #include "DecomposeModelTab.h"
-#include "../Editor/GraphicsScene.h"
-#include "../synthesis/SynthesisTable.h"
-#include "../DockSystem/DockToolbar.h"
 #include <QGridLayout>
 #include <QSplitter>
 #include <DockAreaWidget.h>
-#include <QLabel>
-#include <unordered_map>
-
 #include <Q3DScatter>
-#include <QwtPickerMachine>
-#include <QwtPlotGrid>
 #include <QElapsedTimer>
 #include "../synthesis/SynthesisWindow.h"
+#include "../Editor/GraphicsScene.h"
+#include "../Editor/GraphicsView.h"
+#include "../DockSystem/DockWidget.h"
 #include "../DataVisualization/InputHandler3D.h"
 #include "../Core/ProjectMetadata.h"
-#include "../Core/FFI/rust.h"
 
-inline size_t qHash(const QVector3D &v)
-{
+#include <ptn/context.h>
+#include <ptn/decompose.h>
+#include <ptn/net.h>
+
+inline size_t qHash(const QVector3D &v) {
     return qHash(QString("%1x%2x%3" ).arg(v.x()).arg(v.y()).arg(v.z()) );
 }
 
 DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
-    : QWidget(parent)
+    : BaseTab(parent)
     , m_metadata(metadata)
     , m_dockManager(new ads::CDockManager(this))
 {
     // TODO: make return error if error
     m_metadata->context()->decompose();
 
-    auto linearBaseFragmentsScene = new GraphicsScene(decomposeContext()->linear_base_fragments());
+    auto linearBaseFragmentsScene = new GraphicsScene(decomposeContext()->lbf());
     auto linearBaseFragmentsView = new GraphicsView(nullptr);
     linearBaseFragmentsView->setScene(linearBaseFragmentsScene);
     linearBaseFragmentsView->setToolBoxVisibility(false);
@@ -42,7 +35,7 @@ DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
     m_linearBaseFragmentsView = new DockWidget("LBF");
     m_linearBaseFragmentsView->setWidget(linearBaseFragmentsView);
 
-    auto primitiveNetScene = new GraphicsScene(decomposeContext()->primitive_net());
+    auto primitiveNetScene = new GraphicsScene(decomposeContext()->primitive());
     auto primitiveNetView = new GraphicsView(nullptr);
     primitiveNetView->setScene(primitiveNetScene);
     primitiveNetView->setToolBoxVisibility(false);
@@ -51,7 +44,6 @@ DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
     m_primitiveNetView->setWidget(primitiveNetView);
 
     Q3DScatter* scatter = new Q3DScatter();
-    //scatter->setFlags(scatter->flags() ^ Qt::FramelessWindowHint);
     scatter->axisX()->setTitle("Positions");
     scatter->axisX()->setTitleVisible(true);
 
@@ -70,9 +62,6 @@ DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
 
     connect(m_series, &QScatter3DSeries::selectedItemChanged, this, &DecomposeModelTab::selectedPoint);
 
-    // mesure
-    decomposeContext()->calculate_all();
-
     // Plot
     QElapsedTimer timer;
     timer.start();
@@ -83,9 +72,6 @@ DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
 
         auto program = decomposeContext()->eval_program(i);
 
-        //auto x_axis = program->input_positions() + 2 * program->output_positions();
-        //auto y_axis = program->positions().size() + program->transitions().size();
-
         auto x_axis = program->positions().size();
         auto y_axis = program->transitions().size();
 
@@ -93,8 +79,8 @@ DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
             continue;
         }
 
-        auto connections = program->connections();
-        int weight = 0;
+        auto connections = program->edges();
+        size_t weight = 0;
         for (auto& connection : connections) {
             weight += connection->weight();
         }
@@ -102,8 +88,7 @@ DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
         QVector3D point(x_axis, y_axis, weight);
         auto it = m_graphPoints.find(point);
         if (it == m_graphPoints.end()) {
-            //qDebug() << "New point: " << point << " size: " << m_graphPoints.size();
-            m_graphPoints.insert(point, QVector<std::size_t>{(std::size_t)i});
+            m_graphPoints.insert(point, QVector{i});
             scatterDataArray << QVector3D(x_axis, y_axis, weight);
         } else {
             it.value().push_back(i);
@@ -158,6 +143,6 @@ void DecomposeModelTab::selectedPoint(int idx) {
     }
 }
 
-ffi::DecomposeContext *DecomposeModelTab::decomposeContext() const noexcept {
+ptn::modules::decompose::DecomposeContext *DecomposeModelTab::decomposeContext() const noexcept {
     return m_metadata->context()->decompose_ctx();
 }

@@ -20,20 +20,14 @@
 #include "core/ProjectMetadata.h"
 
 class ActionTabWidget;
-class MainTreeItem;
 class ApplicationProjectController;
 class ActionTabWidgetController;
 class MatrixWindow;
 class NetModelingTab;
 class ReachabilityWindow;
+class DecomposeModelTab;
 
 class MainWindow : public QMainWindow {
-
-    enum SaveFileAnswer {
-        Save = 0,
-        NoSave,
-        Cancel
-    };
 
 public:
     MainWindow() = delete;
@@ -66,11 +60,18 @@ public slots:
     void onClose(bool checked);
     void onDocumentChanged();
 
+    void onWindowSubMenu();
+    void onWindowSubMenuAction(QAction*);
+    void onAbout();
+    static QString aboutText();
+
     // Net
     void onReachabilityTree(bool checked);
 
     void onMatrixWindow(bool checked);
     void onMatrixWindowClose(QWidget* window);
+
+    void onSynthesis();
 
     // Tab Changed
     void onTabChanged(int);
@@ -107,6 +108,7 @@ private:
 
     NetModelingTab* m_netModelingTab = nullptr;
     ReachabilityWindow* m_reachabilityTab = nullptr;
+    DecomposeModelTab* m_decomposeTab = nullptr;
 
     MatrixWindow* m_IOMatrixWindow = nullptr;
 };

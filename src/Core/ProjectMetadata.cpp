@@ -1,18 +1,14 @@
-//
-// Created by darkp on 15.09.2023.
-//
-
 #include "ProjectMetadata.h"
-#include "FFI/rust.h"
 #include <filesystem>
 #include <string>
 #include <QDir>
+#include <ptn/context.h>
 
 namespace fs = std::filesystem;
 
 ProjectMetadata::ProjectMetadata() {
     this->mChanged = false;
-    this->mCtx = ffi::PetriNetContext::create();
+    this->mCtx = ptn::net::context::PetriNetContext::create();
     this->mProjectName = "Untitled";
 }
 

@@ -1,0 +1,6 @@
+[submodule "qtads"]
+	path = thirdparty/qtads
+	url = https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System.git
+[submodule "graphviz"]
+	path = thirdparty/graphviz
+	url = https://gitlab.com/graphviz/graphviz.git

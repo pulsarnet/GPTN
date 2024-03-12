@@ -1,12 +1,9 @@
-//
-// Created by nmuravev on 12/14/2021.
-//
-
 #include "ArrowLine.h"
 #include "PetriObject.h"
 #include "Transition.h"
 #include "../GraphicsScene.h"
 #include <QMatrix4x4>
+#include <ptn/net.h>
 
 ArrowLine::ArrowLine(PetriObject* from, const QLineF &line, QGraphicsItem* parent)
     : QGraphicsLineItem(line, parent)
@@ -104,12 +101,12 @@ void ArrowLine::setBidirectional(bool b) {
     updateConnection();
 }
 
-ffi::Connection *ArrowLine::netItem(bool reverse) {
+ptn::net::edge::Connection* ArrowLine::netItem(bool reverse) {
     auto scene = dynamic_cast<GraphicsScene*>(this->scene());
     if (reverse)
-        return scene->net()->get_connection(m_to->vertex(), m_from->vertex());
+        return scene->net()->edge(m_to->vertexIndex(), m_from->vertexIndex());
     else
-        return scene->net()->get_connection(m_from->vertex(), m_to->vertex());
+        return scene->net()->edge(m_from->vertexIndex(), m_to->vertexIndex());
 }
 
 void ArrowLine::updateConnection() {
@@ -153,9 +150,9 @@ void ArrowLine::updateConnection() {
         m_text.clear();
         if (m_bidirectional) {
             m_text = QString("<- %1 | %2 ->")
-                    .arg(net->connection_weight(to()->vertex(), from()->vertex()))
-                    .arg(net->connection_weight(from()->vertex(), to()->vertex()));
-        } else if (auto weight = net->connection_weight(from()->vertex(), to()->vertex()); weight > 1) {
+                    .arg(net->edge(to()->vertexIndex(), from()->vertexIndex())->weight())
+                    .arg(net->edge(from()->vertexIndex(), to()->vertexIndex())->weight());
+        } else if (auto weight = net->edge(from()->vertexIndex(), to()->vertexIndex())->weight(); weight > 1) {
             m_text = QString("%1").arg(weight);
         }
     }
@@ -199,16 +196,16 @@ QVariant ArrowLine::itemChange(QGraphicsItem::GraphicsItemChange change, const Q
 void ArrowLine::onAddToScene(GraphicsScene *scene) {
     auto net = scene->net();
 
-    net->connect(m_from->vertex(), m_to->vertex());
+    net->add_edge(m_from->vertexIndex(), m_to->vertexIndex());
 
     if (m_state)
-        net->get_connection(m_from->vertex(), m_to->vertex())->setWeight(m_state->weight);
+        net->edge(m_from->vertexIndex(), m_to->vertexIndex())->set_weight(m_state->weight);
 
     if (m_bidirectional) {
-        net->connect(m_to->vertex(), m_from->vertex());
+        net->add_edge(m_to->vertexIndex(), m_from->vertexIndex());
 
         if (m_state)
-            net->get_connection(m_to->vertex(), m_from->vertex())->setWeight(m_state->weight);
+            net->edge(m_to->vertexIndex(), m_from->vertexIndex())->set_weight(m_state->weight);
     }
 
     delete m_state;
@@ -228,9 +225,9 @@ void ArrowLine::onRemoveFromScene() {
 
     // Remove from net
     auto net = dynamic_cast<GraphicsScene*>(this->scene())->net();
-    net->remove_connection(m_from->vertex(), m_to->vertex());
+    net->remove_edge(m_from->vertexIndex(), m_to->vertexIndex());
     if (m_bidirectional)
-        net->remove_connection(m_to->vertex(), m_from->vertex());
+        net->remove_edge(m_to->vertexIndex(), m_from->vertexIndex());
 }
 
 void ArrowLine::hoverEnterEvent(QGraphicsSceneHoverEvent *event) {

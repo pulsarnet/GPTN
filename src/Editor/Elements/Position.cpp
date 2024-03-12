@@ -1,18 +1,18 @@
 #include "Position.h"
 #include "Transition.h"
 #include "../GraphicsScene.h"
+#include <ptn/simulation.h>
 #include <QFontMetrics>
-#include "../../Core/FFI/simulation.h"
 
-Position::Position(const QPointF& origin, ffi::PetriNet* net, ffi::VertexIndex position, QGraphicsItem* parent)
+Position::Position(const QPointF& origin, net::PetriNet* net, vertex::VertexIndex position, QGraphicsItem* parent)
     : PetriObject(net, position, parent)
 {
     this->setPos(origin);
 }
 
 Position::Position(const QPointF &origin,
-                   ffi::PetriNet* net,
-                   ffi::VertexIndex position,
+                   net::PetriNet* net,
+                   vertex::VertexIndex position,
                    PositionState* state,
                    QGraphicsItem *parent)
     : PetriObject(net, position, parent)
@@ -40,13 +40,7 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     painter->setPen(QPen(isSelected() ? Qt::green : painter->pen().color(), penWidth));
     painter->drawEllipse(rect.center(), radius - penWidth / 2., radius - penWidth / 2.);
 
-    int markers;
-    if (simulation) {
-        markers = simulation->markers(this->vertexIndex());
-    } else {
-        markers = this->markers();
-    }
-
+    size_t markers = simulation ? simulation->markers_at(this->vertexIndex()) : this->markers();
     if (markers == 1) {
         painter->save();
         painter->setBrush(QBrush(Qt::black));
@@ -148,7 +142,7 @@ QPointF Position::connectionPos(PetriObject* to) {
     return {xPosy, yPosy};
 }
 
-int Position::markers() const {
+size_t Position::markers() const {
     return vertex()->markers();
 }
 
@@ -169,9 +163,8 @@ QPainterPath Position::shape() const {
 void Position::onAddToScene(GraphicsScene* scene) {
     if (m_state) {
         auto net = scene->net();
-        auto position = net->add_position_with(m_vertex.id);
+        auto position = net->insert_position(m_vertex.id, m_state->parent);
         position->set_markers(m_state->markers);
-        position->set_parent({ffi::VertexType::Position, (ffi::usize)m_state->parent});
     }
 
     PetriObject::onAddToScene(scene);
@@ -180,12 +173,12 @@ void Position::onAddToScene(GraphicsScene* scene) {
 void Position::onRemoveFromScene() {
     auto scene = dynamic_cast<GraphicsScene*>(this->scene());
     auto net = scene->net();
-    auto vertex = net->getVertex(m_vertex);
+    auto vertex = net->vertex(m_vertex);
 
     m_state = new PositionState();
     m_state->markers = (int)vertex->markers();
-    m_state->parent = (int)vertex->parent();
+    m_state->parent = (int)vertex->parent().id;
 
-    net->remove_position(vertex);
+    net->remove(vertex->index());
 }
 

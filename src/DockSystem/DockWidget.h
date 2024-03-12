@@ -15,8 +15,12 @@ public:
 
 public slots:
 
-    void onWindowTitleChanged(const QString &title);
+    void onFullscreen();
 
+private:
+
+    QAction* m_fullscreenAction;
+    bool m_fullscreen = false;
 };
 
 

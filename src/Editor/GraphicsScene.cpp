@@ -1,15 +1,8 @@
-//
-// Created by Николай Муравьев on 13.01.2022.
-//
-
-
 #include <QMenu>
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QJsonObject>
 #include <QJsonDocument>
-#include <QUndoStack>
-#include <QPixmapCache>
 #include "Commands.h"
 #include "GraphicsScene.h"
 #include "elements/PetriObject.h"
@@ -18,8 +11,9 @@
 #include "elements/ArrowLine.h"
 #include "../Core/graphviz/GraphvizWrapper.h"
 #include "GraphicsSceneActions.h"
+#include <ptn/net.h>
 
-GraphicsScene::GraphicsScene(ffi::PetriNet *net, QObject *parent)
+GraphicsScene::GraphicsScene(net::PetriNet *net, QObject *parent)
     : QGraphicsScene(parent)
     , m_mode(Mode::A_Nothing)
     , m_allowMods(Mode::A_Nothing)
@@ -27,17 +21,17 @@ GraphicsScene::GraphicsScene(ffi::PetriNet *net, QObject *parent)
     , m_undoStack(new QUndoStack(this))
 {
     setSceneRect(-12500, -12500, 25000, 25000);
-    setBackgroundBrush(Qt::white);
+    setBackgroundBrush(Qt::NoBrush);
 
     auto positions = m_net->positions();
     auto transitions = m_net->transitions();
-    auto connections = m_net->connections();
+    auto connections = m_net->edges();
 
-    for (auto position : positions) {
+    for (const auto position : positions) {
         addItem(new Position(QPointF(0, 0), m_net, position->index()));
     }
 
-    for (auto transition : transitions) {
+    for (const auto transition : transitions) {
         addItem(new Transition(QPointF(0, 0), m_net, transition->index()));
     }
 
@@ -45,17 +39,16 @@ GraphicsScene::GraphicsScene(ffi::PetriNet *net, QObject *parent)
         auto from = connection->from();
         auto to = connection->to();
 
-        if (from.type == ffi::VertexType::Position) {
-            auto position = getPosition((int)from.id);
-            auto transition = getTransition((int)to.id);
-            auto connectionLine = new ArrowLine(position, transition);
+        if (from.t == vertex::VertexType::Position) {
+            const auto position = getPosition((int)from.id);
+            const auto transition = getTransition((int)to.id);
+            const auto connectionLine = new ArrowLine(position, transition);
             connectionLine->createInNet(false);
             addItem(connectionLine);
-        }
-        else {
-            auto transition = getTransition((int)from.id);
-            auto position = getPosition((int)to.id);
-            auto connectionLine = new ArrowLine(transition, position);
+        } else {
+            const auto transition = getTransition((int)from.id);
+            const auto position = getPosition((int)to.id);
+            const auto connectionLine = new ArrowLine(transition, position);
             connectionLine->createInNet(false);
             addItem(connectionLine);
         }
@@ -68,10 +61,14 @@ GraphicsScene::GraphicsScene(ffi::PetriNet *net, QObject *parent)
 }
 
 
-// todo разобраться
-void GraphicsScene::setMode(Mode mod) {
-    if (m_allowMods & mod) m_mode = mod;
-    else qDebug() << "Mode " << mod << " not allowed!";
+void GraphicsScene::setMode(Mode mode) {
+    if (m_allowMods & mode) {
+        m_mode = mode;
+        qDebug() << "Change scene mode to" << mode;
+    }
+    else {
+        qDebug() << "Mode" << mode << "not allowed!";
+    }
 }
 
 void GraphicsScene::setAllowMods(Modes mods) {
@@ -270,7 +267,7 @@ void GraphicsScene::rotateObject(QGraphicsSceneMouseEvent *event) {
     }
 }
 
-ffi::PetriNet *GraphicsScene::net() {
+net::PetriNet *GraphicsScene::net() {
     return m_net;
 }
 
@@ -280,11 +277,11 @@ void GraphicsScene::onSceneChanged() {
     emit sceneChanged();
 }
 
-void GraphicsScene::setSimulation(ffi::Simulation* simulation) {
+void GraphicsScene::setSimulation(ptn::modules::simulation::Simulation* simulation) {
     m_simulation = simulation;
 }
 
-ffi::Simulation* GraphicsScene::simulation() const {
+ptn::modules::simulation::Simulation* GraphicsScene::simulation() const {
     return m_simulation;
 }
 
@@ -300,8 +297,10 @@ QJsonDocument GraphicsScene::json() const {
         QJsonObject position;
         position.insert("id", QJsonValue((int)net_position->index().id));
         position.insert("markers", QJsonValue((int)net_position->markers()));
-        position.insert("parent", QJsonValue((int)net_position->parent()));
-        position.insert("name", QJsonValue(net_position->get_name(false)));
+        position.insert("parent", QJsonValue((int)net_position->parent().id));
+
+        // todo name
+        //position.insert("name", QJsonValue(net_position->get_name(false)));
 
         QPointF pos = n_position->pos();
         QJsonObject point;
@@ -318,8 +317,10 @@ QJsonDocument GraphicsScene::json() const {
 
         QJsonObject transition;
         transition.insert("id", QJsonValue((int)net_transition->index().id));
-        transition.insert("parent", QJsonValue((int)net_transition->parent()));
-        transition.insert("name", QJsonValue(net_transition->get_name(false)));
+        transition.insert("parent", QJsonValue((int)net_transition->parent().id));
+
+        //todo name
+        //transition.insert("name", QJsonValue(net_transition->get_name(false)));
 
         QPointF pos = n_transition->center();
         QJsonObject point;
@@ -337,11 +338,11 @@ QJsonDocument GraphicsScene::json() const {
 
         QJsonObject connection;
         QJsonObject from;
-        from.insert("type", (int)connection_from->vertex()->index().type);
+        from.insert("type", (int)connection_from->vertex()->index().t);
         from.insert("index", (int)connection_from->vertex()->index().id);
 
         QJsonObject to;
-        to.insert("type", (int)connection_to->vertex()->index().type);
+        to.insert("type", (int)connection_to->vertex()->index().t);
         to.insert("index", (int)connection_to->vertex()->index().id);
 
         connection.insert("from", from);
@@ -397,12 +398,11 @@ bool GraphicsScene::fromJson(const QJsonDocument& document) {
         QJsonObject point = obj.value("pos").toObject();
         auto pos = QPointF(point.value("x").toDouble(), point.value("y").toDouble());
 
-        ffi::Vertex* vertex;
-        if (parent > 0) vertex = m_net->add_position_with_parent(id, parent);
-        else vertex = m_net->add_position_with(id);
+        vertex::Vertex* vertex;
+        vertex = m_net->insert_position(id, parent);
 
         vertex->set_markers(markers);
-        vertex->set_name(name.toUtf8().data());
+        vertex->set_label(name.toUtf8().data());
 
         addItem(new Position(pos, m_net, vertex->index()));
     }
@@ -417,11 +417,9 @@ bool GraphicsScene::fromJson(const QJsonDocument& document) {
         QJsonObject point = obj.value("pos").toObject();
         auto pos = QPointF(point.value("x").toDouble(), point.value("y").toDouble());
 
-        ffi::Vertex* vertex;
-        if (parent > 0) vertex = m_net->add_transition_with_parent(id, parent);
-        else vertex = m_net->add_transition_with(id);
-
-        vertex->set_name(name.toUtf8().data());
+        vertex::Vertex* vertex;
+        vertex = m_net->insert_transition(id, parent);
+        vertex->set_label(name.toUtf8().data());
 
         addItem(new Transition(pos, m_net, vertex->index()));
     }
@@ -430,23 +428,23 @@ bool GraphicsScene::fromJson(const QJsonDocument& document) {
         auto obj = connection.toObject();
 
         auto fromObj = obj.value("from").toObject();
-        auto fromType = (ffi::VertexType)fromObj.value("type").toInt();
+        auto fromType = (vertex::VertexType)fromObj.value("type").toInt();
         auto fromId = fromObj.value("index").toInt();
 
         auto toObj = obj.value("to").toObject();
-        auto toType = (ffi::VertexType)toObj.value("type").toInt();
+        auto toType = (vertex::VertexType)toObj.value("type").toInt();
         auto toId = toObj.value("index").toInt();
 
         PetriObject *from, *to;
-        if (fromType == ffi::VertexType::Position) from = getPosition(fromId);
+        if (fromType == vertex::VertexType::Position) from = getPosition(fromId);
         else from = getTransition(fromId);
 
-        if (toType == ffi::VertexType::Position) to = getPosition(toId);
+        if (toType == vertex::VertexType::Position) to = getPosition(toId);
         else to = getTransition(toId);
 
         auto existing = getConnection(from, to);
         if (existing) {
-            net()->connect(existing->to()->vertex(), existing->from()->vertex());
+            net()->add_edge(existing->to()->vertexIndex(), existing->from()->vertexIndex());
             existing->setBidirectional(true);
         } else {
             addItem(new ArrowLine(from, to, new ArrowLine::ConnectionState{1}));
@@ -466,7 +464,7 @@ void GraphicsScene::removeAll() {
 }
 
 void GraphicsScene::setConnectionWeight(ArrowLine *connection, int weight, bool reverse) {
-    connection->netItem(reverse)->setWeight(weight);
+    connection->netItem(reverse)->set_weight(weight);
     connection->updateConnection();
 }
 
@@ -591,7 +589,7 @@ void GraphicsScene::dotVisualization(char* algorithm) {
         graph.addEdge(conn->from()->name(), conn->to()->name());
     }
 
-    auto res = graph.save(algorithm);
+    auto res = graph.build(algorithm);
     QList<MoveCommandData> moveData;
     for (auto& element : res.elements) {
         if (element.first.startsWith("p")) {
@@ -615,15 +613,12 @@ void GraphicsScene::dotVisualization(char* algorithm) {
 void GraphicsScene::drawBackground(QPainter *painter, const QRectF &rect) {
     const int gridSize = 50.;
     QGraphicsScene::drawBackground(painter, rect);
-    QPen pen(QColor(0, 0, 0, 150), 1, Qt::DotLine);
-    painter->setPen(pen);
-    painter->setOpacity(0.5);
-    painter->setRenderHint(QPainter::Antialiasing);
 
     qreal left = int(rect.left()) - (int(rect.left()) % gridSize);
     qreal top = int(rect.top()) - (int(rect.top()) % gridSize);
 
     QVector<QLineF> lines;
+    lines.reserve(100);
     qreal x = left;
     while(x <= rect.right()) {
         lines.append(QLineF(
@@ -644,6 +639,7 @@ void GraphicsScene::drawBackground(QPainter *painter, const QRectF &rect) {
         y += gridSize;
     }
 
+    painter->setPen(QPen(Qt::lightGray, 0));
     painter->drawLines(lines);
 }
 

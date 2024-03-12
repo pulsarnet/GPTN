@@ -1,24 +1,20 @@
-//
-// Created by nmuravev on 3/20/2022.
-//
-
 #ifndef FFI_RUST_DECOMPOSEMODELTAB_H
 #define FFI_RUST_DECOMPOSEMODELTAB_H
 
-#include <QWidget>
-#include "NetModelingTab.h"
-#include "../DockSystem/DockWidget.h"
 #include <DockManager.h>
+
+#include "BaseTab.h"
 
 class SynthesisWindow;
 class QScatter3DSeries;
 class ProjectMetadata;
+class DockWidget;
 
-namespace ffi {
+namespace ptn::modules::decompose {
     struct DecomposeContext;
 }
 
-class DecomposeModelTab : public QWidget {
+class DecomposeModelTab : public BaseTab {
 
 public:
 
@@ -30,7 +26,7 @@ public slots:
 
 protected:
 
-    ffi::DecomposeContext* decomposeContext() const noexcept;
+    ptn::modules::decompose::DecomposeContext* decomposeContext() const noexcept;
 
 private:
 

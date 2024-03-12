@@ -12,9 +12,14 @@ class GraphicsSceneActions;
 class QUndoCommand;
 class QUndoStack;
 
-namespace ffi {
-    struct Vertex;
+namespace ptn::net {
     struct PetriNet;
+    namespace vertex {
+        struct Vertex;
+    }
+}
+
+namespace ptn::modules::simulation {
     struct Simulation;
 }
 
@@ -37,8 +42,9 @@ public:
     };
 
     Q_DECLARE_FLAGS(Modes, Mode);
+    Q_ENUM(Mode)
 
-    explicit GraphicsScene(ffi::PetriNet* net, QObject* parent = nullptr);
+    explicit GraphicsScene(ptn::net::PetriNet* net, QObject* parent = nullptr);
 
     void setAllowMods(Modes mods);
 
@@ -70,12 +76,12 @@ public:
 
     void dotVisualization(char* algorithm);
 
-    ffi::PetriNet* net();
+    ptn::net::PetriNet* net();
 
     void onSceneChanged();
 
-    void setSimulation(ffi::Simulation*);
-    ffi::Simulation* simulation() const;
+    void setSimulation(ptn::modules::simulation::Simulation*);
+    ptn::modules::simulation::Simulation* simulation() const;
 
     GraphicsSceneActions* actions();
 
@@ -129,13 +135,13 @@ private:
     Modes m_allowMods;
     Modes m_restoreMods;
 
-    ffi::PetriNet* m_net;
+    ptn::net::PetriNet* m_net;
 
     bool m_restore = false;
     bool m_dragInProgress = false;
     QList<QPair<PetriObject*, QPointF>> m_draggedItems;
 
-    ffi::Simulation* m_simulation = nullptr;
+    ptn::modules::simulation::Simulation* m_simulation = nullptr;
 
 };
 

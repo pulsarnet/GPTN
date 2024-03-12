@@ -15,8 +15,13 @@ ApplicationProjectController::ApplicationProjectController(QObject *parent)
 MainWindow *ApplicationProjectController::createMainWindow(QWidget* parent) {
     auto window = new MainWindow(this, parent);
     window->setMinimumSize(QSize(1280, 720));
-    mAvailableWindows.push_back(window);
     return window;
+}
+
+void ApplicationProjectController::emptyProject() {
+    auto window = createMainWindow();
+    mOpenedProjects.insert({QString(), window});
+    window->show();
 }
 
 /**
@@ -45,29 +50,34 @@ bool ApplicationProjectController::openProject(const QString &filename, MainWind
         return true;
     }
 
-    // Get free window or create new
-    if (mAvailableWindows.empty()) {
-        createMainWindow();
-    } else if (mAvailableWindows.back()->metadata()->isChanged()) {
-        mAvailableWindows.pop_back(); // todo: detach maybe
-        createMainWindow();
+    // Use current window or create new
+    bool isCurrentWindow = true;
+    MainWindow* window = parent;
+    if (parent->metadata()->isChanged() || !parent->metadata()->filename().isEmpty()) {
+        window = createMainWindow();
+        isCurrentWindow = false;
+    } else {
+        mOpenedProjects.erase(window->metadata()->filename());
     }
 
-    MainWindow* newWindow = mAvailableWindows.back();
-    mAvailableWindows.pop_back();
-
     // Init project in window
-    if (!newWindow->initProject(path)) {
-        delete newWindow;
+    if (!window->initProject(path)) {
+        if (!isCurrentWindow) {
+            delete window;
+        }
         return false;
     }
 
-    mOpenedProjects.insert({path, newWindow});
+    mOpenedProjects.insert({path, window});
     // todo https://forum.qt.io/topic/126868/i-need-to-include-qtplatformheaders-qwindowswindowfunctions/3
-    newWindow->show();
+    window->show();
     return true;
 }
 
 void ApplicationProjectController::closeProject(const QString &filename) {
     mOpenedProjects.erase(filename);
+}
+
+const std::unordered_map<QString, MainWindow*>& ApplicationProjectController::openedProjects() const {
+    return mOpenedProjects;
 }

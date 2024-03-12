@@ -6,11 +6,14 @@
 #define FFI_RUST_NETMODELINGTAB_H
 
 #include <QWidget>
-#include "../Editor/GraphicsView.h"
+#include <DockManager.h>
+
+#include "BaseTab.h"
 
 class MainWindow;
+class GraphicsView;
 
-class NetModelingTab : public QWidget {
+class NetModelingTab : public BaseTab {
 
     Q_OBJECT
 
@@ -22,8 +25,10 @@ public:
 
 private:
 
-    GraphicsView *m_view;
     MainWindow* m_mainWindow;
+
+    ads::CDockManager* m_dockManager;
+    ads::CDockWidget* m_view;
 
 };
 

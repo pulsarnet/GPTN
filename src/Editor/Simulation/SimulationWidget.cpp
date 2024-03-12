@@ -1,6 +1,5 @@
 #include "SimulationWidget.h"
 #include "../GraphicsView.h"
-#include "../../Core/FFI/Simulation.h"
 #include "../GraphicsScene.h"
 #include "../elements/Position.h"
 #include <QPushButton>
@@ -9,12 +8,12 @@
 #include <QGraphicsDropShadowEffect>
 #include <QStyleOptionFrame>
 #include "../elements/Transition.h"
-#include "../../QwtExt/TimeLineThreadActivity/QwtTimeLineTransitionActivity.h"
+#include <ptn/simulation.h>
 
 SimulationWidget::SimulationWidget(GraphicsView *parent)
     : QFrame(parent)
     , m_timer(new QTimer(this))
-    , m_state(State::Stopped)
+    , m_state(Stopped)
     , m_simulation(nullptr)
 {
     setSizePolicy(QSizePolicy::Policy::Preferred, QSizePolicy::Policy::Preferred);
@@ -25,7 +24,7 @@ SimulationWidget::SimulationWidget(GraphicsView *parent)
                   "}");
     setFrameStyle(StyledPanel | Plain);
     //shadow
-    QGraphicsDropShadowEffect* shadow = new QGraphicsDropShadowEffect(this);
+    auto* shadow = new QGraphicsDropShadowEffect(this);
     shadow->setBlurRadius(10);
     shadow->setOffset(0, 0);
     shadow->setColor(QColor(0, 0, 0, 150));
@@ -91,9 +90,6 @@ SimulationWidget::SimulationWidget(GraphicsView *parent)
 
     m_timer->setInterval(1000);
     connect(m_timer, &QTimer::timeout, this, &SimulationWidget::simulate);
-
-    m_plot = new QwtTimeLineTransitionActivity();
-
 }
 
 void SimulationWidget::paintEvent(QPaintEvent *event) {
@@ -116,7 +112,6 @@ void SimulationWidget::runSimulation() {
     // Создание объекта ffi симуляции сети
     if (m_state != State::Paused) {
         this->initSimulation();
-        this->openPlot();
     }
 
     m_timer->start();
@@ -150,7 +145,6 @@ void SimulationWidget::stepSimulation() {
     // Выполнение одного цикла симуляции
     if (m_state != State::Paused) {
         this->initSimulation();
-        this->openPlot();
     }
     this->simulate();
 
@@ -208,7 +202,7 @@ void SimulationWidget::updateButtonState() {
 }
 
 void SimulationWidget::updateLabel() {
-    int cycles = m_simulation ? m_simulation->cycles() : 0;
+    size_t cycles = m_simulation ? m_simulation->cycles() : 0;
     m_cycleCounterLabel->setText("Cycles: " + QString::number(cycles));
 }
 
@@ -231,16 +225,15 @@ void SimulationWidget::initSimulation() {
     auto parent = qobject_cast<GraphicsView*>(this->parent());
     auto scene = qobject_cast<GraphicsScene*>(parent->scene());
 
-    m_simulation = ffi::Simulation::create(scene->net());
+    m_simulation = ptn::modules::simulation::Simulation::init(scene->net());
     scene->setSimulation(m_simulation);
-    m_plot->setSimulation(m_simulation);
 
     updateLabel();
 }
 
 void SimulationWidget::simulate() {
     // Выполнение одного цикла симуляции
-    int fired = m_simulation->simulate();
+    int fired = m_simulation->step();
     if (fired == 0) {
         this->pauseSimulation();
         return;
@@ -250,7 +243,6 @@ void SimulationWidget::simulate() {
     auto scene = qobject_cast<GraphicsScene*>(parent->scene());
 
     updateScene();
-    updatePlot();
     updateLabel();
 
     scene->update();
@@ -263,36 +255,12 @@ void SimulationWidget::cancelSimulation() {
     auto scene = qobject_cast<GraphicsScene*>(parent->scene());
     scene->setSimulation(nullptr);
 
-    // plot
-    m_plot->setSimulation(nullptr);
-
     // simulation
-    m_simulation->destroy();
+    m_simulation->drop();
     m_simulation = nullptr;
 
     updateScene();
     updateLabel();
-    closePlot();
 
     scene->update();
-}
-
-void SimulationWidget::updatePlot() {
-    // Обновление графика
-    if (m_simulation) {
-        auto firedTransitions = m_simulation->fired();
-        for (auto transition : firedTransitions) {
-            m_plot->registerFire(transition, m_simulation->cycles());
-        }
-    }
-}
-
-void SimulationWidget::openPlot() {
-    // Открытие графика
-    m_plot->show();
-}
-
-void SimulationWidget::closePlot() {
-    // Закрытие графика
-    m_plot->hide();
 }

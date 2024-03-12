@@ -1,21 +1,18 @@
-//
-// Created by Николай Муравьев on 10.01.2022.
-//
-
 #include <QTextDocument>
 #include <QApplication>
+#include <QGraphicsSceneMouseEvent>
+#include <ptn/net.h>
 #include "../GraphicsScene.h"
 #include "PetriObject.h"
 #include "ArrowLine.h"
-#include "../../Core/FFI/rust.h"
 
 
-PetriObject::PetriObject(ffi::PetriNet* net, ffi::VertexIndex _vertex, QGraphicsItem* parent)
+PetriObject::PetriObject(ptn::net::PetriNet* net, ptn::net::vertex::VertexIndex _vertex, QGraphicsItem* parent)
     : QGraphicsItem(parent)
     , m_net(net)
     , m_vertex(_vertex)
 {
-    m_labelItem = new QGraphicsTextItem(vertex()->get_name(false), this );
+    m_labelItem = new QGraphicsTextItem(vertex()->label(false), this);
     m_labelItem->setFlags(m_labelItem->flags() & 0);
     m_labelItem->setCacheMode(DeviceCoordinateCache);
     m_labelItem->setTextInteractionFlags(Qt::TextInteractionFlag::TextEditable);
@@ -24,9 +21,9 @@ PetriObject::PetriObject(ffi::PetriNet* net, ffi::VertexIndex _vertex, QGraphics
     connect(m_labelItem->document(), &QTextDocument::contentsChanged, this, &PetriObject::labelChanged);
 
     auto name = QString("%1%2%3")
-            .arg(this->vertex()->type() == ffi::VertexType::Position ? "P" : "T")
+            .arg(this->vertex()->type() == ptn::net::vertex::VertexType::Position ? "P" : "T")
             .arg(this->index())
-            .arg(this->vertex()->parent() == 0 ? "" : QString(".%1").arg(this->vertex()->parent()));
+            .arg(this->vertex()->parent().id == 0 ? "" : QString(".%1").arg(this->vertex()->parent().id));
 
     m_name = new QGraphicsSimpleTextItem(name, this);
     m_name->setFlags(m_name->flags() & 0);
@@ -128,8 +125,8 @@ uint64_t PetriObject::index() const {
     return vertex()->index().id;
 }
 
-ffi::Vertex *PetriObject::vertex() const {
-    return m_net->getVertex(m_vertex);
+ptn::net::vertex::Vertex *PetriObject::vertex() const {
+    return m_net->vertex(m_vertex);
 }
 
 void PetriObject::updateLabelPosition() {
@@ -151,7 +148,7 @@ void PetriObject::updateConnections() {
 }
 
 void PetriObject::labelChanged() {
-    this->vertex()->set_name(m_labelItem->document()->toRawText().toLocal8Bit().data());
+    this->vertex()->set_label(m_labelItem->document()->toRawText().toLocal8Bit().data());
     updateLabelPosition();
 }
 
@@ -164,7 +161,7 @@ QString PetriObject::label() const {
     return m_labelItem->document()->toRawText();
 }
 
-ffi::VertexIndex PetriObject::vertexIndex() const {
+ptn::net::vertex::VertexIndex PetriObject::vertexIndex() const {
     return m_vertex;
 }
 

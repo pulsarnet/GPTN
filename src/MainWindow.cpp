@@ -1,5 +1,7 @@
 #include "MainWindow.h"
-
+#if defined(Q_OS_WIN32) && !defined(Q_OS_CYGWIN)
+#include <Windows.h>
+#endif
 #include <QStyle>
 #include <QApplication>
 #include <QFileDialog>
@@ -9,18 +11,22 @@
 #include <QMessageBox>
 #include <QProcess>
 #include "ActionTabWidget/ActionTabWidget.h"
+#include "ActionTabWidget/NetModelingTab.h"
+#include "Editor/GraphicsView.h"
 #include "ActionTabWidget/DecomposeModelTab.h"
 #include "WindowWidgets/NewProjectWindow.h"
 #include "Settings/RecentProjects.h"
 #include "Core/ApplicationProjectController.h"
 #include "ActionTabWidget/ActionTabWidgetController.h"
 #include "Editor/GraphicsScene.h"
-#include "Core/FFI/rust.h"
 #include "modules/reachability/ReachabilityWindow.h"
-#include "ActionTabWidget/WrappedLayoutWidget.h"
 #include "overrides/MatrixWindow.h"
 #include "Editor/GraphicsSceneActions.h"
 #include <QStandardPaths>
+#include <ptn/context.h>
+#include <ptn/net.h>
+#include <config.h>
+
 
 /*
  * MainWindow содержит:
@@ -155,6 +161,55 @@ void MainWindow::onDocumentChanged() {
     m_metadata->setChanged(true);
 }
 
+void MainWindow::onWindowSubMenu() {
+    qDebug() << "MainWindow::onWindowSubMenu(" << sender() << ")";
+    auto menu = static_cast<QMenu*>(sender());
+    menu->clear();
+    for (auto& [project, window] : m_Controller->openedProjects()) {
+        auto act = menu->addAction(window->metadata()->projectName());
+        act->setCheckable(true);
+        act->setChecked(m_metadata->filename() == project);
+        act->setData(window->winId());
+    }
+}
+
+void MainWindow::onWindowSubMenuAction(QAction *act) {
+    auto winID = act->data().toULongLong();
+    if (winID == winId()) {
+        return;
+    }
+
+    // todo: cross-platform
+#if defined (Q_OS_WINDOWS) && !defined(Q_OS_CYGWIN)
+    SetActiveWindow((HWND)winID);
+#endif
+}
+
+void MainWindow::onAbout() {
+    QMessageBox::about(this,
+                       tr("About %1").arg(qApp->applicationDisplayName()),
+                       MainWindow::aboutText());
+}
+
+QString MainWindow::aboutText() {
+    return QString(
+            "<b>%1</b><br>"
+            "Version: %2<br>"
+            "<p>This is a free software.</p>"
+            "<hr>"
+            "<p>Credits:</p>"
+            "<br> - QT framework: <a href=\"http://qt.io\">Site</a>"
+           // "<br> - OpenBlas: <a href=\"https://www.openblas.net\">Site</a>"
+            "<br> - Qt Advanced Docking System: <a href=\"https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System\">Site</a>"
+           // "<br> - QWT project: <a href=\"http://qwt.sf.net\">Site</a>"
+            "<br> - Graphviz: <a href=\"https://graphviz.org/license/\">Site</a>"
+    )
+    .arg(
+         QApplication::applicationDisplayName(),
+         VERSION
+    );
+}
+
 QMessageBox::StandardButton MainWindow::onSaveFileAsk() {
     return QMessageBox::information(
             this,
@@ -207,6 +262,16 @@ void MainWindow::createMenuBar() {
     m_ToolsMenu->addSeparator();
     m_ToolsMenu->addAction(tr("Generate Reachability Tree"), this, &MainWindow::onReachabilityTree);
     m_ToolsMenu->addAction(tr("I/O Matrix view"), this, &MainWindow::onMatrixWindow);
+    m_ToolsMenu->addAction(tr("Synthesis"), this, &MainWindow::onSynthesis);
+
+    connect(m_WindowMenu, &QMenu::aboutToShow, this, &MainWindow::onWindowSubMenu);
+    connect(m_WindowMenu, &QMenu::triggered, this, &MainWindow::onWindowSubMenuAction);
+
+    auto aboutQt = m_HelpMenu->addAction(tr("About Qt"), this, &QApplication::aboutQt);
+    aboutQt->setToolTip(tr("Show dialog about qt"));
+
+    auto about = m_HelpMenu->addAction(tr("About"), this, &MainWindow::onAbout);
+    about->setToolTip(tr("Show about dialog"));
 
     m_MenuBar->addMenu(m_FileMenu);
     m_MenuBar->addMenu(m_EditMenu);
@@ -351,7 +416,7 @@ void MainWindow::onMatrixWindow(bool checked) {
         m_IOMatrixWindow->activateWindow();
     } else {
         auto matrix = m_metadata->context()->net()->as_matrix();
-        m_IOMatrixWindow = new MatrixWindow(matrix.first, matrix.second, this);
+        m_IOMatrixWindow = new MatrixWindow(std::move(std::get<0>(matrix)), std::move(std::get<1>(matrix)), this);
         connect(m_IOMatrixWindow, &MatrixWindow::onWindowClose, this, &MainWindow::onMatrixWindowClose);
         m_IOMatrixWindow->show();
     }
@@ -360,6 +425,13 @@ void MainWindow::onMatrixWindow(bool checked) {
 void MainWindow::onMatrixWindowClose(QWidget* window) {
     Q_UNUSED(window);
     m_IOMatrixWindow = nullptr;
+}
+
+void MainWindow::onSynthesis() {
+    if (!m_decomposeTab) {
+        m_decomposeTab = new DecomposeModelTab(m_metadata);
+        m_ActionTabWidgetController->addTab(tr("Decompose and Synthesis"), QIcon(":/images/decompose.svg"), m_decomposeTab);
+    }
 }
 
 void MainWindow::onTabChanged(int index) {

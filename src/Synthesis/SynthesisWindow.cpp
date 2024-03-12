@@ -1,22 +1,18 @@
-//
-// Created by darkp on 13.09.2022.
-//
-
 #include <QTableView>
 #include <QItemSelectionModel>
 #include <DockManager.h>
 #include <DockAreaWidget.h>
 #include <QGridLayout>
 #include <QLabel>
+#include <ptn/decompose.h>
 #include "SynthesisWindow.h"
 #include "SynthesisTable.h"
 #include "SynthesisModel.h"
 #include "../DockSystem/DockWidget.h"
 #include "../Editor/GraphicsScene.h"
 #include "../Editor/GraphicsView.h"
-#include "../Core/FFI/rust.h"
 
-SynthesisWindow::SynthesisWindow(ffi::DecomposeContext *ctx, QVector<size_t> programs, QWidget* parent)
+SynthesisWindow::SynthesisWindow(ptn::modules::decompose::DecomposeContext *ctx, QVector<size_t> programs, QWidget* parent)
     : QWidget(parent)
     , m_ctx(ctx)
     , m_manager(new ads::CDockManager(this))
@@ -83,7 +79,8 @@ void SynthesisWindow::onSelectionChanged(const QItemSelection &selected, const Q
     view()->setScene(newScene);
     delete oldScene;
 
-    label()->setText(m_ctx->program_equations(program));
+    // todo
+//    label()->setText(m_ctx->program_equations(program));
 }
 
 SynthesisTable *SynthesisWindow::table() {

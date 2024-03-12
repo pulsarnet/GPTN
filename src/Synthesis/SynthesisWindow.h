@@ -1,7 +1,3 @@
-//
-// Created by darkp on 13.09.2022.
-//
-
 #ifndef FFI_RUST_SYNTHESIS_WINDOW_H
 #define FFI_RUST_SYNTHESIS_WINDOW_H
 
@@ -11,8 +7,9 @@
 class SynthesisTable;
 class GraphicsView;
 class DockWidget;
+class QLabel;
 
-namespace ffi {
+namespace ptn::modules::decompose {
     struct DecomposeContext;
 }
 
@@ -22,7 +19,7 @@ class SynthesisWindow : public QWidget {
 
 public:
 
-    explicit SynthesisWindow(ffi::DecomposeContext* m_ctx, QVector<size_t> programs, QWidget* parent = nullptr);
+    explicit SynthesisWindow(ptn::modules::decompose::DecomposeContext* m_ctx, QVector<size_t> programs, QWidget* parent = nullptr);
 
 public slots:
 
@@ -38,9 +35,7 @@ private:
     QLabel* label();
     const QLabel* label() const;
 
-private:
-
-    ffi::DecomposeContext* m_ctx;
+    ptn::modules::decompose::DecomposeContext* m_ctx;
     ads::CDockManager* m_manager;
 
     DockWidget* m_table;

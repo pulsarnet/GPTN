@@ -11,7 +11,7 @@
 class SplittableComponentsFactory : public ads::CDockComponentsFactory
 {
 public:
-    ads::CDockAreaTitleBar* createDockAreaTitleBar(ads::CDockAreaWidget* dock_area) const override;
+    ads::CDockAreaTitleBar* createDockAreaTitleBar(ads::CDockAreaWidget* dockArea) const override;
 };
 
 

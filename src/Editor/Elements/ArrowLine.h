@@ -10,9 +10,12 @@
 #include <QGraphicsItem>
 #include <QPainter>
 
-namespace ffi {
+namespace ptn::net {
     struct PetriNet;
-    struct Connection;
+
+    namespace edge {
+        struct Connection;
+    }
 }
 
 class PetriObject;
@@ -41,7 +44,7 @@ public:
 
     void createInNet(bool create = true) { m_createInNet = create; }
 
-    ffi::Connection* netItem(bool reverse = false);
+    ptn::net::edge::Connection* netItem(bool reverse = false);
 
     PetriObject* from() { return m_from; }
 

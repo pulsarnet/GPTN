@@ -4,12 +4,15 @@
 
 #include <QBoxLayout>
 #include "DockWidget.h"
-#include "DockToolbar.h"
 #include <DockAreaWidget.h>
+#include <QAction>
+#include <DockManager.h>
+#include <DockAreaTitleBar.h>
 
+QIcon minimizeIcon();
+QIcon expandIcon();
 
 DockWidget::DockWidget(const QString& name, QWidget *parent) : ads::CDockWidget(name, parent) {
-
     setFrameShape(QFrame::NoFrame);
 
     setFeature(ads::CDockWidget::DockWidgetFloatable, false);
@@ -19,10 +22,36 @@ DockWidget::DockWidget(const QString& name, QWidget *parent) : ads::CDockWidget(
 
     layout()->setContentsMargins(0, 0, 0, 0);
 
+    m_fullscreenAction = new QAction(expandIcon(), "Fullscreen");
+    connect(m_fullscreenAction, &QAction::triggered, this, &DockWidget::onFullscreen);
+
+    setTitleBarActions(QList { m_fullscreenAction });
 }
 
-void DockWidget::onWindowTitleChanged(const QString &title) {
-    if (auto area = dockAreaWidget(); area) {
-        area->titleBar()->setWindowTitle(title);
+void DockWidget::onFullscreen() {
+    if (m_fullscreen) {
+        m_fullscreenAction->setIcon(expandIcon());
+        m_fullscreen = false;
+    } else {
+        m_fullscreenAction->setIcon(minimizeIcon());
+        m_fullscreen = true;
     }
+
+    auto dockManager = this->dockManager();
+    for (int i = 0; i < dockManager->dockAreaCount(); i++) {
+        auto area = dockManager->dockArea(i);
+        if (area != this->dockAreaWidget()) {
+            area->setVisible(!m_fullscreen);
+        }
+    }
+}
+
+QIcon minimizeIcon() {
+    static QIcon icon = QIcon(":/images/minimize.svg");
+    return icon;
+}
+
+QIcon expandIcon() {
+    static QIcon icon = QIcon(":/images/fullscreen.svg");
+    return icon;
 }

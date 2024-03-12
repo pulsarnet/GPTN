@@ -1,17 +1,12 @@
-//
-// Created by Николай Муравьев on 10.01.2022.
-//
-
 #include <QGraphicsTextItem>
-#include <QGraphicsScene>
 #include "Position.h"
 #include "Transition.h"
 #include "../GraphicsScene.h"
-#include "../../Core/FFI/simulation.h"
+#include <ptn/simulation.h>
 
 Transition::Transition(const QPointF& origin,
-                       ffi::PetriNet* net,
-                       ffi::VertexIndex transition,
+                       net::PetriNet* net,
+                       vertex::VertexIndex transition,
                        QGraphicsItem *parent)
     : PetriObject(net, transition, parent)
     , m_origin(origin)
@@ -20,8 +15,8 @@ Transition::Transition(const QPointF& origin,
 }
 
 Transition::Transition(const QPointF& origin,
-                       ffi::PetriNet* net,
-                       ffi::VertexIndex transition,
+                       net::PetriNet* net,
+                       vertex::VertexIndex transition,
                        TransitionState* state,
                        QGraphicsItem *parent)
         : PetriObject(net, transition, parent)
@@ -50,7 +45,7 @@ void Transition::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
     // scene
     auto scene = graphicScene();
     auto simulation = scene->simulation();
-    if (simulation && simulation->isFired(this->vertexIndex())) {
+    if (simulation && simulation->is_fired(this->vertexIndex())) {
         painter->setBrush(QBrush(Qt::green));
     } else {
         painter->setBrush(QBrush(Qt::black));
@@ -71,14 +66,14 @@ QPointF Transition::center() {
 
 QPointF getIntersection(qreal dx, qreal dy, qreal cx, qreal cy, qreal width, qreal height) {
     if (qAbs(dy / dx) < height / width) {
-        return QPointF(cx + (dx > 0 ? width : -width), cy + dy * width / qAbs(dx));
+        return {cx + (dx > 0 ? width : -width), cy + dy * width / qAbs(dx)};
     }
-    return QPointF(cx + dx * height / qAbs(dy), cy + (dy > 0 ? height : -height));
+    return {cx + dx * height / qAbs(dy), cy + (dy > 0 ? height : -height)};
 }
 
 QPointF Transition::connectionPos(PetriObject* to) {
-    qreal w = QGraphicsItem::sceneBoundingRect().width() / 2.;
-    qreal h = QGraphicsItem::sceneBoundingRect().height() / 2.;
+    qreal w = sceneBoundingRect().width() / 2.;
+    qreal h = sceneBoundingRect().height() / 2.;
 
     qreal xPosy = to->scenePos().x();
     qreal yPosy = to->scenePos().y();
@@ -101,27 +96,24 @@ QString Transition::name() const {
 
 void Transition::onAddToScene(GraphicsScene* scene) {
     auto net = scene->net();
-
     if (m_state) {
-        auto transition = net->add_transition_with(m_vertex.id);
-        transition->set_parent({ffi::VertexType::Transition, (ffi::usize)m_state->parent});
+        net->insert_transition(m_vertex.id, (usize)m_state->parent);
     }
-
     PetriObject::onAddToScene(scene);
 }
 
 void Transition::onRemoveFromScene() {
-    auto scene = dynamic_cast<GraphicsScene*>(this->scene());
-    auto net = scene->net();
-    auto vertex = net->getVertex(m_vertex);
+    const auto scene = dynamic_cast<GraphicsScene*>(this->scene());
+    const auto net = scene->net();
+    const auto vertex = net->vertex(m_vertex);
 
     m_state = new TransitionState();
-    m_state->parent = (int)vertex->parent();
+    m_state->parent = (int)vertex->parent().id;
 
-    net->remove_transition(vertex);
+    net->remove(m_vertex);
 }
 
-QVariant Transition::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant &value) {
+QVariant Transition::itemChange(GraphicsItemChange change, const QVariant &value) {
     if (change == ItemRotationChange) {
         m_rotated = !m_rotated;
         updateLabelPosition();
