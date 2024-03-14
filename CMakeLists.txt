@@ -8,7 +8,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(TARGET_NAME GPTN)
 set(TARGET_DIR ${CMAKE_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TARGET_DIR})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${TARGET_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${TARGET_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${TARGET_DIR}/lib)
 set(CMAKE_AUTORCC ON)
 set(VERSION_COMPONENT_BUILD 1)
@@ -118,17 +118,24 @@ if (WIN32)
 
     add_custom_target(copy_graphviz_dlls ALL)
     set_target_properties(copy_graphviz_dlls PROPERTIES FOLDER "Copy Tasks")
-    add_dependencies(copy_graphviz_dlls ${TARGET_NAME})
-    add_custom_command(TARGET copy_graphviz_dlls POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/thirdparty/graphviz/build/ $<TARGET_FILE_DIR:${TARGET_NAME}>
-            COMMAND_EXPAND_LISTS
-    )
     add_custom_command(
-            TARGET copy_graphviz_dlls POST_BUILD
+            TARGET copy_graphviz_dlls
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/thirdparty/graphviz/build/ $<TARGET_FILE_DIR:${TARGET_NAME}>
+    )
+    add_dependencies(copy_graphviz_dlls ${TARGET_NAME})
+
+
+    add_custom_target(generate_graphviz_config ALL)
+    set_target_properties(generate_graphviz_config PROPERTIES FOLDER "Generate Tasks")
+    add_custom_command(
+            TARGET generate_graphviz_config
+            POST_BUILD
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/thirdparty/graphviz/build/
             COMMAND $<TARGET_FILE:dot> ARGS -c -v
-            VERBATIM
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/thirdparty/graphviz/build/config6 $<TARGET_FILE_DIR:${TARGET_NAME}> # copy config6 to build directory
     )
+    add_dependencies(generate_graphviz_config ${TARGET_NAME})
 
     install(TARGETS ${TARGET_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
     install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/thirdparty/graphviz/build/ DESTINATION ${CMAKE_INSTALL_BINDIR} FILES_MATCHING REGEX ".*.dll|config6")

@@ -156,13 +156,15 @@ void ReachabilityNode::updateLayout() {
     auto label_y = m_boundingRect.topLeft().y() + PEN_WIDTH;
     // todo horizontal line
     field_t* shape = (field_t*)ND_shape_info(m_node);
-    for (int i = 0; i < shape->n_flds; i++) {
-        auto field = shape->fld[i];
+    if (shape->fld) {
+        for (int i = 0; i < shape->n_flds; i++) {
+            auto field = shape->fld[i];
 
-        if (i < shape->n_flds - 1) {
-            label_x += field->size.x;
-            m_path.moveTo(label_x, label_y);
-            m_path.lineTo(label_x, label_y + field->size.y - PEN_WIDTH);
+            if (i < shape->n_flds - 1) {
+                label_x += field->size.x;
+                m_path.moveTo(label_x, label_y);
+                m_path.lineTo(label_x, label_y + field->size.y - PEN_WIDTH);
+            }
         }
     }
 

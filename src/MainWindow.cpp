@@ -2,7 +2,7 @@
 #if defined(Q_OS_WIN32) && !defined(Q_OS_CYGWIN)
 #include <Windows.h>
 #endif
-#include <QStyle>
+
 #include <QApplication>
 #include <QFileDialog>
 #include <QGraphicsDropShadowEffect>
@@ -10,7 +10,6 @@
 #include <QJsonDocument>
 #include <QMessageBox>
 #include <QProcess>
-#include "ActionTabWidget/ActionTabWidget.h"
 #include "ActionTabWidget/NetModelingTab.h"
 #include "Editor/GraphicsView.h"
 #include "ActionTabWidget/DecomposeModelTab.h"

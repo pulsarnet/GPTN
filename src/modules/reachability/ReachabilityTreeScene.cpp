@@ -34,7 +34,6 @@ void ReachabilityTreeScene::addEdge(ReachabilityNode *from, ReachabilityNode *to
     const auto to_node = to->graphVizNode();
     const auto edge = m_wrapper->addEdge(from_node, to_node);
     addItem(new ReachabilityLine(edge));
-
     m_wrapper->setEdgeLabel(edge, QString("T%1").arg(transition.id).toUtf8().data());
 }
 

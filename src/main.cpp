@@ -14,6 +14,7 @@
 #include <DockManager.h>
 #include <DockComponentsFactory.h>
 #include "Core/ApplicationProjectController.h"
+#include "Core/Graphviz/GraphvizWrapper.h"
 
 void customMessageOutput(QtMsgType type, const QMessageLogContext& ctx, const QString &msg)
 {
@@ -110,6 +111,8 @@ int main(int argc, char **argv) {
 
     ApplicationProjectController controller;
     controller.emptyProject();
+
+    GraphVizWrapper wrapper;
 
     return app.exec();
 }

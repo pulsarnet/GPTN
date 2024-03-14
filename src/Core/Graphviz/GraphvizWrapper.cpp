@@ -5,7 +5,7 @@
 GraphVizWrapper::GraphVizWrapper() {
     m_context = gvContext();
 
-    m_graph = agopen((char*)"g", Agdirected, 0);
+    m_graph = agopen((char*)"g", Agdirected, NULL);
     agsafeset(m_graph, (char*)"splines", "line", "");
     agsafeset(m_graph, (char*)"overlap", "scalexy", "");
     setRankDir(LeftToRight);
@@ -82,10 +82,11 @@ GraphModel GraphVizWrapper::build(char* algorithm) {
     gvLayout(m_context, m_graph, algorithm);
 
     GraphModel model;
-    for (Agnode_t* node = agfstnode(m_graph); node; node = agnxtnode(m_graph, node)) {
+    Agnode_t* node;;
+    for (node = agfstnode(m_graph); node; node = agnxtnode(m_graph, node)) {
         QString name;
-        if (GD_has_labels(node) && GD_label(node)->text) {
-            name = QString(GD_label(node)->text);
+        if (ND_label(node) && ND_label(node)->text) {
+            name = QString(ND_label(node)->text);
         }
         auto x = ND_coord(node).x * 1.73;
         auto y = ND_coord(node).y * 1.73;
