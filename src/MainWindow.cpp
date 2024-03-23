@@ -208,11 +208,20 @@ QString MainWindow::aboutText() {
 }
 
 QMessageBox::StandardButton MainWindow::onSaveFileAsk() {
+    QString text;
+
+    auto filename = m_metadata->filename();
+    if (filename.isEmpty()) {
+        text = tr("The document has been modified!");
+    } else {
+        text = tr("The document has been modified!\n"
+               "Save file \"%1\"?").arg(filename);
+    }
+
     return QMessageBox::information(
             this,
             tr("Save"),
-            tr("The document has been modified.\n"
-               "Save file \"%1\"?").arg(m_metadata->filename()),
+            text,
             QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
 }
 

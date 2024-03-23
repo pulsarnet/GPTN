@@ -25,5 +25,7 @@ add_dependencies(ptn ptn_target)
 target_include_directories(ptn PUBLIC ${PTN_SYS_INCLUDE_DIR})
 target_link_libraries(ptn ${PTN_SYS_LIB_ARTIFACT})
 
-# tests
-add_subdirectory(tests)
+if (BUILD_TESTING)
+    # tests
+    add_subdirectory(tests)
+endif ()

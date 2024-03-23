@@ -7,20 +7,25 @@
 
 namespace matrix = ptn::matrix;
 
-TEST_CASE("Test matrix")
+TEST_CASE("Matrix")
 {
     matrix::RustMatrix<i32> mat(5, 10);
     REQUIRE(mat.nrows() == 5);
     REQUIRE(mat.ncols() == 10);
-
-    REQUIRE(mat[{2, 3}] == 0);
-    mat[{2, 3}] = 21;
-    REQUIRE(mat[{2, 3}] == 21);
 }
 
-TEST_CASE("Matrix move semantic")
+TEST_CASE("Empty matrix")
 {
     matrix::RustMatrix<i32> mat;
     REQUIRE(mat.nrows() == 0);
     REQUIRE(mat.ncols() == 0);
+}
+
+TEST_CASE("Test matrix change")
+{
+    matrix::RustMatrix<i32> mat(5, 10);
+    REQUIRE(mat[{2, 3}] == 0);
+    mat[{2, 3}] = 21;
+    REQUIRE(mat[{2, 3}] == 21);
+
 }
