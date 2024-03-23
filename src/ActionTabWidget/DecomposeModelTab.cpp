@@ -25,7 +25,7 @@ DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
     , m_dockManager(new ads::CDockManager(this))
 {
     // TODO: make return error if error
-    m_metadata->context()->decompose();
+    m_metadata->decompose();
 
     auto linearBaseFragmentsScene = new GraphicsScene(decomposeContext()->lbf());
     auto linearBaseFragmentsView = new GraphicsView(nullptr);
@@ -144,5 +144,5 @@ void DecomposeModelTab::selectedPoint(int idx) {
 }
 
 ptn::modules::decompose::DecomposeContext *DecomposeModelTab::decomposeContext() const noexcept {
-    return m_metadata->context()->decompose_ctx();
+    return m_metadata->decompose_ctx();
 }

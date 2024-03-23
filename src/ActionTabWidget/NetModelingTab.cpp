@@ -18,7 +18,7 @@ NetModelingTab::NetModelingTab(MainWindow* window, QWidget *parent)
     , m_dockManager(new CDockManager(this))
 {
     /************************* CREATE VIEW *************************/
-    auto scene = new GraphicsScene(m_mainWindow->metadata()->context()->net());
+    auto scene = new GraphicsScene(m_mainWindow->metadata()->net());
     scene->setAllowMods(GraphicsScene::A_Default);
     connect(scene, &GraphicsScene::sceneChanged, m_mainWindow, &MainWindow::onDocumentChanged);
     auto view = new GraphicsView(window);

@@ -1,12 +1,7 @@
-//
-// Created by darkp on 16.09.2023.
-//
-
 #ifndef GPTN_APPLICATIONPROJECTCONTROLLER_H
 #define GPTN_APPLICATIONPROJECTCONTROLLER_H
 
 #include <QObject>
-#include <vector>
 #include <unordered_map>
 
 class MainWindow;
@@ -27,6 +22,7 @@ public:
     const std::unordered_map<QString, MainWindow*>& openedProjects() const;
 
 private:
+
     std::unordered_map<QString, MainWindow*> mOpenedProjects;
 };
 

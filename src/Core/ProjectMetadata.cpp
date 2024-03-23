@@ -22,3 +22,15 @@ void ProjectMetadata::setFilename(const QString &filename) {
     // set variable
     mFilename = filename;
 }
+
+ptn::net::PetriNet* ProjectMetadata::net() const noexcept {
+    return mCtx->net();
+}
+
+void ProjectMetadata::decompose() {
+    mCtx->decompose();
+}
+
+ptn::modules::decompose::DecomposeContext* ProjectMetadata::decompose_ctx() const noexcept {
+    return mCtx->decompose_ctx();
+}

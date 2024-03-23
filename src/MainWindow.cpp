@@ -198,9 +198,7 @@ QString MainWindow::aboutText() {
             "<hr>"
             "<p>Credits:</p>"
             "<br> - QT framework: <a href=\"http://qt.io\">Site</a>"
-           // "<br> - OpenBlas: <a href=\"https://www.openblas.net\">Site</a>"
             "<br> - Qt Advanced Docking System: <a href=\"https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System\">Site</a>"
-           // "<br> - QWT project: <a href=\"http://qwt.sf.net\">Site</a>"
             "<br> - Graphviz: <a href=\"https://graphviz.org/license/\">Site</a>"
     )
     .arg(
@@ -394,7 +392,7 @@ void MainWindow::onReachabilityTree(bool checked) {
     Q_ASSERT(m_metadata);
     if (!m_reachabilityTab) {
         // Если еще не был создан модуль Reachability
-        auto net = m_metadata->context()->net();
+        auto net = m_metadata->net();
         m_reachabilityTab = new ReachabilityWindow(net);
         m_ActionTabWidgetController->addTab(tr("Reachability Tree"), QIcon(":/images/tree.svg"), m_reachabilityTab);
     } else if (int index = m_ActionTabWidgetController->indexOf(m_reachabilityTab); index >= 0) {
@@ -414,7 +412,7 @@ void MainWindow::onMatrixWindow(bool checked) {
     if (m_IOMatrixWindow) {
         m_IOMatrixWindow->activateWindow();
     } else {
-        auto matrix = m_metadata->context()->net()->as_matrix();
+        auto matrix = m_metadata->net()->as_matrix();
         m_IOMatrixWindow = new MatrixWindow(std::move(std::get<0>(matrix)), std::move(std::get<1>(matrix)), this);
         connect(m_IOMatrixWindow, &MatrixWindow::onWindowClose, this, &MainWindow::onMatrixWindowClose);
         m_IOMatrixWindow->show();
