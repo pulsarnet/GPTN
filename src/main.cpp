@@ -46,6 +46,8 @@ void customMessageOutput(QtMsgType type, const QMessageLogContext& ctx, const QS
 int main(int argc, char **argv) {
     qInstallMessageHandler(customMessageOutput);
 
+    QApplication::setApplicationDisplayName("GPTN");
+
     ads::CDockManager::setConfigFlag(ads::CDockManager::DockAreaHasTabsMenuButton, false);
     ads::CDockManager::setConfigFlag(ads::CDockManager::DockAreaHasUndockButton, false);
     ads::CDockManager::setConfigFlag(ads::CDockManager::AlwaysShowTabs, true);

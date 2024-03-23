@@ -22,7 +22,6 @@
 #include "overrides/MatrixWindow.h"
 #include "Editor/GraphicsSceneActions.h"
 #include <QStandardPaths>
-#include <ptn/context.h>
 #include <ptn/net.h>
 #include <config.h>
 
@@ -46,6 +45,7 @@ MainWindow::MainWindow(ApplicationProjectController* controller, QWidget *parent
 
     createMenuBar();
     createStatusBar();
+    onProjectNameChanged();
 }
 
 /**
@@ -96,7 +96,7 @@ bool MainWindow::saveFile(const QString& filename) {
     }
 
     saveFileInner(file);
-    m_metadata->setChanged(false);
+    setWindowModified(false);
     return true;
 }
 
@@ -152,12 +152,12 @@ bool MainWindow::initProject(const QString &filename) {
 }
 
 void MainWindow::onProjectNameChanged() {
-    this->setWindowTitle(this->m_metadata->projectName());
+    this->setWindowTitle(QString("%1[*]").arg(this->m_metadata->projectName()));
 }
 
 void MainWindow::onDocumentChanged() {
     qDebug() << "on document changed";
-    m_metadata->setChanged(true);
+    setWindowModified(true);
 }
 
 void MainWindow::onWindowSubMenu() {
@@ -375,7 +375,7 @@ bool MainWindow::saveOnExit() {
     qDebug() << "MainWindow::saveOnExit()";
 
     // Check if project is changed
-    if (!m_metadata || !m_metadata->isChanged())
+    if (isWindowModified())
         return true;
 
     switch (onSaveFileAsk())

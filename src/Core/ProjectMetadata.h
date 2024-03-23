@@ -33,13 +33,9 @@ public:
     void decompose();
     [[nodiscard]] ptn::modules::decompose::DecomposeContext* decompose_ctx() const noexcept;
 
-    void setChanged(bool flag) { this->mChanged = flag; }
-    [[nodiscard]] bool isChanged() const noexcept { return this->mChanged; }
-
 private:
     QString mFilename;
     QString mProjectName;
-    bool mChanged;
     ptn::net::context::PetriNetContext* mCtx;
 };
 

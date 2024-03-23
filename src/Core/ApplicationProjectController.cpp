@@ -53,7 +53,7 @@ bool ApplicationProjectController::openProject(const QString &filename, MainWind
     // Use current window or create new
     bool isCurrentWindow = true;
     MainWindow* window = parent;
-    if (parent->metadata()->isChanged() || !parent->metadata()->filename().isEmpty()) {
+    if (parent->isWindowModified() || !parent->metadata()->filename().isEmpty()) {
         window = createMainWindow();
         isCurrentWindow = false;
     } else {

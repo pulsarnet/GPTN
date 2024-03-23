@@ -7,7 +7,6 @@
 namespace fs = std::filesystem;
 
 ProjectMetadata::ProjectMetadata() {
-    this->mChanged = false;
     this->mCtx = ptn::net::context::PetriNetContext::create();
     this->mProjectName = "Untitled";
 }
