@@ -38,7 +38,6 @@ void ReachabilityTreeScene::addEdge(ReachabilityNode *from, ReachabilityNode *to
 }
 
 void ReachabilityTreeScene::setTree(ptn::modules::reachability::ReachabilityTree *tree) {
-    m_tree->drop();
     m_tree = tree;
     removeAll();
     reload();
