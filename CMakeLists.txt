@@ -49,12 +49,14 @@ file(GLOB_RECURSE QRC_FILES resources/*.qrc)
 
 qt_add_resources(QT_RESOURCES ${QRC_FILES})
 qt_add_executable(${TARGET_NAME}
-        WIN32
+        #WIN32
         MACOSX_BUNDLE
         ${SOURCE_FILES}
         ${HEADER_FILES}
         ${QT_RESOURCES}
         ${WIN_RC_FILE}
+        src/Property/Spoiler.cpp
+        src/Property/Spoiler.h
 )
 qt_import_plugins(${TARGET_NAME} INCLUDE Qt::Svg NO_DEFAULT)
 
@@ -135,7 +137,7 @@ if (WIN32)
             COMMAND $<TARGET_FILE:dot> ARGS -c -v
             COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/thirdparty/graphviz/build/config6 $<TARGET_FILE_DIR:${TARGET_NAME}> # copy config6 to build directory
     )
-    add_dependencies(generate_graphviz_config ${TARGET_NAME})
+    add_dependencies(generate_graphviz_config ${TARGET_NAME} xdot dot)
 
     install(TARGETS ${TARGET_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
     install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/thirdparty/graphviz/build/ DESTINATION ${CMAKE_INSTALL_BINDIR} FILES_MATCHING REGEX ".*.dll|config6")

@@ -1,4 +1,5 @@
 use nalgebra::DMatrix;
+use net::DirectedEdge;
 use crate::net::{PetriNet, Vertex};
 
 pub struct PrimitiveDecomposition {
@@ -27,14 +28,14 @@ impl PrimitiveDecomposition {
                 .positions()
                 .iter()
                 .filter(|(index, _)| {
-                    net.connections()
+                    net.directed()
                         .iter()
-                        .find(|connection| connection.first().eq(index))
+                        .find(|connection| connection.begin().eq(index))
                         .is_some()
                         && net
-                            .connections()
+                            .directed()
                             .iter()
-                            .find(|connection| connection.second().eq(index))
+                            .find(|connection| connection.end().eq(index))
                             .is_some()
                 })
                 .take(need)
@@ -56,19 +57,19 @@ impl PrimitiveDecomposition {
 
                 net.insert_position(new_position);
                 let connections = net
-                    .connections()
+                    .directed()
                     .iter()
                     .filter(|connection| {
-                        connection.first().eq(index) || connection.second().eq(index)
+                        connection.begin().eq(index) || connection.end().eq(index)
                     })
                     .cloned()
                     .collect::<Vec<_>>();
 
                 connections.into_iter().for_each(|connection| {
-                    if connection.first().eq(index) {
-                        net.connect(new_index, connection.second(), connection.weight());
+                    if connection.begin().eq(index) {
+                        net.add_directed(DirectedEdge::new_with(new_index, connection.end(), connection.weight()));
                     } else {
-                        net.connect(connection.first(), new_index, connection.weight());
+                        net.add_directed(DirectedEdge::new_with(connection.begin(), new_index, connection.weight()));
                     }
                 });
 
@@ -81,7 +82,7 @@ impl PrimitiveDecomposition {
         }
 
         // Создадим матрицы D(I) и D(O)
-        let (d_input, d_output) = net.incidence_matrix();
+        let (d_input, d_output) = net.adjacency_matrices::<i32>();
 
         // Получим общую матрицу инцидентности D
         let d_matrix = d_output - d_input;
@@ -101,16 +102,20 @@ impl PrimitiveDecomposition {
             for column_index in 0..primitive_matrix.ncols() {
                 let value = primitive_matrix.row(row_index)[column_index];
                 if value > 0 {
-                    primitive_net.connect(
-                        net.transitions()[column_index].index(),
-                        net.positions()[row_index].index(),
-                        value as usize
+                    primitive_net.add_directed(
+                        DirectedEdge::new_with(
+                            net.transitions()[column_index].index(),
+                            net.positions()[row_index].index(),
+                            value as u32
+                        )
                     )
                 } else if value < 0 {
-                    primitive_net.connect(
-                        net.transitions()[column_index].index(),
-                        net.positions()[row_index].index(),
-                        (-value) as usize
+                    primitive_net.add_directed(
+                        DirectedEdge::new_with(
+                            net.transitions()[column_index].index(),
+                            net.positions()[row_index].index(),
+                            (-value) as u32
+                        )
                     )
                 }
             }

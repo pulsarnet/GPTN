@@ -1,7 +1,3 @@
-//
-// Created by darkp on 09.01.2023.
-//
-
 #ifndef FFI_RUST_INPUTHANDLER3D_H
 #define FFI_RUST_INPUTHANDLER3D_H
 

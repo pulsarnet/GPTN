@@ -139,6 +139,7 @@ rust_vec!(i64);
 rust_vec!(usize);
 
 rust_vec_shims!("const_vertex_ptr", *const ptn::net::Vertex);
-rust_vec_shims!("const_edge_ptr", *const ptn::net::Connection);
+rust_vec_shims!("const_directed_ptr", *const ptn::net::DirectedEdge);
+rust_vec_shims!("const_inhibitor_ptr", *const ptn::net::InhibitorEdge);
 rust_vec_shims!("const_marking_ptr", *const ptn::modules::reachability::Marking);
 rust_vec_shims!("vertex_index", *const ptn::net::vertex::VertexIndex);

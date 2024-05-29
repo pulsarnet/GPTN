@@ -1,7 +1,3 @@
-//
-// Created by nmuravev on 3/20/2022.
-//
-
 #ifndef FFI_RUST_ACTIONTABWIDGET_H
 #define FFI_RUST_ACTIONTABWIDGET_H
 

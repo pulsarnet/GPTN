@@ -3,7 +3,7 @@
 
 #include "Simulation/SimulationWidget.h"
 #include "elements/Position.h"
-#include "elements/ArrowLine.h"
+#include "elements/Edge.h"
 #include "GraphicsView.h"
 #include "GraphicsViewZoom.h"
 #include "GraphicsScene.h"
@@ -43,7 +43,8 @@ GraphicsView::GraphicsView(MainWindow* window, QWidget *parent)
     m_positionAction = makeAction(QIcon(":/images/tools/position.svg"), tr("Position"), true, GraphicsScene::A_Position, m_actionGroup, QKeySequence::fromString("Shift+1"));
     m_markerAction = makeAction(QIcon(":/images/tools/marker.svg"), tr("Marker"), true, GraphicsScene::A_Marker, m_actionGroup, QKeySequence::fromString("Shift+2"));
     m_transitionAction = makeAction(QIcon(":/images/tools/transition.svg"), tr("Transition"), true, GraphicsScene::A_Transition, m_actionGroup, QKeySequence::fromString("Shift+3"));
-    m_connectAction = makeAction(QIcon(":/images/tools/connect.svg"), tr("Connect"), true, GraphicsScene::A_Connection, m_actionGroup, QKeySequence::fromString("Shift+4"));
+    m_directedAction = makeAction(QIcon(":/images/tools/connect.svg"), tr("Directed Arc"), true, GraphicsScene::A_Connection, m_actionGroup, QKeySequence::fromString("Shift+4"));
+    m_inhibitorAction = makeAction(QIcon(":/images/tools/inhibitor.svg"), tr("Inhibitor Arc"), true, GraphicsScene::A_Connection, m_actionGroup, QKeySequence::fromString("Shift+4"));
     m_removeAction = makeAction(QIcon(":/images/tools/remove.svg"), tr("Remove"), true, GraphicsScene::A_Remove, m_actionGroup, QKeySequence::fromString("Shift+5"));
     m_moveAction = makeAction(QIcon(":/images/tools/move.svg"), tr("Move"), true, GraphicsScene::A_Move, m_actionGroup, QKeySequence::fromString("Shift+6"));
     m_rotationAction = makeAction(QIcon(":/images/tools/rotation.svg"), tr("Rotate"), true, GraphicsScene::A_Rotation, m_actionGroup, QKeySequence::fromString("Shift+7"));
@@ -53,7 +54,8 @@ GraphicsView::GraphicsView(MainWindow* window, QWidget *parent)
     m_mainToolBar->addTool(m_positionAction, tr("Add position (aka place) to net"));
     m_mainToolBar->addTool(m_markerAction, tr("Add marker to position<br/> Use <b>Shift + LB</b> to remove"));
     m_mainToolBar->addTool(m_transitionAction, tr("Add transition to net"));
-    m_mainToolBar->addTool(m_connectAction, tr("Add edge. A directed edge that can only be between vertices of different types"));
+    m_mainToolBar->addTool(m_directedAction, tr("Add edge. A directed edge that can only be between vertices of different types"));
+    m_mainToolBar->addTool(m_inhibitorAction, tr("Add edge. An inhibitor edge that can only be from place to transition"));
     m_mainToolBar->addTool(m_removeAction, tr("Remove object/edge from net"));
     m_mainToolBar->addTool(m_moveAction, tr("Move selected object(s)"));
     m_mainToolBar->addTool(m_rotationAction, tr("Rotate the object 90 degrees"));
@@ -93,6 +95,11 @@ void GraphicsView::onToolBoxAction(QAction* action) {
     auto lScene = dynamic_cast<GraphicsScene*>(scene());
     if (auto checked = m_actionGroup->checkedAction(); checked) {
         lScene->setMode((GraphicsScene::Mode)checked->data().toInt());
+        if (action == m_directedAction) {
+            lScene->setEdgeType(GraphicsScene::EdgeType::Direct);
+        } else if (action == m_inhibitorAction) {
+            lScene->setEdgeType(GraphicsScene::EdgeType::Inhibitor);
+        }
     } else {
         lScene->setMode(GraphicsScene::Mode::A_Nothing);
     }

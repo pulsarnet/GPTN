@@ -8,15 +8,18 @@
 #include "elements/PetriObject.h"
 #include "elements/Position.h"
 #include "elements/Transition.h"
-#include "elements/ArrowLine.h"
+#include "elements/Edge.h"
 #include "../Core/graphviz/GraphvizWrapper.h"
 #include "GraphicsSceneActions.h"
 #include <ptn/net.h>
 
+#include "Elements/DirectedArc.h"
+#include "Elements/InhibitorArc.h"
+
 GraphicsScene::GraphicsScene(net::PetriNet *net, QObject *parent)
     : QGraphicsScene(parent)
     , m_mode(Mode::A_Nothing)
-    , m_allowMods(Mode::A_Nothing)
+    , m_allowModes(Mode::A_Nothing)
     , m_net(net)
     , m_undoStack(new QUndoStack(this))
 {
@@ -25,7 +28,8 @@ GraphicsScene::GraphicsScene(net::PetriNet *net, QObject *parent)
 
     auto positions = m_net->positions();
     auto transitions = m_net->transitions();
-    auto connections = m_net->edges();
+    auto directed_arcs = m_net->directed_arcs();
+    auto inhibitor_arcs = m_net->inhibitor_arcs();
 
     for (const auto position : positions) {
         addItem(new Position(QPointF(0, 0), m_net, position->index()));
@@ -35,23 +39,37 @@ GraphicsScene::GraphicsScene(net::PetriNet *net, QObject *parent)
         addItem(new Transition(QPointF(0, 0), m_net, transition->index()));
     }
 
-    for (auto connection : connections) {
-        auto from = connection->from();
-        auto to = connection->to();
+    for (auto arc : directed_arcs) {
+        auto from = arc->from();
+        auto to = arc->to();
 
         if (from.t == vertex::VertexType::Position) {
             const auto position = getPosition((int)from.id);
             const auto transition = getTransition((int)to.id);
-            const auto connectionLine = new ArrowLine(position, transition);
-            connectionLine->createInNet(false);
+            const auto connectionLine = new DirectedArc(position, transition);
+            connectionLine->blockChange(true);
             addItem(connectionLine);
+            connectionLine->blockChange(false);
         } else {
             const auto transition = getTransition((int)from.id);
             const auto position = getPosition((int)to.id);
-            const auto connectionLine = new ArrowLine(transition, position);
-            connectionLine->createInNet(false);
+            const auto connectionLine = new DirectedArc(transition, position);
+            connectionLine->blockChange(true);
             addItem(connectionLine);
+            connectionLine->blockChange(false);
         }
+    }
+
+    for (auto arc : inhibitor_arcs) {
+        auto place = arc->place();
+        auto transition = arc->transition();
+
+        const auto p = getPosition((int)place.id);
+        const auto t = getTransition((int)transition.id);
+        const auto connectionLine = new InhibitorArc(p, t);
+        connectionLine->blockChange();
+        addItem(connectionLine);
+        connectionLine->blockChange(false);
     }
 
     dotVisualization((char*)"dot");
@@ -62,17 +80,16 @@ GraphicsScene::GraphicsScene(net::PetriNet *net, QObject *parent)
 
 
 void GraphicsScene::setMode(Mode mode) {
-    if (m_allowMods & mode) {
+    if (m_allowModes & mode) {
         m_mode = mode;
         qDebug() << "Change scene mode to" << mode;
-    }
-    else {
+    } else {
         qDebug() << "Mode" << mode << "not allowed!";
     }
 }
 
 void GraphicsScene::setAllowMods(Modes mods) {
-    m_allowMods = mods;
+    m_allowModes = mods;
 }
 
 void GraphicsScene::onSelectionChanged() {
@@ -185,7 +202,7 @@ void GraphicsScene::removeObject(QGraphicsSceneMouseEvent *event) {
     if (auto scenePetriObject = dynamic_cast<PetriObject*>(item); scenePetriObject) {
         m_undoStack->push(new RemoveCommand(scenePetriObject, this));
     }
-    else if (auto connection_line = dynamic_cast<ArrowLine*>(item); connection_line) {
+    else if (auto connection_line = dynamic_cast<Edge*>(item); connection_line) {
         m_undoStack->push(ConnectCommand::disconnect(connection_line, this));
     }
 }
@@ -193,39 +210,64 @@ void GraphicsScene::removeObject(QGraphicsSceneMouseEvent *event) {
 void GraphicsScene::connectionStart(QGraphicsSceneMouseEvent *event) {
     auto item = itemAt(event->scenePos(), QTransform());
     if (auto petri = dynamic_cast<PetriObject*>(item); petri) {
-        auto connection = new ArrowLine(petri, QLineF(item->scenePos(), event->scenePos()));
-        addItem(connection);
-        m_currentConnection = connection;
+        Edge* edge;
+        if (m_edgeType == Direct) {
+            edge = new DirectedArc(petri, QLineF(item->scenePos(), event->scenePos()));
+        } else if (auto place = dynamic_cast<Position*>(petri); m_edgeType == Inhibitor && place) {
+            edge = new InhibitorArc(place, QLineF(item->scenePos(), event->scenePos()));
+        } else {
+            return;
+        }
+
+        edge->blockChange(true);
+        addItem(edge);
+        m_currentConnection = edge;
     }
 }
 
 void GraphicsScene::connectionCommit(QGraphicsSceneMouseEvent *event) {
     if (!m_currentConnection) return;
 
-    auto item = netItemAt(event->scenePos());
-    if (auto petri = dynamic_cast<PetriObject*>(item); petri) {
-        if (m_currentConnection->from()->allowConnection(item)) {
-            auto existing = getConnection(m_currentConnection->from(), petri);
-            if (existing) {
-                if (existing->from() == petri) {
-                    if (existing->isBidirectional()) {
-                        m_undoStack->push(ConnectCommand::setWeight(existing,
-                                                                    (int)existing->netItem(true)->weight() + 1,
+    if (auto item = netItemAt(event->scenePos()); item) {
+        if (m_currentConnection->allowDestination(item)) {
+            if (auto existing = getConnection(m_currentConnection->from(), item); existing) {
+                if (existing->typeId() != m_currentConnection->typeId()) {
+                    qWarning() << "existing arc with other type " << existing->typeId();
+                    connectionRollback(nullptr);
+                    return;
+                }
+
+                // if supports bidirectional
+                if (existing->flags() & Edge::EdgeCanBidirectional) {
+                    if (existing->from() == item && !existing->isBidirectional()) {
+                        m_undoStack->push(ConnectCommand::setBidirectional(existing, this));
+                        connectionRollback(nullptr);
+                        return;
+                    }
+                }
+
+                // if supports weight
+                if (existing->flags() & Edge::EdgeHasWeight) {
+                    if (existing->from() == item) {
+                        if (existing->isBidirectional()) {
+                            m_undoStack->push(ConnectCommand::setWeight(existing,
+                                                                    (int)existing->weight(true) + 1,
                                                                     true,
                                                                     this));
+                        }
                     } else {
-                        m_undoStack->push(ConnectCommand::setBidirectional(existing, this));
-                    }
-
-                } else {
-                    m_undoStack->push(ConnectCommand::setWeight(existing,
-                                                                (int)existing->netItem()->weight() + 1,
+                        m_undoStack->push(ConnectCommand::setWeight(existing,
+                                                                (int)existing->weight(false) + 1,
                                                                 false,
                                                                 this));
+                    }
                 }
             } else {
                 // create new connection
-                m_undoStack->push(ConnectCommand::connect(m_currentConnection->from(), petri, this));
+                if (m_edgeType == Direct)
+                    m_undoStack->push(ConnectCommand::directed(m_currentConnection->from(), item, this));
+                else
+                    m_undoStack->push(ConnectCommand::inhibitor((Position*)m_currentConnection->from(), (Transition*)item, this));
             }
         }
     }
@@ -237,7 +279,7 @@ void GraphicsScene::connectionRollback(QGraphicsSceneMouseEvent *event) {
     Q_UNUSED(event)
     if (m_currentConnection) {
         removeItem(m_currentConnection);
-        delete m_currentConnection; // а точно ли нужен delete, а может и deleteLater()
+        delete m_currentConnection;
         m_currentConnection = nullptr;
     }
 }
@@ -331,6 +373,7 @@ QJsonDocument GraphicsScene::json() const {
         transitions.push_back(transition);
     }
 
+    // TODO: directed
     QJsonArray connections;
     for (auto & n_connection : n_connections) {
         auto connection_from = n_connection->from();
@@ -350,6 +393,7 @@ QJsonDocument GraphicsScene::json() const {
 
         connections.push_back(connection);
 
+        // TODO: save & restore weight
         if (n_connection->isBidirectional()) {
             connection.insert("from", to);
             connection.insert("to", from);
@@ -444,10 +488,10 @@ bool GraphicsScene::fromJson(const QJsonDocument& document) {
 
         auto existing = getConnection(from, to);
         if (existing) {
-            net()->add_edge(existing->to()->vertexIndex(), existing->from()->vertexIndex());
+            net()->add_directed(existing->to()->vertexIndex(), existing->from()->vertexIndex());
             existing->setBidirectional(true);
         } else {
-            addItem(new ArrowLine(from, to, new ArrowLine::ConnectionState{1}));
+            addItem(new DirectedArc(from, to));
         }
     }
 
@@ -463,16 +507,12 @@ void GraphicsScene::removeAll() {
     m_connections.clear();
 }
 
-void GraphicsScene::setConnectionWeight(ArrowLine *connection, int weight, bool reverse) {
-    connection->netItem(reverse)->set_weight(weight);
-    connection->updateConnection();
-}
 
-ArrowLine* GraphicsScene::getConnection(PetriObject *from, PetriObject *to) {
+Edge* GraphicsScene::getConnection(const PetriObject *from, const PetriObject *to) {
     auto it = std::find_if(
             m_connections.begin(),
             m_connections.end(),
-            [&](ArrowLine* connection) {
+            [&](Edge* connection) {
                 return (connection->from() == from && connection->to() == to)
                        || (connection->from() == to && connection->to() == from);
             });
@@ -648,7 +688,7 @@ void GraphicsScene::registerItem(QGraphicsItem *item) {
         m_positions.push_back(position);
     } else if (auto transition = dynamic_cast<Transition*>(item); transition) {
         m_transition.push_back(transition);
-    } else if (auto connection = dynamic_cast<ArrowLine*>(item); connection) {
+    } else if (auto connection = dynamic_cast<Edge*>(item); connection) {
         m_connections.push_back(connection);
     }
 }
@@ -658,7 +698,7 @@ void GraphicsScene::unregisterItem(QGraphicsItem *item) {
         m_positions.remove(m_positions.indexOf(position));
     } else if (auto transition = dynamic_cast<Transition*>(item); transition) {
         m_transition.remove(m_transition.indexOf(transition));
-    } else if (auto connection = dynamic_cast<ArrowLine*>(item); connection) {
+    } else if (auto connection = dynamic_cast<Edge*>(item); connection) {
         m_connections.remove(m_connections.indexOf(connection));
     }
 }

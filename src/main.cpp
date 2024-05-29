@@ -29,16 +29,16 @@ void customMessageOutput(QtMsgType type, const QMessageLogContext& ctx, const QS
             logger::debug(localMsg, function, filename, line);
             break;
         case QtInfoMsg:
-            logger::info(localMsg);
+            logger::info(localMsg, function, filename, line);
             break;
         case QtWarningMsg:
-            logger::warn(localMsg);
+            logger::warn(localMsg, function, filename, line);
             break;
         case QtCriticalMsg:
-            logger::error(localMsg);
+            logger::error(localMsg, function, filename, line);
             break;
         case QtFatalMsg:
-            logger::error(localMsg);
+            logger::error(localMsg, function, filename, line);
             abort();
     }
 }

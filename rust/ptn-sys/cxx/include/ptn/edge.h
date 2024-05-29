@@ -4,17 +4,18 @@
 #include <ptn/vertex.h>
 
 namespace ptn::net::edge {
-
-    struct Connection {
+    struct DirectedEdge {
         [[nodiscard]] vertex::VertexIndex from() const;
-
         [[nodiscard]] vertex::VertexIndex to() const;
 
-        [[nodiscard]] usize weight() const;
-
         void set_weight(usize weight);
+        [[nodiscard]] usize weight() const;
     };
 
+    struct InhibitorEdge {
+        [[nodiscard]] vertex::VertexIndex place() const;
+        [[nodiscard]] vertex::VertexIndex transition() const;
+    };
 }
 
 #endif

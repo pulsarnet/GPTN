@@ -1,7 +1,3 @@
-//
-// Created by darkp on 16.09.2023.
-//
-
 #ifndef GPTN_ACTIONTABWIDGETCONTROLLER_H
 #define GPTN_ACTIONTABWIDGETCONTROLLER_H
 

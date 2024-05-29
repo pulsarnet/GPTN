@@ -5,7 +5,6 @@ use crate::net::PetriNet;
 #[repr(C)]
 pub struct UpdateMarking {
     vertex: VertexIndex,
-
     // How much take or put
     marking: usize,
 }
@@ -41,6 +40,7 @@ impl Simulation {
 
     /// Возвращает количество сработавших переходов
     pub fn simulate(&mut self) -> i32 {
+        // TODO inhibitor
         // Для каждого перехода
         //   Получить входящие соединения
         //   Получить исходящие соединения
@@ -58,37 +58,56 @@ impl Simulation {
         for (index, _) in self.net().transitions().iter() {
             let input = self
                 .net()
-                .connections()
+                .directed()
                 .iter()
-                .filter(|c| c.second() == *index)
+                .filter(|c| c.end() == *index)
                 .collect::<Vec<_>>();
 
             let output = self
                 .net()
-                .connections()
+                .directed()
                 .iter()
-                .filter(|c| c.first() == *index)
+                .filter(|c| c.begin() == *index)
+                .collect::<Vec<_>>();
+            
+            let inhibitor = self
+                .net()
+                .edges()
+                .inhibitor()
+                .iter()
+                .filter(|c| c.transition() == *index)
                 .collect::<Vec<_>>();
 
             let mut can_fire = true;
             for connection in input.iter() {
-                let marking_at = *self.marking.get(&connection.first()).unwrap();
-                let take_marking_at = *take_marking.get(&connection.first()).unwrap();
-                if (marking_at - take_marking_at) < connection.weight() {
+                let marking_at = *self.marking.get(&connection.begin()).unwrap();
+                let take_marking_at = *take_marking.get(&connection.begin()).unwrap();
+                if (marking_at - take_marking_at) < connection.weight() as usize {
                     can_fire = false;
                     break;
                 }
             }
+            
+            // still can fire, check inhibitor
+            if can_fire {
+                for connection in inhibitor.iter() {
+                    let marking_at = *self.marking.get(&connection.place()).unwrap();
+                    if (marking_at > 0) {
+                        can_fire = false;
+                        break;
+                    }
+                }
+            }
 
             if can_fire {
-                let max_take = input.iter().map(|c| c.weight()).max().unwrap_or(0);
+                let max_take = input.iter().map(|c| c.weight()).max().unwrap_or(0) as usize;
 
                 for connection in input.iter() {
-                    *take_marking.get_mut(&connection.first()).unwrap() += max_take;
+                    *take_marking.get_mut(&connection.begin()).unwrap() += max_take;
                 }
 
                 for connection in output.iter() {
-                    *put_marking.get_mut(&connection.second()).unwrap() += connection.weight();
+                    *put_marking.get_mut(&connection.end()).unwrap() += connection.weight() as usize;
                 }
 
                 fired_transitions.push(*index);

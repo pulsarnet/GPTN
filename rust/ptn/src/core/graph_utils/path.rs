@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::iter::FromIterator;
 use tracing::debug;
+use core::graph_utils::adjacent;
 
 use net::vertex::VertexIndex;
 use net::PetriNet;
@@ -25,9 +26,9 @@ impl NetPaths {
             .positions()
             .iter()
             .filter(|(index, _)| {
-                net.connections()
+                net.directed()
                     .iter()
-                    .find(|c| c.second() == **index)
+                    .find(|c| c.end() == **index)
                     .is_none()
             })
             .map(|(index, _)| *index)
@@ -38,9 +39,9 @@ impl NetPaths {
             .positions()
             .iter()
             .filter(|(index, _)| {
-                net.connections()
+                net.directed()
                     .iter()
-                    .find(|c| c.first() == **index)
+                    .find(|c| c.begin() == **index)
                     .is_none()
             })
             .map(|(index, _)| *index)
@@ -80,7 +81,7 @@ impl NetPaths {
 
         stack.push(vertex);
 
-        let adjacent = net.adjacent(vertex);
+        let adjacent = adjacent(net, vertex);
         if adjacent.is_empty() {
             paths.push(vec![]);
             for &v in stack.iter() {
@@ -109,7 +110,7 @@ impl NetPaths {
 #[cfg(test)]
 mod tests {
     use core::graph_utils::path::NetPaths;
-    use net::PetriNet;
+    use net::{DirectedEdge, PetriNet};
 
     #[test]
     fn test_find_path() {
@@ -123,12 +124,12 @@ mod tests {
         let t1 = net.add_transition(1).index();
         let t2 = net.add_transition(2).index();
 
-        net.connect(p1, t1);
-        net.connect(t1, p2);
-        net.connect(p2, t2);
-        net.connect(t2, p3);
-        net.connect(p4, t2);
-        net.connect(t2, p5);
+        net.add_directed(DirectedEdge::new(p1, t1));
+        net.add_directed(DirectedEdge::new(t1, p2));
+        net.add_directed(DirectedEdge::new(p2, t2));
+        net.add_directed(DirectedEdge::new(t2, p3));
+        net.add_directed(DirectedEdge::new(p4, t2));
+        net.add_directed(DirectedEdge::new(t2, p5));
 
         NetPaths::find(&net);
     }

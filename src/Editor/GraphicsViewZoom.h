@@ -1,7 +1,3 @@
-//
-// Created by nmuravev on 12/15/2021.
-//
-
 #ifndef FFI_RUST_GRAPHICSVIEWZOOM_H
 #define FFI_RUST_GRAPHICSVIEWZOOM_H
 

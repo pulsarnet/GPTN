@@ -1,11 +1,10 @@
 use std::ptr;
+use tracing::{info, trace};
 use matrix::RustMatrix;
 use crate::vec::RustVec;
 
-use ptn::net::PetriNet;
+use ptn::net::{DirectedEdge, InhibitorEdge, PetriNet};
 use ptn::net::vertex::{VertexIndex, VertexType, Vertex};
-use ptn::net::Connection;
-
 
 #[export_name = "ptn$net$new"]
 extern "C" fn new_net() -> *mut PetriNet {
@@ -43,25 +42,48 @@ extern "C" fn net_transitions(net: &mut PetriNet, ret: &mut RustVec<*const Verte
     unsafe { ptr::write_unaligned(ret, RustVec::from(result)) };
 }
 
-#[export_name = "ptn$net$edges"]
-unsafe extern "C" fn net_edges(net: &mut PetriNet, ret: &mut RustVec<*const Connection>) {
-    core::ptr::write_unaligned(
+#[export_name = "ptn$net$directed$arcs"]
+unsafe extern "C" fn net_directed_arcs(net: &mut PetriNet, ret: &mut RustVec<*const DirectedEdge>) {
+    ptr::write_unaligned(
         ret,
         RustVec::from(
-            net.connections()
+            net.edges()
+                .directed()
                 .iter()
-                .map(|c| c as *const Connection)
+                .map(|c| c as _)
                 .collect::<Vec<_>>(),
         ),
     );
 }
 
-#[export_name = "ptn$net$edge"]
-unsafe extern "C" fn net_edge(net: &mut PetriNet, from: VertexIndex, to: VertexIndex) -> *const Connection {
-    net.connections().iter().find(|conn| conn.first() == from && conn.second() == to)
+#[export_name = "ptn$net$directed$arc"]
+unsafe extern "C" fn net_directed_arc(net: &mut PetriNet, from: VertexIndex, to: VertexIndex) -> *const DirectedEdge {
+    net.edges().get_directed(from, to)
         .map(|conn| conn as _)
         .unwrap_or(ptr::null())
 }
+
+#[export_name = "ptn$net$inhibitor$arcs"]
+unsafe extern "C" fn net_inhibitor_arcs(net: &mut PetriNet, ret: &mut RustVec<*const InhibitorEdge>) {
+    ptr::write_unaligned(
+        ret,
+        RustVec::from(
+            net.edges()
+                .inhibitor()
+                .iter()
+                .map(|c| c as _)
+                .collect::<Vec<_>>(),
+        ),
+    );
+}
+
+#[export_name = "ptn$net$inhibitor$arc"]
+unsafe extern "C" fn net_inhibitor_arc(net: &mut PetriNet, place: VertexIndex, transition: VertexIndex) -> *const InhibitorEdge {
+    net.edges().get_inhibitor(place, transition)
+        .map(|conn| conn as _)
+        .unwrap_or(ptr::null())
+}
+
 
 #[export_name = "ptn$net$clear"]
 extern "C" fn net_clear(v: &mut PetriNet) {
@@ -106,20 +128,34 @@ extern "C" fn insert_transition(net: &mut PetriNet, index: usize, parent: isize)
     net.add_transition(index) as *const Vertex
 }
 
-#[export_name = "ptn$net$add_edge"]
-extern "C" fn add_edge(net: &mut PetriNet, from: VertexIndex, to: VertexIndex) {
-    net.connect(from, to, 1);
+#[export_name = "ptn$net$add_directed"]
+extern "C" fn add_directed(net: &mut PetriNet, from: VertexIndex, to: VertexIndex, weight: u32) {
+    info!("add directed edge to net: {net:?}");
+    net.add_directed(DirectedEdge::new_with(from, to, weight));
 }
 
 /// Удаляет все соединения вершин, которые выходят из from и входят в to
-#[export_name = "ptn$net$remove_edge"]
-extern "C" fn remove_edge(net: &mut PetriNet, from: VertexIndex, to: VertexIndex) {
-    net.disconnect(from, to);
+#[export_name = "ptn$net$remove_directed"]
+extern "C" fn remove_directed(net: &mut PetriNet, from: VertexIndex, to: VertexIndex) {
+    net.remove_directed(from, to);
 }
+
+#[export_name = "ptn$net$add_inhibitor"]
+extern "C" fn add_inhibitor(net: &mut PetriNet, place: VertexIndex, transition: VertexIndex) {
+    info!("add inhibitor edge to net: {net:?}");
+    net.add_inhibitor(InhibitorEdge::new(place, transition));
+}
+
+/// Удаляет все соединения вершин, которые выходят из from и входят в to
+#[export_name = "ptn$net$remove_inhibitor"]
+extern "C" fn remove_inhibitor(net: &mut PetriNet, place: VertexIndex, transition: VertexIndex) {
+    net.remove_inhibitor(place, transition);
+}
+
 
 #[export_name = "ptn$net$as_matrix"]
 extern "C" fn as_matrix(net: &PetriNet, input: &mut RustMatrix<i32>, output: &mut RustMatrix<i32>) {
-    let (i, o) = net.incidence_matrix();
+    let (i, o) = net.adjacency_matrices::<i32>();
     unsafe {
         ptr::write(input, RustMatrix::from(i));
         ptr::write(output, RustMatrix::from(o));

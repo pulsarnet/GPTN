@@ -9,7 +9,7 @@ use ndarray::{Array1, Array2};
 use ndarray_linalg::Solve;
 use tracing::{debug, info};
 use core::{MatrixExt, NetCycles, NetPaths};
-use net::Connection;
+use net::DirectedEdge;
 use net::vertex::{VertexIndex, VertexType};
 
 /// Контекст декомпозиции
@@ -238,6 +238,7 @@ pub struct DecomposeContext {
 
 impl DecomposeContext {
     pub fn init(net: &PetriNet) -> Self {
+        // TODO check connection types
         let mut net = net.clone();
         let mut parts = vec![];
 
@@ -248,7 +249,7 @@ impl DecomposeContext {
         for part in parts {
             part.positions().iter().for_each(|(_, v)| { lbf_net.insert(v.clone()); });
             part.transitions().iter().for_each(|(_, v)| { lbf_net.insert(v.clone()); });
-            part.connections().iter().for_each(|conn| { lbf_net.connect(conn.first(), conn.second(), conn.weight()); });
+            part.directed().iter().for_each(|conn| { lbf_net.add_directed(conn.clone()); });
         }
 
         normalize_net(&mut lbf_net);
@@ -282,38 +283,40 @@ impl DecomposeContext {
         for row in 0..d_input.nrows() {
             for column in 0..d_input.ncols() {
                 if d_input.row(row)[column] > 0 {
-                    result.connect(
-                        self.positions
-                            .iter()
-                            .enumerate()
-                            .find(|(k, _)| *k == row)
-                            .map(|(_, k)| k.index())
-                            .unwrap(),
-                        self.transitions
-                            .iter()
-                            .enumerate()
-                            .find(|(k, _)| *k == column)
-                            .map(|(_, k)| k.index())
-                            .unwrap(),
-                        1
+                    result.add_directed(
+                        DirectedEdge::new(
+                            self.positions
+                                .iter()
+                                .enumerate()
+                                .find(|(k, _)| *k == row)
+                                .map(|(_, k)| k.index())
+                                .unwrap(),
+                            self.transitions
+                                .iter()
+                                .enumerate()
+                                .find(|(k, _)| *k == column)
+                                .map(|(_, k)| k.index())
+                                .unwrap(),
+                        )
                     )
                 }
 
                 if d_output.column(column)[row] > 0 {
-                    result.connect(
-                        self.transitions
-                            .iter()
-                            .enumerate()
-                            .find(|(k, _)| *k == column)
-                            .map(|(_, k)| k.index())
-                            .unwrap(),
-                        self.positions
-                            .iter()
-                            .enumerate()
-                            .find(|(k, _)| *k == row)
-                            .map(|(_, k)| k.index())
-                            .unwrap(),
-                        1
+                    result.add_directed(
+                        DirectedEdge::new(
+                            self.transitions
+                                .iter()
+                                .enumerate()
+                                .find(|(k, _)| *k == column)
+                                .map(|(_, k)| k.index())
+                                .unwrap(),
+                            self.positions
+                                .iter()
+                                .enumerate()
+                                .find(|(k, _)| *k == row)
+                                .map(|(_, k)| k.index())
+                                .unwrap(),
+                        )
                     )
                 }
             }
@@ -469,8 +472,8 @@ fn normalize_net(net: &mut PetriNet) {
     let mut connections = vec![];
     for (&idx, position) in net.positions() {
         // Проверим, что позиция не является входной или выходной, т.е. находится между двумя переходами
-        let Some(input) = net.connections().iter().find(|conn| conn.second() == idx) else { continue };
-        let Some(output) = net.connections().iter().find(|conn| conn.first() == idx) else { continue };
+        let Some(input) = net.directed().iter().find(|conn| conn.end() == idx) else { continue };
+        let Some(output) = net.directed().iter().find(|conn| conn.begin() == idx) else { continue };
 
         // Создадим новую позицию с родителем
         let new_pos = position.split(net.next_position_index());
@@ -478,8 +481,8 @@ fn normalize_net(net: &mut PetriNet) {
         positions.push(new_pos);
 
         // Соединим новую позицию с переходами
-        connections.push(Connection::new(input.first(), new_pos_index, input.weight()));
-        connections.push(Connection::new(new_pos_index, output.second(), output.weight()));
+        connections.push(DirectedEdge::new_with(input.begin(), new_pos_index, input.weight()));
+        connections.push(DirectedEdge::new_with(new_pos_index, output.end(), output.weight()));
     }
 
     for pos in positions.into_iter() {
@@ -489,7 +492,7 @@ fn normalize_net(net: &mut PetriNet) {
 
     for conn in connections.into_iter() {
         // Добавим соединения
-        net.connect(conn.first(), conn.second(), conn.weight());
+        net.add_directed(conn);
     }
 }
 
@@ -514,16 +517,16 @@ fn extract_part(net: &mut PetriNet, remove: &[VertexIndex]) -> PetriNet {
     for connect in remove.windows(2) {
         assert_ne!(connect[0].type_, connect[1].type_, "vertices must be different types");
         // удалим соединение в текущей сети
-        let removed = net.disconnect(connect[0], connect[1])
+        let removed = net.remove_directed(connect[0], connect[1])
             .expect("BUG: the connection must exists in net");
-        result.connect(removed.first(), removed.second(), removed.weight());
+        result.add_directed(removed);
     }
 
     // Проверим, что это цикл: если типы 1 элемента и последнего неравны, то это цикл
     if remove[0].type_ != remove[remove.len() - 1].type_ {
-        let removed = net.disconnect(remove[remove.len() - 1], remove[0])
+        let removed = net.remove_directed(remove[remove.len() - 1], remove[0])
             .expect("BUG: the connection must exists in net");
-        result.connect(removed.first(), removed.second(), removed.weight())
+        result.add_directed(removed)
     }
 
     // Для каждого удаляемого элемента проверим:
@@ -531,8 +534,8 @@ fn extract_part(net: &mut PetriNet, remove: &[VertexIndex]) -> PetriNet {
     // TODO: По хорошему в найденном цикле могут быть обратные дуги, их бы тоже удалить (ЗАЧЕМ? ОБОСНОВАНИЕ?).
     // TODO: то есть для элемента могли остаться обратные соединения
     for &index in remove {
-        let found = net.connections().iter()
-            .find(|conn| conn.first() == index || conn.second() == index)
+        let found = net.directed().iter()
+            .find(|conn| conn.begin() == index || conn.end() == index)
             .is_some();
 
         // Если нашли, что у элемента есть соединение, то делим его и потом удаляем родительский элемент
@@ -542,17 +545,17 @@ fn extract_part(net: &mut PetriNet, remove: &[VertexIndex]) -> PetriNet {
             // Когда делимый элемент является переходом, то проверяем, чтобы из него выходило соединение
             // В ином случае необходимо вернуть позицию в которую входит родительский элемент и тоже её разделить
             if VertexType::Transition == split.type_ {
-                if let None = net.connections().iter().find(|conn| conn.first() == index) {
-                    let connection = result.connections().iter().find(|conn| conn.first() == index)
+                if let None = net.directed().iter().find(|conn| conn.begin() == index) {
+                    let connection = result.directed().iter().find(|conn| conn.begin() == index)
                         .copied()
                         .expect("an output position must exists");
 
-                    let position = result.get(connection.second())
+                    let position = result.get(connection.end())
                         .expect("an position must exists")
                         .split(net.next_position_index());
 
                     let idx = net.insert(position).index();
-                    net.connect(split, idx, connection.weight());
+                    net.add_directed(DirectedEdge::new_with(split, idx, connection.weight()));
                 }
             }
         }
@@ -576,12 +579,12 @@ fn split_element(net: &mut PetriNet, index: VertexIndex) -> VertexIndex {
     net.insert(new_element); // добавляем новый элемент
 
     // Скопировать соединения
-    let connections = net.connections().iter()
+    let connections = net.directed().iter()
         .filter_map(|conn| {
-            if conn.first() == index {
-                Some(Connection::new(new_element_index, conn.second(), conn.weight()))
-            } else if conn.second() == index {
-                Some(Connection::new(conn.first(), new_element_index, conn.weight()))
+            if conn.begin() == index {
+                Some(DirectedEdge::new_with(new_element_index, conn.end(), conn.weight()))
+            } else if conn.end() == index {
+                Some(DirectedEdge::new_with(conn.begin(), new_element_index, conn.weight()))
             } else {
                 None
             }
@@ -589,7 +592,7 @@ fn split_element(net: &mut PetriNet, index: VertexIndex) -> VertexIndex {
         .collect::<Vec<_>>();
 
     for conn in connections {
-        net.connect(conn.first(), conn.second(), conn.weight());
+        net.add_directed(conn);
     }
 
     new_element_index
@@ -628,30 +631,30 @@ fn primitive_net(net: &mut PetriNet) -> PetriNet {
 
     'brk: for transition in transitions.values() {
         let mut from = net
-            .connections()
+            .directed()
             .iter()
-            .filter(|c| c.first().eq(&transition.index()));
+            .filter(|c| c.begin().eq(&transition.index()));
 
         while let Some(from_t) = from.next() {
-            if result.positions().get(&from_t.second()).is_some() {
+            if result.positions().get(&from_t.end()).is_some() {
                 continue;
             }
 
-            let mut to = net.connections().iter().filter(|c| {
-                c.first().ne(&from_t.second()) && c.second().eq(&transition.index())
+            let mut to = net.directed().iter().filter(|c| {
+                c.begin().ne(&from_t.end()) && c.end().eq(&transition.index())
             });
 
             while let Some(to_t) = to.next() {
-                if result.positions().get(&to_t.first()).is_some() {
+                if result.positions().get(&to_t.begin()).is_some() {
                     continue;
                 }
 
-                result.insert(net.get(to_t.first()).unwrap().clone());
-                result.insert(net.get(from_t.first()).unwrap().clone());
-                result.insert(net.get(from_t.second()).unwrap().clone());
+                result.insert(net.get(to_t.begin()).unwrap().clone());
+                result.insert(net.get(from_t.begin()).unwrap().clone());
+                result.insert(net.get(from_t.end()).unwrap().clone());
 
-                result.connect(to_t.first(), from_t.first().clone(), 1); // to_t.weight()
-                result.connect(from_t.first(), from_t.second().clone(), 1); // from_t.weight()
+                result.add_directed(DirectedEdge::new(to_t.begin(), from_t.begin().clone())); // to_t.weight()
+                result.add_directed(DirectedEdge::new(from_t.begin(), from_t.end().clone())); // from_t.weight()
                 continue 'brk;
             }
         }
@@ -664,7 +667,7 @@ fn primitive_net(net: &mut PetriNet) -> PetriNet {
 #[cfg(test)]
 mod tests {
     use modules::synthesis::decompose::{extract_loops, extract_paths};
-    use net::{PetriNet, Vertex};
+    use net::{DirectedEdge, PetriNet, Vertex};
     use net::vertex::VertexIndex;
 
     #[test]
@@ -675,26 +678,27 @@ mod tests {
         let mut net = PetriNet::new();
         let p1 = net.add_position(1).index();
         let t1 = net.add_transition(1).index();
-        net.connect(p1, t1, 1);
+        net.add_directed(DirectedEdge::new(p1, t1));
 
         let p2 = net.add_position(2).index();
         let p3 = net.add_position(3).index();
-        net.connect(t1, p2, 1);
-        net.connect(t1, p3, 1);
+        net.add_directed(DirectedEdge::new(t1, p2));
+        net.add_directed(DirectedEdge::new(t1, p3));
 
         let loops = extract_loops(&mut net);
         assert!(loops.is_empty());
 
         let paths = extract_paths(&mut net);
+        dbg!(&paths);
         assert_eq!(paths.len(), 2);
 
         // todo дописать
         let path1 = &paths[0];
         assert_eq!(path1.positions().len(), 2);
         assert_eq!(path1.transitions().len(), 1);
-        assert_eq!(path1.connections().len(), 1);
+        assert_eq!(path1.directed().len(), 2);
         assert_eq!(path1.get(p1).cloned(), Some(Vertex::position(1)));
         assert_eq!(path1.get(t1).cloned(), Some(Vertex::transition(1)));
-        assert_eq!(path1.get(p2).cloned(), Some(Vertex::position(2)));
+        assert_eq!(path1.get(p3).cloned(), Some(Vertex::position(3)));
     }
 }

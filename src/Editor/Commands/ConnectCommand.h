@@ -1,15 +1,13 @@
-//
-// Created by darkp on 15.10.2022.
-//
-
 #ifndef FFI_RUST_CONNECTCOMMAND_H
 #define FFI_RUST_CONNECTCOMMAND_H
 
 #include <QUndoCommand>
 
 class GraphicsScene;
-class ArrowLine;
+class Edge;
 class PetriObject;
+class Position;
+class Transition;
 
 class ConnectCommand : public QUndoCommand {
 
@@ -20,12 +18,12 @@ class ConnectCommand : public QUndoCommand {
         Bidirectional
     };
 
-    explicit ConnectCommand(ArrowLine* connection,
+    explicit ConnectCommand(Edge* connection,
                             ConnectionType type,
                             GraphicsScene* scene,
                             QUndoCommand* parent = nullptr);
 
-    explicit ConnectCommand(ArrowLine* connection,
+    explicit ConnectCommand(Edge* connection,
                             ConnectionType type,
                             int newWeight,
                             int oldWeight,
@@ -35,10 +33,11 @@ class ConnectCommand : public QUndoCommand {
 
 public:
 
-    static ConnectCommand* connect(PetriObject* from, PetriObject* to, GraphicsScene* scene);
-    static ConnectCommand* disconnect(ArrowLine* connection, GraphicsScene* scene);
-    static ConnectCommand* setWeight(ArrowLine* connection, int newWeight, bool reverse, GraphicsScene* scene);
-    static ConnectCommand* setBidirectional(ArrowLine* connection, GraphicsScene* scene);
+    static ConnectCommand* directed(PetriObject* from, PetriObject* to, GraphicsScene* scene);
+    static ConnectCommand* inhibitor(Position *place, Transition *transition, GraphicsScene* scene);
+    static ConnectCommand* disconnect(Edge* connection, GraphicsScene* scene);
+    static ConnectCommand* setWeight(Edge* connection, int newWeight, bool reverse, GraphicsScene* scene);
+    static ConnectCommand* setBidirectional(Edge* connection, GraphicsScene* scene);
 
     void redo() override;
     void undo() override;
@@ -46,7 +45,7 @@ public:
 private:
 
     GraphicsScene* m_scene;
-    ArrowLine* m_connection;
+    Edge* m_connection;
     ConnectionType m_type;
     int m_newWeight;
     int m_oldWeight;

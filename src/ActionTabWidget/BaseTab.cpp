@@ -1,7 +1,3 @@
-//
-// Created by darkp on 19.11.2023.
-//
-
 #include "BaseTab.h"
 
 BaseTab::BaseTab(QWidget* parent): QWidget(parent) {}

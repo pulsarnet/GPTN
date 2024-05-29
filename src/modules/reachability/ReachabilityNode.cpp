@@ -1,7 +1,3 @@
-//
-// Created by darkp on 28.09.2022.
-//
-
 #include <QPainter>
 #include <QToolTip>
 #include <QStyleOptionGraphicsItem>

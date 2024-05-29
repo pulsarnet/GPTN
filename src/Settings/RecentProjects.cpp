@@ -1,7 +1,3 @@
-//
-// Created by darkp on 08.02.2023.
-//
-
 #include "RecentProjects.h"
 #include <QJsonDocument>
 #include <QJsonArray>

@@ -1,7 +1,3 @@
-//
-// Created by darkp on 23.10.2022.
-//
-
 #include "NewProjectWindow.h"
 #include <QFileDialog>
 #include <QLineEdit>

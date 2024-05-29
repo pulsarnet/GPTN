@@ -1,7 +1,3 @@
-//
-// Created by darkp on 23.10.2022.
-//
-
 #ifndef FFI_RUST_NEWPROJECTWINDOW_H
 #define FFI_RUST_NEWPROJECTWINDOW_H
 

@@ -3,9 +3,9 @@
 extern "C" {
     void ptn$logger$init();
     void ptn$logger$debug(const char* msg, const char* function, const char* filename, int line);
-    void ptn$logger$info(const char* msg);
-    void ptn$logger$warn(const char* msg);
-    void ptn$logger$error(const char* msg);
+    void ptn$logger$info(const char* msg, const char* function, const char* filename, int line);
+    void ptn$logger$warn(const char* msg, const char* function, const char* filename, int line);
+    void ptn$logger$error(const char* msg, const char* function, const char* filename, int line);
 }
 
 void ptn::logger::init() {
@@ -16,14 +16,14 @@ void ptn::logger::debug(const char* msg, const char* function = nullptr, const c
     ptn$logger$debug(msg, function, filename, line);
 }
 
-void ptn::logger::info(const char* msg) {
-    ptn$logger$info(msg);
+void ptn::logger::info(const char* msg, const char* function = nullptr, const char* filename = nullptr, int line = -1) {
+    ptn$logger$info(msg, function, filename, line);
 }
 
-void ptn::logger::warn(const char* msg) {
-    ptn$logger$warn(msg);
+void ptn::logger::warn(const char* msg, const char* function = nullptr, const char* filename = nullptr, int line = -1) {
+    ptn$logger$warn(msg, function, filename, line);
 }
 
-void ptn::logger::error(const char* msg) {
-    ptn$logger$error(msg);
+void ptn::logger::error(const char* msg, const char* function = nullptr, const char* filename = nullptr, int line = -1) {
+    ptn$logger$error(msg, function, filename, line);
 }

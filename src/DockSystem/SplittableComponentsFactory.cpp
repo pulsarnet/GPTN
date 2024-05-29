@@ -1,7 +1,3 @@
-//
-// Created by nmuravev on 3/21/2022.
-//
-
 #include "SplittableComponentsFactory.h"
 #include <DockAreaWidget.h>
 

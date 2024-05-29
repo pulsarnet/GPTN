@@ -1,7 +1,3 @@
-//
-// Created by Николай Муравьев on 08.01.2022.
-//
-
 #ifndef FFI_RUST_NAMED_MATRIX_MODEL_H
 #define FFI_RUST_NAMED_MATRIX_MODEL_H
 

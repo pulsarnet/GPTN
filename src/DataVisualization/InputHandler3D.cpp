@@ -1,7 +1,3 @@
-//
-// Created by darkp on 09.01.2023.
-//
-
 #include "InputHandler3D.h"
 
 InputHandler3D::InputHandler3D(QObject *parent) : Q3DInputHandler(parent) {

@@ -1,6 +1,7 @@
 use net::vertex::VertexIndex;
 use net::PetriNet;
 use std::collections::HashMap;
+use core::graph_utils::adjacent;
 
 #[derive(Debug, PartialEq)]
 enum DFSVertexState {
@@ -41,7 +42,7 @@ impl NetCycles {
         visited: &mut HashMap<VertexIndex, DFSVertexState>,
         cycles: &mut Vec<Vec<VertexIndex>>,
     ) {
-        for vert in net.adjacent(stack[stack.len() - 1]) {
+        for vert in adjacent(net, stack[stack.len() - 1]) {
             match visited[&vert] {
                 DFSVertexState::InStack => {
                     // print cycle
@@ -79,7 +80,7 @@ impl NetCycles {
 #[cfg(test)]
 mod tests {
     use super::NetCycles;
-    use net::PetriNet;
+    use net::{DirectedEdge, PetriNet};
     use net::vertex::VertexIndex;
 
     #[test]
@@ -93,12 +94,12 @@ mod tests {
         let t2 = net.add_transition(2).index();
         let t3 = net.add_transition(3).index();
 
-        net.connect(p1, t1, 1);
-        net.connect(t1, p2, 1);
-        net.connect(p2, t2, 1);
-        net.connect(t2, p3, 1);
-        net.connect(p3, t3, 1);
-        net.connect(t3, p1, 1);
+        net.add_directed(DirectedEdge::new(p1, t1));
+        net.add_directed(DirectedEdge::new(t1, p2));
+        net.add_directed(DirectedEdge::new(p2, t2));
+        net.add_directed(DirectedEdge::new(t2, p3));
+        net.add_directed(DirectedEdge::new(p3, t3));
+        net.add_directed(DirectedEdge::new(t3, p1));
 
         let cycles = NetCycles::find(&net);
         assert_eq!(cycles.cycles.len(), 1);

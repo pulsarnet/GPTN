@@ -1,7 +1,3 @@
-//
-// Created by darkp on 05.10.2022.
-//
-
 #ifndef FFI_RUST_REACHABILITY_LINE_H
 #define FFI_RUST_REACHABILITY_LINE_H
 

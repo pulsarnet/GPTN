@@ -51,6 +51,7 @@ impl From<DMatrix<i32>> for CMatrix {
 #[cfg(test)]
 mod tests {
     use modules::synthesis::SynthesisProgram;
+    use net::Vertex;
 
     use super::*;
 
@@ -75,6 +76,6 @@ mod tests {
             Vertex::transition(4),
         ];
 
-        dbg!(program.sets(&pos_indexes, &tran_indexes));
+        dbg!(program.sets());
     }
 }

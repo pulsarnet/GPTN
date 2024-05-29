@@ -64,6 +64,7 @@ IMPL_FOR_TYPE(u64)
 IMPL_FOR_TYPE(i64)
 
 IMPL_FOR_TYPE_INNER(const vertex::Vertex*, const_vertex_ptr)
-IMPL_FOR_TYPE_INNER(const edge::Connection*, const_edge_ptr)
+IMPL_FOR_TYPE_INNER(const edge::DirectedEdge*, const_directed_ptr)
+IMPL_FOR_TYPE_INNER(const edge::InhibitorEdge*, const_inhibitor_ptr)
 IMPL_FOR_TYPE_INNER(const reachability::Marking*, const_marking_ptr)
 IMPL_FOR_TYPE_INNER(vertex::VertexIndex, vertex_index)

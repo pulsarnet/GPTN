@@ -1,7 +1,3 @@
-//
-// Created by nmuravev on 23.01.2022.
-//
-
 #ifndef FFI_RUST_SYNTHESIS_MODEL_H
 #define FFI_RUST_SYNTHESIS_MODEL_H
 

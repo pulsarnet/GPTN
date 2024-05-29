@@ -188,15 +188,18 @@ impl From<DMatrix<i32>> for Marking {
 pub struct Reachability {
     positions: Vec<VertexIndex>,
     transitions: Vec<VertexIndex>,
+
     input: DMatrix<i32>,
     output: DMatrix<i32>,
+    inhibitor: DMatrix<i32>,
 
     marking: Marking,
 }
 
 impl Reachability {
     pub fn new(net: &PetriNet) -> Self {
-        let (input, output) = net.incidence_matrix();
+        let (input, output) = net.adjacency_matrices::<i32>();
+        let inhibitor = net.inhibitor_matrix();
         let marking = net.marking();
 
         Reachability {
@@ -204,6 +207,7 @@ impl Reachability {
             transitions: net.transitions().keys().cloned().collect(),
             input,
             output,
+            inhibitor,
             marking: Marking::from(marking),
         }
     }
@@ -215,8 +219,15 @@ impl Reachability {
         'main: for transition in 0..self.input.ncols() {
             let input_col = self.input.column(transition);
             let output_col = self.output.column(transition);
+            let inhibitor_col = self.inhibitor.column(transition);
 
             for position in 0..self.input.nrows() {
+                // inhibitor arc only fire transition
+                if inhibitor_col[position] != 0 {
+                    // allow fire
+                    continue
+                }
+
                 if marking.data.row(0)[position] < input_col[position] {
                     continue 'main;
                 }
@@ -280,10 +291,10 @@ impl Reachability {
                     // then replace M'(p) by o for each p such that M'(p)>M"(p).
                     let mut index = Some((transition.clone(), marking));
                     while let Some((_, i)) = index {
-                        if i == 0 {
-                            // TODO: если это root дерева то его не учитываем
-                            break;
-                        }
+                        // if i == 0 {
+                        //     // TODO: если это root дерева то его не учитываем
+                        //     break;
+                        // }
                         index = tree[i].prev;
                         if select.data.row(0) >= tree[i].data.row(0) && select.data.row(0) != tree[i].data.row(0) {
                             for position in 0..self.input.nrows() {
@@ -303,11 +314,12 @@ impl Reachability {
                 // Вершина х переопределяется как внутренняя, вершина z становится граничной.
                 for (transition, mut select) in selector.into_iter() {
                     let contains_w = select.data.iter().find(|w| **w == MarkerValue::Infinity).is_some();
-                    if contains_w {
-                        select.type_ = CovType::DeadEnd; // todo тупикова, дублирующая, омега (бесконечная)
-                    } else {
-                        select.type_ = CovType::Boundary;
-                    }
+                    // if contains_w {
+                    //     select.type_ = CovType::DeadEnd; // todo тупикова, дублирующая, омега (бесконечная)
+                    // } else {
+                    //     select.type_ = CovType::Boundary;
+                    // }
+                    select.type_ = CovType::Boundary;
                     select.prev = Some((transition, marking));
                     tree.append(select);
 
@@ -382,7 +394,7 @@ impl IndexMut<usize> for ReachabilityTree {
 #[cfg(test)]
 mod tests {
     use modules::reachability::Reachability;
-    use net::PetriNet;
+    use net::{DirectedEdge, PetriNet};
 
     #[test]
     pub fn test_cov() {
@@ -397,27 +409,27 @@ mod tests {
         let t3 = net.add_transition(3).index();
 
         // p1
-        net.connect(p1, t1);
-        net.connect(p1, t2);
-        net.connect(t1, p1);
+        net.add_directed(DirectedEdge::new(p1, t1));
+        net.add_directed(DirectedEdge::new(p1, t2));
+        net.add_directed(DirectedEdge::new(t1, p1));
 
         // p2
-        net.connect(p2, t3);
-        net.connect(t1, p2);
+        net.add_directed(DirectedEdge::new(p2, t3));
+        net.add_directed(DirectedEdge::new(t1, p2));
 
         // p3
-        net.connect(p3, t3);
-        net.connect(t3, p3);
-        net.connect(t2, p3);
+        net.add_directed(DirectedEdge::new(p3, t3));
+        net.add_directed(DirectedEdge::new(t3, p3));
+        net.add_directed(DirectedEdge::new(t2, p3));
 
         // p4
-        net.connect(t3, p4);
+        net.add_directed(DirectedEdge::new(t3, p4));
 
         // marking
         net.positions_mut().get_mut(&p1).unwrap().add_marker();
 
         let cov = Reachability::new(&net);
-        let tree = cov.compute();
+        let tree = cov.compute().expect("non empty tree");
 
         let mut current = vec![0];
         let mut level = 0;

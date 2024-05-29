@@ -7,7 +7,7 @@
 class PetriObject;
 class Position;
 class Transition;
-class ArrowLine;
+class Edge;
 class GraphicsSceneActions;
 class QUndoCommand;
 class QUndoStack;
@@ -44,9 +44,16 @@ public:
     Q_DECLARE_FLAGS(Modes, Mode);
     Q_ENUM(Mode)
 
+    enum EdgeType {
+        Direct = 1,
+        Inhibitor,
+    };
+
     explicit GraphicsScene(ptn::net::PetriNet* net, QObject* parent = nullptr);
 
     void setAllowMods(Modes mods);
+
+    void setEdgeType(EdgeType type) { m_edgeType = type; }
 
     QJsonDocument json() const;
     bool fromJson(const QJsonDocument& document);
@@ -61,18 +68,17 @@ public:
     void unregisterItem(QGraphicsItem* item);
 
     // Operations with connections
-    void setConnectionWeight(ArrowLine* connection, int weight, bool reverse);
-    ArrowLine* getConnection(PetriObject* from, PetriObject* to);
+    Edge* getConnection(const PetriObject* from, const PetriObject* to);
 
     QUndoStack* undoStack() const { return m_undoStack; }
 
     [[nodiscard]] const QList<Position*>& positions() const { return m_positions; }
     [[nodiscard]] const QList<Transition*>& transitions() const { return m_transition; }
-    [[nodiscard]] const QList<ArrowLine*>& connections() const { return m_connections; }
+    [[nodiscard]] const QList<Edge*>& connections() const { return m_connections; }
 
     QList<Position*>& positions() { return m_positions; }
     QList<Transition*>& transitions() { return m_transition; }
-    QList<ArrowLine*>& connections() { return m_connections; }
+    QList<Edge*>& connections() { return m_connections; }
 
     void dotVisualization(char* algorithm);
 
@@ -125,15 +131,13 @@ private:
 
     QList<Position*> m_positions;
     QList<Transition*> m_transition;
-    QList<ArrowLine*> m_connections;
+    QList<Edge*> m_connections;
 
-    ArrowLine* m_currentConnection = nullptr;
+    Edge* m_currentConnection = nullptr;
 
     Mode m_mode;
-    Mode m_restoreMode;
-
-    Modes m_allowMods;
-    Modes m_restoreMods;
+    Modes m_allowModes;
+    EdgeType m_edgeType = Inhibitor;
 
     ptn::net::PetriNet* m_net;
 

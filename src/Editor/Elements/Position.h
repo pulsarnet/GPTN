@@ -31,9 +31,9 @@ public:
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
 
-    QPointF center() override;
+    QPointF center() const override;
 
-    QPointF connectionPos(PetriObject*) override;
+    QPointF connectionPos(const PetriObject*) const override;
 
     ObjectType objectType() override { return PetriObject::Position; }
 

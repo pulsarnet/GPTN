@@ -1,7 +1,3 @@
-//
-// Created by Николай Муравьев on 12.01.2022.
-//
-
 #ifndef FFI_RUST_TOOL_H
 #define FFI_RUST_TOOL_H
 

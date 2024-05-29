@@ -1,7 +1,3 @@
-//
-// Created by nmuravev on 3/21/2022.
-//
-
 #include <QBoxLayout>
 #include "DockWidget.h"
 #include <DockAreaWidget.h>

@@ -2,6 +2,7 @@
     <qresource prefix="/">
         <file>images/tools/position.svg</file>
         <file>images/tools/connect.svg</file>
+        <file>images/tools/inhibitor.svg</file>
         <file>images/tools/move.svg</file>
         <file>images/tools/transition.svg</file>
         <file>images/tools/rotation.svg</file>

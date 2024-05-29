@@ -375,7 +375,7 @@ bool MainWindow::saveOnExit() {
     qDebug() << "MainWindow::saveOnExit()";
 
     // Check if project is changed
-    if (isWindowModified())
+    if (!isWindowModified())
         return true;
 
     switch (onSaveFileAsk())

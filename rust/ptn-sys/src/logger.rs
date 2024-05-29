@@ -33,31 +33,55 @@ fn try_char_to_str(msg: *const c_char) -> Option<&'static str> {
 #[export_name = "ptn$logger$debug"]
 extern "C" fn external_debug_log(msg: *const c_char, function: *const c_char, filename: *const c_char, line: i32) {
     let msg = try_char_to_str(msg).unwrap_or_default();
-    let function = try_char_to_str(function);
-    let filename = try_char_to_str(filename);
+    let function = try_char_to_str(function).unwrap_or("-");
+    let filename = try_char_to_str(filename).unwrap_or("-");
     
     debug!(target: "external", 
-        function = ?function, 
-        filename = ?filename, 
+        function = function, 
+        filename = filename, 
         line = line, 
         "{msg}"
     );
 }
 
 #[export_name = "ptn$logger$info"]
-extern "C" fn external_info_log(msg: *const c_char) {
-    let msg = unsafe { CStr::from_ptr(msg) }.to_str().unwrap_or_default();
-    info!(target: "external", "{msg}");
+extern "C" fn external_info_log(msg: *const c_char, function: *const c_char, filename: *const c_char, line: i32) {
+    let msg = try_char_to_str(msg).unwrap_or_default();
+    let function = try_char_to_str(function).unwrap_or("-");
+    let filename = try_char_to_str(filename).unwrap_or("-");
+
+    info!(target: "external", 
+        function = function, 
+        filename = filename, 
+        line = line, 
+        "{msg}"
+    );
 }
 
 #[export_name = "ptn$logger$warn"]
-extern "C" fn external_warn_log(msg: *const c_char) {
-    let msg = unsafe { CStr::from_ptr(msg) }.to_str().unwrap_or_default();
-    warn!(target: "external", "{msg}");
+extern "C" fn external_warn_log(msg: *const c_char, function: *const c_char, filename: *const c_char, line: i32) {
+    let msg = try_char_to_str(msg).unwrap_or_default();
+    let function = try_char_to_str(function).unwrap_or("-");
+    let filename = try_char_to_str(filename).unwrap_or("-");
+
+    warn!(target: "external", 
+        function = function, 
+        filename = filename, 
+        line = line, 
+        "{msg}"
+    );
 }
 
 #[export_name = "ptn$logger$error"]
-extern "C" fn external_error_log(msg: *const c_char) {
-    let msg = unsafe { CStr::from_ptr(msg) }.to_str().unwrap_or_default();
-    error!(target: "external", "{msg}");
+extern "C" fn external_error_log(msg: *const c_char, function: *const c_char, filename: *const c_char, line: i32) {
+    let msg = try_char_to_str(msg).unwrap_or_default();
+    let function = try_char_to_str(function).unwrap_or("-");
+    let filename = try_char_to_str(filename).unwrap_or("-");
+
+    error!(target: "external", 
+        function = function, 
+        filename = filename, 
+        line = line, 
+        "{msg}"
+    );
 }

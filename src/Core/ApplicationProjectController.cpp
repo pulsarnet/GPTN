@@ -1,7 +1,3 @@
-//
-// Created by darkp on 16.09.2023.
-//
-
 #include "ApplicationProjectController.h"
 #include "../MainWindow.h"
 #include <QApplication>

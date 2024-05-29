@@ -51,7 +51,8 @@ private:
     QAction* m_positionAction = nullptr;
     QAction* m_transitionAction = nullptr;
     QAction* m_moveAction = nullptr;
-    QAction* m_connectAction = nullptr;
+    QAction* m_directedAction = nullptr;
+    QAction* m_inhibitorAction = nullptr;
     QAction* m_rotationAction = nullptr;
     QAction* m_removeAction = nullptr;
     QAction* m_markerAction = nullptr;

@@ -3,5 +3,4 @@ resolver = "2"
 members = [
     "ptn",
     "ptn-sys",
-    "ptn-dataset-gen"
 ]

@@ -1,11 +1,7 @@
-//
-// Created by darkp on 16.10.2022.
-//
-
 #include "RemoveCommand.h"
 #include "../GraphicsScene.h"
 #include "../elements/PetriObject.h"
-#include "../elements/ArrowLine.h"
+#include "../elements/Edge.h"
 
 RemoveCommand::RemoveCommand(PetriObject *item, GraphicsScene *scene, QUndoCommand *parent)
     : QUndoCommand(parent)

@@ -59,12 +59,10 @@ impl PositiveNegative {
 
 
 pub fn t_invariant(net: &PetriNet) {
-    let (i, o) = net.adjacency_matrices();
-    let mat = o + i;
-    let mat =
-        DMatrix::<i32>::from_iterator(mat.nrows(), mat.ncols(), mat.iter().map(|el| *el as i32));
+    let (i, mut o) = net.adjacency_matrices::<i32>();
+    o -= i;
 
-    let res = invariant(mat);
+    let res = invariant(o);
     let transitions = net
         .transitions()
         .values()
@@ -77,12 +75,10 @@ pub fn t_invariant(net: &PetriNet) {
 }
 
 pub fn p_invariant(net: &PetriNet) {
-    let (i, o) = net.adjacency_matrices();
-    let mat = o + i;
-    let mat =
-        DMatrix::<i32>::from_iterator(mat.nrows(), mat.ncols(), mat.iter().map(|el| *el as i32));
+    let (i, mut o) = net.adjacency_matrices::<i32>();
+    o -= i;
 
-    let res = invariant(mat.transpose());
+    let res = invariant(o.transpose());
     let positions = net.positions().values().fold(vec![], |mut acc, pos| {
         acc.push(format!("p{}", pos.index().id));
         acc

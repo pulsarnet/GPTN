@@ -1,7 +1,3 @@
-//
-// Created by darkp on 25.09.2022.
-//
-
 /// ReachabilityTreeScene не освобождает память rust::Reachability
 
 #ifndef FFI_RUST_REACHABILITY_TREE_SCENE_H

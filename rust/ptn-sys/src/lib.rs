@@ -39,9 +39,6 @@ macro_rules! profile {
 }
 
 
-
-
-
 #[no_mangle]
 extern "C" fn synthesis_program_value(
     ctx: &DecomposeContext,

@@ -4,7 +4,7 @@
 #include <ptn/net.h>
 #include "../GraphicsScene.h"
 #include "PetriObject.h"
-#include "ArrowLine.h"
+#include "Edge.h"
 
 
 PetriObject::PetriObject(ptn::net::PetriNet* net, ptn::net::vertex::VertexIndex _vertex, QGraphicsItem* parent)
@@ -55,12 +55,12 @@ void PetriObject::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
     QGraphicsItem::mouseReleaseEvent(event);
 }
 
-QPointF PetriObject::connectionPos(PetriObject* to) {
+QPointF PetriObject::connectionPos(const PetriObject* to) const {
     Q_UNUSED(to)
     return {0, 0};
 }
 
-qreal PetriObject::angleBetween(const QPointF &to) {
+qreal PetriObject::angleBetween(const QPointF &to) const {
     qreal x = center().x();
     qreal y = center().y();
 
@@ -73,11 +73,11 @@ qreal PetriObject::angleBetween(const QPointF &to) {
     return rotation;
 }
 
-void PetriObject::removeConnectionLine(ArrowLine* line) {
+void PetriObject::removeConnectionLine(Edge* line) {
     m_connections.remove(m_connections.indexOf(line));
 }
 
-void PetriObject::addConnectionLine(ArrowLine* line) {
+void PetriObject::addConnectionLine(Edge* line) {
     if (m_connections.indexOf(line) == -1) {
         m_connections.push_back(line);
     }
@@ -90,11 +90,13 @@ PetriObject::~PetriObject() {
 //    }
 }
 
-QVariant PetriObject::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant &value) {
+QVariant PetriObject::itemChange(GraphicsItemChange change, const QVariant &value) {
     if (change == ItemPositionHasChanged) {
         updateConnections();
         return value;
-    } else if (change == ItemSceneChange) {
+    }
+
+    if (change == ItemSceneChange) {
         auto scene = value.value<GraphicsScene*>();
         if (scene) {
             scene->registerItem(this);

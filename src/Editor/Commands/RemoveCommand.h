@@ -1,7 +1,3 @@
-//
-// Created by darkp on 16.10.2022.
-//
-
 #ifndef FFI_RUST_REMOVECOMMAND_H
 #define FFI_RUST_REMOVECOMMAND_H
 
@@ -9,7 +5,7 @@
 
 class GraphicsScene;
 class PetriObject;
-class ArrowLine;
+class Edge;
 
 class RemoveCommand : public QUndoCommand {
 
@@ -24,7 +20,7 @@ private:
 
     GraphicsScene* m_scene;
     PetriObject* m_item;
-    QList<ArrowLine*> m_connections;
+    QList<Edge*> m_connections;
 
 };
 

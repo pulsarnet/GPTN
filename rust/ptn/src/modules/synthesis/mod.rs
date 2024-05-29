@@ -1,7 +1,7 @@
 mod decompose;
 
 pub use self::decompose::*;
-use net::PetriNet;
+use net::{DirectedEdge, PetriNet};
 use std::collections::HashMap;
 use std::hint::black_box;
 use std::sync::Arc;
@@ -227,9 +227,9 @@ pub fn synthesis_program(context: &DecomposeContext, index: usize) -> PetriNet {
             for (index, &el) in column.iter().enumerate().filter(|e| e.1.ne(&0.)) {
                 let pos = pos_indexes_vec[index].clone();
                 if (el > 0. && i == 0) || (el < 0. && i == 1) {
-                    new_net.update_connect(pos.index(), vtx_idx, el.abs() as usize);
+                    new_net.add_directed(DirectedEdge::new_with(pos.index(), vtx_idx, el.abs() as u32));
                 } else if (el > 0. && i == 1) || (el < 0. && i == 0) {
-                    new_net.update_connect(vtx_idx, pos.index(), el.abs() as usize);
+                    new_net.add_directed(DirectedEdge::new_with(vtx_idx, pos.index(), el.abs() as u32));
                 }
             }
         }

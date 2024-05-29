@@ -124,11 +124,11 @@ void Position::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     painter->restore();
 }
 
-QPointF Position::center() {
+QPointF Position::center() const {
     return scenePos();
 }
 
-QPointF Position::connectionPos(PetriObject* to) {
+QPointF Position::connectionPos(const PetriObject* to) const {
 
     qreal angle = this->angleBetween(to->scenePos());
 

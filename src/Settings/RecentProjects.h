@@ -1,7 +1,3 @@
-//
-// Created by darkp on 08.02.2023.
-//
-
 #ifndef FFI_RUST_RECENTPROJECTS_H
 #define FFI_RUST_RECENTPROJECTS_H
 

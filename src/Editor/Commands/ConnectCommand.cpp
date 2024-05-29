@@ -1,10 +1,13 @@
 #include "ConnectCommand.h"
 #include "../GraphicsScene.h"
 #include "../elements/PetriObject.h"
-#include "../elements/ArrowLine.h"
+#include "../elements/Edge.h"
 #include <ptn/net.h>
 
-ConnectCommand::ConnectCommand(ArrowLine* connection, ConnectionType type, GraphicsScene *scene, QUndoCommand *parent)
+#include "../Elements/DirectedArc.h"
+#include "../Elements/InhibitorArc.h"
+
+ConnectCommand::ConnectCommand(Edge* connection, ConnectionType type, GraphicsScene *scene, QUndoCommand *parent)
     : QUndoCommand(parent)
     , m_scene(scene)
     , m_connection(connection)
@@ -13,7 +16,7 @@ ConnectCommand::ConnectCommand(ArrowLine* connection, ConnectionType type, Graph
 
 }
 
-ConnectCommand::ConnectCommand(ArrowLine* connection,
+ConnectCommand::ConnectCommand(Edge* connection,
                                ConnectionType type,
                                int newWeight,
                                int oldWeight,
@@ -40,11 +43,9 @@ void ConnectCommand::redo() {
             m_scene->removeItem(m_connection);
             break;
         case SetWeight:
-            m_scene->setConnectionWeight(m_connection, m_newWeight, m_reverse);
+            m_connection->setWeight(m_newWeight, m_reverse);
             break;
         case Bidirectional:
-            // Добавить обратное соединение в объект net, для правильного отображения
-            m_scene->net()->add_edge(m_connection->to()->vertexIndex(), m_connection->from()->vertexIndex());
             m_connection->setBidirectional(true);
             break;
     }
@@ -59,33 +60,35 @@ void ConnectCommand::undo() {
             m_scene->addItem(m_connection);
             break;
         case SetWeight:
-            m_scene->setConnectionWeight(m_connection, m_oldWeight, m_reverse);
+            m_connection->setWeight(m_oldWeight, m_reverse);
             break;
         case Bidirectional:
-            // Сначала удалить обратное соединение из объекта net, для правильного отображения
-            m_scene->net()->remove_edge(m_connection->to()->vertexIndex(), m_connection->from()->vertexIndex());
             m_connection->setBidirectional(false);
             break;
     }
 }
 
-ConnectCommand *ConnectCommand::connect(PetriObject *from, PetriObject *to, GraphicsScene *scene) {
-    return new ConnectCommand(new ArrowLine(from, to), Connect, scene);
+ConnectCommand *ConnectCommand::directed(PetriObject *from, PetriObject *to, GraphicsScene *scene) {
+    return new ConnectCommand(new DirectedArc(from, to), Connect, scene);
 }
 
-ConnectCommand *ConnectCommand::disconnect(ArrowLine *connection, GraphicsScene *scene) {
+ConnectCommand *ConnectCommand::inhibitor(Position *place, Transition *transition, GraphicsScene *scene) {
+    return new ConnectCommand(new InhibitorArc(place, transition), Connect, scene);
+}
+
+ConnectCommand *ConnectCommand::disconnect(Edge *connection, GraphicsScene *scene) {
     return new ConnectCommand(connection, Disconnect, scene);
 }
 
-ConnectCommand *ConnectCommand::setBidirectional(ArrowLine *connection, GraphicsScene *scene) {
+ConnectCommand *ConnectCommand::setBidirectional(Edge *connection, GraphicsScene *scene) {
     return new ConnectCommand(connection, Bidirectional, scene);
 }
 
-ConnectCommand *ConnectCommand::setWeight(ArrowLine *connection, int newWeight, bool reverse, GraphicsScene *scene) {
+ConnectCommand *ConnectCommand::setWeight(Edge *connection, int newWeight, bool reverse, GraphicsScene *scene) {
     return new ConnectCommand(connection,
                               SetWeight,
                               newWeight,
-                              (int)connection->netItem(reverse)->weight(),
+                              (int)connection->weight(reverse),
                               reverse,
                               scene);
 }

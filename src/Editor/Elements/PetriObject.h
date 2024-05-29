@@ -6,7 +6,7 @@
 #include <QStyleOptionGraphicsItem>
 #include <ptn/vertex.h>
 
-class ArrowLine;
+class Edge;
 class GraphicsScene;
 
 namespace ptn::net {
@@ -39,11 +39,11 @@ protected:
 
 public:
 
-    virtual QPointF connectionPos(PetriObject*);
+    virtual QPointF connectionPos(const PetriObject*) const;
 
-    virtual QPointF center() = 0;
+    virtual QPointF center() const = 0;
 
-    virtual qreal angleBetween(const QPointF& to);
+    virtual qreal angleBetween(const QPointF& to) const;
 
     [[nodiscard]] uint64_t index() const;
 
@@ -69,11 +69,11 @@ public:
 
     bool colored() { return m_colored; }
 
-    void addConnectionLine(ArrowLine* line);
-    void removeConnectionLine(ArrowLine* line);
+    void addConnectionLine(Edge* line);
+    void removeConnectionLine(Edge* line);
     void updateLabelPosition();
     void updateConnections();
-    [[nodiscard]] const QList<ArrowLine*>& connections() const { return m_connections; };
+    [[nodiscard]] const QList<Edge*>& connections() const { return m_connections; };
 
     [[nodiscard]] GraphicsScene* graphicScene() const;
 
@@ -93,7 +93,7 @@ protected:
 protected:
 
     bool m_colored = false;
-    QList<ArrowLine*> m_connections;
+    QList<Edge*> m_connections;
 
     ptn::net::PetriNet* m_net;
     ptn::net::vertex::VertexIndex m_vertex;

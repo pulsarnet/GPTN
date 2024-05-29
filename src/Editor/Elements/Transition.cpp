@@ -60,7 +60,7 @@ void Transition::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
     painter->restore();
 }
 
-QPointF Transition::center() {
+QPointF Transition::center() const {
     return this->scenePos();
 }
 
@@ -71,7 +71,7 @@ QPointF getIntersection(qreal dx, qreal dy, qreal cx, qreal cy, qreal width, qre
     return {cx + dx * height / qAbs(dy), cy + (dy > 0 ? height : -height)};
 }
 
-QPointF Transition::connectionPos(PetriObject* to) {
+QPointF Transition::connectionPos(const PetriObject* to) const {
     qreal w = sceneBoundingRect().width() / 2.;
     qreal h = sceneBoundingRect().height() / 2.;
 

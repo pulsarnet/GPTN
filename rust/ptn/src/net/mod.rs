@@ -1,16 +1,15 @@
-mod connection;
 pub mod vertex;
+mod edge;
 
 use indexmap::map::IndexMap;
 use nalgebra::{DMatrix, Scalar};
-pub use net::connection::Connection;
 pub use net::vertex::Vertex;
 use net::vertex::{VertexIndex, VertexType};
-use std::collections::HashMap;
 use std::fmt::Debug;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use num_traits::{One, Zero};
+use num_traits::{AsPrimitive, One, Zero};
 use tracing::{debug, trace};
+pub use net::edge::{DirectedEdge, Edges, InhibitorEdge};
 
 #[derive(Debug)]
 pub struct PetriNet {
@@ -21,7 +20,7 @@ pub struct PetriNet {
     transitions: IndexMap<VertexIndex, Vertex>,
 
     /// Соединения между вершинами в сети Петри
-    connections: Vec<Connection>,
+    edges: Edges,
 
     /// Последняя добавленная позиция
     position_index: AtomicUsize,
@@ -51,23 +50,8 @@ impl PetriNet {
         &mut self.transitions
     }
 
-    pub fn connections(&self) -> &[Connection] {
-        &self.connections
-    }
-
-    /// Количество выходных позиций (т.е. позиций без выходных дуг)
-    ///
-    /// TODO: сделать итератор (output_positions_iter, output_positions - коллекция)
-    pub fn output_positions(&self) -> usize {
-        let mut post_c = 0;
-        for pos in self.positions.keys() {
-            let mut filter = self.connections.iter().filter(|conn| conn.first() == *pos);
-
-            if filter.next().is_none() {
-                post_c += 1;
-            }
-        }
-        post_c
+    pub fn edges(&self) -> &Edges {
+        &self.edges
     }
 
     /// Получить элемент по индексу [`VertexIndex`]
@@ -83,21 +67,6 @@ impl PetriNet {
         self.positions.get_mut(&index)
             .unwrap()
             .set_markers(marking);
-    }
-
-    /// Количество входных позиций (т.е. позиций без входных дуг)
-    ///
-    /// TODO: сделать итератор (input_positions_iter, input_positions - коллекция)
-    pub fn input_positions(&self) -> usize {
-        let mut pre_c = 0;
-        for pos in self.positions.keys() {
-            let mut filter = self.connections.iter().filter(|conn| conn.second() == *pos);
-
-            if filter.next().is_none() {
-                pre_c += 1;
-            }
-        }
-        pre_c
     }
 
     /// Массив индексов всех вершин
@@ -120,8 +89,7 @@ impl PetriNet {
     pub fn remove_position(&mut self, index: usize) {
         trace!("remove position at {index}");
         if let Some(position) = self.get_position(index).map(|v| v.index()) {
-            self.connections
-                .retain(|c| c.first().ne(&position) && c.second().ne(&position));
+            self.edges.remove_relative_to_vertex(position);
             self.positions.remove(&position);
             debug!("removed position {position}");
         }
@@ -136,8 +104,7 @@ impl PetriNet {
     pub fn remove_transition(&mut self, index: usize) {
         trace!("remove transition at {index}");
         if let Some(transition) = self.get_transition(index).map(|v| v.index()) {
-            self.connections
-                .retain(|c| c.first().ne(&transition) && c.second().ne(&transition));
+            self.edges.remove_relative_to_vertex(transition);
             self.transitions.remove(&transition);
             debug!("removed transition {transition}");
         }
@@ -255,48 +222,34 @@ impl PetriNet {
             false => self.insert_transition(element),
         }
     }
-
-    /// Добавляет соединение в структуру сети Петри
-    ///
-    /// Если соединение существует, то изменяет его вес на новый
-    pub fn connect(&mut self, from: VertexIndex, to: VertexIndex, weight: usize) {
-        if from.type_ == to.type_ {
-            panic!("{} and {} has same type", from, to);
-        }
-
-        match self
-            .connections
-            .iter_mut()
-            .find(|c| c.first() == from && c.second() == to)
-        {
-            Some(connection) => connection.set_weight(weight),
-            None => self.connections.push(Connection::new(from, to, weight)),
-        }
+    
+    pub fn directed(&self) -> &[DirectedEdge] {
+        self.edges.directed()
+    }
+    
+    /// Find directed arc by `from` and `to` vertex 
+    pub fn get_directed(&self, from: VertexIndex, to: VertexIndex) -> Option<&DirectedEdge> {
+        self.edges.get_directed(from, to)
     }
 
-    /// Прибавляет вес к соединению, или создает новое
-    pub fn update_connect(&mut self, from: VertexIndex, to: VertexIndex, weight: usize) {
-        if from.type_ == to.type_ {
-            panic!("{} and {} has same type", from, to);
-        }
-
-        match self
-            .connections
-            .iter_mut()
-            .find(|c| c.first() == from && c.second() == to)
-        {
-            Some(connection) => connection.set_weight(connection.weight() + weight),
-            None => self.connections.push(Connection::new(from, to, weight)),
-        }
+    pub fn add_directed(&mut self, edge: DirectedEdge) {
+        self.edges.add_directed(edge)
+    }
+    
+    pub fn remove_directed(&mut self, from: VertexIndex, to: VertexIndex) -> Option<DirectedEdge> {
+        self.edges.remove_directed(from, to)
     }
 
-    /// Удаляет соединение из `from` в `to` и возвращает его
-    pub fn disconnect(&mut self, from: VertexIndex, to: VertexIndex) -> Option<Connection> {
-        if let Some(index) = self.connections.iter().position(|c| c.first() == from && c.second() == to) {
-            Some(self.connections.remove(index))
-        } else {
-            None
-        }
+    pub fn get_inhibitor(&self, place: VertexIndex, transition: VertexIndex) -> Option<&InhibitorEdge> {
+        self.edges.get_inhibitor(place, transition)
+    }
+
+    pub fn add_inhibitor(&mut self, edge: InhibitorEdge) {
+        self.edges.add_inhibitor(edge)
+    }
+    
+    pub fn remove_inhibitor(&mut self, place: VertexIndex, transition: VertexIndex) {
+        self.edges.remove_inhibitor(place, transition)
     }
 
     #[inline]
@@ -313,148 +266,86 @@ impl PetriNet {
     pub fn next_position_index(&self) -> usize {
         self.update_position_index()
     }
+    
+    pub fn adjacency_matrices<I>(&self) -> (DMatrix<I>, DMatrix<I>) 
+        where
+            I: Scalar + Zero + Copy + 'static,
+            u32: AsPrimitive<I>,
+    {
+        let mut input = DMatrix::<I>::zeros(self.positions.len(), self.transitions.len());
+        let mut output = DMatrix::<I>::zeros(self.positions.len(), self.transitions.len());
 
-    // pub fn as_matrix(&self) -> (CNamedMatrix, CNamedMatrix) {
-    //     let positions = self.positions.clone();
-    //     let transitions = self.transitions.clone();
-    //
-    //     let pos_indexes = positions
-    //         .values()
-    //         .enumerate()
-    //         .map(|(i, v)| (v.index(), i))
-    //         .collect::<HashMap<_, _>>();
-    //     let tran_indexes = transitions
-    //         .values()
-    //         .enumerate()
-    //         .map(|(i, v)| (v.index(), i))
-    //         .collect::<HashMap<_, _>>();
-    //
-    //     let mut d_input = DMatrix::<i32>::zeros(positions.len(), transitions.len());
-    //     let mut d_output = DMatrix::<i32>::zeros(positions.len(), transitions.len());
-    //
-    //     for conn in self.connections.iter() {
-    //         match conn.first().type_ {
-    //             VertexType::Position => {
-    //                 d_input.row_mut(*pos_indexes.get(&conn.first()).unwrap())
-    //                     [*tran_indexes.get(&conn.second()).unwrap()] = -(conn.weight() as i32)
-    //             }
-    //             VertexType::Transition => {
-    //                 d_output.column_mut(*tran_indexes.get(&conn.first()).unwrap())
-    //                     [*pos_indexes.get(&conn.second()).unwrap()] = conn.weight() as i32
-    //             }
-    //         }
-    //     }
-    //
-    //     (
-    //         CNamedMatrix::new(&positions, &transitions, d_input),
-    //         CNamedMatrix::new(&positions, &transitions, d_output),
-    //     )
-    // }
-
-    pub fn incidence_matrix(&self) -> (DMatrix<i32>, DMatrix<i32>) {
-        let positions = self.positions.values().collect::<Vec<_>>();
-        let transitions = self.transitions.values().collect::<Vec<_>>();
-
-        let position_indexes = positions
-            .iter()
-            .enumerate()
-            .map(|(i, v)| (v.index(), i))
-            .collect::<HashMap<_, _>>();
-        let transition_indexes = transitions
-            .iter()
-            .enumerate()
-            .map(|(i, v)| (v.index(), i))
-            .collect::<HashMap<_, _>>();
-
-        let mut input = DMatrix::<i32>::zeros(positions.len(), transitions.len());
-        let mut output = DMatrix::<i32>::zeros(positions.len(), transitions.len());
-
-        for conn in self.connections.iter() {
-            match conn.first().type_ {
+        for conn in self.edges.directed() {
+            let begin = conn.begin();
+            let end = conn.end();
+            
+            match begin.type_ {
                 VertexType::Transition => {
-                    output.row_mut(*position_indexes.get(&conn.second()).unwrap())
-                        [*transition_indexes.get(&conn.first()).unwrap()] = conn.weight() as i32
+                    let p_idx = self.positions.get_index_of(&end).unwrap();
+                    let t_idx = self.transitions.get_index_of(&begin).unwrap();
+
+                    output[(p_idx, t_idx)] = conn.weight().as_();
                 }
                 VertexType::Position => {
-                    input.row_mut(*position_indexes.get(&conn.first()).unwrap())
-                        [*transition_indexes.get(&conn.second()).unwrap()] = conn.weight() as i32
+                    let p_idx = self.positions.get_index_of(&begin).unwrap();
+                    let t_idx = self.transitions.get_index_of(&end).unwrap();
+
+                    input[(p_idx, t_idx)] = conn.weight().as_();
                 }
             }
         }
 
         (input, output)
     }
-
-    pub fn adjacency_matrix(&self) -> DMatrix<f64> {
-        let mut adjacency = DMatrix::<f64>::zeros(self.positions.len(), self.positions.len());
-
-        for conn in self.connections.iter() {
-            match conn.first().type_ {
-                VertexType::Transition => {
-                    let place_index = self.positions.get_index_of(&conn.second()).unwrap();
-                    let transition_index = self.transitions.get_index_of(&conn.first()).unwrap();
-                    adjacency[(place_index, transition_index)] = conn.weight() as f64;
-                }
-                VertexType::Position => {
-                    let place_index = self.positions.get_index_of(&conn.first()).unwrap();
-                    let transition_index = self.transitions.get_index_of(&conn.second()).unwrap();
-                    adjacency[(place_index, transition_index)] = -(conn.weight() as f64);
-                }
-            }
+    
+    pub fn inhibitor_matrix<I>(&self) -> DMatrix<I>
+        where
+            I: Scalar + Zero + Copy + 'static,
+            u32: AsPrimitive<I>,
+    {
+        let mut inhibitor = DMatrix::<I>::zeros(self.positions.len(), self.transitions.len());
+        
+        for arc in self.edges.inhibitor() {
+            let place = arc.place();
+            let transition = arc.transition();
+            
+            let p_idx = self.positions.get_index_of(&place).unwrap();
+            let t_idx = self.transitions.get_index_of(&transition).unwrap();
+            
+            inhibitor[(p_idx, t_idx)] = 1u32.as_();
         }
-
-        adjacency
-    }
-
-    pub fn adjacency_matrices(&self) -> (DMatrix<f64>, DMatrix<f64>) {
-        let mut adjacency_input =
-            DMatrix::<f64>::zeros(self.positions.len(), self.transitions.len());
-        let mut adjacency_output =
-            DMatrix::<f64>::zeros(self.positions.len(), self.transitions.len());
-
-        for conn in self.connections.iter() {
-            match conn.first().type_ {
-                VertexType::Transition => {
-                    let place_index = self.positions.get_index_of(&conn.second()).unwrap();
-                    let transition_index = self.transitions.get_index_of(&conn.first()).unwrap();
-                    adjacency_output[(place_index, transition_index)] = conn.weight() as f64;
-                }
-                VertexType::Position => {
-                    let place_index = self.positions.get_index_of(&conn.first()).unwrap();
-                    let transition_index = self.transitions.get_index_of(&conn.second()).unwrap();
-                    adjacency_input[(place_index, transition_index)] = -(conn.weight() as f64);
-                }
-            }
-        }
-
-        (adjacency_input, adjacency_output)
+        
+        inhibitor
     }
 
     pub fn one_zero_adjacency_matrices<T>(&self) -> (DMatrix<T>, DMatrix<T>)
         where
             T: Debug + PartialEq + Scalar + Clone + Zero + One
     {
-        let mut adjacency_input =
-            DMatrix::<T>::zeros(self.positions.len(), self.transitions.len());
-        let mut adjacency_output =
-            DMatrix::<T>::zeros(self.positions.len(), self.transitions.len());
+        let mut input = DMatrix::<T>::zeros(self.positions.len(), self.transitions.len());
+        let mut output = DMatrix::<T>::zeros(self.positions.len(), self.transitions.len());
 
-        for conn in self.connections.iter() {
-            match conn.first().type_ {
+        for conn in self.edges.directed() {
+            let begin = conn.begin();
+            let end = conn.end();
+
+            match begin.type_ {
                 VertexType::Transition => {
-                    let place_index = self.positions.get_index_of(&conn.second()).unwrap();
-                    let transition_index = self.transitions.get_index_of(&conn.first()).unwrap();
-                    adjacency_output[(place_index, transition_index)] = T::one();
+                    let p_idx = self.positions.get_index_of(&end).unwrap();
+                    let t_idx = self.transitions.get_index_of(&begin).unwrap();
+
+                    output[(p_idx, t_idx)] = T::one();
                 }
                 VertexType::Position => {
-                    let place_index = self.positions.get_index_of(&conn.first()).unwrap();
-                    let transition_index = self.transitions.get_index_of(&conn.second()).unwrap();
-                    adjacency_input[(place_index, transition_index)] = T::one();
+                    let p_idx = self.positions.get_index_of(&begin).unwrap();
+                    let t_idx = self.transitions.get_index_of(&end).unwrap();
+
+                    input[(p_idx, t_idx)] = T::one();
                 }
             }
         }
 
-        (adjacency_input, adjacency_output)
+        (input, output)
     }
 
     #[inline]
@@ -481,42 +372,6 @@ impl PetriNet {
             },
         )
     }
-
-    pub fn adjacent(&self, vertex: VertexIndex) -> Vec<VertexIndex> {
-        self.connections
-            .iter()
-            .filter(|conn| conn.first() == vertex)
-            .map(|conn| conn.second())
-            .collect()
-    }
-
-    pub fn from_matrix(adjacent: DMatrix<i32>, marking: Vec<i32>) -> PetriNet {
-        let mut net = PetriNet::new();
-        let mut positions = vec![];
-        let mut transitions = vec![];
-
-        for (i, _) in adjacent.row_iter().enumerate() {
-            let position = net.add_position(i).index();
-            positions.push(position);
-            net.set_marking(position, marking[i] as usize)
-        }
-
-        for (i, _) in adjacent.column_iter().enumerate() {
-            transitions.push(net.add_transition(i).index());
-        }
-
-        for (i, row) in adjacent.row_iter().enumerate() {
-            for (j, _) in adjacent.column_iter().enumerate() {
-                if row[j] > 0 {
-                    net.connect(positions[i], transitions[j], row[j] as usize);
-                } else if row[j] < 0 {
-                    net.connect(transitions[j], positions[i], (-row[j]) as usize);
-                }
-            }
-        }
-
-        net
-    }
 }
 
 impl Default for PetriNet {
@@ -524,7 +379,7 @@ impl Default for PetriNet {
         PetriNet {
             positions: IndexMap::new(),
             transitions: IndexMap::new(),
-            connections: vec![],
+            edges: Edges::default(),
             position_index: AtomicUsize::new(1),
             transition_index: AtomicUsize::new(1),
         }
@@ -536,7 +391,7 @@ impl Clone for PetriNet {
         Self {
             positions: self.positions.clone(),
             transitions: self.transitions.clone(),
-            connections: self.connections.clone(),
+            edges: self.edges.clone(),
             position_index: AtomicUsize::new(self.position_index.load(Ordering::SeqCst)),
             transition_index: AtomicUsize::new(self.transition_index.load(Ordering::SeqCst)),
         }

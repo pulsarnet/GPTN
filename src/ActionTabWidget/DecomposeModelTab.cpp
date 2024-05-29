@@ -79,7 +79,7 @@ DecomposeModelTab::DecomposeModelTab(ProjectMetadata* metadata, QWidget *parent)
             continue;
         }
 
-        auto connections = program->edges();
+        auto connections = program->directed_arcs();
         size_t weight = 0;
         for (auto& connection : connections) {
             weight += connection->weight();

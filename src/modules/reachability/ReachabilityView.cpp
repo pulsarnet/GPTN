@@ -1,7 +1,3 @@
-//
-// Created by darkp on 06.10.2022.
-//
-
 #include "ReachabilityView.h"
 #include "../../Editor/GraphicsViewZoom.h"
 
