@@ -222,14 +222,14 @@ impl Reachability {
             let inhibitor_col = self.inhibitor.column(transition);
 
             for position in 0..self.input.nrows() {
-                // inhibitor arc only fire transition
-                if inhibitor_col[position] != 0 {
-                    // allow fire
-                    continue
-                }
-
-                if marking.data.row(0)[position] < input_col[position] {
-                    continue 'main;
+                if inhibitor_col[position] != 0 { // if it's inhibitor arc
+                    if marking.data.row(0)[position] != 0 { // check that the place has no markers
+                        continue 'main
+                    }
+                } else if input_col[position] != 0 { // if it's directed arc
+                    if marking.data.row(0)[position] < input_col[position] { // check that the place has more markers than arc weight
+                        continue 'main;
+                    }
                 }
             }
 

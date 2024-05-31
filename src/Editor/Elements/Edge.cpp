@@ -161,6 +161,8 @@ QVariant Edge::edgeChange(EdgeChange change, const QVariant &value) {
         m_from->addConnectionLine(this);
         m_to->addConnectionLine(this);
         s->registerItem(this);
+
+        updateConnection();
     }
 
     return value;
